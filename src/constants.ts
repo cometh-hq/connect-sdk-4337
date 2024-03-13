@@ -1,6 +1,8 @@
+import { webAuthnOptions } from './wallet/types'
+
 export const API_URL = 'https://api.connect.cometh.io/'
-export const DEFAULT_CHAIN_ID = 11155111
-export const DEFAULT_RPC_TARGET = 'https://ethereum-sepolia-rpc.publicnode.com'
+export const DEFAULT_CHAIN_ID = 80001
+export const DEFAULT_RPC_TARGET = 'https://polygon-mumbai-pokt.nodies.app'
 
 export const EIP712_SAFE_MESSAGE_TYPE = {
   // "SafeMessage(bytes message)"
@@ -40,3 +42,25 @@ export const WebauthnSignerBytecode =
 // Hardcoded because we cannot easily install @safe-global/safe-contracts because of conflicting ethers.js versions
 export const SafeProxyBytecode =
   '0x608060405234801561001057600080fd5b506040516101e63803806101e68339818101604052602081101561003357600080fd5b8101908080519060200190929190505050600073ffffffffffffffffffffffffffffffffffffffff168173ffffffffffffffffffffffffffffffffffffffff1614156100ca576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260228152602001806101c46022913960400191505060405180910390fd5b806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505060ab806101196000396000f3fe608060405273ffffffffffffffffffffffffffffffffffffffff600054167fa619486e0000000000000000000000000000000000000000000000000000000060003514156050578060005260206000f35b3660008037600080366000845af43d6000803e60008114156070573d6000fd5b3d6000f3fea264697066735822122003d1488ee65e08fa41e58e888a9865554c535f2c77126a82cb4c0f917f31441364736f6c63430007060033496e76616c69642073696e676c65746f6e20616464726573732070726f7669646564'
+
+export const challengePrefix = '226368616c6c656e6765223a'
+
+export const importSafeMessage = 'Use my wallet with Cometh Connect'
+
+export const defaultEncryptionSalt = 'COMETH-CONNECT'
+export const Pbkdf2Iterations = 1000000
+
+export const SAFE_SENTINEL_OWNERS = '0x1'
+// 60 secondes
+export const DEFAULT_CONFIRMATION_TIME = 60 * 1000
+
+export const BLOCK_EVENT_GAP = -500
+
+export const DEFAULT_WEBAUTHN_OPTIONS: webAuthnOptions = {
+  // authenticatorSelection documentation can be found here: https://www.w3.org/TR/webauthn-2/#dictdef-authenticatorselectioncriteria
+  authenticatorSelection: {
+    authenticatorAttachment: 'platform',
+    residentKey: 'preferred',
+    userVerification: 'preferred'
+  }
+}

@@ -38,7 +38,7 @@ export class NoSignerFoundError extends Error {
   }
 }
 
-export class NoAdapterFoundError extends Error {
+export class NoAdaptorFoundError extends Error {
   constructor() {
     super('No EOA adapter found')
   }

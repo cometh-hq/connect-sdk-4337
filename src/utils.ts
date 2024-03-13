@@ -75,6 +75,12 @@ export function deepHexlify(obj: any): any {
   )
 }
 
+const hexArrayStr = (array): string =>
+  new Uint8Array(array).reduce(
+    (acc, v) => acc + v.toString(16).padStart(2, '0'),
+    '0x'
+  )
+
 /**
  * Represents the status of a request.
  */
@@ -89,5 +95,6 @@ export {
   RequestStatus,
   numberToUnpaddedHex,
   getRandomUint256,
-  hexStringToUint8Array
+  hexStringToUint8Array,
+  hexArrayStr
 }

@@ -1,1 +1,1 @@
-export * from './ComethWallet'
+export * from './SafeAccount'

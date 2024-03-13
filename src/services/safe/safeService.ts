@@ -1,23 +1,29 @@
-import { ethers } from 'ethers'
+import { ethers, getBytes } from 'ethers'
 
 import {
   ENTRYPOINT_ADDRESS,
+  MULTISEND_ADDRESS,
   SAFE_4337_MODULE_ADDRESS,
   SAFE_PROXY_FACTORY_ADDRESS,
   SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+  SAFE_SINGLETON_ADDRESS,
   WEBAUTHN_SIGNER_FACTORY_ADDRESS,
   WEBAUTHN_VERIFIER_ADDRESS
-} from '../config'
-import { SafeProxyBytecode, WebauthnSignerBytecode } from '../constants'
-import EntrypointAbi from '../contracts/abis/entrypoint.json'
-import SafeSingletonAbi from '../contracts/abis/safe.json'
-import Safe4337ModuleAbi from '../contracts/abis/safe4337ModuleAbi.json'
-import SetupModuleSetupAbi from '../contracts/abis/safeModuleSetup.json'
-import SafeProxyFactoryAbi from '../contracts/abis/safeProxyFactory.json'
-import SafeSignerLaunchpadAbi from '../contracts/abis/safeSignerLaunchpadAbi.json'
-import WebAuthnSignerAbi from '../contracts/abis/safeWebauthnSigner.json'
-import WebAuthnSignerFactoryAbi from '../contracts/abis/safeWebauthnSignerFactory.json'
-import { UserOperation } from './userOpService'
+} from '../../config'
+import { SafeProxyBytecode, WebauthnSignerBytecode } from '../../constants'
+import enableModuleAbi from '../../contracts/abis/enablemodule.json'
+import EntrypointAbi from '../../contracts/abis/entrypoint.json'
+import multisendAbi from '../../contracts/abis/Multisend.json'
+import SafeSingletonAbi from '../../contracts/abis/safe.json'
+import Safe4337ModuleAbi from '../../contracts/abis/safe4337ModuleAbi.json'
+import SetupModuleSetupAbi from '../../contracts/abis/safeModuleSetup.json'
+import SafeProxyFactoryAbi from '../../contracts/abis/safeProxyFactory.json'
+import SafeSignerLaunchpadAbi from '../../contracts/abis/safeSignerLaunchpadAbi.json'
+import WebAuthnSignerAbi from '../../contracts/abis/safeWebauthnSigner.json'
+import WebAuthnSignerFactoryAbi from '../../contracts/abis/safeWebauthnSignerFactory.json'
+import { WalletNotDeployedError } from '../../wallet/errors'
+import { UserOperation } from '../4337/types'
+import { API } from '../API'
 
 function getEntrypointContract(
   provider: ethers.JsonRpcApiProvider
@@ -30,6 +36,13 @@ function getSafeContract(
   provider: ethers.JsonRpcProvider
 ): ethers.Contract {
   return new ethers.Contract(address, SafeSingletonAbi, provider)
+}
+
+function getSafeFactoryContract(
+  address: string,
+  provider: ethers.JsonRpcProvider
+): ethers.Contract {
+  return new ethers.Contract(address, SafeProxyFactoryAbi, provider)
 }
 
 /**
@@ -71,6 +84,7 @@ function getSafe4337ModuleContract(
  * @returns An instance of the WebAuthnSignerFactory contract.
  */
 function getWebAuthnSignerFactoryContract(
+  address: string,
   provider: ethers.JsonRpcProvider
 ): ethers.Contract {
   return new ethers.Contract(
@@ -92,25 +106,6 @@ function getWebAuthnSignerContract(
   address: string
 ): ethers.Contract {
   return new ethers.Contract(address, WebAuthnSignerAbi, provider)
-}
-
-/**
- * Calculates the signer address from the given public key coordinates.
- * @param x The x-coordinate of the public key.
- * @param y The y-coordinate of the public key.
- * @returns The signer address.
- */
-function getSignerAddressFromPubkeyCoords(x: string, y: string): string {
-  const deploymentCode = ethers.solidityPacked(
-    ['bytes', 'uint256', 'uint256', 'uint256'],
-    [WebauthnSignerBytecode, x, y, WEBAUTHN_VERIFIER_ADDRESS]
-  )
-  const salt = ethers.ZeroHash
-  return ethers.getCreate2Address(
-    WEBAUTHN_SIGNER_FACTORY_ADDRESS,
-    salt,
-    ethers.keccak256(deploymentCode)
-  )
 }
 
 type SafeInitializer = {
@@ -190,7 +185,7 @@ function getSafeDeploymentData(
  * @param saltNonce - The salt nonce used for the safe contract. Defaults to ethers.ZeroHash.
  * @returns The address of the safe contract.
  */
-function getSafeAddress(
+function getSafeAddressWithLaunchpad(
   initializer: string,
   factoryAddress = SAFE_PROXY_FACTORY_ADDRESS,
   singleton = SAFE_SIGNER_LAUNCHPAD_ADDRESS,
@@ -204,6 +199,83 @@ function getSafeAddress(
     ['bytes32', 'uint256'],
     [ethers.solidityPackedKeccak256(['bytes'], [initializer]), saltNonce]
   )
+  return ethers.getCreate2Address(
+    factoryAddress,
+    salt,
+    ethers.keccak256(deploymentCode)
+  )
+}
+
+/**
+ * Calculates the address of a safe contract based on the initializer, factory address, singleton address, and salt nonce.
+ * @param initializer - The initializer bytes.
+ * @param factoryAddress - The factory address used to create the safe contract. Defaults to SAFE_PROXY_FACTORY_ADDRESS.
+ * @param singleton - The singleton address used for the safe contract. Defaults to SAFE_SIGNER_LAUNCHPAD_ADDRESS.
+ * @param saltNonce - The salt nonce used for the safe contract. Defaults to ethers.ZeroHash.
+ * @returns The address of the safe contract.
+ */
+async function getSafeAddress(
+  ownerAddress: string,
+  provider: ethers.JsonRpcProvider,
+  factoryAddress = SAFE_PROXY_FACTORY_ADDRESS,
+  singleton = SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+  saltNonce = 'COMETH'
+): Promise<string> {
+  const enableModulesInterface = new ethers.Interface(enableModuleAbi)
+  const safeInterface = new ethers.Interface(SafeSingletonAbi)
+  const multisendInterface = new ethers.Interface(multisendAbi)
+
+  const safeFactoryInstance = getSafeFactoryContract(factoryAddress, provider)
+
+  const enableModuleData = enableModulesInterface.encodeFunctionData(
+    'enableModules',
+    [[SAFE_4337_MODULE_ADDRESS]]
+  )
+
+  const addModulesLibAddress = '0x8EcD4ec46D4D2a6B64fE960B3D64e8B94B2234eb'
+
+  const tx = {
+    to: addModulesLibAddress,
+    data: enableModuleData,
+    value: '0x00',
+    operation: 1
+  }
+
+  const encodedData = ethers
+    .solidityPacked(
+      ['uint8', 'address', 'uint256', 'uint256', 'bytes'],
+      [tx.operation, tx.to, tx.value, getBytes(tx.data)!.length, tx.data]
+    )
+    .slice(2)
+
+  const multiSendCallData = multisendInterface.encodeFunctionData('multiSend', [
+    encodedData
+  ])
+
+  const setUpData = safeInterface.encodeFunctionData('setup', [
+    [ownerAddress],
+    1,
+    MULTISEND_ADDRESS,
+    multiSendCallData,
+    SAFE_4337_MODULE_ADDRESS,
+    ethers.ZeroAddress,
+    0,
+    ethers.ZeroAddress
+  ])
+
+  const deploymentCode = ethers.solidityPacked(
+    ['bytes', 'uint256'],
+    [await safeFactoryInstance.proxyCreationCode(), singleton]
+  )
+
+  const salt = ethers.solidityPackedKeccak256(
+    ['bytes32', 'uint256'],
+    [
+      ethers.keccak256(ethers.solidityPacked(['bytes'], [setUpData])),
+      ethers.encodeBytes32String(saltNonce)
+    ]
+  )
+
   return ethers.getCreate2Address(
     factoryAddress,
     salt,
@@ -235,6 +307,8 @@ function getLaunchpadInitializeThenUserOpData(
   const safeSignerLaunchpadInterface = new ethers.Interface(
     SafeSignerLaunchpadAbi
   )
+
+  console.log({ initializer })
 
   const initializeThenUserOpData =
     safeSignerLaunchpadInterface.encodeFunctionData('initializeThenUserOp', [
@@ -327,6 +401,38 @@ const getOwners = async (
   return await safe.getOwners()
 }
 
+const isSafeOwner = async (
+  walletAddress: string,
+  signerAddress: string,
+  provider: ethers.JsonRpcProvider
+): Promise<boolean> => {
+  const safe = getSafeContract(walletAddress, provider)
+  if ((await isDeployed(walletAddress, provider)) === true) {
+    return await safe.isOwner(signerAddress)
+  } else {
+    throw new WalletNotDeployedError()
+  }
+}
+
+const isSigner = async (
+  signerAddress: string,
+  walletAddress: string,
+  provider: ethers.JsonRpcProvider,
+  API: API
+): Promise<boolean> => {
+  try {
+    const owner = await isSafeOwner(walletAddress, signerAddress, provider)
+
+    if (!owner) return false
+  } catch {
+    const predictedWalletAddress = await API.getWalletAddress(signerAddress)
+
+    if (predictedWalletAddress !== walletAddress) return false
+  }
+
+  return true
+}
+
 export type { SafeInitializer }
 
 export {
@@ -339,11 +445,12 @@ export {
   getOwners,
   getSafe4337ModuleContract,
   getSafeAddress,
+  getSafeAddressWithLaunchpad,
   getSafeDeploymentData,
   getSafeSignerLaunchpadContract,
-  getSignerAddressFromPubkeyCoords,
   getValidateUserOpData,
   getWebAuthnSignerContract,
   getWebAuthnSignerFactoryContract,
-  isDeployed
+  isDeployed,
+  isSigner
 }

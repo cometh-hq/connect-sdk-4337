@@ -4,50 +4,29 @@ import {
   ENTRYPOINT_ADDRESS,
   SAFE_4337_MODULE_ADDRESS,
   SAFE_SIGNER_LAUNCHPAD_ADDRESS
-} from '../config'
-import { DEFAULT_CHAIN_ID, EIP712_SAFE_OPERATION_TYPE } from '../constants'
-import { hexStringToUint8Array } from '../utils'
-import { getEip4337BundlerProvider } from './bundlerService'
-import { PasskeyLocalStorageFormat } from './passkeys'
+} from '../../config'
+import { DEFAULT_CHAIN_ID, EIP712_SAFE_OPERATION_TYPE } from '../../constants'
+import { hexStringToUint8Array } from '../../utils'
+import {
+  buildSignatureBytes,
+  extractClientDataFields,
+  extractSignature
+} from '../../utils/passkeys'
+import { PasskeyLocalStorageFormat } from '../passkeys/passkeys'
+import { getSignerAddressFromPubkeyCoords } from '../passkeys/passkeyService'
 import {
   getEntrypointContract,
   getLaunchpadInitializeThenUserOpData,
   getSafeDeploymentData,
-  getSignerAddressFromPubkeyCoords,
   SafeInitializer
-} from './safeService'
-
-type PackedUserOperation = {
-  sender: string
-  nonce: ethers.BigNumberish
-  initCode: ethers.BytesLike
-  callData: ethers.BytesLike
-  accountGasLimits: ethers.BytesLike
-  preVerificationGas: ethers.BigNumberish
-  gasFees: ethers.BytesLike
-  paymasterAndData: ethers.BytesLike
-  signature: ethers.BytesLike
-}
-
-type UnsignedPackedUserOperation = Omit<PackedUserOperation, 'signature'>
-
-type UserOperation = {
-  sender: string
-  nonce: ethers.BigNumberish
-  factory?: string
-  factoryData?: ethers.BytesLike
-  callData: ethers.BytesLike
-  callGasLimit: ethers.BigNumberish
-  verificationGasLimit: ethers.BigNumberish
-  preVerificationGas: ethers.BigNumberish
-  maxFeePerGas: ethers.BigNumberish
-  maxPriorityFeePerGas: ethers.BigNumberish
-  paymaster?: string
-  paymasterVerificationGasLimit?: ethers.BigNumberish
-  paymasterPostOpGasLimit?: ethers.BigNumberish
-  paymasterData?: ethers.BytesLike
-  signature: ethers.BytesLike
-}
+} from '../safe/safeService'
+import { getEip4337BundlerProvider } from './bundlerService'
+import {
+  PackedUserOperation,
+  UnsignedPackedUserOperation,
+  UserOperation,
+  UserOpGasLimitEstimation
+} from './types'
 
 // Dummy signature for gas estimation. We require it so the estimation doesn't revert
 // if the signature is absent
@@ -71,15 +50,6 @@ function getUserOpInitCode(
   return userOpInitCode
 }
 
-/**
- * Prepares a user operation with initialization.
- *
- * @param proxyFactoryAddress - The address of the proxy factory.
- * @param initializer - The safe initializer.
- * @param afterInitializationOpCall - Optional user operation call to be executed after initialization.
- * @param saltNonce - The salt nonce.
- * @returns The unsigned user operation.
- */
 async function prepareUserOperation(
   safe: string,
   calldata: string,
@@ -127,6 +97,8 @@ function prepareUserOperationWithInitialisation(
     saltNonce
   )
 
+  console.log({ safeDeploymentData })
+
   const userOp = {
     sender: predictedSafeAddress,
     nonce: ethers.toBeHex(0),
@@ -142,13 +114,9 @@ function prepareUserOperationWithInitialisation(
     paymasterAndData: '0x'
   }
 
-  return userOp
-}
+  console.log({ userOp })
 
-type UserOpGasLimitEstimation = {
-  preVerificationGas: string
-  callGasLimit: string
-  verificationGasLimit: string
+  return userOp
 }
 
 /**
@@ -163,6 +131,8 @@ function estimateUserOpGasLimit(
 ): Promise<UserOpGasLimitEstimation> {
   const provider = getEip4337BundlerProvider()
   const rpcUserOp = unpackUserOperationForRpc(userOp, DUMMY_SIGNATURE)
+
+  console.log({ rpcUserOp })
   const estimation = provider.send('eth_estimateUserOperationGas', [
     rpcUserOp,
     entryPointAddress
@@ -300,74 +270,6 @@ function getUserOpHash(
   return ethers.keccak256(enc)
 }
 
-/**
- * Compute the additional client data JSON fields. This is the fields other than `type` and
- * `challenge` (including `origin` and any other additional client data fields that may be
- * added by the authenticator).
- *
- * See <https://w3c.github.io/webauthn/#clientdatajson-serialization>
- */
-function extractClientDataFields(
-  response: AuthenticatorAssertionResponse
-): string {
-  const clientDataJSON = new TextDecoder('utf-8').decode(
-    response.clientDataJSON
-  )
-  const match = clientDataJSON.match(
-    /^\{"type":"webauthn.get","challenge":"[A-Za-z0-9\-_]{43}",(.*)\}$/
-  )
-
-  if (!match) {
-    throw new Error('challenge not found in client data JSON')
-  }
-
-  const [, fields] = match
-  return ethers.hexlify(ethers.toUtf8Bytes(fields))
-}
-
-/**
- * Extracts the signature into R and S values from the authenticator response.
- *
- * See:
- * - <https://datatracker.ietf.org/doc/html/rfc3279#section-2.2.3>
- * - <https://en.wikipedia.org/wiki/X.690#BER_encoding>
- */
-function extractSignature(
-  response: AuthenticatorAssertionResponse
-): [bigint, bigint] {
-  const check = (x: boolean): void => {
-    if (!x) {
-      throw new Error('invalid signature encoding')
-    }
-  }
-
-  // Decode the DER signature. Note that we assume that all lengths fit into 8-bit integers,
-  // which is true for the kinds of signatures we are decoding but generally false. I.e. this
-  // code should not be used in any serious application.
-  const view = new DataView(response.signature)
-
-  // check that the sequence header is valid
-  check(view.getUint8(0) === 0x30)
-  check(view.getUint8(1) === view.byteLength - 2)
-
-  // read r and s
-  const readInt = (offset: number): any => {
-    check(view.getUint8(offset) === 0x02)
-    const len = view.getUint8(offset + 1)
-    const start = offset + 2
-    const end = start + len
-    const n = BigInt(
-      ethers.hexlify(new Uint8Array(view.buffer.slice(start, end)))
-    )
-    check(n < ethers.MaxUint256)
-    return [n, end] as const
-  }
-  const [r, sOffset] = readInt(2)
-  const [s] = readInt(sOffset)
-
-  return [r, s]
-}
-
 type Assertion = {
   response: AuthenticatorAssertionResponse
 }
@@ -440,50 +342,6 @@ async function signUserOpWithInitialisation(
   )
 
   return unpackUserOperationForRpc(userOp, signature)
-}
-
-const buildSignatureBytes = (signatures: any[]): string => {
-  const SIGNATURE_LENGTH_BYTES = 65
-  signatures.sort((left, right) =>
-    left.signer.toLowerCase().localeCompare(right.signer.toLowerCase())
-  )
-
-  let signatureBytes = '0x'
-  let dynamicBytes = ''
-  for (const sig of signatures) {
-    if (sig.dynamic) {
-      /* 
-              A contract signature has a static part of 65 bytes and the dynamic part that needs to be appended 
-              at the end of signature bytes.
-              The signature format is
-              Signature type == 0
-              Constant part: 65 bytes
-              {32-bytes signature verifier}{32-bytes dynamic data position}{1-byte signature type}
-              Dynamic part (solidity bytes): 32 bytes + signature data length
-              {32-bytes signature length}{bytes signature data}
-          */
-      const dynamicPartPosition = (
-        signatures.length * SIGNATURE_LENGTH_BYTES +
-        dynamicBytes.length / 2
-      )
-        .toString(16)
-        .padStart(64, '0')
-      const dynamicPartLength = (sig.data.slice(2).length / 2)
-        .toString(16)
-        .padStart(64, '0')
-      const staticSignature = `${sig.signer
-        .slice(2)
-        .padStart(64, '0')}${dynamicPartPosition}00`
-      const dynamicPartWithLength = `${dynamicPartLength}${sig.data.slice(2)}`
-
-      signatureBytes += staticSignature
-      dynamicBytes += dynamicPartWithLength
-    } else {
-      signatureBytes += sig.data.slice(2)
-    }
-  }
-
-  return signatureBytes + dynamicBytes
 }
 
 export const buildPackedUserOperationFromSafeUserOperation = ({
@@ -622,15 +480,10 @@ async function SendUserOp(
   }
 }
 
-export type {
-  PackedUserOperation,
-  UnsignedPackedUserOperation,
-  UserOperation,
-  UserOpGasLimitEstimation
-}
-
 export {
   estimateUserOpGasLimit,
+  extractClientDataFields,
+  extractSignature,
   getUserOpHash,
   packGasParameters,
   prepareUserOperation,

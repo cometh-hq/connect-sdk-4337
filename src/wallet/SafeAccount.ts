@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { ethers, HDNodeWallet, Wallet } from 'ethers'
 import { encodeMulti, MetaTransaction } from 'ethers-multisend'
 
 import {
@@ -12,21 +12,8 @@ import {
   WEBAUTHN_SIGNER_FACTORY_ADDRESS,
   WEBAUTHN_VERIFIER_ADDRESS
 } from '../config'
-import { DEFAULT_CHAIN_ID, DEFAULT_RPC_TARGET } from '../constants'
-import {
-  createPasskey,
-  PasskeyLocalStorageFormat,
-  toLocalStorageFormat
-} from '../services/passkeys'
-import {
-  encodeSafeModuleSetupCall,
-  getExecuteUserOpData,
-  getInitHash,
-  getLaunchpadInitializer,
-  getSafeAddress,
-  isDeployed,
-  SafeInitializer
-} from '../services/safeService'
+import { DEFAULT_CHAIN_ID } from '../constants'
+import { UnsignedPackedUserOperation } from '../services/4337/types'
 import {
   estimateUserOpGasLimit,
   packGasParameters,
@@ -34,13 +21,34 @@ import {
   prepareUserOperationWithInitialisation,
   SendUserOp,
   signUserOp,
-  signUserOpWithInitialisation,
-  UnsignedPackedUserOperation
-} from '../services/userOpService'
+  signUserOpWithInitialisation
+} from '../services/4337/userOpService'
+import { API } from '../services/API'
+import { PasskeyLocalStorageFormat } from '../services/passkeys/passkeys'
+import {
+  encodeSafeModuleSetupCall,
+  getExecuteUserOpData,
+  getInitHash,
+  getLaunchpadInitializer,
+  getSafeAddress,
+  getSafeAddressWithLaunchpad,
+  isDeployed,
+  SafeInitializer
+} from '../services/safe/safeService'
 import { isMetaTransactionArray } from '../utils/utils'
-import { EmptyBatchTransactionError, WalletNotConnectedError } from './errors'
+import { AuthAdaptor } from './adaptors'
+import { EmptyBatchTransactionError, NoSignerFoundError } from './errors'
+import { PasskeySigner } from './signers'
+import { SponsoredTransaction, WalletInfos } from './types'
 
-export class ComethWallet {
+export interface AccountConfig {
+  authAdaptor: AuthAdaptor
+  transactionTimeout?: number
+  baseUrl?: string
+}
+
+export class SafeAccount {
+  public authAdaptor: AuthAdaptor
   readonly chainId: number
   private provider: ethers.JsonRpcProvider
   private walletAddress?: string
@@ -48,28 +56,76 @@ export class ComethWallet {
   private passkey?: PasskeyLocalStorageFormat
   private launchpadInitializer?: string
   private initializer?: SafeInitializer
+  public transactionTimeout?: number
+  public signer?: HDNodeWallet | Wallet | PasskeySigner | ethers.JsonRpcSigner
+  private API: API
+  private sponsoredAddresses?: SponsoredTransaction[]
 
-  constructor() {
-    this.chainId = DEFAULT_CHAIN_ID
-    this.provider = new ethers.JsonRpcProvider(DEFAULT_RPC_TARGET)
+  constructor({ authAdaptor, transactionTimeout, baseUrl }: AccountConfig) {
+    this.authAdaptor = authAdaptor
+    this.API = new API(authAdaptor.apiKey, baseUrl)
+    this.provider = authAdaptor.provider
+    this.chainId = +authAdaptor.chainId
+    this.transactionTimeout = transactionTimeout
   }
 
   /**
    * Connection Section
    */
 
-  public async connect(): Promise<void> {
-    const storagePasskey = this.getWebauthnCredentialsInStorage()
+  public async connect(walletAddress?: string): Promise<void> {
+    if (!this.authAdaptor) throw new Error('No Auth adaptor found')
 
-    if (storagePasskey) {
-      this.passkey = JSON.parse(storagePasskey)
+    if (!walletAddress) {
+      await this.authAdaptor.createSigner()
+      this.signer = this.authAdaptor.getSigner()
+      this.walletAddress = await this.predictWalletAddress()
+
+      this.authAdaptor.createWallet(this.walletAddress)
     } else {
-      const passkey = await createPasskey()
-      this.passkey = toLocalStorageFormat(passkey)
-      this.setWebauthnCredentialsInStorage(this.passkey)
+      await this.authAdaptor.authenticate(walletAddress)
+      this.signer = this.authAdaptor.getSigner()
+      this.walletAddress = walletAddress
     }
 
-    if (!this.passkey) throw new Error('no passkey found')
+    console.log('address', this.walletAddress)
+
+    if (!this.signer) throw new NoSignerFoundError()
+
+    this.isWalletDeployed = await isDeployed(this.walletAddress, this.provider)
+
+    if (
+      this.isWalletDeployed == false &&
+      this.signer instanceof PasskeySigner
+    ) {
+      this.getLaunchpadInitializationParams(this.signer)
+    }
+
+    this.sponsoredAddresses = await this.API.getSponsoredAddresses()
+  }
+
+  private async predictWalletAddress(): Promise<string> {
+    if (!this.signer) throw new NoSignerFoundError()
+
+    if (this.signer instanceof PasskeySigner) {
+      this.getLaunchpadInitializationParams(this.signer)
+
+      return getSafeAddressWithLaunchpad(
+        this.launchpadInitializer!,
+        SAFE_PROXY_FACTORY_ADDRESS,
+        SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+        ethers.ZeroHash
+      )
+    } else {
+      return await getSafeAddress(this.signer.address, this.provider)
+    }
+  }
+
+  private getLaunchpadInitializationParams(signer: PasskeySigner): void {
+    const { publicKeyX, publicKeyY } = signer.getPasskeyCredentials()
+
+    console.log(publicKeyX, publicKeyY)
+    console.log({ DEFAULT_CHAIN_ID })
 
     this.initializer = {
       singleton: SAFE_SINGLETON_ADDRESS,
@@ -77,11 +133,7 @@ export class ComethWallet {
       signerFactory: WEBAUTHN_SIGNER_FACTORY_ADDRESS,
       signerData: ethers.AbiCoder.defaultAbiCoder().encode(
         ['uint256', 'uint256', 'address'],
-        [
-          this.passkey.pubkeyCoordinates.x,
-          this.passkey.pubkeyCoordinates.y,
-          WEBAUTHN_VERIFIER_ADDRESS
-        ]
+        [publicKeyX, publicKeyY, WEBAUTHN_VERIFIER_ADDRESS]
       ),
       setupTo: SAFE_MODULE_SETUP_ADDRESS,
       setupData: encodeSafeModuleSetupCall([SAFE_4337_MODULE_ADDRESS])
@@ -89,39 +141,14 @@ export class ComethWallet {
 
     const initHash = getInitHash(this.initializer, DEFAULT_CHAIN_ID)
     this.launchpadInitializer = getLaunchpadInitializer(initHash)
-
-    this.walletAddress = getSafeAddress(
-      this.launchpadInitializer,
-      SAFE_PROXY_FACTORY_ADDRESS,
-      SAFE_SIGNER_LAUNCHPAD_ADDRESS,
-      ethers.ZeroHash
-    )
-
-    if (!this.walletAddress) throw new WalletNotConnectedError()
-
-    try {
-      this.isWalletDeployed = await isDeployed(
-        this.walletAddress,
-        this.provider
-      )
-    } catch {
-      this.isWalletDeployed = false
-    }
-  }
-
-  setWebauthnCredentialsInStorage = (
-    passkey: PasskeyLocalStorageFormat
-  ): void => {
-    const localPasskey = JSON.stringify(passkey)
-    window.localStorage.setItem(`cometh-connect`, localPasskey)
-  }
-
-  getWebauthnCredentialsInStorage = (): string | null => {
-    return window.localStorage.getItem(`cometh-connect`)
   }
 
   public getAddress(): string {
     return this.walletAddress ?? ''
+  }
+
+  public getProvider(): ethers.JsonRpcProvider {
+    return this.provider
   }
 
   public async _signAndSendTransaction(
@@ -152,7 +179,11 @@ export class ComethWallet {
   ): Promise<string | undefined> {
     const unsignedUserOp = await this.buildUserOp(safeTxData)
 
+    console.log({ unsignedUserOp })
+
     const userOpHash = await this._signAndSendTransaction(unsignedUserOp)
+
+    console.log({ userOpHash })
 
     if (unsignedUserOp.nonce == 0) this.isWalletDeployed = true
 

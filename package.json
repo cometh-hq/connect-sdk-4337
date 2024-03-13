@@ -64,6 +64,8 @@
     "@ethersproject/abstract-signer": "^5.7.0",
     "@ethersproject/providers": "^5.7.2",
     "@types/babel__core": "^7.20.0",
+    "axios": "^1.6.7",
+    "bowser": "^2.11.0",
     "ethers": "^6.11.1",
     "ethers-multisend": "^2.4.0",
     "react": "^18.0.0",
