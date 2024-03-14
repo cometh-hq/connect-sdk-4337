@@ -24,17 +24,14 @@ import {
   getUserOpHash,
   packGasParameters,
   prepareUserOperation,
-  prepareUserOperationWithInitialisation,
   SendUserOp,
-  signUserOp,
   unpackUserOperationForRpc
 } from '../services/4337/userOpService'
 import { API } from '../services/API'
 import deviceService from '../services/deviceService'
-import {
-  getSignerAddressFromPubkeyCoords,
-  setPasskeyInStorage
-} from '../services/passkeys/passkeyService'
+import { setPasskeyInStorage } from '../services/passkeys/passkeyService'
+import { buildSignatureBytes } from '../services/passkeys/utils'
+import { prepareUserOperationWithInitialisation } from '../services/safe/4337'
 import {
   encodeSafeModuleSetupCall,
   getExecuteUserOpData,
@@ -42,15 +39,14 @@ import {
   getLaunchpadInitializer,
   getSafeAddress,
   getSafeAddressWithLaunchpad,
-  isDeployed,
-  SafeInitializer
+  isDeployed
 } from '../services/safe/safeService'
-import { buildSignatureBytes } from '../utils/passkeys'
+import { SafeInitializer } from '../services/safe/types'
 import { isMetaTransactionArray } from '../utils/utils'
 import { AuthAdaptor } from './adaptors'
 import { EmptyBatchTransactionError, NoSignerFoundError } from './errors'
 import { PasskeySigner } from './signers'
-import { SponsoredTransaction, WalletInfos } from './types'
+import { BaseAccount, SponsoredTransaction } from './types'
 
 export interface AccountConfig {
   authAdaptor: AuthAdaptor
@@ -58,7 +54,7 @@ export interface AccountConfig {
   baseUrl?: string
 }
 
-export class SafeAccount {
+export class SafeAccount implements BaseAccount {
   public authAdaptor: AuthAdaptor
   readonly chainId: number
   private provider: ethers.JsonRpcProvider
@@ -186,8 +182,6 @@ export class SafeAccount {
   ): Promise<string | undefined> {
     let rpcUserOp
 
-    console.log('deployed', this.isWalletDeployed)
-
     if (this.signer instanceof PasskeySigner) {
       if (this.isWalletDeployed) {
         const finalUserOp = {
@@ -195,14 +189,14 @@ export class SafeAccount {
           nonce: userOp.nonce,
           initCode: userOp.initCode ?? '0x',
           callData: userOp.callData ?? '0x',
-          verificationGasLimit: 5000000,
+          verificationGasLimit: 2000000,
           callGasLimit: 2000000,
           preVerificationGas: 60000,
           // use same maxFeePerGas and maxPriorityFeePerGas to ease testing prefund validation
           // otherwise it's tricky to calculate the prefund because of dynamic parameters like block.basefee
           // check UserOperation.sol#gasPrice()
           maxFeePerGas: 10000000000,
-          maxPriorityFeePerGas: 10000000000,
+          maxPriorityFeePerGas: 20000000000,
           paymasterAndData: '0x',
           validAfter: 0,
           validUntil: 0,
@@ -339,15 +333,15 @@ export class SafeAccount {
 
     console.log({ unsignedUserOperation })
 
-    /*  const userOpGasLimitEstimation = await estimateUserOpGasLimit(
+    const userOpGasLimitEstimation = await estimateUserOpGasLimit(
       unsignedUserOperation
-    ) */
+    )
 
     // Increase the gas limit by 50%, otherwise the user op will fail during simulation with "verification more than gas limit" error
-    /* userOpGasLimitEstimation.verificationGasLimit = `0x${(
+    userOpGasLimitEstimation.verificationGasLimit = `0x${(
       (BigInt(userOpGasLimitEstimation.verificationGasLimit) * 20n) /
       10n
-    ).toString(16)}` */
+    ).toString(16)}`
 
     const feeData = await this.provider
       .getFeeData()
@@ -362,23 +356,23 @@ export class SafeAccount {
       throw new Error('No fee data found')
 
     return {
-      ...unsignedUserOperation
-      /*   ...packGasParameters({
+      ...unsignedUserOperation,
+      ...packGasParameters({
         verificationGasLimit: userOpGasLimitEstimation.verificationGasLimit,
         callGasLimit: userOpGasLimitEstimation.callGasLimit,
         maxFeePerGas: `0x${(
-          (BigInt(feeData?.maxFeePerGas) * 15n) /
+          (BigInt(feeData?.maxFeePerGas) * 50n) /
           10n
         ).toString(16)}`,
         maxPriorityFeePerGas: `0x${(
-          (BigInt(feeData?.maxPriorityFeePerGas) * 15n) /
+          (BigInt(feeData?.maxPriorityFeePerGas) * 50n) /
           10n
         ).toString(16)}`
       }),
       preVerificationGas: `0x${(
         (BigInt(userOpGasLimitEstimation.preVerificationGas) * 15n) /
         10n
-      ).toString(16)}` */
+      ).toString(16)}`
     } as UnsignedPackedUserOperation
   }
 }

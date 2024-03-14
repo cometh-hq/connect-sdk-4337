@@ -13,7 +13,8 @@ import {
   setPasskeyInStorage,
   waitPasskeySignerDeployment
 } from '../../services/passkeys/passkeyService'
-import { isWebAuthnCompatible } from '../../utils/passkeys'
+import { isWebAuthnCompatible } from '../../services/passkeys/utils'
+
 import { PasskeySigner } from '../signers/PasskeySigner'
 import {
   NewSignerRequest,

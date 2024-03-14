@@ -10,7 +10,7 @@ import {
   extractClientDataFields,
   extractSignature,
   getPasskeyCreationRpId
-} from '../../utils/passkeys'
+} from '../passkeys/utils'
 import { parseHex } from '../../utils/utils'
 import {
   NoPasskeySignerFoundInDBError,
@@ -22,36 +22,11 @@ import { DeviceData, webAuthnOptions, WebAuthnSigner } from '../../wallet/types'
 import { API } from '../API'
 import deviceService from '../deviceService'
 import { getWebAuthnSignerFactoryContract, isSigner } from '../safe/safeService'
-
-type Assertion = {
-  rawId: ArrayBuffer
-  response: AuthenticatorAssertionResponse
-}
-
-type PasskeyCredential = {
-  id: 'string'
-  rawId: ArrayBuffer
-  response: {
-    clientDataJSON: ArrayBuffer
-    attestationObject: ArrayBuffer
-    getPublicKey(): ArrayBuffer
-    getPublicKeyAlgorithm(): any
-  }
-  type: 'public-key'
-}
-
-type PasskeyCredentialWithPubkeyCoordinates = PasskeyCredential & {
-  pubkeyCoordinates: {
-    x: string
-    y: string
-  }
-}
-
-export type PasskeyCredentials = {
-  publicKeyId: string
-  publicKeyX: string
-  publicKeyY: string
-}
+import {
+  Assertion,
+  PasskeyCredential,
+  PasskeyCredentialWithPubkeyCoordinates
+} from './types'
 
 /**
  * Calculates the signer address from the given public key coordinates.

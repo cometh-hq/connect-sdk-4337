@@ -13,7 +13,7 @@ const transactionReceiptStatus = {
  */
 function getEip4337BundlerProvider(): ethers.JsonRpcProvider {
   const provider = new ethers.JsonRpcProvider(
-    'https://mumbai.bundler.develop.core.cometh.tech/rpc'
+    'https://polygon.bundler.develop.core.cometh.tech/rpc'
     /* 'https://api.pimlico.io/v1/sepolia/rpc?apikey=690deb0b-19a1-4bab-8684-30b7667da883' */
   )
   return provider

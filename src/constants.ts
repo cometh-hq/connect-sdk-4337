@@ -1,8 +1,9 @@
 import { webAuthnOptions } from './wallet/types'
 
 export const API_URL = 'https://api.connect.cometh.io/'
-export const DEFAULT_CHAIN_ID = 80001
-export const DEFAULT_RPC_TARGET = 'https://polygon-mumbai-pokt.nodies.app'
+export const DEFAULT_CHAIN_ID = 137
+export const DEFAULT_RPC_TARGET =
+  'https://polygon-mainnet.infura.io/v3/5b3c5466f15745578801804f317a53ec'
 
 export const EIP712_SAFE_MESSAGE_TYPE = {
   // "SafeMessage(bytes message)"

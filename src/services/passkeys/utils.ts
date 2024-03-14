@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import psl from 'psl'
 
-import { webAuthnOptions } from '../wallet/types'
+import { webAuthnOptions } from '../../wallet/types'
 
 /**
  * Compute the additional client data JSON fields. This is the fields other than `type` and

@@ -6,11 +6,9 @@ import {
   SAFE_4337_MODULE_ADDRESS,
   SAFE_PROXY_FACTORY_ADDRESS,
   SAFE_SIGNER_LAUNCHPAD_ADDRESS,
-  SAFE_SINGLETON_ADDRESS,
-  WEBAUTHN_SIGNER_FACTORY_ADDRESS,
-  WEBAUTHN_VERIFIER_ADDRESS
+  WEBAUTHN_SIGNER_FACTORY_ADDRESS
 } from '../../config'
-import { SafeProxyBytecode, WebauthnSignerBytecode } from '../../constants'
+import { SafeProxyBytecode } from '../../constants'
 import enableModuleAbi from '../../contracts/abis/enablemodule.json'
 import EntrypointAbi from '../../contracts/abis/entrypoint.json'
 import multisendAbi from '../../contracts/abis/Multisend.json'
@@ -24,6 +22,7 @@ import WebAuthnSignerFactoryAbi from '../../contracts/abis/safeWebauthnSignerFac
 import { WalletNotDeployedError } from '../../wallet/errors'
 import { UserOperation } from '../4337/types'
 import { API } from '../API'
+import { SafeInitializer } from './types'
 
 function getEntrypointContract(
   provider: ethers.JsonRpcApiProvider
@@ -106,15 +105,6 @@ function getWebAuthnSignerContract(
   address: string
 ): ethers.Contract {
   return new ethers.Contract(address, WebAuthnSignerAbi, provider)
-}
-
-type SafeInitializer = {
-  singleton: string
-  signerFactory: string
-  signerData: string
-  setupTo: string
-  setupData: string
-  fallbackHandler: string
 }
 
 function getInitHash(
@@ -432,8 +422,6 @@ const isSigner = async (
 
   return true
 }
-
-export type { SafeInitializer }
 
 export {
   encodeSafeModuleSetupCall,

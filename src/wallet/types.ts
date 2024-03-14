@@ -1,3 +1,20 @@
+import { MetaTransaction } from 'ethers-multisend'
+import { UnsignedPackedUserOperation } from '../services/4337/types'
+
+export interface BaseAccount {
+  connect(walletAddress?: string): Promise<void>
+  createWallet(walletAddress: string): Promise<void>
+  sendTransaction(tx: MetaTransaction | any): Promise<string | undefined>
+  sendBatchTransactions(
+    txs: MetaTransaction[] | any
+  ): Promise<string | undefined>
+  buildUserOp(
+    txs: MetaTransaction | MetaTransaction[]
+  ): Promise<UnsignedPackedUserOperation>
+  getAddress(): string
+  transactionTimeout?: number
+}
+
 export type UIConfig = {
   displayValidationModal: boolean
 }
