@@ -5,6 +5,7 @@ type PasskeyCredential = {
     clientDataJSON: ArrayBuffer
     attestationObject: ArrayBuffer
     getPublicKey(): ArrayBuffer
+    getPublicKeyAlgorithm(): any
   }
   type: 'public-key'
 }
@@ -50,6 +51,8 @@ async function createPasskey(): Promise<PasskeyCredentialWithPubkeyCoordinates> 
   if (!passkeyCredential) {
     throw new Error('Failed to generate passkey. Received null as a credential')
   }
+
+  const publicKeyAlgorithm = passkeyCredential.response.getPublicKeyAlgorithm()
 
   // Import the public key to later export it to get the XY coordinates
   const key = await crypto.subtle.importKey(
