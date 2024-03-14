@@ -1,13 +1,6 @@
 import { ethers, getBytes } from 'ethers'
 
-import {
-  SAFE_4337_MODULE_ADDRESS,
-  SAFE_MULTISEND_ADDRESS,
-  SAFE_PROXY_FACTORY_ADDRESS,
-  SAFE_SIGNER_LAUNCHPAD_ADDRESS,
-  SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
-  SAFE_WEBAUTHN_VERIFIER_ADDRESS
-} from '../../config'
+import { SAFE_ADDRESSES } from '../../config'
 import {
   BLOCK_EVENT_GAP,
   SafeProxyBytecode,
@@ -26,6 +19,15 @@ import { WalletNotDeployedError } from '../../wallet/errors'
 import { UserOperation } from '../4337/types'
 import { API } from '../API'
 import { SafeInitializer } from './types'
+
+const {
+  MODULE_4337_ADDRESS,
+  MULTISEND_ADDRESS,
+  PROXY_FACTORY_ADDRESS,
+  SIGNER_LAUNCHPAD_ADDRESS,
+  WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+  WEBAUTHN_VERIFIER_ADDRESS
+} = SAFE_ADDRESSES
 
 function getSafeContract(
   address: string,
@@ -51,7 +53,7 @@ function getSafeSignerLaunchpadContract(
   provider: ethers.JsonRpcProvider
 ): ethers.Contract {
   return new ethers.Contract(
-    SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+    SIGNER_LAUNCHPAD_ADDRESS,
     SafeSignerLaunchpadAbi,
     provider
   )
@@ -66,11 +68,7 @@ function getSafeSignerLaunchpadContract(
 function getSafe4337ModuleContract(
   provider: ethers.JsonRpcProvider
 ): ethers.Contract {
-  return new ethers.Contract(
-    SAFE_4337_MODULE_ADDRESS,
-    Safe4337ModuleAbi,
-    provider
-  )
+  return new ethers.Contract(MODULE_4337_ADDRESS, Safe4337ModuleAbi, provider)
 }
 
 /**
@@ -84,7 +82,7 @@ function getWebAuthnSignerFactoryContract(
   provider: ethers.JsonRpcProvider
 ): ethers.Contract {
   return new ethers.Contract(
-    SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+    WEBAUTHN_SIGNER_FACTORY_ADDRESS,
     WebAuthnSignerFactoryAbi,
     provider
   )
@@ -109,7 +107,7 @@ function getInitHash(
   chainId: ethers.BigNumberish
 ): string {
   const safeInitHash = ethers.TypedDataEncoder.hash(
-    { verifyingContract: SAFE_SIGNER_LAUNCHPAD_ADDRESS, chainId },
+    { verifyingContract: SIGNER_LAUNCHPAD_ADDRESS, chainId },
     {
       SafeInit: [
         { type: 'address', name: 'singleton' },
@@ -167,15 +165,15 @@ function getSafeDeploymentData(
 /**
  * Calculates the address of a safe contract based on the initializer, factory address, singleton address, and salt nonce.
  * @param initializer - The initializer bytes.
- * @param factoryAddress - The factory address used to create the safe contract. Defaults to SAFE_PROXY_FACTORY_ADDRESS.
- * @param singleton - The singleton address used for the safe contract. Defaults to SAFE_SIGNER_LAUNCHPAD_ADDRESS.
+ * @param factoryAddress - The factory address used to create the safe contract. Defaults to PROXY_FACTORY_ADDRESS.
+ * @param singleton - The singleton address used for the safe contract. Defaults to SIGNER_LAUNCHPAD_ADDRESS.
  * @param saltNonce - The salt nonce used for the safe contract. Defaults to ethers.ZeroHash.
  * @returns The address of the safe contract.
  */
 function getSafeAddressWithLaunchpad(
   initializer: string,
-  factoryAddress = SAFE_PROXY_FACTORY_ADDRESS,
-  singleton = SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+  factoryAddress = PROXY_FACTORY_ADDRESS,
+  singleton = SIGNER_LAUNCHPAD_ADDRESS,
   saltNonce: ethers.BigNumberish = ethers.ZeroHash
 ): string {
   const deploymentCode = ethers.solidityPacked(
@@ -196,16 +194,16 @@ function getSafeAddressWithLaunchpad(
 /**
  * Calculates the address of a safe contract based on the initializer, factory address, singleton address, and salt nonce.
  * @param initializer - The initializer bytes.
- * @param factoryAddress - The factory address used to create the safe contract. Defaults to SAFE_PROXY_FACTORY_ADDRESS.
- * @param singleton - The singleton address used for the safe contract. Defaults to SAFE_SIGNER_LAUNCHPAD_ADDRESS.
+ * @param factoryAddress - The factory address used to create the safe contract. Defaults to PROXY_FACTORY_ADDRESS.
+ * @param singleton - The singleton address used for the safe contract. Defaults to SIGNER_LAUNCHPAD_ADDRESS.
  * @param saltNonce - The salt nonce used for the safe contract. Defaults to ethers.ZeroHash.
  * @returns The address of the safe contract.
  */
 async function getSafeAddress(
   ownerAddress: string,
   provider: ethers.JsonRpcProvider,
-  factoryAddress = SAFE_PROXY_FACTORY_ADDRESS,
-  singleton = SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+  factoryAddress = PROXY_FACTORY_ADDRESS,
+  singleton = SIGNER_LAUNCHPAD_ADDRESS,
   saltNonce = 'COMETH'
 ): Promise<string> {
   const enableModulesInterface = new ethers.Interface(enableModuleAbi)
@@ -216,7 +214,7 @@ async function getSafeAddress(
 
   const enableModuleData = enableModulesInterface.encodeFunctionData(
     'enableModules',
-    [[SAFE_4337_MODULE_ADDRESS]]
+    [[MODULE_4337_ADDRESS]]
   )
 
   const addModulesLibAddress = '0x8EcD4ec46D4D2a6B64fE960B3D64e8B94B2234eb'
@@ -242,9 +240,9 @@ async function getSafeAddress(
   const setUpData = safeInterface.encodeFunctionData('setup', [
     [ownerAddress],
     1,
-    SAFE_MULTISEND_ADDRESS,
+    MULTISEND_ADDRESS,
     multiSendCallData,
-    SAFE_4337_MODULE_ADDRESS,
+    MODULE_4337_ADDRESS,
     ethers.ZeroAddress,
     0,
     ethers.ZeroAddress
@@ -279,11 +277,11 @@ async function getSafeAddress(
 const getSignerAddressFromPubkeyCoords = (x: string, y: string): string => {
   const deploymentCode = ethers.solidityPacked(
     ['bytes', 'uint256', 'uint256', 'uint256'],
-    [WebauthnSignerBytecode, x, y, SAFE_WEBAUTHN_VERIFIER_ADDRESS]
+    [WebauthnSignerBytecode, x, y, WEBAUTHN_VERIFIER_ADDRESS]
   )
   const salt = ethers.ZeroHash
   return ethers.getCreate2Address(
-    SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+    WEBAUTHN_SIGNER_FACTORY_ADDRESS,
     salt,
     ethers.keccak256(deploymentCode)
   )
@@ -473,12 +471,12 @@ export {
   getLaunchpadInitializer,
   getLaunchpadInitializeThenUserOpData,
   getOwners,
-  getSignerAddressFromPubkeyCoords,
   getSafe4337ModuleContract,
   getSafeAddress,
   getSafeAddressWithLaunchpad,
   getSafeDeploymentData,
   getSafeSignerLaunchpadContract,
+  getSignerAddressFromPubkeyCoords,
   getValidateUserOpData,
   getWebAuthnSignerContract,
   getWebAuthnSignerFactoryContract,

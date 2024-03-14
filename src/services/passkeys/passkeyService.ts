@@ -16,7 +16,7 @@ import {
   extractSignature,
   getPasskeyCreationRpId
 } from '../passkeys/utils'
-import { isSigner, getSignerAddressFromPubkeyCoords } from '../safe/safeService'
+import { getSignerAddressFromPubkeyCoords, isSigner } from '../safe/safeService'
 import {
   Assertion,
   PasskeyCredential,

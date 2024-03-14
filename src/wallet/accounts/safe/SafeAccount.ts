@@ -1,17 +1,7 @@
 import { ethers, HDNodeWallet, Wallet } from 'ethers'
 import { encodeMulti, MetaTransaction } from 'ethers-multisend'
 
-import {
-  ENTRYPOINT_ADDRESS_V7,
-  SAFE_4337_MODULE_ADDRESS,
-  SAFE_MODULE_SETUP_ADDRESS,
-  SAFE_MULTISEND_ADDRESS,
-  SAFE_PROXY_FACTORY_ADDRESS,
-  SAFE_SIGNER_LAUNCHPAD_ADDRESS,
-  SAFE_SINGLETON_ADDRESS,
-  SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
-  SAFE_WEBAUTHN_VERIFIER_ADDRESS
-} from '../../../config'
+import { ENTRYPOINT_ADDRESS_V7, SAFE_ADDRESSES } from '../../../config'
 import {
   DEFAULT_CHAIN_ID,
   EIP712_SAFE_INIT_OPERATION_TYPE,
@@ -48,6 +38,17 @@ import { AuthAdaptor } from '../../adaptors'
 import { EmptyBatchTransactionError, NoSignerFoundError } from '../../errors'
 import { PasskeySigner } from '../../signers'
 import { BaseAccount, SponsoredTransaction } from '../../types'
+
+const {
+  MODULE_4337_ADDRESS,
+  MODULE_SETUP_ADDRESS,
+  MULTISEND_ADDRESS,
+  PROXY_FACTORY_ADDRESS,
+  SIGNER_LAUNCHPAD_ADDRESS,
+  SINGLETON_ADDRESS,
+  WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+  WEBAUTHN_VERIFIER_ADDRESS
+} = SAFE_ADDRESSES
 
 export interface AccountConfig {
   authAdaptor: AuthAdaptor
@@ -142,8 +143,8 @@ export class SafeAccount implements BaseAccount {
 
       return getSafeAddressWithLaunchpad(
         this.launchpadInitializer!,
-        SAFE_PROXY_FACTORY_ADDRESS,
-        SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+        PROXY_FACTORY_ADDRESS,
+        SIGNER_LAUNCHPAD_ADDRESS,
         ethers.ZeroHash
       )
     } else {
@@ -155,15 +156,15 @@ export class SafeAccount implements BaseAccount {
     const { publicKeyX, publicKeyY } = signer.getPasskeyCredentials()
 
     this.initializer = {
-      singleton: SAFE_SINGLETON_ADDRESS,
-      fallbackHandler: SAFE_4337_MODULE_ADDRESS,
-      signerFactory: SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+      singleton: SINGLETON_ADDRESS,
+      fallbackHandler: MODULE_4337_ADDRESS,
+      signerFactory: WEBAUTHN_SIGNER_FACTORY_ADDRESS,
       signerData: ethers.AbiCoder.defaultAbiCoder().encode(
         ['uint256', 'uint256', 'address'],
-        [publicKeyX, publicKeyY, SAFE_WEBAUTHN_VERIFIER_ADDRESS]
+        [publicKeyX, publicKeyY, WEBAUTHN_VERIFIER_ADDRESS]
       ),
-      setupTo: SAFE_MODULE_SETUP_ADDRESS,
-      setupData: encodeSafeModuleSetupCall([SAFE_4337_MODULE_ADDRESS])
+      setupTo: MODULE_SETUP_ADDRESS,
+      setupData: encodeSafeModuleSetupCall([MODULE_4337_ADDRESS])
     }
 
     const initHash = getInitHash(this.initializer, DEFAULT_CHAIN_ID)
@@ -220,7 +221,7 @@ export class SafeAccount implements BaseAccount {
         const encodedSignature = await this.signer._signTypedData(
           {
             chainId: this.chainId,
-            verifyingContract: SAFE_4337_MODULE_ADDRESS
+            verifyingContract: MODULE_4337_ADDRESS
           },
           EIP712_SAFE_OPERATION_TYPE,
           finalUserOp
@@ -256,7 +257,7 @@ export class SafeAccount implements BaseAccount {
 
         const encodedSignature = await this.signer._signTypedData(
           {
-            verifyingContract: SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+            verifyingContract: SIGNER_LAUNCHPAD_ADDRESS,
             chainId: this.chainId
           },
           EIP712_SAFE_INIT_OPERATION_TYPE,
@@ -311,10 +312,10 @@ export class SafeAccount implements BaseAccount {
     let txData
 
     if (isMetaTransactionArray(safeTxData)) {
-      const multisendData = encodeMulti(safeTxData, SAFE_MULTISEND_ADDRESS).data
+      const multisendData = encodeMulti(safeTxData, MULTISEND_ADDRESS).data
 
       txData = {
-        to: SAFE_MULTISEND_ADDRESS,
+        to: MULTISEND_ADDRESS,
         value: '0',
         data: multisendData,
         operation: 1
@@ -338,7 +339,7 @@ export class SafeAccount implements BaseAccount {
     const unsignedUserOperation = this.isWalletDeployed
       ? await prepareUserOperation(this.walletAddress!, calldata, this.provider)
       : prepareUserOperationWithInitialisation(
-          SAFE_PROXY_FACTORY_ADDRESS,
+          PROXY_FACTORY_ADDRESS,
           calldata,
           this.initializer!,
           this.walletAddress!,

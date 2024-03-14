@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 
-import { SAFE_SIGNER_LAUNCHPAD_ADDRESS } from '../../config'
+import { SAFE_ADDRESSES } from '../../config'
 import { UnsignedPackedUserOperation } from '../4337/types'
 import { getUserOpInitCode, packGasParameters } from '../4337/userOpService'
 import {
@@ -8,6 +8,8 @@ import {
   getSafeDeploymentData
 } from '../safe/safeService'
 import { SafeInitializer } from './types'
+
+const { SIGNER_LAUNCHPAD_ADDRESS } = SAFE_ADDRESSES
 
 /**
  * Prepares a user operation with initialization.
@@ -27,7 +29,7 @@ function prepareUserOperationWithInitialisation(
   saltNonce = ethers.ZeroHash
 ): UnsignedPackedUserOperation {
   const safeDeploymentData = getSafeDeploymentData(
-    SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+    SIGNER_LAUNCHPAD_ADDRESS,
     launchpadInitializer,
     saltNonce
   )
