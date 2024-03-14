@@ -1,16 +1,14 @@
 import { ethers, getBytes } from 'ethers'
 
 import {
-  ENTRYPOINT_ADDRESS,
-  MULTISEND_ADDRESS,
   SAFE_4337_MODULE_ADDRESS,
+  SAFE_MULTISEND_ADDRESS,
   SAFE_PROXY_FACTORY_ADDRESS,
   SAFE_SIGNER_LAUNCHPAD_ADDRESS,
-  WEBAUTHN_SIGNER_FACTORY_ADDRESS
+  SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS
 } from '../../config'
 import { SafeProxyBytecode } from '../../constants'
 import enableModuleAbi from '../../contracts/abis/enablemodule.json'
-import EntrypointAbi from '../../contracts/abis/entrypoint.json'
 import multisendAbi from '../../contracts/abis/Multisend.json'
 import SafeSingletonAbi from '../../contracts/abis/safe.json'
 import Safe4337ModuleAbi from '../../contracts/abis/safe4337ModuleAbi.json'
@@ -23,12 +21,6 @@ import { WalletNotDeployedError } from '../../wallet/errors'
 import { UserOperation } from '../4337/types'
 import { API } from '../API'
 import { SafeInitializer } from './types'
-
-function getEntrypointContract(
-  provider: ethers.JsonRpcApiProvider
-): ethers.Contract {
-  return new ethers.Contract(ENTRYPOINT_ADDRESS, EntrypointAbi, provider)
-}
 
 function getSafeContract(
   address: string,
@@ -87,7 +79,7 @@ function getWebAuthnSignerFactoryContract(
   provider: ethers.JsonRpcProvider
 ): ethers.Contract {
   return new ethers.Contract(
-    WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+    SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
     WebAuthnSignerFactoryAbi,
     provider
   )
@@ -245,7 +237,7 @@ async function getSafeAddress(
   const setUpData = safeInterface.encodeFunctionData('setup', [
     [ownerAddress],
     1,
-    MULTISEND_ADDRESS,
+    SAFE_MULTISEND_ADDRESS,
     multiSendCallData,
     SAFE_4337_MODULE_ADDRESS,
     ethers.ZeroAddress,
@@ -425,7 +417,6 @@ const isSigner = async (
 
 export {
   encodeSafeModuleSetupCall,
-  getEntrypointContract,
   getExecuteUserOpData,
   getInitHash,
   getLaunchpadInitializer,

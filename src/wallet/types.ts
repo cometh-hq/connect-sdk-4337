@@ -1,4 +1,5 @@
 import { MetaTransaction } from 'ethers-multisend'
+
 import { UnsignedPackedUserOperation } from '../services/4337/types'
 
 export interface BaseAccount {
@@ -17,11 +18,6 @@ export interface BaseAccount {
 
 export type UIConfig = {
   displayValidationModal: boolean
-}
-
-export type UserNonceType = {
-  walletAddress: string
-  connectionNonce: string
 }
 
 export type SponsoredTransaction = {
@@ -67,38 +63,6 @@ export enum SupportedNetworks {
 export enum DefaultSponsoredFunctions {
   ADD_OWNER_FUNCTION_SELECTOR = '0x0d582f13',
   SET_DELAY_TX_NONCE_SELECTOR = '0x46ba2307'
-}
-
-export declare enum OperationType {
-  Call = 0,
-  DelegateCall = 1
-}
-
-export interface MetaTransactionData {
-  readonly to: string
-  readonly value: string
-  readonly data: string
-  readonly operation?: OperationType | string
-}
-
-export interface SafeTransactionDataPartial extends MetaTransactionData {
-  readonly operation?: OperationType | string
-  readonly safeTxGas?: number | string
-  readonly baseGas?: number | string
-  readonly gasPrice?: number | string
-  readonly gasToken?: number | string
-  readonly refundReceiver?: string
-  readonly nonce?: number | string
-}
-
-export type RelayTransactionType = {
-  safeTxData: SafeTransactionDataPartial
-  signatures: string
-  walletAddress: string
-}
-
-export type SendTransactionResponse = {
-  safeTxHash: string
 }
 
 export type TransactionStatus = {

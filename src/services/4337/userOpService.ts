@@ -1,8 +1,9 @@
 import { ethers } from 'ethers'
-import { ENTRYPOINT_ADDRESS } from '../../config'
+
+import { ENTRYPOINT_ADDRESS_V7 } from '../../config'
 import { DEFAULT_CHAIN_ID } from '../../constants'
+import EntrypointAbi from '../../contracts/abis/entrypoint.json'
 import { extractClientDataFields, extractSignature } from '../passkeys/utils'
-import { getEntrypointContract } from '../safe/safeService'
 import { getEip4337BundlerProvider } from './bundlerService'
 import {
   PackedUserOperation,
@@ -15,6 +16,12 @@ import {
 // if the signature is absent
 const DUMMY_SIGNATURE =
   '0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e043aa8d1b19ca9387bdf05124650baec5c7ed57c04135f915b7a5fac9feeb29783063924cb9712ab0dd42f880317626ea82b4149f81f4e60d8ddeff9109d4619f0000000000000000000000000000000000000000000000000000000000000025a24f744b28d73f066bf3203d145765a7bc735e6328168c8b03e476da3ad0d8fe0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001e226f726967696e223a2268747470733a2f2f736166652e676c6f62616c220000'
+
+function getEntrypointv7Contract(
+  provider: ethers.JsonRpcApiProvider
+): ethers.Contract {
+  return new ethers.Contract(ENTRYPOINT_ADDRESS_V7, EntrypointAbi, provider)
+}
 
 /**
  * Generates the user operation initialization code.
@@ -38,7 +45,7 @@ async function prepareUserOperation(
   calldata: string,
   provider: ethers.JsonRpcProvider
 ): Promise<UnsignedPackedUserOperation> {
-  const entrypoint = getEntrypointContract(provider)
+  const entrypoint = getEntrypointv7Contract(provider)
   const nonce = await entrypoint.getNonce(account, BigInt(0))
 
   return {
@@ -60,12 +67,12 @@ async function prepareUserOperation(
 /**
  * Estimates the gas limit for a user operation. A dummy signature will be used.
  * @param userOp - The user operation to estimate gas limit for.
- * @param entryPointAddress - The entry point address. Default value is ENTRYPOINT_ADDRESS.
+ * @param entryPointAddress - The entry point address. Default value is ENTRYPOINT_ADDRESS_V7.
  * @returns A promise that resolves to the estimated gas limit for the user operation.
  */
 function estimateUserOpGasLimit(
   userOp: UnsignedPackedUserOperation,
-  entryPointAddress = ENTRYPOINT_ADDRESS
+  entryPointAddress = ENTRYPOINT_ADDRESS_V7
 ): Promise<UserOpGasLimitEstimation> {
   const provider = getEip4337BundlerProvider()
   const rpcUserOp = unpackUserOperationForRpc(userOp, DUMMY_SIGNATURE)
@@ -197,7 +204,7 @@ function packUserOpData(op: UnsignedPackedUserOperation): string {
  */
 function getUserOpHash(
   op: UnsignedPackedUserOperation,
-  entryPoint: string = ENTRYPOINT_ADDRESS,
+  entryPoint: string = ENTRYPOINT_ADDRESS_V7,
   chainId: ethers.BigNumberish = DEFAULT_CHAIN_ID
 ): string {
   const userOpHash = ethers.keccak256(packUserOpData(op))
@@ -258,7 +265,7 @@ const buildPackedUserOperationFromSafeUserOperation = ({
 
 async function SendUserOp(
   userOp: UserOperation,
-  entryPoint: string = ENTRYPOINT_ADDRESS
+  entryPoint: string = ENTRYPOINT_ADDRESS_V7
 ): Promise<string | undefined> {
   try {
     console.log({ userOp })
@@ -272,14 +279,14 @@ async function SendUserOp(
 }
 
 export {
-  getUserOpInitCode,
+  buildPackedUserOperationFromSafeUserOperation,
   estimateUserOpGasLimit,
   extractClientDataFields,
   extractSignature,
   getUserOpHash,
+  getUserOpInitCode,
   packGasParameters,
   prepareUserOperation,
   SendUserOp,
-  unpackUserOperationForRpc,
-  buildPackedUserOperationFromSafeUserOperation
+  unpackUserOperationForRpc
 }

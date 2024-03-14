@@ -2,22 +2,22 @@ import { ethers, HDNodeWallet, Wallet } from 'ethers'
 import { encodeMulti, MetaTransaction } from 'ethers-multisend'
 
 import {
-  ENTRYPOINT_ADDRESS,
-  MULTISEND_ADDRESS,
+  ENTRYPOINT_ADDRESS_V7,
   SAFE_4337_MODULE_ADDRESS,
   SAFE_MODULE_SETUP_ADDRESS,
+  SAFE_MULTISEND_ADDRESS,
   SAFE_PROXY_FACTORY_ADDRESS,
   SAFE_SIGNER_LAUNCHPAD_ADDRESS,
   SAFE_SINGLETON_ADDRESS,
-  WEBAUTHN_SIGNER_FACTORY_ADDRESS,
-  WEBAUTHN_VERIFIER_ADDRESS
-} from '../config'
+  SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+  SAFE_WEBAUTHN_VERIFIER_ADDRESS
+} from '../../../config'
 import {
   DEFAULT_CHAIN_ID,
   EIP712_SAFE_INIT_OPERATION_TYPE,
   EIP712_SAFE_OPERATION_TYPE
-} from '../constants'
-import { UnsignedPackedUserOperation } from '../services/4337/types'
+} from '../../../constants'
+import { UnsignedPackedUserOperation } from '../../../services/4337/types'
 import {
   buildPackedUserOperationFromSafeUserOperation,
   estimateUserOpGasLimit,
@@ -26,12 +26,12 @@ import {
   prepareUserOperation,
   SendUserOp,
   unpackUserOperationForRpc
-} from '../services/4337/userOpService'
-import { API } from '../services/API'
-import deviceService from '../services/deviceService'
-import { setPasskeyInStorage } from '../services/passkeys/passkeyService'
-import { buildSignatureBytes } from '../services/passkeys/utils'
-import { prepareUserOperationWithInitialisation } from '../services/safe/4337'
+} from '../../../services/4337/userOpService'
+import { API } from '../../../services/API'
+import deviceService from '../../../services/deviceService'
+import { setPasskeyInStorage } from '../../../services/passkeys/passkeyService'
+import { buildSignatureBytes } from '../../../services/passkeys/utils'
+import { prepareUserOperationWithInitialisation } from '../../../services/safe/4337'
 import {
   encodeSafeModuleSetupCall,
   getExecuteUserOpData,
@@ -40,13 +40,13 @@ import {
   getSafeAddress,
   getSafeAddressWithLaunchpad,
   isDeployed
-} from '../services/safe/safeService'
-import { SafeInitializer } from '../services/safe/types'
-import { isMetaTransactionArray } from '../utils/utils'
-import { AuthAdaptor } from './adaptors'
-import { EmptyBatchTransactionError, NoSignerFoundError } from './errors'
-import { PasskeySigner } from './signers'
-import { BaseAccount, SponsoredTransaction } from './types'
+} from '../../../services/safe/safeService'
+import { SafeInitializer } from '../../../services/safe/types'
+import { isMetaTransactionArray } from '../../../utils/utils'
+import { AuthAdaptor } from '../../adaptors'
+import { EmptyBatchTransactionError, NoSignerFoundError } from '../../errors'
+import { PasskeySigner } from '../../signers'
+import { BaseAccount, SponsoredTransaction } from '../../types'
 
 export interface AccountConfig {
   authAdaptor: AuthAdaptor
@@ -156,10 +156,10 @@ export class SafeAccount implements BaseAccount {
     this.initializer = {
       singleton: SAFE_SINGLETON_ADDRESS,
       fallbackHandler: SAFE_4337_MODULE_ADDRESS,
-      signerFactory: WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+      signerFactory: SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
       signerData: ethers.AbiCoder.defaultAbiCoder().encode(
         ['uint256', 'uint256', 'address'],
-        [publicKeyX, publicKeyY, WEBAUTHN_VERIFIER_ADDRESS]
+        [publicKeyX, publicKeyY, SAFE_WEBAUTHN_VERIFIER_ADDRESS]
       ),
       setupTo: SAFE_MODULE_SETUP_ADDRESS,
       setupData: encodeSafeModuleSetupCall([SAFE_4337_MODULE_ADDRESS])
@@ -200,7 +200,7 @@ export class SafeAccount implements BaseAccount {
           paymasterAndData: '0x',
           validAfter: 0,
           validUntil: 0,
-          entryPoint: ENTRYPOINT_ADDRESS
+          entryPoint: ENTRYPOINT_ADDRESS_V7
         }
 
         const encodedSignature = await this.signer._signTypedData(
@@ -229,7 +229,7 @@ export class SafeAccount implements BaseAccount {
       } else {
         const userOpHash = getUserOpHash(
           userOp,
-          ENTRYPOINT_ADDRESS,
+          ENTRYPOINT_ADDRESS_V7,
           this.chainId
         )
 
@@ -237,7 +237,7 @@ export class SafeAccount implements BaseAccount {
           userOpHash,
           validAfter: 0,
           validUntil: 0,
-          entryPoint: ENTRYPOINT_ADDRESS
+          entryPoint: ENTRYPOINT_ADDRESS_V7
         }
 
         const encodedSignature = await this.signer._signTypedData(
@@ -256,7 +256,7 @@ export class SafeAccount implements BaseAccount {
 
         rpcUserOp = unpackUserOperationForRpc(userOp, signature)
       }
-      return await SendUserOp(rpcUserOp, ENTRYPOINT_ADDRESS)
+      return await SendUserOp(rpcUserOp, ENTRYPOINT_ADDRESS_V7)
     }
   }
 
@@ -297,10 +297,10 @@ export class SafeAccount implements BaseAccount {
     let txData
 
     if (isMetaTransactionArray(safeTxData)) {
-      const multisendData = encodeMulti(safeTxData, MULTISEND_ADDRESS).data
+      const multisendData = encodeMulti(safeTxData, SAFE_MULTISEND_ADDRESS).data
 
       txData = {
-        to: MULTISEND_ADDRESS,
+        to: SAFE_MULTISEND_ADDRESS,
         value: '0',
         data: multisendData,
         operation: 1

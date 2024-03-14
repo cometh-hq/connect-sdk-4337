@@ -5,7 +5,6 @@ import {
   DeviceData,
   NewSignerRequest,
   NewSignerRequestType,
-  RelayTransactionType,
   SponsoredTransaction,
   WalletInfos,
   WebAuthnSigner
@@ -43,7 +42,7 @@ export class API {
     walletAddress,
     safeTxData,
     signatures
-  }: RelayTransactionType): Promise<string> {
+  }: any): Promise<string> {
     const body = {
       ...safeTxData,
       nonce: safeTxData?.nonce?.toString(),

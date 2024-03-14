@@ -9,7 +9,7 @@ import { DEFAULT_CONFIRMATION_TIME } from '../constants'
 import { getUserOperationReceipt } from '../services/4337/bundlerService'
 import { GetUserOperationReceiptReturnType } from '../services/4337/types'
 import { deepHexlify } from '../utils'
-import { SafeAccount } from './SafeAccount'
+import { SafeAccount } from './accounts/safe/SafeAccount'
 
 export class RelayTransactionResponse implements TransactionResponse {
   hash: string

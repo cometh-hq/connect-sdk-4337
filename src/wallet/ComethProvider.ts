@@ -7,9 +7,9 @@ import {
 import { JsonRpcProvider } from 'ethers'
 
 import { DEFAULT_CHAIN_ID } from '../constants'
-import { RelayTransactionResponse } from './RelayTransactionResponse'
 /* import { ComethSigner } from './ComethSigner' */
-import { SafeAccount } from './SafeAccount'
+import { SafeAccount } from './accounts/safe/SafeAccount'
+import { RelayTransactionResponse } from './RelayTransactionResponse'
 
 export class ComethProvider extends BaseProvider {
   //readonly signer: ComethSigner

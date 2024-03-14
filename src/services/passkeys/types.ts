@@ -31,6 +31,6 @@ type PasskeyCredentials = {
 export type {
   Assertion,
   PasskeyCredential,
-  PasskeyCredentialWithPubkeyCoordinates,
-  PasskeyCredentials
+  PasskeyCredentials,
+  PasskeyCredentialWithPubkeyCoordinates
 }

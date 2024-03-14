@@ -1,16 +1,11 @@
 import { ethers } from 'ethers'
 
 import {
-  WEBAUTHN_SIGNER_FACTORY_ADDRESS,
-  WEBAUTHN_VERIFIER_ADDRESS
+  SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+  SAFE_WEBAUTHN_VERIFIER_ADDRESS
 } from '../../config'
 import { BLOCK_EVENT_GAP, WebauthnSignerBytecode } from '../../constants'
 import { hexArrayStr } from '../../utils'
-import {
-  extractClientDataFields,
-  extractSignature,
-  getPasskeyCreationRpId
-} from '../passkeys/utils'
 import { parseHex } from '../../utils/utils'
 import {
   NoPasskeySignerFoundInDBError,
@@ -21,6 +16,11 @@ import {
 import { DeviceData, webAuthnOptions, WebAuthnSigner } from '../../wallet/types'
 import { API } from '../API'
 import deviceService from '../deviceService'
+import {
+  extractClientDataFields,
+  extractSignature,
+  getPasskeyCreationRpId
+} from '../passkeys/utils'
 import { getWebAuthnSignerFactoryContract, isSigner } from '../safe/safeService'
 import {
   Assertion,
@@ -37,11 +37,11 @@ import {
 const getSignerAddressFromPubkeyCoords = (x: string, y: string): string => {
   const deploymentCode = ethers.solidityPacked(
     ['bytes', 'uint256', 'uint256', 'uint256'],
-    [WebauthnSignerBytecode, x, y, WEBAUTHN_VERIFIER_ADDRESS]
+    [WebauthnSignerBytecode, x, y, SAFE_WEBAUTHN_VERIFIER_ADDRESS]
   )
   const salt = ethers.ZeroHash
   return ethers.getCreate2Address(
-    WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+    SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
     salt,
     ethers.keccak256(deploymentCode)
   )

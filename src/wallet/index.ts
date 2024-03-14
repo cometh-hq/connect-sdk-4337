@@ -1,1 +1,1 @@
-export * from './SafeAccount'
+export * from './accounts/safe/SafeAccount'
