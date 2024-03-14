@@ -39,7 +39,8 @@ import {
   getLaunchpadInitializer,
   getSafeAddress,
   getSafeAddressWithLaunchpad,
-  isDeployed
+  isDeployed,
+  waitPasskeySignerDeployment
 } from '../../../services/safe/safeService'
 import { SafeInitializer } from '../../../services/safe/types'
 import { isMetaTransactionArray } from '../../../utils/utils'
@@ -167,6 +168,19 @@ export class SafeAccount implements BaseAccount {
 
     const initHash = getInitHash(this.initializer, DEFAULT_CHAIN_ID)
     this.launchpadInitializer = getLaunchpadInitializer(initHash)
+  }
+
+  async waitPasskeySignerDeployment(publicKeyId: string): Promise<void> {
+    const passkeySigner = await this.API.getPasskeySignerByPublicKeyId(
+      publicKeyId
+    )
+
+    await waitPasskeySignerDeployment(
+      passkeySigner.deploymentParams.P256FactoryContract,
+      passkeySigner.publicKeyX,
+      passkeySigner.publicKeyY,
+      this.provider
+    )
   }
 
   public getAddress(): string {

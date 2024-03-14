@@ -1,10 +1,5 @@
 import { ethers } from 'ethers'
 
-import {
-  SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
-  SAFE_WEBAUTHN_VERIFIER_ADDRESS
-} from '../../config'
-import { BLOCK_EVENT_GAP, WebauthnSignerBytecode } from '../../constants'
 import { hexArrayStr } from '../../utils'
 import { parseHex } from '../../utils/utils'
 import {
@@ -21,31 +16,12 @@ import {
   extractSignature,
   getPasskeyCreationRpId
 } from '../passkeys/utils'
-import { getWebAuthnSignerFactoryContract, isSigner } from '../safe/safeService'
+import { isSigner, getSignerAddressFromPubkeyCoords } from '../safe/safeService'
 import {
   Assertion,
   PasskeyCredential,
   PasskeyCredentialWithPubkeyCoordinates
 } from './types'
-
-/**
- * Calculates the signer address from the given public key coordinates.
- * @param x The x-coordinate of the public key.
- * @param y The y-coordinate of the public key.
- * @returns The signer address.
- */
-const getSignerAddressFromPubkeyCoords = (x: string, y: string): string => {
-  const deploymentCode = ethers.solidityPacked(
-    ['bytes', 'uint256', 'uint256', 'uint256'],
-    [WebauthnSignerBytecode, x, y, SAFE_WEBAUTHN_VERIFIER_ADDRESS]
-  )
-  const salt = ethers.ZeroHash
-  return ethers.getCreate2Address(
-    SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
-    salt,
-    ethers.keccak256(deploymentCode)
-  )
-}
 
 const createPasskey = async (
   webAuthnOptions: webAuthnOptions,
@@ -170,33 +146,6 @@ const sign = async (
   const publicKeyId = hexArrayStr(assertion.rawId)
 
   return { signature, publicKeyId }
-}
-
-const waitPasskeySignerDeployment = async (
-  safeWebauthnSignerFactoryAddress: string,
-  publicKey_X: string,
-  publicKey_Y: string,
-  provider: ethers.JsonRpcProvider
-): Promise<string> => {
-  const safeWebauthnSignerFactory = getWebAuthnSignerFactoryContract(
-    safeWebauthnSignerFactoryAddress,
-    provider
-  )
-
-  let signerDeploymentEvent: any = []
-
-  while (signerDeploymentEvent.length === 0) {
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    signerDeploymentEvent = await safeWebauthnSignerFactory.queryFilter(
-      safeWebauthnSignerFactory.filters.NewSignerCreated(
-        publicKey_X,
-        publicKey_Y
-      ),
-      BLOCK_EVENT_GAP
-    )
-  }
-
-  return signerDeploymentEvent[0].args.signer
 }
 
 const signWithPasskey = async (
@@ -379,11 +328,9 @@ export {
   createPasskey,
   getPasskeyInStorage,
   getSigner,
-  getSignerAddressFromPubkeyCoords,
   getSignerFromCredentials,
   retrieveWalletAddressFromSigner,
   setPasskeyInStorage,
   sign,
-  signWithPasskey,
-  waitPasskeySignerDeployment
+  signWithPasskey
 }

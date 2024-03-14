@@ -10,8 +10,7 @@ import {
   getSigner,
   getSignerFromCredentials,
   retrieveWalletAddressFromSigner,
-  setPasskeyInStorage,
-  waitPasskeySignerDeployment
+  setPasskeyInStorage
 } from '../../services/passkeys/passkeyService'
 import { isWebAuthnCompatible } from '../../services/passkeys/utils'
 import { PasskeySigner } from '../signers/PasskeySigner'
@@ -293,19 +292,6 @@ export class PasskeyAdaptor implements AuthAdaptor {
   async getNewSignerRequests(): Promise<NewSignerRequest[] | null> {
     const walletAddress = this.getWalletAddress()
     return await this.API.getNewSignerRequests(walletAddress)
-  }
-
-  async waitPasskeySignerDeployment(publicKeyId: string): Promise<void> {
-    const PasskeySigner = await this.API.getPasskeySignerByPublicKeyId(
-      publicKeyId
-    )
-
-    await waitPasskeySignerDeployment(
-      PasskeySigner.deploymentParams.P256FactoryContract,
-      PasskeySigner.publicKeyX,
-      PasskeySigner.publicKeyY,
-      this.provider
-    )
   }
 
   async initRecoveryRequest(

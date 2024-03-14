@@ -5,9 +5,14 @@ import {
   SAFE_MULTISEND_ADDRESS,
   SAFE_PROXY_FACTORY_ADDRESS,
   SAFE_SIGNER_LAUNCHPAD_ADDRESS,
-  SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS
+  SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+  SAFE_WEBAUTHN_VERIFIER_ADDRESS
 } from '../../config'
-import { SafeProxyBytecode } from '../../constants'
+import {
+  BLOCK_EVENT_GAP,
+  SafeProxyBytecode,
+  WebauthnSignerBytecode
+} from '../../constants'
 import enableModuleAbi from '../../contracts/abis/enablemodule.json'
 import multisendAbi from '../../contracts/abis/Multisend.json'
 import SafeSingletonAbi from '../../contracts/abis/safe.json'
@@ -266,6 +271,52 @@ async function getSafeAddress(
 }
 
 /**
+ * Calculates the signer address from the given public key coordinates.
+ * @param x The x-coordinate of the public key.
+ * @param y The y-coordinate of the public key.
+ * @returns The signer address.
+ */
+const getSignerAddressFromPubkeyCoords = (x: string, y: string): string => {
+  const deploymentCode = ethers.solidityPacked(
+    ['bytes', 'uint256', 'uint256', 'uint256'],
+    [WebauthnSignerBytecode, x, y, SAFE_WEBAUTHN_VERIFIER_ADDRESS]
+  )
+  const salt = ethers.ZeroHash
+  return ethers.getCreate2Address(
+    SAFE_WEBAUTHN_SIGNER_FACTORY_ADDRESS,
+    salt,
+    ethers.keccak256(deploymentCode)
+  )
+}
+
+const waitPasskeySignerDeployment = async (
+  safeWebauthnSignerFactoryAddress: string,
+  publicKey_X: string,
+  publicKey_Y: string,
+  provider: ethers.JsonRpcProvider
+): Promise<string> => {
+  const safeWebauthnSignerFactory = getWebAuthnSignerFactoryContract(
+    safeWebauthnSignerFactoryAddress,
+    provider
+  )
+
+  let signerDeploymentEvent: any = []
+
+  while (signerDeploymentEvent.length === 0) {
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+    signerDeploymentEvent = await safeWebauthnSignerFactory.queryFilter(
+      safeWebauthnSignerFactory.filters.NewSignerCreated(
+        publicKey_X,
+        publicKey_Y
+      ),
+      BLOCK_EVENT_GAP
+    )
+  }
+
+  return signerDeploymentEvent[0].args.signer
+}
+
+/**
  * Encodes the function call to enable modules in the SafeModuleSetup contract.
  *
  * @param modules - An array of module addresses.
@@ -422,6 +473,7 @@ export {
   getLaunchpadInitializer,
   getLaunchpadInitializeThenUserOpData,
   getOwners,
+  getSignerAddressFromPubkeyCoords,
   getSafe4337ModuleContract,
   getSafeAddress,
   getSafeAddressWithLaunchpad,
@@ -431,5 +483,6 @@ export {
   getWebAuthnSignerContract,
   getWebAuthnSignerFactoryContract,
   isDeployed,
-  isSigner
+  isSigner,
+  waitPasskeySignerDeployment
 }
