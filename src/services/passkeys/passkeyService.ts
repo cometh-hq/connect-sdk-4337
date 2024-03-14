@@ -47,6 +47,12 @@ type PasskeyCredentialWithPubkeyCoordinates = PasskeyCredential & {
   }
 }
 
+export type PasskeyCredentials = {
+  publicKeyId: string
+  publicKeyX: string
+  publicKeyY: string
+}
+
 /**
  * Calculates the signer address from the given public key coordinates.
  * @param x The x-coordinate of the public key.

@@ -12,19 +12,29 @@ import {
   WEBAUTHN_SIGNER_FACTORY_ADDRESS,
   WEBAUTHN_VERIFIER_ADDRESS
 } from '../config'
-import { DEFAULT_CHAIN_ID } from '../constants'
+import {
+  DEFAULT_CHAIN_ID,
+  EIP712_SAFE_INIT_OPERATION_TYPE,
+  EIP712_SAFE_OPERATION_TYPE
+} from '../constants'
 import { UnsignedPackedUserOperation } from '../services/4337/types'
 import {
+  buildPackedUserOperationFromSafeUserOperation,
   estimateUserOpGasLimit,
+  getUserOpHash,
   packGasParameters,
   prepareUserOperation,
   prepareUserOperationWithInitialisation,
   SendUserOp,
   signUserOp,
-  signUserOpWithInitialisation
+  unpackUserOperationForRpc
 } from '../services/4337/userOpService'
 import { API } from '../services/API'
-import { PasskeyLocalStorageFormat } from '../services/passkeys/passkeys'
+import deviceService from '../services/deviceService'
+import {
+  getSignerAddressFromPubkeyCoords,
+  setPasskeyInStorage
+} from '../services/passkeys/passkeyService'
 import {
   encodeSafeModuleSetupCall,
   getExecuteUserOpData,
@@ -35,6 +45,7 @@ import {
   isDeployed,
   SafeInitializer
 } from '../services/safe/safeService'
+import { buildSignatureBytes } from '../utils/passkeys'
 import { isMetaTransactionArray } from '../utils/utils'
 import { AuthAdaptor } from './adaptors'
 import { EmptyBatchTransactionError, NoSignerFoundError } from './errors'
@@ -53,7 +64,6 @@ export class SafeAccount {
   private provider: ethers.JsonRpcProvider
   private walletAddress?: string
   private isWalletDeployed?: boolean
-  private passkey?: PasskeyLocalStorageFormat
   private launchpadInitializer?: string
   private initializer?: SafeInitializer
   public transactionTimeout?: number
@@ -77,18 +87,17 @@ export class SafeAccount {
     if (!this.authAdaptor) throw new Error('No Auth adaptor found')
 
     if (!walletAddress) {
-      await this.authAdaptor.createSigner()
-      this.signer = this.authAdaptor.getSigner()
+      this.signer = await this.authAdaptor.createSigner()
       this.walletAddress = await this.predictWalletAddress()
 
-      this.authAdaptor.createWallet(this.walletAddress)
+      await this.createWallet(this.walletAddress)
     } else {
-      await this.authAdaptor.authenticate(walletAddress)
-      this.signer = this.authAdaptor.getSigner()
+      const wallet = await this.API.getWalletInfos(walletAddress)
+      if (!wallet) throw new Error('Wallet does not exists')
+
+      this.signer = await this.authAdaptor.getSignerFromWallet(walletAddress)
       this.walletAddress = walletAddress
     }
-
-    console.log('address', this.walletAddress)
 
     if (!this.signer) throw new NoSignerFoundError()
 
@@ -102,6 +111,30 @@ export class SafeAccount {
     }
 
     this.sponsoredAddresses = await this.API.getSponsoredAddresses()
+  }
+
+  async createWallet(walletAddress: string): Promise<void> {
+    if (this.signer instanceof PasskeySigner) {
+      const { publicKeyId, publicKeyX, publicKeyY } =
+        this.signer.getPasskeyCredentials()
+      const signerAddress = await this.signer.getAddress()
+      const deviceData = deviceService.getDeviceData()
+
+      await this.API.initWalletWithPasskey({
+        walletAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        deviceData
+      })
+      setPasskeyInStorage(walletAddress, publicKeyId, signerAddress)
+    } else {
+      const ownerAddress = this.signer?.address
+      if (!ownerAddress) throw new Error('no owner address')
+      await this.API.initWallet({
+        ownerAddress
+      })
+    }
   }
 
   private async predictWalletAddress(): Promise<string> {
@@ -123,9 +156,6 @@ export class SafeAccount {
 
   private getLaunchpadInitializationParams(signer: PasskeySigner): void {
     const { publicKeyX, publicKeyY } = signer.getPasskeyCredentials()
-
-    console.log(publicKeyX, publicKeyY)
-    console.log({ DEFAULT_CHAIN_ID })
 
     this.initializer = {
       singleton: SAFE_SINGLETON_ADDRESS,
@@ -156,22 +186,84 @@ export class SafeAccount {
   ): Promise<string | undefined> {
     let rpcUserOp
 
-    if (this.isWalletDeployed) {
-      rpcUserOp = await signUserOp(
-        userOp,
-        this.passkey!,
-        ENTRYPOINT_ADDRESS,
-        this.chainId
-      )
-    } else {
-      rpcUserOp = await signUserOpWithInitialisation(
-        userOp,
-        this.passkey!,
-        ENTRYPOINT_ADDRESS,
-        this.chainId
-      )
+    console.log('deployed', this.isWalletDeployed)
+
+    if (this.signer instanceof PasskeySigner) {
+      if (this.isWalletDeployed) {
+        const finalUserOp = {
+          safe: userOp.sender,
+          nonce: userOp.nonce,
+          initCode: userOp.initCode ?? '0x',
+          callData: userOp.callData ?? '0x',
+          verificationGasLimit: 5000000,
+          callGasLimit: 2000000,
+          preVerificationGas: 60000,
+          // use same maxFeePerGas and maxPriorityFeePerGas to ease testing prefund validation
+          // otherwise it's tricky to calculate the prefund because of dynamic parameters like block.basefee
+          // check UserOperation.sol#gasPrice()
+          maxFeePerGas: 10000000000,
+          maxPriorityFeePerGas: 10000000000,
+          paymasterAndData: '0x',
+          validAfter: 0,
+          validUntil: 0,
+          entryPoint: ENTRYPOINT_ADDRESS
+        }
+
+        const encodedSignature = await this.signer._signTypedData(
+          {
+            chainId: this.chainId,
+            verifyingContract: SAFE_4337_MODULE_ADDRESS
+          },
+          EIP712_SAFE_OPERATION_TYPE,
+          finalUserOp
+        )
+
+        const signerAddress = await this.signer.getAddress()
+
+        const signature = buildSignatureBytes([
+          {
+            signer: signerAddress as string,
+            data: encodedSignature,
+            dynamic: true
+          }
+        ])
+
+        rpcUserOp = buildPackedUserOperationFromSafeUserOperation({
+          safeOp: finalUserOp,
+          signature
+        })
+      } else {
+        const userOpHash = getUserOpHash(
+          userOp,
+          ENTRYPOINT_ADDRESS,
+          this.chainId
+        )
+
+        const safeInitOp = {
+          userOpHash,
+          validAfter: 0,
+          validUntil: 0,
+          entryPoint: ENTRYPOINT_ADDRESS
+        }
+
+        const encodedSignature = await this.signer._signTypedData(
+          {
+            verifyingContract: SAFE_SIGNER_LAUNCHPAD_ADDRESS,
+            chainId: this.chainId
+          },
+          EIP712_SAFE_INIT_OPERATION_TYPE,
+          safeInitOp
+        )
+
+        const signature = ethers.solidityPacked(
+          ['uint48', 'uint48', 'bytes'],
+          [safeInitOp.validAfter, safeInitOp.validUntil, encodedSignature]
+        )
+
+        rpcUserOp = unpackUserOperationForRpc(userOp, signature)
+      }
+      return await SendUserOp(rpcUserOp, ENTRYPOINT_ADDRESS)
     }
-    return await SendUserOp(rpcUserOp, ENTRYPOINT_ADDRESS)
   }
 
   public async sendTransaction(
@@ -245,15 +337,17 @@ export class SafeAccount {
           this.launchpadInitializer!
         )
 
-    const userOpGasLimitEstimation = await estimateUserOpGasLimit(
+    console.log({ unsignedUserOperation })
+
+    /*  const userOpGasLimitEstimation = await estimateUserOpGasLimit(
       unsignedUserOperation
-    )
+    ) */
 
     // Increase the gas limit by 50%, otherwise the user op will fail during simulation with "verification more than gas limit" error
-    userOpGasLimitEstimation.verificationGasLimit = `0x${(
-      (BigInt(userOpGasLimitEstimation.verificationGasLimit) * 15n) /
+    /* userOpGasLimitEstimation.verificationGasLimit = `0x${(
+      (BigInt(userOpGasLimitEstimation.verificationGasLimit) * 20n) /
       10n
-    ).toString(16)}`
+    ).toString(16)}` */
 
     const feeData = await this.provider
       .getFeeData()
@@ -268,8 +362,8 @@ export class SafeAccount {
       throw new Error('No fee data found')
 
     return {
-      ...unsignedUserOperation,
-      ...packGasParameters({
+      ...unsignedUserOperation
+      /*   ...packGasParameters({
         verificationGasLimit: userOpGasLimitEstimation.verificationGasLimit,
         callGasLimit: userOpGasLimitEstimation.callGasLimit,
         maxFeePerGas: `0x${(
@@ -284,7 +378,7 @@ export class SafeAccount {
       preVerificationGas: `0x${(
         (BigInt(userOpGasLimitEstimation.preVerificationGas) * 15n) /
         10n
-      ).toString(16)}`
+      ).toString(16)}` */
     } as UnsignedPackedUserOperation
   }
 }

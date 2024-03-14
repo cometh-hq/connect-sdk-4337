@@ -13,7 +13,10 @@ import {
   extractSignature
 } from '../../utils/passkeys'
 import { PasskeyLocalStorageFormat } from '../passkeys/passkeys'
-import { getSignerAddressFromPubkeyCoords } from '../passkeys/passkeyService'
+import {
+  getSignerAddressFromPubkeyCoords,
+  PasskeyCredentials
+} from '../passkeys/passkeyService'
 import {
   getEntrypointContract,
   getLaunchpadInitializeThenUserOpData,
@@ -96,8 +99,6 @@ function prepareUserOperationWithInitialisation(
     launchpadInitializer,
     saltNonce
   )
-
-  console.log({ safeDeploymentData })
 
   const userOp = {
     sender: predictedSafeAddress,
@@ -274,76 +275,6 @@ type Assertion = {
   response: AuthenticatorAssertionResponse
 }
 
-/**
- * Signs and sends a user operation to the specified entry point on the blockchain.
- * @param userOp The unsigned user operation to sign and send.
- * @param passkey The passkey used for signing the user operation.
- * @param entryPoint The entry point address on the blockchain. Defaults to ENTRYPOINT_ADDRESS if not provided.
- * @param chainId The chain ID of the blockchain. Defaults to DEFAULT_CHAIN_ID if not provided.
- * @returns User Operation hash promise.
- * @throws An error if signing the user operation fails.
- */
-async function signUserOpWithInitialisation(
-  userOp: UnsignedPackedUserOperation,
-  passkey: PasskeyLocalStorageFormat,
-  entryPoint: string = ENTRYPOINT_ADDRESS,
-  chainId: ethers.BigNumberish = DEFAULT_CHAIN_ID
-): Promise<UserOperation> {
-  const userOpHash = getUserOpHash(userOp, entryPoint, chainId)
-
-  const safeInitOp = {
-    userOpHash,
-    validAfter: 0,
-    validUntil: 0,
-    entryPoint: ENTRYPOINT_ADDRESS
-  }
-
-  const safeInitOpHash = ethers.TypedDataEncoder.hash(
-    { verifyingContract: SAFE_SIGNER_LAUNCHPAD_ADDRESS, chainId },
-    {
-      SafeInitOp: [
-        { type: 'bytes32', name: 'userOpHash' },
-        { type: 'uint48', name: 'validAfter' },
-        { type: 'uint48', name: 'validUntil' },
-        { type: 'address', name: 'entryPoint' }
-      ]
-    },
-    safeInitOp
-  )
-
-  const assertion = (await navigator.credentials.get({
-    publicKey: {
-      challenge: ethers.getBytes(safeInitOpHash),
-      allowCredentials: [
-        { type: 'public-key', id: hexStringToUint8Array(passkey.rawId) }
-      ],
-      userVerification: 'required'
-    }
-  })) as Assertion | null
-
-  if (!assertion) {
-    throw new Error('Failed to sign user operation')
-  }
-
-  const signature = ethers.solidityPacked(
-    ['uint48', 'uint48', 'bytes'],
-    [
-      safeInitOp.validAfter,
-      safeInitOp.validUntil,
-      ethers.AbiCoder.defaultAbiCoder().encode(
-        ['bytes', 'bytes', 'uint256[2]'],
-        [
-          new Uint8Array(assertion.response.authenticatorData),
-          extractClientDataFields(assertion.response),
-          extractSignature(assertion.response)
-        ]
-      )
-    ]
-  )
-
-  return unpackUserOperationForRpc(userOp, signature)
-}
-
 export const buildPackedUserOperationFromSafeUserOperation = ({
   safeOp,
   signature
@@ -394,7 +325,7 @@ export const buildPackedUserOperationFromSafeUserOperation = ({
 
 async function signUserOp(
   userOp: UnsignedPackedUserOperation,
-  passkey: PasskeyLocalStorageFormat,
+  passkey: PasskeyCredentials,
   entryPoint: string = ENTRYPOINT_ADDRESS,
   chainId: ethers.BigNumberish = DEFAULT_CHAIN_ID
 ): Promise<any> {
@@ -430,7 +361,7 @@ async function signUserOp(
     publicKey: {
       challenge: ethers.getBytes(safeOpHash),
       allowCredentials: [
-        { type: 'public-key', id: hexStringToUint8Array(passkey.rawId) }
+        { type: 'public-key', id: hexStringToUint8Array(passkey.publicKeyId) }
       ],
       userVerification: 'required'
     }
@@ -441,8 +372,8 @@ async function signUserOp(
   }
 
   const signerAddress = getSignerAddressFromPubkeyCoords(
-    passkey!.pubkeyCoordinates.x,
-    passkey!.pubkeyCoordinates.y
+    passkey!.publicKeyX,
+    passkey!.publicKeyY
   )
 
   const signature = buildSignatureBytes([
@@ -490,5 +421,5 @@ export {
   prepareUserOperationWithInitialisation,
   SendUserOp,
   signUserOp,
-  signUserOpWithInitialisation
+  unpackUserOperationForRpc
 }

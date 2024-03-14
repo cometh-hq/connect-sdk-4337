@@ -115,34 +115,9 @@ export class PasskeyAdaptor implements AuthAdaptor {
     this.signer = signer
   }
 
-  async createWallet(walletAddress: string): Promise<void> {
-    if (this.signer instanceof PasskeySigner) {
-      const { publicKeyId, publicKeyX, publicKeyY } =
-        this.signer.getPasskeyCredentials()
-      const signerAddress = await this.signer.getAddress()
-      const deviceData = deviceService.getDeviceData()
-
-      await this.API.initWalletWithPasskey({
-        walletAddress,
-        publicKeyId,
-        publicKeyX,
-        publicKeyY,
-        deviceData
-      })
-      setPasskeyInStorage(walletAddress, publicKeyId, signerAddress)
-    } else {
-      const ownerAddress = this.signer?.address
-      if (!ownerAddress) throw new Error('no owner address')
-      await this.API.initWallet({
-        ownerAddress
-      })
-    }
-  }
-
-  async authenticate(walletAddress: string): Promise<void> {
-    const wallet = await this.getWalletInfos(walletAddress)
-    if (!wallet) throw new Error('Wallet does not exists')
-
+  async getSignerFromWallet(
+    walletAddress: string
+  ): Promise<PasskeySigner | Wallet> {
     const isPasskeyCompatible = await isWebAuthnCompatible(this.webAuthnOptions)
 
     if (isPasskeyCompatible && !this._isFallbackSigner()) {
@@ -169,6 +144,7 @@ export class PasskeyAdaptor implements AuthAdaptor {
     }
 
     this.walletAddress = walletAddress
+    return this.signer
   }
 
   _throwErrorWhenEoaFallbackDisabled(): void {

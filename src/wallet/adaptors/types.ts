@@ -6,8 +6,7 @@ import { SupportedNetworks, webAuthnOptions } from '../types'
 export interface AuthAdaptor {
   logout(): Promise<void>
   createSigner(): Promise<PasskeySigner | Wallet | HDNodeWallet>
-  createWallet(walletAddress: string): Promise<void>
-  authenticate(walletAddress: string): Promise<void>
+  getSignerFromWallet(walletAddress: string): Promise<PasskeySigner | Wallet>
   getAccount(): Promise<string | null>
   getSigner(): JsonRpcSigner | Wallet | PasskeySigner | HDNodeWallet
   getWalletAddress(): string
