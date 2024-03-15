@@ -1,7 +1,7 @@
 import { ethers, HDNodeWallet, Wallet } from 'ethers'
 import { encodeMulti, MetaTransaction } from 'ethers-multisend'
 
-import { ENTRYPOINT_ADDRESS_V7, SAFE_ADDRESSES } from '../../../config'
+import { ENTRYPOINT_ADDRESS_V07, SAFE_ADDRESSES } from '../../../config'
 import {
   DEFAULT_CHAIN_ID,
   EIP712_SAFE_INIT_OPERATION_TYPE,
@@ -215,7 +215,7 @@ export class SafeAccount implements BaseAccount {
           paymasterAndData: '0x',
           validAfter: 0,
           validUntil: 0,
-          entryPoint: ENTRYPOINT_ADDRESS_V7
+          entryPoint: ENTRYPOINT_ADDRESS_V07
         }
 
         const encodedSignature = await this.signer._signTypedData(
@@ -244,7 +244,7 @@ export class SafeAccount implements BaseAccount {
       } else {
         const userOpHash = getUserOpHash(
           userOp,
-          ENTRYPOINT_ADDRESS_V7,
+          ENTRYPOINT_ADDRESS_V07,
           this.chainId
         )
 
@@ -252,7 +252,7 @@ export class SafeAccount implements BaseAccount {
           userOpHash,
           validAfter: 0,
           validUntil: 0,
-          entryPoint: ENTRYPOINT_ADDRESS_V7
+          entryPoint: ENTRYPOINT_ADDRESS_V07
         }
 
         const encodedSignature = await this.signer._signTypedData(
@@ -269,9 +269,13 @@ export class SafeAccount implements BaseAccount {
           [safeInitOp.validAfter, safeInitOp.validUntil, encodedSignature]
         )
 
-        rpcUserOp = unpackUserOperationForRpc(userOp, signature)
+        rpcUserOp = unpackUserOperationForRpc(
+          userOp,
+          signature,
+          ENTRYPOINT_ADDRESS_V07
+        )
       }
-      return await SendUserOp(rpcUserOp, ENTRYPOINT_ADDRESS_V7)
+      return await SendUserOp(rpcUserOp, ENTRYPOINT_ADDRESS_V07)
     }
   }
 
@@ -337,7 +341,13 @@ export class SafeAccount implements BaseAccount {
     )
 
     const unsignedUserOperation = this.isWalletDeployed
-      ? await prepareUserOperation(this.walletAddress!, calldata, this.provider)
+      ? await prepareUserOperation({
+          entrypointAddress: ENTRYPOINT_ADDRESS_V07,
+          account: this.walletAddress!,
+          calldata,
+          provider: this.provider,
+          initCode: '0x'
+        })
       : prepareUserOperationWithInitialisation(
           PROXY_FACTORY_ADDRESS,
           calldata,
@@ -349,7 +359,8 @@ export class SafeAccount implements BaseAccount {
     console.log({ unsignedUserOperation })
 
     const userOpGasLimitEstimation = await estimateUserOpGasLimit(
-      unsignedUserOperation
+      unsignedUserOperation,
+      ENTRYPOINT_ADDRESS_V07
     )
 
     // Increase the gas limit by 50%, otherwise the user op will fail during simulation with "verification more than gas limit" error

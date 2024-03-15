@@ -1,9 +1,12 @@
 import { webAuthnOptions } from './wallet/types'
 
 export const API_URL = 'https://api.connect.cometh.io/'
-export const DEFAULT_CHAIN_ID = 137
+/* export const DEFAULT_CHAIN_ID = 137
 export const DEFAULT_RPC_TARGET =
-  'https://polygon-mainnet.infura.io/v3/5b3c5466f15745578801804f317a53ec'
+  'https://polygon-mainnet.infura.io/v3/5b3c5466f15745578801804f317a53ec' */
+
+export const DEFAULT_CHAIN_ID = 11155111
+export const DEFAULT_RPC_TARGET = 'https://ethereum-sepolia-rpc.publicnode.com'
 
 export const EIP712_SAFE_MESSAGE_TYPE = {
   // "SafeMessage(bytes message)"

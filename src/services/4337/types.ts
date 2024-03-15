@@ -47,7 +47,22 @@ export type PackedUserOperation = {
   signature: ethers.BytesLike
 }
 
+export type UnPackedUserOperation = {
+  sender: string
+  nonce: ethers.BigNumberish
+  initCode: ethers.BytesLike
+  callData: ethers.BytesLike
+  callGasLimit: ethers.BigNumberish
+  verificationGasLimit: ethers.BigNumberish
+  preVerificationGas: ethers.BigNumberish
+  maxFeePerGas: ethers.BigNumberish
+  maxPriorityFeePerGas: ethers.BigNumberish
+  paymasterAndData: ethers.BytesLike
+  signature: ethers.BytesLike
+}
+
 export type UnsignedPackedUserOperation = Omit<PackedUserOperation, 'signature'>
+export type UnsignedUserOperation = Omit<UnPackedUserOperation, 'signature'>
 
 export type UserOperation = {
   sender: string
