@@ -67,14 +67,16 @@ export type UnsignedUserOperation = Omit<UnPackedUserOperation, 'signature'>
 export type UserOperation = {
   sender: string
   nonce: ethers.BigNumberish
+  initCode?: string
   factory?: string
   factoryData?: ethers.BytesLike
   callData: ethers.BytesLike
-  callGasLimit: ethers.BigNumberish
-  verificationGasLimit: ethers.BigNumberish
-  preVerificationGas: ethers.BigNumberish
+  callGasLimit?: ethers.BigNumberish
+  verificationGasLimit?: ethers.BigNumberish
+  preVerificationGas?: ethers.BigNumberish
   maxFeePerGas: ethers.BigNumberish
   maxPriorityFeePerGas: ethers.BigNumberish
+  paymasterAndData?: string
   paymaster?: string
   paymasterVerificationGasLimit?: ethers.BigNumberish
   paymasterPostOpGasLimit?: ethers.BigNumberish

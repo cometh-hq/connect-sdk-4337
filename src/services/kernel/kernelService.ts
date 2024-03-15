@@ -1,13 +1,18 @@
 import { ethers } from 'ethers'
-import { KERNEL_ADDRESSES, ENTRYPOINT_ADDRESS_V06 } from '../../config'
-import kernelFactoryAbi from '../../contracts/abis/kernel/factory.json'
-import kernelSingletonAbi from '../../contracts/abis/kernel/singleton.json'
-import entrypointv6Abi from '../../contracts/abis/entrypoint_v0.6.json'
 import { MetaTransaction } from 'ethers-multisend'
 
+import { ENTRYPOINT_ADDRESS_V06, KERNEL_ADDRESSES } from '../../config'
+import entrypointv6Abi from '../../contracts/abis/entrypoint_v0.6.json'
+import executeAbi from '../../contracts/abis/kernel/execute.json'
+import kernelFactoryAbi from '../../contracts/abis/kernel/factory.json'
+import kernelSingletonAbi from '../../contracts/abis/kernel/singleton.json'
+import { concatHex } from '../../utils/utils'
+import { getEntrypointContractV6 } from '../4337/userOpService'
+
 const { ACCOUNT_LOGIC, FACTORY_ADDRESS } = KERNEL_ADDRESSES
-const kernalSingletonInterface = new ethers.Interface(kernelSingletonAbi)
+const kernelSingletonInterface = new ethers.Interface(kernelSingletonAbi)
 const kernalFactoryInterface = new ethers.Interface(kernelFactoryAbi)
+const executeInterface = new ethers.Interface(executeAbi)
 
 const getKernelContract = (
   address: string,
@@ -19,7 +24,7 @@ const getKernelContract = (
 const encodeCallData = (tx: MetaTransaction | MetaTransaction[]) => {
   if (Array.isArray(tx)) {
     // Encode a batched call
-    return kernalSingletonInterface.encodeFunctionData('executeBatch', [
+    return executeInterface.encodeFunctionData('executeBatch', [
       tx.map((tx) => ({
         to: tx.to,
         value: tx.value,
@@ -28,7 +33,7 @@ const encodeCallData = (tx: MetaTransaction | MetaTransaction[]) => {
     ])
   }
   // Encode a simple call
-  return kernalSingletonInterface.encodeFunctionData('execute', [
+  return executeInterface.encodeFunctionData('execute', [
     tx.to,
     tx.value,
     tx.data,
@@ -55,7 +60,7 @@ const getAccountInitCode = async ({
   accountAddress: string
 }): Promise<string> => {
   // Build the account initialization data
-  const initialisationData = kernalSingletonInterface.encodeFunctionData(
+  const initialisationData = kernelSingletonInterface.encodeFunctionData(
     'initialize',
     [validatorAddress, accountAddress]
   )
@@ -83,7 +88,7 @@ const getInitCode = async ({
   const isAccountDeployed = await isDeployed(accountAddress, provider)
   if (isAccountDeployed) return '0x'
 
-  return ethers.concat([
+  return concatHex([
     FACTORY_ADDRESS,
     await getAccountInitCode({
       index,
@@ -120,19 +125,17 @@ const getSenderAddress = async ({
   provider: any
 }): Promise<string> => {
   if (!initCode) {
-    throw new Error('`initCode`must be provided')
+    throw new Error('initCode must be provided')
   }
 
-  const entrypoint: any = new ethers.Contract(
-    ENTRYPOINT_ADDRESS_V06,
-    entrypointv6Abi,
-    provider
-  )
+  const entrypoint = getEntrypointContractV6(provider)
 
   try {
     await entrypoint.getSenderAddress.staticCall(initCode)
   } catch (e) {
     const err = entrypoint.interface.parseError(e.data)
+
+    if (!err) throw new Error('Invalid entrypoint address')
 
     if (err.name === 'SenderAddressResult' && err.args && err.args[0]) {
       return err.args[0] as string
@@ -144,4 +147,4 @@ const getSenderAddress = async ({
   throw new Error('Invalid entrypoint address')
 }
 
-export { getInitCode, getSenderAddress, encodeCallData }
+export { encodeCallData, getInitCode, getSenderAddress }

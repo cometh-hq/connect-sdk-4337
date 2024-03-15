@@ -2,10 +2,13 @@ import { ethers, HDNodeWallet, Wallet } from 'ethers'
 import { MetaTransaction } from 'ethers-multisend'
 
 import { ENTRYPOINT_ADDRESS_V06, KERNEL_ADDRESSES } from '../../../config'
-
-import { UnsignedPackedUserOperation } from '../../../services/4337/types'
+import { DEFAULT_CHAIN_ID, DEFAULT_RPC_TARGET } from '../../../constants'
 import {
-  buildPackedUserOperationFromSafeUserOperation,
+  UnsignedPackedUserOperation,
+  UserOperation
+} from '../../../services/4337/types'
+import {
+  buildPackedUserOperationFromUserOperation,
   estimateUserOpGasLimit,
   getUserOpHash,
   packGasParameters,
@@ -14,7 +17,6 @@ import {
   unpackUserOperationForRpc
 } from '../../../services/4337/userOpService'
 import { API } from '../../../services/API'
-
 import {
   encodeCallData,
   getInitCode,
@@ -22,6 +24,7 @@ import {
 } from '../../../services/kernel/kernelService'
 import { isDeployed } from '../../../services/safe/safeService'
 import { SafeInitializer } from '../../../services/safe/types'
+import { deepHexlify } from '../../../utils'
 import { AuthAdaptor } from '../../adaptors'
 import {
   EmptyBatchTransactionError,
@@ -30,8 +33,6 @@ import {
 } from '../../errors'
 import { PasskeySigner } from '../../signers'
 import { BaseAccount, SponsoredTransaction } from '../../types'
-import { DEFAULT_CHAIN_ID, DEFAULT_RPC_TARGET } from '../../../constants'
-import { deepHexlify } from '../../../utils'
 
 const { ACCOUNT_LOGIC, ECDSA_VALIDATOR } = KERNEL_ADDRESSES
 
@@ -98,10 +99,9 @@ export class KernelAccount implements BaseAccount {
     accountAddress: string
     provider: ethers.JsonRpcProvider
   }): Promise<string> {
-    const index = 0n
     // Find the init code for this account
     const initCode = await getInitCode({
-      index,
+      index: 0n,
       accountLogicAddress,
       validatorAddress,
       accountAddress,
@@ -179,7 +179,7 @@ export class KernelAccount implements BaseAccount {
         maxPriorityFeePerGas: ethers.toBeHex(finalUserOp.maxPriorityFeePerGas),
         paymasterAndData: finalUserOp.paymasterAndData,
         signature
-      }
+      } as UserOperation
 
       return await SendUserOp(rpcUserOp, ENTRYPOINT_ADDRESS_V06)
     }
@@ -218,6 +218,8 @@ export class KernelAccount implements BaseAccount {
     if (!this.walletAddress) throw new WalletNotConnectedError()
 
     const calldata = encodeCallData(tx)
+
+    console.log({ calldata })
 
     const initCode = await getInitCode({
       index: 0n,

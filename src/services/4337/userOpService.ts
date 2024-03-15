@@ -13,12 +13,15 @@ import {
   UserOperation,
   UserOpGasLimitEstimation
 } from './types'
-import { deepHexlify } from '../../utils'
 
-// Dummy signature for gas estimation. We require it so the estimation doesn't revert
-// if the signature is absent
-const DUMMY_SIGNATURE =
-  '0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e043aa8d1b19ca9387bdf05124650baec5c7ed57c04135f915b7a5fac9feeb29783063924cb9712ab0dd42f880317626ea82b4149f81f4e60d8ddeff9109d4619f0000000000000000000000000000000000000000000000000000000000000025a24f744b28d73f066bf3203d145765a7bc735e6328168c8b03e476da3ad0d8fe0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001e226f726967696e223a2268747470733a2f2f736166652e676c6f62616c220000'
+const DUMMY_SIGNATURE: {
+  ECDSA: string
+  SAFE: string
+} = {
+  ECDSA:
+    '0x00000000fffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c',
+  SAFE: '0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000e043aa8d1b19ca9387bdf05124650baec5c7ed57c04135f915b7a5fac9feeb29783063924cb9712ab0dd42f880317626ea82b4149f81f4e60d8ddeff9109d4619f0000000000000000000000000000000000000000000000000000000000000025a24f744b28d73f066bf3203d145765a7bc735e6328168c8b03e476da3ad0d8fe0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001e226f726967696e223a2268747470733a2f2f736166652e676c6f62616c220000'
+}
 
 function getEntrypointContractV6(
   provider: ethers.JsonRpcApiProvider
@@ -65,7 +68,7 @@ async function prepareUserOperation({
   if (entrypointAddress === ENTRYPOINT_ADDRESS_V06) {
     return await prepareUserOperationV6(account, calldata, provider, initCode)
   } else if (entrypointAddress === ENTRYPOINT_ADDRESS_V07) {
-    return await prepareUserOperationV7(account, calldata, provider)
+    return await prepareUserOperationV7(account, calldata, provider, initCode)
   }
 
   throw new Error('Unsupported entrypoint address')
@@ -73,7 +76,7 @@ async function prepareUserOperation({
 
 async function prepareUserOperationV6(
   account: string,
-  calldata: string,
+  callData: string,
   provider: ethers.JsonRpcProvider,
   initCode: string
 ): Promise<any> {
@@ -84,7 +87,7 @@ async function prepareUserOperationV6(
     sender: account,
     nonce,
     initCode,
-    callData: calldata,
+    callData,
     callGasLimit: ethers.toBeHex(2000000),
     verificationGasLimit: ethers.toBeHex(2000000),
     maxFeePerGas: ethers.toBeHex(10000000000),
@@ -96,8 +99,9 @@ async function prepareUserOperationV6(
 
 async function prepareUserOperationV7(
   account: string,
-  calldata: string,
-  provider: ethers.JsonRpcProvider
+  callData: string,
+  provider: ethers.JsonRpcProvider,
+  initCode: string
 ): Promise<UnsignedPackedUserOperation> {
   const entrypoint = getEntrypointContractV7(provider)
   const nonce = await entrypoint.getNonce(account, BigInt(0))
@@ -105,8 +109,8 @@ async function prepareUserOperationV7(
   return {
     sender: account,
     nonce,
-    initCode: '0x',
-    callData: calldata,
+    initCode,
+    callData,
     ...packGasParameters({
       callGasLimit: ethers.toBeHex(2000000),
       verificationGasLimit: ethers.toBeHex(2000000),
@@ -132,14 +136,12 @@ function estimateUserOpGasLimit(
 
   const rpcUserOp = unpackUserOperationForRpc(
     userOp,
-    DUMMY_SIGNATURE,
+    DUMMY_SIGNATURE.ECDSA,
     entryPointAddress
   )
 
-  console.log(deepHexlify(rpcUserOp))
-
   const estimation = provider.send('eth_estimateUserOperationGas', [
-    deepHexlify(rpcUserOp),
+    rpcUserOp,
     entryPointAddress
   ])
 
@@ -159,18 +161,15 @@ function unpackUserOperationForRpc(
 ): UserOperation {
   let initFields
   let paymasterFields
-  let callGasLimit
-  let verificationGasLimit
-  let maxFeePerGas
-  let maxPriorityFeePerGas
+  let gasEstimationFields
 
   if (entryPointAddress === ENTRYPOINT_ADDRESS_V06) {
     initFields = { initCode: userOp.initCode }
     paymasterFields = { paymasterAndData: userOp.paymasterAndData }
-    callGasLimit = ethers.toBeHex(userOp.callGasLimit)
-    verificationGasLimit = ethers.toBeHex(userOp.verificationGasLimit)
-    maxFeePerGas = ethers.toBeHex(userOp.maxFeePerGas)
-    maxPriorityFeePerGas = ethers.toBeHex(userOp.maxPriorityFeePerGas)
+    gasEstimationFields = {
+      maxFeePerGas: ethers.toBeHex(userOp.maxFeePerGas),
+      maxPriorityFeePerGas: ethers.toBeHex(userOp.maxPriorityFeePerGas)
+    }
   } else {
     initFields =
       ethers.dataLength(userOp.initCode) > 0
@@ -197,16 +196,19 @@ function unpackUserOperationForRpc(
           }
         : {}
 
-    callGasLimit = ethers.toBeHex(
-      ethers.dataSlice(userOp.accountGasLimits, 16, 32)
-    )
-    verificationGasLimit = ethers.toBeHex(
-      ethers.dataSlice(userOp.accountGasLimits, 0, 16)
-    )
-    maxFeePerGas = ethers.toBeHex(ethers.dataSlice(userOp.gasFees, 16, 32))
-    maxPriorityFeePerGas = ethers.toBeHex(
-      ethers.dataSlice(userOp.gasFees, 0, 16)
-    )
+    gasEstimationFields = {
+      preVerificationGas: ethers.toBeHex(userOp.preVerificationGas),
+      callGasLimit: ethers.toBeHex(
+        ethers.dataSlice(userOp.accountGasLimits, 16, 32)
+      ),
+      verificationGasLimit: ethers.toBeHex(
+        ethers.dataSlice(userOp.accountGasLimits, 0, 16)
+      ),
+      maxFeePerGas: ethers.toBeHex(ethers.dataSlice(userOp.gasFees, 16, 32)),
+      maxPriorityFeePerGas: ethers.toBeHex(
+        ethers.dataSlice(userOp.gasFees, 0, 16)
+      )
+    }
   }
 
   return {
@@ -214,11 +216,7 @@ function unpackUserOperationForRpc(
     nonce: ethers.toBeHex(userOp.nonce),
     ...initFields,
     callData: ethers.hexlify(userOp.callData),
-    callGasLimit,
-    verificationGasLimit,
-    preVerificationGas: ethers.toBeHex(userOp.preVerificationGas),
-    maxFeePerGas,
-    maxPriorityFeePerGas,
+    ...gasEstimationFields,
     ...paymasterFields,
     signature: ethers.hexlify(signature)
   }
@@ -341,50 +339,50 @@ function getUserOpHash(
   return ethers.keccak256(enc)
 }
 
-const buildPackedUserOperationFromSafeUserOperation = ({
-  safeOp,
+const buildPackedUserOperationFromUserOperation = ({
+  userOp,
   signature
 }: {
-  safeOp: any
+  userOp: any
   signature: string
 }): any => {
   const initFields =
-    ethers.dataLength(safeOp.initCode) > 0
+    ethers.dataLength(userOp.initCode) > 0
       ? {
-          factory: ethers.getAddress(ethers.dataSlice(safeOp.initCode, 0, 20)),
-          factoryData: ethers.dataSlice(safeOp.initCode, 20)
+          factory: ethers.getAddress(ethers.dataSlice(userOp.initCode, 0, 20)),
+          factoryData: ethers.dataSlice(userOp.initCode, 20)
         }
       : {}
   const paymasterFields =
-    ethers.dataLength(safeOp.paymasterAndData) > 0
+    ethers.dataLength(userOp.paymasterAndData) > 0
       ? {
           paymaster: ethers.getAddress(
-            ethers.dataSlice(safeOp.initCode, 0, 20)
+            ethers.dataSlice(userOp.initCode, 0, 20)
           ),
           paymasterVerificationGasLimit: ethers.toBeHex(
-            ethers.dataSlice(safeOp.paymasterAndData, 20, 36)
+            ethers.dataSlice(userOp.paymasterAndData, 20, 36)
           ),
           paymasterPostOpGasLimit: ethers.toBeHex(
-            ethers.dataSlice(safeOp.paymasterAndData, 36, 52)
+            ethers.dataSlice(userOp.paymasterAndData, 36, 52)
           ),
-          paymasterData: ethers.dataSlice(safeOp.paymasterAndData, 52)
+          paymasterData: ethers.dataSlice(userOp.paymasterAndData, 52)
         }
       : {}
 
   return {
-    sender: safeOp.safe,
-    nonce: ethers.toBeHex(safeOp.nonce),
+    sender: userOp.safe,
+    nonce: ethers.toBeHex(userOp.nonce),
     ...initFields,
-    callData: ethers.hexlify(safeOp.callData),
-    callGasLimit: ethers.toBeHex(safeOp.callGasLimit),
-    preVerificationGas: ethers.toBeHex(safeOp.preVerificationGas),
-    verificationGasLimit: ethers.toBeHex(safeOp.verificationGasLimit),
-    maxFeePerGas: ethers.toBeHex(safeOp.maxFeePerGas),
-    maxPriorityFeePerGas: ethers.toBeHex(safeOp.maxPriorityFeePerGas),
+    callData: ethers.hexlify(userOp.callData),
+    callGasLimit: ethers.toBeHex(userOp.callGasLimit),
+    preVerificationGas: ethers.toBeHex(userOp.preVerificationGas),
+    verificationGasLimit: ethers.toBeHex(userOp.verificationGasLimit),
+    maxFeePerGas: ethers.toBeHex(userOp.maxFeePerGas),
+    maxPriorityFeePerGas: ethers.toBeHex(userOp.maxPriorityFeePerGas),
     ...paymasterFields,
     signature: ethers.solidityPacked(
       ['uint48', 'uint48', 'bytes'],
-      [safeOp.validAfter, safeOp.validUntil, signature]
+      [userOp.validAfter, userOp.validUntil, signature]
     )
   }
 }
@@ -394,7 +392,6 @@ async function SendUserOp(
   entryPoint: string = ENTRYPOINT_ADDRESS_V07
 ): Promise<string | undefined> {
   try {
-    console.log({ userOp })
     return await getEip4337BundlerProvider().send('eth_sendUserOperation', [
       userOp,
       entryPoint
@@ -405,11 +402,12 @@ async function SendUserOp(
 }
 
 export {
+  buildPackedUserOperationFromUserOperation,
   DUMMY_SIGNATURE,
-  buildPackedUserOperationFromSafeUserOperation,
   estimateUserOpGasLimit,
   extractClientDataFields,
   extractSignature,
+  getEntrypointContractV6,
   getUserOpHash,
   getUserOpInitCode,
   packGasParameters,

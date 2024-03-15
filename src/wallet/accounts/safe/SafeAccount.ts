@@ -9,7 +9,7 @@ import {
 } from '../../../constants'
 import { UnsignedPackedUserOperation } from '../../../services/4337/types'
 import {
-  buildPackedUserOperationFromSafeUserOperation,
+  buildPackedUserOperationFromUserOperation,
   estimateUserOpGasLimit,
   getUserOpHash,
   packGasParameters,
@@ -237,8 +237,8 @@ export class SafeAccount implements BaseAccount {
           }
         ])
 
-        rpcUserOp = buildPackedUserOperationFromSafeUserOperation({
-          safeOp: finalUserOp,
+        rpcUserOp = buildPackedUserOperationFromUserOperation({
+          userOp: finalUserOp,
           signature
         })
       } else {

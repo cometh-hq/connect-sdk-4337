@@ -118,3 +118,10 @@ export const isMetaTransactionArray = (
 ): safeTransactions is MetaTransaction[] => {
   return (safeTransactions as MetaTransaction[])?.length !== undefined
 }
+
+export function concatHex(values: readonly string[]): string {
+  return `0x${(values as string[]).reduce(
+    (acc, x) => acc + x.replace('0x', ''),
+    ''
+  )}`
+}
