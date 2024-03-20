@@ -2,7 +2,6 @@ import {
   getAccountNonce,
   getEntryPointVersion,
   getSenderAddress,
-  getUserOperationHash,
   isSmartAccountDeployed,
 } from "permissionless";
 import type { SmartAccount } from "permissionless/accounts";
@@ -38,12 +37,13 @@ import { API } from "../../services/API";
 import { getNetwork, getViemClient } from "../utils";
 import { encryptSignerInStorage } from "../../signers/fallbackEoa/services/eoaFallbackService";
 import type { ComethSigner } from "../../signers/createSigner";
+import { signerToKernelValidator } from "./validators/signerToValidator";
 
-export type KernelEcdsaSmartAccount<
+export type KernelSmartAccount<
   entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
   transport extends Transport = Transport,
   chain extends Chain | undefined = Chain | undefined
-> = SmartAccount<entryPoint, "kernelEcdsaSmartAccount", transport, chain>;
+> = SmartAccount<entryPoint, "kernelSmartAccount", transport, chain>;
 
 /**
  * The account creation ABI for a kernel smart account (from the KernelFactory)
@@ -252,9 +252,8 @@ export async function signerToKernelSmartAccount<
   validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
   deployedAccountAddress,
 }: signerToKernelSmartAccountParameters<entryPoint>): Promise<
-  KernelEcdsaSmartAccount<entryPoint, TTransport, TChain>
+  KernelSmartAccount<entryPoint, TTransport, TChain>
 > {
-  console.log({ comethSigner });
   const entryPointVersion = getEntryPointVersion(entryPointAddress);
 
   if (entryPointVersion !== "v0.6") {
@@ -286,7 +285,7 @@ export async function signerToKernelSmartAccount<
     });
 
   // Fetch account address and chain id
-  const [smartAccountAddress, chainId] = await Promise.all([
+  const [smartAccountAddress] = await Promise.all([
     address ??
       getAccountAddress<entryPoint, TTransport, TChain>({
         client,
@@ -323,6 +322,10 @@ export async function signerToKernelSmartAccount<
     smartAccountAddress
   );
 
+  const validator = await signerToKernelValidator(client, {
+    signer: viemSigner,
+  });
+
   return toSmartAccount({
     address: smartAccountAddress,
     async signMessage({ message }) {
@@ -346,7 +349,7 @@ export async function signerToKernelSmartAccount<
     client: client,
     publicKey: smartAccountAddress,
     entryPoint: entryPointAddress,
-    source: "kernelEcdsaSmartAccount",
+    source: "kernelSmartAccount",
 
     // Get the nonce of the smart account
     async getNonce() {
@@ -358,20 +361,7 @@ export async function signerToKernelSmartAccount<
 
     // Sign a user operation
     async signUserOperation(userOperation) {
-      const hash = getUserOperationHash({
-        userOperation: {
-          ...userOperation,
-          signature: "0x",
-        },
-        entryPoint: entryPointAddress,
-        chainId: chainId,
-      });
-      const signature = await signMessage(client, {
-        account: viemSigner,
-        message: { raw: hash },
-      });
-      // Always use the sudo mode, since we will use external paymaster
-      return concatHex(["0x00000000", signature]);
+      return validator.signUserOperation(userOperation);
     },
 
     // Encode the init code
@@ -445,7 +435,7 @@ export async function signerToKernelSmartAccount<
 
     // Get simple dummy signature
     async getDummySignature(_userOperation) {
-      return "0x00000000fffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c";
+      return validator.getDummySignature(_userOperation);
     },
   });
 }
