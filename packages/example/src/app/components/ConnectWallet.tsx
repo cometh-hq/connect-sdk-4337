@@ -1,12 +1,13 @@
-import { polygonMumbai, sepolia } from "viem/chains";
-import { createSmartAccount } from "@cometh/connect-sdk-4337";
+import { polygonMumbai } from "viem/chains";
 import {
-  createSmartAccountClient,
+  createSigner,
+  signerToKernelSmartAccount,
   ENTRYPOINT_ADDRESS_V06,
-} from "permissionless";
+} from "@cometh/connect-sdk-4337";
+import { createSmartAccountClient } from "permissionless";
 import countContractAbi from "../contract/counterABI.json";
 
-import { http, encodeFunctionData } from "viem";
+import { http, encodeFunctionData, type Hex } from "viem";
 
 const COUNTER_CONTRACT_ADDRESS = "0x84ADD3fa2c2463C8cF2C95aD70e4b5F602332160";
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
@@ -17,26 +18,39 @@ function ConnectWallet(): JSX.Element {
   const connect = async () => {
     const localStorageAddress = window.localStorage.getItem(
       "walletAddress"
-    ) as `0x${string}`;
-    /* 
-    let wallet;
+    ) as Hex;
+
+    const signer = await createSigner({
+      address: localStorageAddress,
+      disableEoaFallback: false,
+    });
+
+    console.log({ signer });
+
+    let smartAccount;
 
     if (localStorageAddress) {
-      wallet = await createSmartAccount({
+      smartAccount = await signerToKernelSmartAccount({
+        comethSigner: signer,
         apiKey,
-        walletAddress: localStorageAddress,
+        rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
+        address: localStorageAddress,
+        entryPoint: ENTRYPOINT_ADDRESS_V06,
         disableEoaFallback: false,
       });
     } else {
-      wallet = await createSmartAccount({
+      smartAccount = await signerToKernelSmartAccount({
+        comethSigner: signer,
         apiKey,
+        rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
+        entryPoint: ENTRYPOINT_ADDRESS_V06,
         disableEoaFallback: false,
       });
-      window.localStorage.setItem("walletAddress", wallet.address);
+      window.localStorage.setItem("walletAddress", smartAccount.address);
     }
 
     const smartAccountClient = createSmartAccountClient({
-      account: wallet,
+      account: smartAccount,
       entryPoint: ENTRYPOINT_ADDRESS_V06,
       chain: polygonMumbai,
       bundlerTransport: http("https://mumbai.bundler.develop.core.cometh.tech"),
@@ -54,7 +68,7 @@ function ConnectWallet(): JSX.Element {
       data: calldata,
     });
 
-    console.log(txHash); */
+    console.log(txHash);
   };
   return (
     <>
