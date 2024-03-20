@@ -1,74 +1,29 @@
 {
-  "name": "@cometh/connect-sdk-4337",
+  "name": "@cometh/connect-sdk",
   "version": "0.0.1",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "description": "SDK Cometh Connect 4337",
-  "files": [
-    "dist/**/*"
+  "description": "SDK Cometh Connect",
+  "private": true,
+  "type": "module",
+  "license": "ISC",
+  "workspaces": [
+    "packages/*"
   ],
   "scripts": {
-    "build:ts": "tsc",
-    "build": "rimraf dist && yarn build:ts",
-    "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write",
-    "lint": "eslint . --ext .ts",
-    "test": "jest",
-    "prepare": "husky install"
+    "build": "sh builder.sh",
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --apply .",
+    "changeset": "changeset",
+    "changeset:release": "bun run build && changeset publish",
+    "changeset:version": "changeset version && bun install --lockfile-only"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cometh-game/connect-sdk-4337.git"
-  },
-  "author": "yoanslvy",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/cometh-game/connect-sdk-4337/issues"
-  },
-  "homepage": "https://github.com/cometh-game/connect-sdk-4337#readme",
   "devDependencies": {
-    "@rollup/plugin-typescript": "^11.1.0",
-    "@tsconfig/recommended": "^1.0.2",
-    "@types/jest": "^29.4.0",
-    "@typescript-eslint/eslint-plugin": "^5.53.0",
-    "@typescript-eslint/parser": "^5.53.0",
-    "autoprefixer": "^10.4.14",
-    "css-loader": "^6.7.3",
-    "eslint": "^8.34.0",
-    "eslint-config-prettier": "^8.0.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-import-resolver-typescript": "^3.5.2",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^27.1.6",
-    "eslint-plugin-mocha": "^10.1.0",
-    "eslint-plugin-no-loops": "^0.3.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-promise": "^6.1.1",
-    "eslint-plugin-simple-import-sort": "^10.0.0",
-    "husky": "^8.0.3",
-    "jest": "^29.2.2",
-    "jest-environment-jsdom": "^29.7.0",
-    "mini-css-extract-plugin": "^2.7.5",
-    "postcss": "^8.4.23",
-    "prettier": "2.8.4",
-    "rollup": "^3.21.3",
-    "style-loader": "^3.3.2",
-    "ts-jest": "^29.0.3",
-    "ts-loader": "^9.4.2",
-    "typescript": "^5.3.3",
-    "webpack": "^5.81.0",
-    "webpack-cli": "^5.0.2"
-  },
-  "dependencies": {
-    "@babel/traverse": "^7.23.4",
-    "@ethersproject/abstract-provider": "^5.7.0",
-    "@ethersproject/abstract-signer": "^5.7.0",
-    "@ethersproject/providers": "^5.7.2",
-    "@types/babel__core": "^7.20.0",
-    "axios": "^1.6.7",
-    "bowser": "^2.11.0",
-    "ethers": "^6.11.1",
-    "ethers-multisend": "^2.4.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "@biomejs/biome": "1.5.3",
+    "@types/node": "^20",
+    "rimraf": "^5.0.5",
+    "typescript": "^5",
+    "@changesets/changelog-git": "^0.2.0",
+    "@changesets/changelog-github": "^0.5.0",
+    "@changesets/cli": "^2.27.1"
   }
 }
