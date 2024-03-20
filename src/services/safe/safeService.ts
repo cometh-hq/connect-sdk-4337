@@ -339,8 +339,6 @@ function getLaunchpadInitializeThenUserOpData(
     SafeSignerLaunchpadAbi
   )
 
-  console.log({ initializer })
-
   const initializeThenUserOpData =
     safeSignerLaunchpadInterface.encodeFunctionData('initializeThenUserOp', [
       initializer.singleton,

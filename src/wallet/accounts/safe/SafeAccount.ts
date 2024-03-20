@@ -168,6 +168,7 @@ export class SafeAccount implements BaseAccount {
     }
 
     const initHash = getInitHash(this.initializer, DEFAULT_CHAIN_ID)
+
     this.launchpadInitializer = getLaunchpadInitializer(initHash)
   }
 
@@ -338,6 +339,7 @@ export class SafeAccount implements BaseAccount {
       txData.value,
       txData.data,
       txData.operation
+      
     )
 
     const unsignedUserOperation = this.isWalletDeployed

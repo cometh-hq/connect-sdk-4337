@@ -134,11 +134,15 @@ function estimateUserOpGasLimit(
 ): Promise<UserOpGasLimitEstimation> {
   const provider = getEip4337BundlerProvider()
 
+  console.log({ userOp })
+
   const rpcUserOp = unpackUserOperationForRpc(
     userOp,
     DUMMY_SIGNATURE.ECDSA,
     entryPointAddress
   )
+
+  console.log({ rpcUserOp })
 
   const estimation = provider.send('eth_estimateUserOperationGas', [
     rpcUserOp,
@@ -167,6 +171,9 @@ function unpackUserOperationForRpc(
     initFields = { initCode: userOp.initCode }
     paymasterFields = { paymasterAndData: userOp.paymasterAndData }
     gasEstimationFields = {
+      preVerificationGas: ethers.toBeHex(userOp.preVerificationGas),
+      callGasLimit: ethers.toBeHex(userOp.callGasLimit),
+      verificationGasLimit: ethers.toBeHex(userOp.verificationGasLimit),
       maxFeePerGas: ethers.toBeHex(userOp.maxFeePerGas),
       maxPriorityFeePerGas: ethers.toBeHex(userOp.maxPriorityFeePerGas)
     }

@@ -237,8 +237,6 @@ export class KernelAccount implements BaseAccount {
       initCode
     })
 
-    console.log({ unsignedUserOperation })
-
     const userOpGasLimitEstimation = await estimateUserOpGasLimit(
       unsignedUserOperation,
       ENTRYPOINT_ADDRESS_V06

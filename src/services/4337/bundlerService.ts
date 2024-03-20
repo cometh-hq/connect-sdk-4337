@@ -12,10 +12,8 @@ const transactionReceiptStatus = {
  * @returns The EIP-4337 bundler provider.
  */
 function getEip4337BundlerProvider(): ethers.JsonRpcProvider {
-  const provider = new ethers.JsonRpcProvider(
-    /* 'https://polygon.bundler.develop.core.cometh.tech/rpc' */
-    'https://bundler.biconomy.io/api/v2/11155111/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44'
-  )
+  const provider = new ethers.JsonRpcProvider()
+  /* 'https://polygon.bundler.develop.core.cometh.tech/rpc' */
   return provider
 }
 
