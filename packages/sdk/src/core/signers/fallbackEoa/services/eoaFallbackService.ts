@@ -4,6 +4,7 @@ import * as utils from "../../../services/utils";
 
 import * as cryptolib from "./cryptoService";
 import { getRandomIV } from "./randomIvService";
+import type { Hex } from "viem";
 
 export type fallbackStorageValues = {
   encryptedPrivateKey: string;
@@ -15,7 +16,7 @@ export const Pbkdf2Iterations = 1000000;
 
 export const encryptSignerInStorage = async (
   walletAddress: Address,
-  privateKey: `0x${string}`,
+  privateKey: Hex,
   salt?: string
 ): Promise<void> => {
   const { encryptedPrivateKey, iv } = await encryptEoaFallback(
@@ -41,7 +42,7 @@ export const encryptSignerInStorage = async (
 export const getSignerLocalStorage = async (
   walletAddress: Address,
   salt?: string
-): Promise<`0x${string}` | null> => {
+): Promise<Hex | null> => {
   const localStorage = window.localStorage.getItem(
     `cometh-connect-fallback-${walletAddress}`
   );
@@ -63,8 +64,8 @@ export const getSignerLocalStorage = async (
 };
 
 const encryptEoaFallback = async (
-  walletAddress: string,
-  privateKey: string,
+  walletAddress: Address,
+  privateKey: Hex,
   salt: string
 ): Promise<{ encryptedPrivateKey: string; iv: string }> => {
   const encodedWalletAddress = utils.encodeUTF8(walletAddress);
@@ -93,7 +94,7 @@ const encryptEoaFallback = async (
 };
 
 const decryptEoaFallback = async (
-  walletAddress: string,
+  walletAddress: Address,
   encryptedPrivateKey: ArrayBuffer,
   iv: ArrayBuffer,
   salt: string
@@ -119,12 +120,12 @@ const decryptEoaFallback = async (
 const formatStorageValue = (
   encryptedPrivateKey: string,
   iv: string,
-  accountAddress: Address
+  walletAddress: Address
 ): string => {
   return JSON.stringify({
     encryptedPrivateKey,
     iv,
-    accountAddress,
+    walletAddress,
   });
 };
 

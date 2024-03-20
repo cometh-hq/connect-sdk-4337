@@ -5,7 +5,7 @@ import {
   getUserOperationHash,
   isSmartAccountDeployed,
 } from "permissionless";
-import type { SmartAccount, SmartAccountSigner } from "permissionless/accounts";
+import type { SmartAccount } from "permissionless/accounts";
 import {
   SignTransactionNotSupportedBySmartAccount,
   toSmartAccount,
@@ -32,8 +32,12 @@ import {
 import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
 import type { Prettify } from "viem/types/utils";
 import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types/entrypoint";
-import { KERNEL_ADDRESSES } from "../../../config";
+import { KERNEL_ADDRESSES, networks } from "../../../config";
 import type { PasskeyCredentials } from "../../signers/passkeys/types";
+import { API } from "../../services/API";
+import { getNetwork, getViemClient } from "../utils";
+import { encryptSignerInStorage } from "../../signers/fallbackEoa/services/eoaFallbackService";
+import type { ComethSigner } from "../../signers/createSigner";
 
 export type KernelEcdsaSmartAccount<
   entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
@@ -208,13 +212,13 @@ export const getAccountAddress = async <
 };
 
 export type signerToKernelSmartAccountParameters<
-  entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
-  TSource extends string = string,
-  TAddress extends Address = Address
+  entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE
 > = Prettify<{
-  signer: SmartAccountSigner<TSource, TAddress>;
-  entryPoint: entryPoint;
+  comethSigner: ComethSigner;
+  apiKey: string;
+  rpcUrl?: string;
   address?: Address;
+  entryPoint: entryPoint;
   index?: bigint;
   factoryAddress?: Address;
   accountLogicAddress?: Address;
@@ -235,31 +239,38 @@ export type signerToKernelSmartAccountParameters<
 export async function signerToKernelSmartAccount<
   entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
   TTransport extends Transport = Transport,
-  TChain extends Chain | undefined = Chain | undefined,
-  TSource extends string = string,
-  TAddress extends Address = Address
->(
-  client: Client<TTransport, TChain, undefined>,
-  {
-    signer,
-    address,
-    entryPoint: entryPointAddress,
-    index = 0n,
-    factoryAddress = KERNEL_ADDRESSES.FACTORY_ADDRESS,
-    accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_LOGIC,
-    validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
-    deployedAccountAddress,
-  }: signerToKernelSmartAccountParameters<entryPoint, TSource, TAddress>
-): Promise<KernelEcdsaSmartAccount<entryPoint, TTransport, TChain>> {
+  TChain extends Chain | undefined = Chain | undefined
+>({
+  comethSigner,
+  apiKey,
+  rpcUrl,
+  address,
+  entryPoint: entryPointAddress,
+  index = 0n,
+  factoryAddress = KERNEL_ADDRESSES.FACTORY_ADDRESS,
+  accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_LOGIC,
+  validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
+  deployedAccountAddress,
+}: signerToKernelSmartAccountParameters<entryPoint>): Promise<
+  KernelEcdsaSmartAccount<entryPoint, TTransport, TChain>
+> {
+  console.log({ comethSigner });
   const entryPointVersion = getEntryPointVersion(entryPointAddress);
 
   if (entryPointVersion !== "v0.6") {
     throw new Error("Only EntryPoint 0.6 is supported");
   }
 
+  const api = new API(apiKey);
+  const chain = await getNetwork(api);
+  const client = getViemClient(
+    chain,
+    rpcUrl || networks[chain.id].rpcUrl
+  ) as Client<TTransport, TChain, undefined>;
+
   // Get the private key related account
   const viemSigner: LocalAccount = {
-    ...signer,
+    ...comethSigner.signer,
     signTransaction: (_, __) => {
       throw new SignTransactionNotSupportedBySmartAccount();
     },
@@ -275,7 +286,7 @@ export async function signerToKernelSmartAccount<
     });
 
   // Fetch account address and chain id
-  const [walletAddress, chainId] = await Promise.all([
+  const [smartAccountAddress, chainId] = await Promise.all([
     address ??
       getAccountAddress<entryPoint, TTransport, TChain>({
         client,
@@ -289,15 +300,31 @@ export async function signerToKernelSmartAccount<
     getChainId(client),
   ]);
 
-  if (!walletAddress) throw new Error("Account address not found");
+  if (!smartAccountAddress) throw new Error("Account address not found");
+
+  // TODO adapt backend route to save a wallet in db
+  /*  if (address) {
+    const storedWallet = api.getWalletInfos(address);
+    if (!storedWallet) throw new Error("Wallet not found");
+  } else {
+    api.initWallet({ ownerAddress: comethSigner.signer.address });
+  } */
+
+  if (comethSigner.eoaFallbackParams) {
+    await encryptSignerInStorage(
+      smartAccountAddress,
+      comethSigner.eoaFallbackParams.privateKey,
+      comethSigner.eoaFallbackParams.encryptionSalt
+    );
+  }
 
   let smartAccountDeployed = await isSmartAccountDeployed(
     client,
-    walletAddress
+    smartAccountAddress
   );
 
   return toSmartAccount({
-    address: walletAddress,
+    address: smartAccountAddress,
     async signMessage({ message }) {
       return signMessage(client, { account: viemSigner, message });
     },
@@ -317,14 +344,14 @@ export async function signerToKernelSmartAccount<
       );
     },
     client: client,
-    publicKey: walletAddress,
+    publicKey: smartAccountAddress,
     entryPoint: entryPointAddress,
     source: "kernelEcdsaSmartAccount",
 
     // Get the nonce of the smart account
     async getNonce() {
       return getAccountNonce(client, {
-        sender: walletAddress,
+        sender: smartAccountAddress,
         entryPoint: entryPointAddress,
       });
     },
@@ -353,7 +380,7 @@ export async function signerToKernelSmartAccount<
 
       smartAccountDeployed = await isSmartAccountDeployed(
         client,
-        walletAddress
+        smartAccountAddress
       );
 
       if (smartAccountDeployed) return "0x";
@@ -366,7 +393,7 @@ export async function signerToKernelSmartAccount<
 
       smartAccountDeployed = await isSmartAccountDeployed(
         client,
-        walletAddress
+        smartAccountAddress
       );
 
       if (smartAccountDeployed) return undefined;
@@ -379,7 +406,7 @@ export async function signerToKernelSmartAccount<
 
       smartAccountDeployed = await isSmartAccountDeployed(
         client,
-        walletAddress
+        smartAccountAddress
       );
 
       if (smartAccountDeployed) return undefined;

@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "sh builder.sh",
+    "build": "sh builder.sh bun install",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --apply .",

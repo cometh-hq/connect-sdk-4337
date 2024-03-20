@@ -6,7 +6,6 @@ import {
 
 import type { PrivateKeyAccount } from "viem";
 import { getSignerLocalStorage } from "./services/eoaFallbackService";
-import type { API } from "../../services/API";
 
 const throwErrorWhenEoaFallbackDisabled = (
   disableEoaFallback: boolean
@@ -34,20 +33,14 @@ export const getExistingSigner = async ({
 };
 
 export const createNewSigner = async ({
-  api,
   disableEoaFallback,
 }: {
-  api: API;
   disableEoaFallback: boolean;
 }): Promise<{ privateKey: `0x${string}`; signer: PrivateKeyAccount }> => {
   throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
 
   const privateKey = generatePrivateKey();
   const signer = privateKeyToAccount(privateKey);
-
-  await api.initWallet({
-    ownerAddress: signer.address,
-  });
 
   return { signer, privateKey };
 };
