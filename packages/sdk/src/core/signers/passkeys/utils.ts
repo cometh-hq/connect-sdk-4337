@@ -2,6 +2,8 @@ import * as psl from "psl";
 
 import type { webAuthnOptions } from "./types";
 
+
+
 export const challengePrefix = "226368616c6c656e6765223a";
 
 export const DEFAULT_WEBAUTHN_OPTIONS: webAuthnOptions = {
@@ -136,7 +138,7 @@ export const isWebAuthnCompatible = async (
   webAuthnOptions: webAuthnOptions
 ): Promise<boolean> => {
   try {
-    if (!window.PublicKeyCredential) return false;
+    if (typeof window === undefined ||!window.PublicKeyCredential) return false;
 
     if (
       webAuthnOptions.authenticatorSelection?.authenticatorAttachment ===

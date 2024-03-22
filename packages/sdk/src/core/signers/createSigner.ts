@@ -85,6 +85,7 @@ export async function createSigner({
             passkey = await createPasskeySigner(webAuthnOptions, passKeyName);
 
             if (passkey.publicKeyAlgorithm !== -7) {
+                console.warn("ECC passkey are not supported by your device");
                 throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
 
                 return {
@@ -102,6 +103,7 @@ export async function createSigner({
         };
     }
 
+    console.warn("ECC passkey are not supported by your device");
     throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
 
     let privateKey: Hex;
