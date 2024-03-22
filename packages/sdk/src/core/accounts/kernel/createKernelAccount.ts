@@ -9,32 +9,24 @@ import {
   SignTransactionNotSupportedBySmartAccount,
   toSmartAccount,
 } from "permissionless/accounts";
-import type { TypedData } from "viem";
+
 import {
   type Address,
   type Chain,
   type Client,
   type Hex,
-  type LocalAccount,
   type Transport,
-  type TypedDataDefinition,
   concatHex,
   encodeFunctionData,
-  isAddressEqual,
 } from "viem";
-import {
-  getChainId,
-  readContract,
-  signMessage,
-  signTypedData,
-} from "viem/actions";
+import { getChainId } from "viem/actions";
 import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
 import type { Prettify } from "viem/types/utils";
 import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types/entrypoint";
-import { KERNEL_ADDRESSES, networks } from "../../../config";
-import type { PasskeyCredentials } from "../../signers/passkeys/types";
+import { KERNEL_ADDRESSES } from "../../../config";
 import { API } from "../../services/API";
-import { getNetwork, getViemClient } from "../utils";
+import { getClient } from "../utils";
+
 import { encryptSignerInStorage } from "../../signers/fallbackEoa/services/eoaFallbackService";
 import type { ComethSigner } from "../../signers/createSigner";
 import { signerToKernelValidator } from "./validators/signerToValidator";
@@ -89,41 +81,23 @@ const createAccountAbi = [
  * @param validatorAddress
  */
 export const getAccountInitCode = async ({
-  owner,
   index,
   accountLogicAddress,
   validatorAddress,
-  passkey,
+  enableData,
 }: {
-  owner: Address;
   index: bigint;
   accountLogicAddress: Address;
   validatorAddress: Address;
-  passkey?: PasskeyCredentials;
+  enableData: Hex;
 }): Promise<Hex> => {
-  if (!owner) throw new Error("Owner account not found");
-
-  let initialisationData: Hex;
-
   // Build the account initialization data
-  if (passkey) {
-    const encodedPublicKey = concatHex([
-      passkey.publicKeyX,
-      passkey.publicKeyY,
-    ]);
 
-    initialisationData = encodeFunctionData({
-      abi: KernelInitAbi,
-      functionName: "initialize",
-      args: [validatorAddress, encodedPublicKey],
-    });
-  } else {
-    initialisationData = encodeFunctionData({
-      abi: KernelInitAbi,
-      functionName: "initialize",
-      args: [validatorAddress, owner],
-    });
-  }
+  const initialisationData = encodeFunctionData({
+    abi: KernelInitAbi,
+    functionName: "initialize",
+    args: [validatorAddress, enableData],
+  });
 
   // Build the account init code
   return encodeFunctionData({
@@ -148,65 +122,20 @@ export const getAccountAddress = async <
   TChain extends Chain | undefined = Chain | undefined
 >({
   client,
-  owner,
   entryPoint: entryPointAddress,
   initCodeProvider,
-  validatorAddress,
-  deployedAccountAddress,
   factoryAddress,
 }: {
   client: Client<TTransport, TChain>;
-  owner: Address;
   initCodeProvider: () => Promise<Hex>;
   factoryAddress: Address;
   entryPoint: entryPoint;
-  validatorAddress: Address;
-  deployedAccountAddress?: Address;
 }): Promise<Address> => {
-  // If we got an already deployed account, ensure it's well deployed, and the validator & signer are correct
-  if (deployedAccountAddress !== undefined) {
-    // Get the owner of the deployed account, ensure it's the same as the owner given in params
-    const deployedAccountOwner = await readContract(client, {
-      address: validatorAddress,
-      abi: [
-        {
-          inputs: [
-            {
-              internalType: "address",
-              name: "",
-              type: "address",
-            },
-          ],
-          name: "ecdsaValidatorStorage",
-          outputs: [
-            {
-              internalType: "address",
-              name: "owner",
-              type: "address",
-            },
-          ],
-          stateMutability: "view",
-          type: "function",
-        },
-      ],
-      functionName: "ecdsaValidatorStorage",
-      args: [deployedAccountAddress],
-    });
-
-    // Ensure the address match
-    if (!isAddressEqual(deployedAccountOwner, owner)) {
-      throw new Error("Invalid owner for the already deployed account");
-    }
-
-    // If ok, return the address
-    return deployedAccountAddress;
-  }
-
   // Find the init code for this account
-  const factoryData = await initCodeProvider();
+  const initCode = await initCodeProvider();
 
   return getSenderAddress<ENTRYPOINT_ADDRESS_V06_TYPE>(client, {
-    initCode: concatHex([factoryAddress, factoryData]),
+    initCode: concatHex([factoryAddress, initCode]),
     entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V06_TYPE,
   });
 };
@@ -223,7 +152,6 @@ export type signerToKernelSmartAccountParameters<
   factoryAddress?: Address;
   accountLogicAddress?: Address;
   validatorAddress?: Address;
-  deployedAccountAddress?: Address;
 }>;
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
@@ -250,7 +178,6 @@ export async function signerToKernelSmartAccount<
   factoryAddress = KERNEL_ADDRESSES.FACTORY_ADDRESS,
   accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_LOGIC,
   validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
-  deployedAccountAddress,
 }: signerToKernelSmartAccountParameters<entryPoint>): Promise<
   KernelSmartAccount<entryPoint, TTransport, TChain>
 > {
@@ -261,27 +188,25 @@ export async function signerToKernelSmartAccount<
   }
 
   const api = new API(apiKey);
-  const chain = await getNetwork(api);
-  const client = getViemClient(
-    chain,
-    rpcUrl || networks[chain.id].rpcUrl
-  ) as Client<TTransport, TChain, undefined>;
+  const client = (await getClient(api, rpcUrl)) as Client<
+    TTransport,
+    TChain,
+    undefined
+  >;
 
-  // Get the private key related account
-  const viemSigner: LocalAccount = {
-    ...comethSigner.signer,
-    signTransaction: (_, __) => {
-      throw new SignTransactionNotSupportedBySmartAccount();
-    },
-  } as LocalAccount;
+  const validator = await signerToKernelValidator(client, {
+    comethSigner,
+  });
+
+  const enableData = await validator.getEnableData();
 
   // Helper to generate the init code for the smart account
   const generateInitCode = () =>
     getAccountInitCode({
-      owner: viemSigner.address,
       index,
       accountLogicAddress,
       validatorAddress,
+      enableData,
     });
 
   // Fetch account address and chain id
@@ -290,10 +215,7 @@ export async function signerToKernelSmartAccount<
       getAccountAddress<entryPoint, TTransport, TChain>({
         client,
         entryPoint: entryPointAddress,
-        owner: viemSigner.address,
-        validatorAddress,
         initCodeProvider: generateInitCode,
-        deployedAccountAddress,
         factoryAddress,
       }),
     getChainId(client),
@@ -309,11 +231,11 @@ export async function signerToKernelSmartAccount<
     api.initWallet({ ownerAddress: comethSigner.signer.address });
   } */
 
-  if (comethSigner.eoaFallbackParams) {
+  if (comethSigner.type === "localWallet") {
     await encryptSignerInStorage(
       smartAccountAddress,
-      comethSigner.eoaFallbackParams.privateKey,
-      comethSigner.eoaFallbackParams.encryptionSalt
+      comethSigner.eoaFallback.privateKey,
+      comethSigner.eoaFallback.encryptionSalt
     );
   }
 
@@ -322,29 +244,16 @@ export async function signerToKernelSmartAccount<
     smartAccountAddress
   );
 
-  const validator = await signerToKernelValidator(client, {
-    signer: viemSigner,
-  });
-
   return toSmartAccount({
     address: smartAccountAddress,
     async signMessage({ message }) {
-      return signMessage(client, { account: viemSigner, message });
+      return validator.signMessage({ message });
     },
     async signTransaction(_, __) {
       throw new SignTransactionNotSupportedBySmartAccount();
     },
-    async signTypedData<
-      const TTypedData extends TypedData | Record<string, unknown>,
-      TPrimaryType extends keyof TTypedData | "EIP712Domain" = keyof TTypedData
-    >(typedData: TypedDataDefinition<TTypedData, TPrimaryType>) {
-      return signTypedData<TTypedData, TPrimaryType, TChain, undefined>(
-        client,
-        {
-          account: viemSigner,
-          ...typedData,
-        }
-      );
+    async signTypedData() {
+      throw new SignTransactionNotSupportedBySmartAccount();
     },
     client: client,
     publicKey: smartAccountAddress,

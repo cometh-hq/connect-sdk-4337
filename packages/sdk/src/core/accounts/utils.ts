@@ -1,13 +1,13 @@
 import { http, type Chain, createClient } from "viem";
 import type { API } from "../services/API";
-import { supportedChains } from "../../config";
+import { networks, supportedChains } from "../../config";
 
-export const getNetwork = async (api: API): Promise<Chain> => {
+const getNetwork = async (api: API): Promise<Chain> => {
   const chainId = await api.getProjectParams().then((params) => params.chainId);
   return supportedChains.find((chain) => chain.id === +chainId) as Chain;
 };
 
-export const getViemClient = (chain: Chain, rpcUrl: string) => {
+const getViemClient = (chain: Chain, rpcUrl: string) => {
   const rpcTransport = http(rpcUrl, {
     batch: { wait: 50 },
     retryCount: 5,
@@ -23,4 +23,9 @@ export const getViemClient = (chain: Chain, rpcUrl: string) => {
       multicall: { wait: 50 },
     },
   });
+};
+
+export const getClient = async (api: API, rpcUrl?: string) => {
+  const chain = await getNetwork(api);
+  return getViemClient(chain, rpcUrl || networks[chain.id].rpcUrl);
 };

@@ -1,130 +1,138 @@
-import { ethers } from "ethers";
-import psl from "psl";
+import * as psl from "psl";
 
-import { webAuthnOptions } from "../../wallet/types";
+import type { webAuthnOptions } from "./types";
 
-/**
- * Compute the additional client data JSON fields. This is the fields other than `type` and
- * `challenge` (including `origin` and any other additional client data fields that may be
- * added by the authenticator).
- *
- * See <https://w3c.github.io/webauthn/#clientdatajson-serialization>
- */
-function extractClientDataFields(
-  response: AuthenticatorAssertionResponse
-): string {
-  const clientDataJSON = new TextDecoder("utf-8").decode(
-    response.clientDataJSON
+export const challengePrefix = "226368616c6c656e6765223a";
+
+export const DEFAULT_WEBAUTHN_OPTIONS: webAuthnOptions = {
+  // authenticatorSelection documentation can be found here: https://www.w3.org/TR/webauthn-2/#dictdef-authenticatorselectioncriteria
+  authenticatorSelection: {
+    authenticatorAttachment: "platform",
+    residentKey: "preferred",
+    userVerification: "preferred",
+  },
+};
+
+export const rpId =
+  process.env.IS_LOCAL === "true"
+    ? { name: "localhost" }
+    : {
+        name: (psl.parse(window.location.host) as psl.ParsedDomain)
+          .domain as string,
+        id: (psl.parse(window.location.host) as psl.ParsedDomain)
+          .domain as string,
+      };
+
+export const hexArrayStr = (array: any): string =>
+  new Uint8Array(array).reduce(
+    (acc, v) => acc + v.toString(16).padStart(2, "0"),
+    "0x"
   );
-  const match = clientDataJSON.match(
-    /^\{"type":"webauthn.get","challenge":"[A-Za-z0-9\-_]{43}",(.*)\}$/
-  );
 
-  if (!match) {
-    throw new Error("challenge not found in client data JSON");
+export const parseHex = (str: any): Uint8Array =>
+  new Uint8Array(str.match(/[\da-f]{2}/gi).map((h: any) => parseInt(h, 16)));
+
+export const derToRS = (der: any): any[] => {
+  let offset = 3;
+  let dataOffset;
+
+  if (der[offset] === 0x21) {
+    dataOffset = offset + 2;
+  } else {
+    dataOffset = offset + 1;
+  }
+  const r = der.slice(dataOffset, dataOffset + 32);
+  offset = offset + der[offset] + 1 + 1;
+  if (der[offset] === 0x21) {
+    dataOffset = offset + 2;
+  } else {
+    dataOffset = offset + 1;
   }
 
-  const [, fields] = match;
-  return ethers.hexlify(ethers.toUtf8Bytes(fields));
-}
-
-/**
- * Extracts the signature into R and S values from the authenticator response.
- *
- * See:
- * - <https://datatracker.ietf.org/doc/html/rfc3279#section-2.2.3>
- * - <https://en.wikipedia.org/wiki/X.690#BER_encoding>
- */
-function extractSignature(
-  response: AuthenticatorAssertionResponse
-): [bigint, bigint] {
-  const check = (x: boolean): void => {
-    if (!x) {
-      throw new Error("invalid signature encoding");
-    }
-  };
-
-  // Decode the DER signature. Note that we assume that all lengths fit into 8-bit integers,
-  // which is true for the kinds of signatures we are decoding but generally false. I.e. this
-  // code should not be used in any serious application.
-  const view = new DataView(response.signature);
-
-  // check that the sequence header is valid
-  check(view.getUint8(0) === 0x30);
-  check(view.getUint8(1) === view.byteLength - 2);
-
-  // read r and s
-  const readInt = (offset: number): any => {
-    check(view.getUint8(offset) === 0x02);
-    const len = view.getUint8(offset + 1);
-    const start = offset + 2;
-    const end = start + len;
-    const n = BigInt(
-      ethers.hexlify(new Uint8Array(view.buffer.slice(start, end)))
-    );
-    check(n < ethers.MaxUint256);
-    return [n, end] as const;
-  };
-  const [r, sOffset] = readInt(2);
-  const [s] = readInt(sOffset);
-
+  const s = der.slice(dataOffset, dataOffset + 32);
   return [r, s];
-}
+};
 
-const buildSignatureBytes = (signatures: any[]): string => {
-  const SIGNATURE_LENGTH_BYTES = 65;
-  signatures.sort((left, right) =>
-    left.signer.toLowerCase().localeCompare(right.signer.toLowerCase())
-  );
-
-  let signatureBytes = "0x";
-  let dynamicBytes = "";
-  for (const sig of signatures) {
-    if (sig.dynamic) {
-      /* 
-              A contract signature has a static part of 65 bytes and the dynamic part that needs to be appended 
-              at the end of signature bytes.
-              The signature format is
-              Signature type == 0
-              Constant part: 65 bytes
-              {32-bytes signature verifier}{32-bytes dynamic data position}{1-byte signature type}
-              Dynamic part (solidity bytes): 32 bytes + signature data length
-              {32-bytes signature length}{bytes signature data}
-          */
-      const dynamicPartPosition = (
-        signatures.length * SIGNATURE_LENGTH_BYTES +
-        dynamicBytes.length / 2
-      )
-        .toString(16)
-        .padStart(64, "0");
-      const dynamicPartLength = (sig.data.slice(2).length / 2)
-        .toString(16)
-        .padStart(64, "0");
-      const staticSignature = `${sig.signer
-        .slice(2)
-        .padStart(64, "0")}${dynamicPartPosition}00`;
-      const dynamicPartWithLength = `${dynamicPartLength}${sig.data.slice(2)}`;
-
-      signatureBytes += staticSignature;
-      dynamicBytes += dynamicPartWithLength;
-    } else {
-      signatureBytes += sig.data.slice(2);
+export const findSequence = (arr: any, seq: any): number => {
+  for (let i = 0; i < arr.length; ++i) {
+    for (let j = 0; j < seq.length; j++) {
+      if (arr[i + j] !== seq[j]) {
+        break;
+      }
+      if (j === seq.length - 1) {
+        return i;
+      }
     }
   }
-
-  return signatureBytes + dynamicBytes;
+  return -1;
 };
 
-const getPasskeyCreationRpId = (): any => {
-  return psl.parse(window.location.host).domain
-    ? {
-        name: psl.parse(window.location.host).domain,
-        id: psl.parse(window.location.host).domain,
-      }
-    : { name: "localhost" };
+export const getChallengeOffset = (
+  clientData: any,
+  challengePrefix: string
+): number => {
+  return (
+    findSequence(new Uint8Array(clientData), parseHex(challengePrefix)) + 12 + 1
+  );
 };
 
-const isWebAuthnCompatible = async (
+export const decodeUTF8 = (b: ArrayBuffer): string => {
+  return new TextDecoder().decode(b);
+};
+
+export const encodeUTF8 = (s: string): ArrayBuffer => {
+  return new TextEncoder().encode(s);
+};
+
+export const bufferToArrayBuffer = (bufferObject: any): ArrayBuffer => {
+  const buffer = Buffer.from(bufferObject.data);
+  return Uint8Array.from(buffer).buffer;
+};
+
+export const bufferToHex = (s: ArrayBuffer): string => {
+  return Buffer.from(s).toString("hex");
+};
+
+export const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+};
+
+export const uint8ArrayToBase64 = (bytes: Uint8Array): string => {
+  let binary = "";
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+};
+
+export const base64toUint8Array = (base64: string): Uint8Array => {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes;
+};
+
+export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
+  const binary_string = window.atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+};
+
+export const isWebAuthnCompatible = async (
   webAuthnOptions: webAuthnOptions
 ): Promise<boolean> => {
   try {
@@ -144,12 +152,4 @@ const isWebAuthnCompatible = async (
   } catch {
     return false;
   }
-};
-
-export {
-  buildSignatureBytes,
-  extractClientDataFields,
-  extractSignature,
-  getPasskeyCreationRpId,
-  isWebAuthnCompatible,
 };

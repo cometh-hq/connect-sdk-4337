@@ -20,3 +20,9 @@ export type UserOperation = {
   paymasterPostOpGasLimit?: never;
   paymasterData?: never;
 };
+
+export type DeviceData = {
+  browser: string;
+  os: string;
+  platform: string;
+};

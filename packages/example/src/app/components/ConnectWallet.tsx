@@ -3,8 +3,9 @@ import {
   createSigner,
   signerToKernelSmartAccount,
   ENTRYPOINT_ADDRESS_V06,
+  createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
-import { createSmartAccountClient } from "permissionless";
+
 import countContractAbi from "../contract/counterABI.json";
 
 import { http, encodeFunctionData, type Hex } from "viem";
@@ -48,6 +49,8 @@ function ConnectWallet(): JSX.Element {
       });
       window.localStorage.setItem("walletAddress", smartAccount.address);
     }
+
+    console.log(smartAccount);
 
     const smartAccountClient = createSmartAccountClient({
       account: smartAccount,
