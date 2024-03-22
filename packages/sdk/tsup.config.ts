@@ -1,19 +1,19 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  // All of our entry-points
-  entry: ["src/index.ts", "src/core/index.ts"],
-  external: [
-    // Viem is also a peer dependency
-    "viem",
-  ],
-  // Format waited
-  format: ["cjs", "esm"],
-  // Code splitting
-  clean: true,
-  splitting: true,
-  // Types config
-  dts: {
-    resolve: true,
-  },
+    // All of our entry-points
+    entry: ["src/index.ts", "src/core/index.ts"],
+    external: [
+        // Viem is also a peer dependency
+        "viem",
+    ],
+    // Format waited
+    format: ["cjs", "esm"],
+    // Code splitting
+    clean: true,
+    splitting: true,
+    // Types config
+    dts: {
+        resolve: true,
+    },
 });

@@ -22,6 +22,7 @@ function ConnectWallet(): JSX.Element {
     ) as Hex;
 
     const signer = await createSigner({
+      apiKey,
       address: localStorageAddress,
       disableEoaFallback: false,
     });

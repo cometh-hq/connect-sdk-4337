@@ -1,75 +1,75 @@
 import {
-  getAccountNonce,
-  getEntryPointVersion,
-  getSenderAddress,
-  isSmartAccountDeployed,
+    getAccountNonce,
+    getEntryPointVersion,
+    getSenderAddress,
+    isSmartAccountDeployed,
 } from "permissionless";
 import type { SmartAccount } from "permissionless/accounts";
 import {
-  SignTransactionNotSupportedBySmartAccount,
-  toSmartAccount,
+    SignTransactionNotSupportedBySmartAccount,
+    toSmartAccount,
 } from "permissionless/accounts";
 
+import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types/entrypoint";
 import {
-  type Address,
-  type Chain,
-  type Client,
-  type Hex,
-  type Transport,
-  concatHex,
-  encodeFunctionData,
+    type Address,
+    type Chain,
+    type Client,
+    type Hex,
+    type Transport,
+    concatHex,
+    encodeFunctionData,
 } from "viem";
 import { getChainId } from "viem/actions";
-import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
 import type { Prettify } from "viem/types/utils";
-import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types/entrypoint";
 import { KERNEL_ADDRESSES } from "../../../config";
 import { API } from "../../services/API";
 import { getClient } from "../utils";
+import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
 
-import { encryptSignerInStorage } from "../../signers/fallbackEoa/services/eoaFallbackService";
 import type { ComethSigner } from "../../signers/createSigner";
+import { encryptSignerInStorage } from "../../signers/fallbackEoa/services/eoaFallbackService";
 import { signerToKernelValidator } from "./validators/signerToValidator";
 
 export type KernelSmartAccount<
-  entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
-  transport extends Transport = Transport,
-  chain extends Chain | undefined = Chain | undefined
+    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
+    transport extends Transport = Transport,
+    chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "kernelSmartAccount", transport, chain>;
 
 /**
  * The account creation ABI for a kernel smart account (from the KernelFactory)
  */
 const createAccountAbi = [
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "_implementation",
-        type: "address",
-      },
-      {
-        internalType: "bytes",
-        name: "_data",
-        type: "bytes",
-      },
-      {
-        internalType: "uint256",
-        name: "_index",
-        type: "uint256",
-      },
-    ],
-    name: "createAccount",
-    outputs: [
-      {
-        internalType: "address",
-        name: "proxy",
-        type: "address",
-      },
-    ],
-    stateMutability: "payable",
-    type: "function",
-  },
+    {
+        inputs: [
+            {
+                internalType: "address",
+                name: "_implementation",
+                type: "address",
+            },
+            {
+                internalType: "bytes",
+                name: "_data",
+                type: "bytes",
+            },
+            {
+                internalType: "uint256",
+                name: "_index",
+                type: "uint256",
+            },
+        ],
+        name: "createAccount",
+        outputs: [
+            {
+                internalType: "address",
+                name: "proxy",
+                type: "address",
+            },
+        ],
+        stateMutability: "payable",
+        type: "function",
+    },
 ] as const;
 
 /**
@@ -81,30 +81,30 @@ const createAccountAbi = [
  * @param validatorAddress
  */
 export const getAccountInitCode = async ({
-  index,
-  accountLogicAddress,
-  validatorAddress,
-  enableData,
+    index,
+    accountLogicAddress,
+    validatorAddress,
+    enableData,
 }: {
-  index: bigint;
-  accountLogicAddress: Address;
-  validatorAddress: Address;
-  enableData: Hex;
+    index: bigint;
+    accountLogicAddress: Address;
+    validatorAddress: Address;
+    enableData: Hex;
 }): Promise<Hex> => {
-  // Build the account initialization data
+    // Build the account initialization data
 
-  const initialisationData = encodeFunctionData({
-    abi: KernelInitAbi,
-    functionName: "initialize",
-    args: [validatorAddress, enableData],
-  });
+    const initialisationData = encodeFunctionData({
+        abi: KernelInitAbi,
+        functionName: "initialize",
+        args: [validatorAddress, enableData],
+    });
 
-  // Build the account init code
-  return encodeFunctionData({
-    abi: createAccountAbi,
-    functionName: "createAccount",
-    args: [accountLogicAddress, initialisationData, index],
-  });
+    // Build the account init code
+    return encodeFunctionData({
+        abi: createAccountAbi,
+        functionName: "createAccount",
+        args: [accountLogicAddress, initialisationData, index],
+    });
 };
 
 /**
@@ -117,41 +117,41 @@ export const getAccountInitCode = async ({
  * @param deployedAccountAddress
  */
 export const getAccountAddress = async <
-  entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
-  TTransport extends Transport = Transport,
-  TChain extends Chain | undefined = Chain | undefined
+    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = Chain | undefined,
 >({
-  client,
-  entryPoint: entryPointAddress,
-  initCodeProvider,
-  factoryAddress,
+    client,
+    entryPoint: entryPointAddress,
+    initCodeProvider,
+    factoryAddress,
 }: {
-  client: Client<TTransport, TChain>;
-  initCodeProvider: () => Promise<Hex>;
-  factoryAddress: Address;
-  entryPoint: entryPoint;
+    client: Client<TTransport, TChain>;
+    initCodeProvider: () => Promise<Hex>;
+    factoryAddress: Address;
+    entryPoint: entryPoint;
 }): Promise<Address> => {
-  // Find the init code for this account
-  const initCode = await initCodeProvider();
+    // Find the init code for this account
+    const initCode = await initCodeProvider();
 
-  return getSenderAddress<ENTRYPOINT_ADDRESS_V06_TYPE>(client, {
-    initCode: concatHex([factoryAddress, initCode]),
-    entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V06_TYPE,
-  });
+    return getSenderAddress<ENTRYPOINT_ADDRESS_V06_TYPE>(client, {
+        initCode: concatHex([factoryAddress, initCode]),
+        entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V06_TYPE,
+    });
 };
 
 export type signerToKernelSmartAccountParameters<
-  entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE
+    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
 > = Prettify<{
-  comethSigner: ComethSigner;
-  apiKey: string;
-  rpcUrl?: string;
-  address?: Address;
-  entryPoint: entryPoint;
-  index?: bigint;
-  factoryAddress?: Address;
-  accountLogicAddress?: Address;
-  validatorAddress?: Address;
+    comethSigner: ComethSigner;
+    apiKey: string;
+    rpcUrl?: string;
+    address?: Address;
+    entryPoint: entryPoint;
+    index?: bigint;
+    factoryAddress?: Address;
+    accountLogicAddress?: Address;
+    validatorAddress?: Address;
 }>;
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
@@ -165,186 +165,188 @@ export type signerToKernelSmartAccountParameters<
  * @param deployedAccountAddress
  */
 export async function signerToKernelSmartAccount<
-  entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
-  TTransport extends Transport = Transport,
-  TChain extends Chain | undefined = Chain | undefined
+    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = Chain | undefined,
 >({
-  comethSigner,
-  apiKey,
-  rpcUrl,
-  address,
-  entryPoint: entryPointAddress,
-  index = 0n,
-  factoryAddress = KERNEL_ADDRESSES.FACTORY_ADDRESS,
-  accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_LOGIC,
-  validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
-}: signerToKernelSmartAccountParameters<entryPoint>): Promise<
-  KernelSmartAccount<entryPoint, TTransport, TChain>
-> {
-  const entryPointVersion = getEntryPointVersion(entryPointAddress);
-
-  if (entryPointVersion !== "v0.6") {
-    throw new Error("Only EntryPoint 0.6 is supported");
-  }
-
-  const api = new API(apiKey);
-  const client = (await getClient(api, rpcUrl)) as Client<
-    TTransport,
-    TChain,
-    undefined
-  >;
-
-  const validator = await signerToKernelValidator(client, {
     comethSigner,
-  });
+    apiKey,
+    rpcUrl,
+    address,
+    entryPoint: entryPointAddress,
+    index = 0n,
+    factoryAddress = KERNEL_ADDRESSES.FACTORY_ADDRESS,
+    accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_LOGIC,
+    validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
+}: signerToKernelSmartAccountParameters<entryPoint>): Promise<
+    KernelSmartAccount<entryPoint, TTransport, TChain>
+> {
+    const entryPointVersion = getEntryPointVersion(entryPointAddress);
 
-  const enableData = await validator.getEnableData();
+    if (entryPointVersion !== "v0.6") {
+        throw new Error("Only EntryPoint 0.6 is supported");
+    }
 
-  // Helper to generate the init code for the smart account
-  const generateInitCode = () =>
-    getAccountInitCode({
-      index,
-      accountLogicAddress,
-      validatorAddress,
-      enableData,
+    const api = new API(apiKey);
+    const client = (await getClient(api, rpcUrl)) as Client<
+        TTransport,
+        TChain,
+        undefined
+    >;
+
+    const validator = await signerToKernelValidator(client, {
+        comethSigner,
     });
 
-  // Fetch account address and chain id
-  const [smartAccountAddress] = await Promise.all([
-    address ??
-      getAccountAddress<entryPoint, TTransport, TChain>({
-        client,
-        entryPoint: entryPointAddress,
-        initCodeProvider: generateInitCode,
-        factoryAddress,
-      }),
-    getChainId(client),
-  ]);
+    const enableData = await validator.getEnableData();
 
-  if (!smartAccountAddress) throw new Error("Account address not found");
+    // Helper to generate the init code for the smart account
+    const generateInitCode = () =>
+        getAccountInitCode({
+            index,
+            accountLogicAddress,
+            validatorAddress,
+            enableData,
+        });
 
-  // TODO adapt backend route to save a wallet in db
-  /*  if (address) {
+    // Fetch account address and chain id
+    const [smartAccountAddress] = await Promise.all([
+        address ??
+            getAccountAddress<entryPoint, TTransport, TChain>({
+                client,
+                entryPoint: entryPointAddress,
+                initCodeProvider: generateInitCode,
+                factoryAddress,
+            }),
+        getChainId(client),
+    ]);
+
+    if (!smartAccountAddress) throw new Error("Account address not found");
+
+    // TODO adapt backend route to save a wallet in db
+    /*  if (address) {
     const storedWallet = api.getWalletInfos(address);
     if (!storedWallet) throw new Error("Wallet not found");
   } else {
     api.initWallet({ ownerAddress: comethSigner.signer.address });
   } */
 
-  if (comethSigner.type === "localWallet") {
-    await encryptSignerInStorage(
-      smartAccountAddress,
-      comethSigner.eoaFallback.privateKey,
-      comethSigner.eoaFallback.encryptionSalt
+    if (comethSigner.type === "localWallet") {
+        await encryptSignerInStorage(
+            smartAccountAddress,
+            comethSigner.eoaFallback.privateKey,
+            comethSigner.eoaFallback.encryptionSalt
+        );
+    }
+
+    let smartAccountDeployed = await isSmartAccountDeployed(
+        client,
+        smartAccountAddress
     );
-  }
 
-  let smartAccountDeployed = await isSmartAccountDeployed(
-    client,
-    smartAccountAddress
-  );
-
-  return toSmartAccount({
-    address: smartAccountAddress,
-    async signMessage({ message }) {
-      return validator.signMessage({ message });
-    },
-    async signTransaction(_, __) {
-      throw new SignTransactionNotSupportedBySmartAccount();
-    },
-    async signTypedData() {
-      throw new SignTransactionNotSupportedBySmartAccount();
-    },
-    client: client,
-    publicKey: smartAccountAddress,
-    entryPoint: entryPointAddress,
-    source: "kernelSmartAccount",
-
-    // Get the nonce of the smart account
-    async getNonce() {
-      return getAccountNonce(client, {
-        sender: smartAccountAddress,
+    return toSmartAccount({
+        address: smartAccountAddress,
+        async signMessage({ message }) {
+            return validator.signMessage({ message });
+        },
+        async signTransaction(_, __) {
+            throw new SignTransactionNotSupportedBySmartAccount();
+        },
+        async signTypedData() {
+            throw new SignTransactionNotSupportedBySmartAccount();
+        },
+        client: client,
+        publicKey: smartAccountAddress,
         entryPoint: entryPointAddress,
-      });
-    },
+        source: "kernelSmartAccount",
 
-    // Sign a user operation
-    async signUserOperation(userOperation) {
-      return validator.signUserOperation(userOperation);
-    },
+        // Get the nonce of the smart account
+        async getNonce() {
+            return getAccountNonce(client, {
+                sender: smartAccountAddress,
+                entryPoint: entryPointAddress,
+            });
+        },
 
-    // Encode the init code
-    async getInitCode() {
-      if (smartAccountDeployed) return "0x";
+        // Sign a user operation
+        async signUserOperation(userOperation) {
+            return validator.signUserOperation(userOperation);
+        },
 
-      smartAccountDeployed = await isSmartAccountDeployed(
-        client,
-        smartAccountAddress
-      );
+        // Encode the init code
+        async getInitCode() {
+            if (smartAccountDeployed) return "0x";
 
-      if (smartAccountDeployed) return "0x";
+            smartAccountDeployed = await isSmartAccountDeployed(
+                client,
+                smartAccountAddress
+            );
 
-      return concatHex([factoryAddress, await generateInitCode()]);
-    },
+            if (smartAccountDeployed) return "0x";
 
-    async getFactory() {
-      if (smartAccountDeployed) return undefined;
+            return concatHex([factoryAddress, await generateInitCode()]);
+        },
 
-      smartAccountDeployed = await isSmartAccountDeployed(
-        client,
-        smartAccountAddress
-      );
+        async getFactory() {
+            if (smartAccountDeployed) return undefined;
 
-      if (smartAccountDeployed) return undefined;
+            smartAccountDeployed = await isSmartAccountDeployed(
+                client,
+                smartAccountAddress
+            );
 
-      return factoryAddress;
-    },
+            if (smartAccountDeployed) return undefined;
 
-    async getFactoryData() {
-      if (smartAccountDeployed) return undefined;
+            return factoryAddress;
+        },
 
-      smartAccountDeployed = await isSmartAccountDeployed(
-        client,
-        smartAccountAddress
-      );
+        async getFactoryData() {
+            if (smartAccountDeployed) return undefined;
 
-      if (smartAccountDeployed) return undefined;
+            smartAccountDeployed = await isSmartAccountDeployed(
+                client,
+                smartAccountAddress
+            );
 
-      return generateInitCode();
-    },
+            if (smartAccountDeployed) return undefined;
 
-    // Encode the deploy call data
-    async encodeDeployCallData(_) {
-      throw new Error("Simple account doesn't support account deployment");
-    },
+            return generateInitCode();
+        },
 
-    // Encode a call
-    async encodeCallData(_tx) {
-      if (Array.isArray(_tx)) {
-        // Encode a batched call
-        return encodeFunctionData({
-          abi: KernelExecuteAbi,
-          functionName: "executeBatch",
-          args: [
-            _tx.map((tx) => ({
-              to: tx.to,
-              value: tx.value,
-              data: tx.data,
-            })),
-          ],
-        });
-      }
-      // Encode a simple call
-      return encodeFunctionData({
-        abi: KernelExecuteAbi,
-        functionName: "execute",
-        args: [_tx.to, _tx.value, _tx.data, 0],
-      });
-    },
+        // Encode the deploy call data
+        async encodeDeployCallData(_) {
+            throw new Error(
+                "Simple account doesn't support account deployment"
+            );
+        },
 
-    // Get simple dummy signature
-    async getDummySignature(_userOperation) {
-      return validator.getDummySignature(_userOperation);
-    },
-  });
+        // Encode a call
+        async encodeCallData(_tx) {
+            if (Array.isArray(_tx)) {
+                // Encode a batched call
+                return encodeFunctionData({
+                    abi: KernelExecuteAbi,
+                    functionName: "executeBatch",
+                    args: [
+                        _tx.map((tx) => ({
+                            to: tx.to,
+                            value: tx.value,
+                            data: tx.data,
+                        })),
+                    ],
+                });
+            }
+            // Encode a simple call
+            return encodeFunctionData({
+                abi: KernelExecuteAbi,
+                functionName: "execute",
+                args: [_tx.to, _tx.value, _tx.data, 0],
+            });
+        },
+
+        // Get simple dummy signature
+        async getDummySignature(_userOperation) {
+            return validator.getDummySignature(_userOperation);
+        },
+    });
 }

@@ -1,65 +1,65 @@
-import { type Address } from "viem/accounts";
+import type { Address } from "viem/accounts";
 
 import type { Hex } from "viem";
 
+import type { SmartAccountSigner } from "permissionless/accounts";
 import {
-  createFallbackEoaSigner,
-  getFallbackEoaSigner,
+    createFallbackEoaSigner,
+    getFallbackEoaSigner,
 } from "./fallbackEoa/fallbackEoaSigner";
 import {
-  getPasskeySigner,
-  createPasskeySigner,
+    createPasskeySigner,
+    getPasskeySigner,
 } from "./passkeys/passkeyService";
-import type { SmartAccountSigner } from "permissionless/accounts";
 
-import type {
-  PasskeyLocalStorageFormat,
-  webAuthnOptions,
-} from "./passkeys/types";
-import {
-  DEFAULT_WEBAUTHN_OPTIONS,
-  isWebAuthnCompatible,
-} from "./passkeys/utils";
 import { API } from "../services/API";
 import type { eoaFallback } from "./fallbackEoa/types";
+import type {
+    PasskeyLocalStorageFormat,
+    webAuthnOptions,
+} from "./passkeys/types";
+import {
+    DEFAULT_WEBAUTHN_OPTIONS,
+    isWebAuthnCompatible,
+} from "./passkeys/utils";
 
 interface Signer {
-  type: "localWallet" | "passkey";
+    type: "localWallet" | "passkey";
 }
 
 export interface FallbackEoaSigner extends Signer {
-  type: "localWallet";
-  eoaFallback: eoaFallback;
+    type: "localWallet";
+    eoaFallback: eoaFallback;
 }
 
 export interface PasskeySigner extends Signer {
-  type: "passkey";
-  passkey: PasskeyLocalStorageFormat;
+    type: "passkey";
+    passkey: PasskeyLocalStorageFormat;
 }
 
 export type ComethSigner = FallbackEoaSigner | PasskeySigner;
 
 type SignerConfigParams = {
-  apiKey: string;
-  address?: Address;
-  disableEoaFallback?: boolean;
-  encryptionSalt?: string;
-  webAuthnOptions?: webAuthnOptions;
-  passKeyName?: string;
+    apiKey: string;
+    address?: Address;
+    disableEoaFallback?: boolean;
+    encryptionSalt?: string;
+    webAuthnOptions?: webAuthnOptions;
+    passKeyName?: string;
 };
 
 const throwErrorWhenEoaFallbackDisabled = (
-  disableEoaFallback: boolean
+    disableEoaFallback: boolean
 ): void => {
-  if (disableEoaFallback)
-    throw new Error("Passkeys are not compatible with your device");
+    if (disableEoaFallback)
+        throw new Error("Passkeys are not compatible with your device");
 };
 
 const _isFallbackSigner = (): boolean => {
-  const fallbackSigner = Object.keys(localStorage).find((key) =>
-    key.startsWith("cometh-connect-fallback-")
-  );
-  return !!fallbackSigner;
+    const fallbackSigner = Object.keys(localStorage).find((key) =>
+        key.startsWith("cometh-connect-fallback-")
+    );
+    return !!fallbackSigner;
 };
 
 /**
@@ -69,55 +69,55 @@ const _isFallbackSigner = (): boolean => {
  * @param encryptionSalt
  */
 export async function createSigner({
-  apiKey,
-  address,
-  disableEoaFallback = false,
-  encryptionSalt,
-  webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
-  passKeyName,
+    apiKey,
+    address,
+    disableEoaFallback = false,
+    encryptionSalt,
+    webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+    passKeyName,
 }: SignerConfigParams): Promise<ComethSigner> {
-  const api = new API(apiKey);
-  const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
+    const api = new API(apiKey);
+    const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
-  if (webAuthnCompatible && !_isFallbackSigner()) {
-    let passkey: PasskeyLocalStorageFormat;
-    if (!address) {
-      passkey = await createPasskeySigner(webAuthnOptions, passKeyName);
+    if (webAuthnCompatible && !_isFallbackSigner()) {
+        let passkey: PasskeyLocalStorageFormat;
+        if (!address) {
+            passkey = await createPasskeySigner(webAuthnOptions, passKeyName);
 
-      if (passkey.publicKeyAlgorithm !== -7) {
-        throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
+            if (passkey.publicKeyAlgorithm !== -7) {
+                throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
+
+                return {
+                    type: "localWallet",
+                    eoaFallback: await createFallbackEoaSigner(),
+                };
+            }
+        } else {
+            passkey = await getPasskeySigner({ api, walletAddress: address });
+        }
 
         return {
-          type: "localWallet",
-          eoaFallback: await createFallbackEoaSigner(),
+            type: "passkey",
+            passkey,
         };
-      }
-    } else {
-      passkey = await getPasskeySigner({ api, walletAddress: address });
     }
 
-    return {
-      type: "passkey",
-      passkey,
-    };
-  } else {
     throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
 
     let privateKey: Hex;
     let signer: SmartAccountSigner;
 
     if (!address) {
-      ({ privateKey, signer } = await createFallbackEoaSigner());
+        ({ privateKey, signer } = await createFallbackEoaSigner());
     } else {
-      ({ privateKey, signer } = await getFallbackEoaSigner({
-        walletAddress: address,
-        encryptionSalt,
-      }));
+        ({ privateKey, signer } = await getFallbackEoaSigner({
+            walletAddress: address,
+            encryptionSalt,
+        }));
     }
 
     return {
-      type: "localWallet",
-      eoaFallback: { privateKey, signer, encryptionSalt },
+        type: "localWallet",
+        eoaFallback: { privateKey, signer, encryptionSalt },
     };
-  }
 }

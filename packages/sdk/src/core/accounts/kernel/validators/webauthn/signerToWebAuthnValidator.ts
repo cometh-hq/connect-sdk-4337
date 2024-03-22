@@ -2,157 +2,165 @@ import type { KernelValidator } from "@zerodev/sdk/types";
 import { getUserOperationHash } from "permissionless";
 import { SignTransactionNotSupportedBySmartAccount } from "permissionless/accounts";
 import {
-  concatHex,
-  type Address,
-  type Chain,
-  type Client,
-  type Hex,
-  type Transport,
-  hashMessage,
-  encodePacked,
-  encodeAbiParameters,
-  maxUint256,
+    type Address,
+    type Chain,
+    type Client,
+    type Hex,
+    type Transport,
+    concatHex,
+    encodeAbiParameters,
+    encodePacked,
+    hashMessage,
+    maxUint256,
 } from "viem";
 import { toAccount } from "viem/accounts";
 
+import type { EntryPoint } from "permissionless/_types/types";
 import { getChainId } from "viem/actions";
 import {
-  ENTRYPOINT_ADDRESS_V06,
-  KERNEL_ADDRESSES,
+    ENTRYPOINT_ADDRESS_V06,
+    KERNEL_ADDRESSES,
 } from "../../../../../config";
-import type { UserOperation } from "../../../../types";
-import type { EntryPoint } from "permissionless/_types/types";
 import { sign } from "../../../../signers/passkeys/passkeyService";
 import type { PasskeyLocalStorageFormat } from "../../../../signers/passkeys/types";
+import type { UserOperation } from "../../../../types";
 
 /**
  * Represent the layout of the calldata used for a webauthn signature
  */
 const webAuthNSignatureLayoutParam = [
-  { name: "useOnChainP256Verifier", type: "bool" },
-  { name: "authenticatorData", type: "bytes" },
-  { name: "clientData", type: "bytes" },
-  { name: "challengeOffset", type: "uint256" },
-  { name: "rs", type: "uint256[2]" },
+    { name: "useOnChainP256Verifier", type: "bool" },
+    { name: "authenticatorData", type: "bytes" },
+    { name: "clientData", type: "bytes" },
+    { name: "challengeOffset", type: "uint256" },
+    { name: "rs", type: "uint256[2]" },
 ] as const;
 
 export async function signerToWebAuthnValidator<
-  TTransport extends Transport = Transport,
-  TChain extends Chain | undefined = Chain | undefined
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = Chain | undefined,
 >(
-  client: Client<TTransport, TChain, undefined>,
-  {
-    passkey,
-    entryPoint = ENTRYPOINT_ADDRESS_V06,
-    validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
-  }: {
-    passkey: PasskeyLocalStorageFormat;
-    entryPoint?: Address;
-    validatorAddress?: Address;
-  }
+    client: Client<TTransport, TChain, undefined>,
+    {
+        passkey,
+        entryPoint = ENTRYPOINT_ADDRESS_V06,
+        validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
+    }: {
+        passkey: PasskeyLocalStorageFormat;
+        entryPoint?: Address;
+        validatorAddress?: Address;
+    }
 ): Promise<KernelValidator<"WebAuthnValidator">> {
-  // Fetch chain id
-  const chainId = await getChainId(client);
+    // Fetch chain id
+    const chainId = await getChainId(client);
 
-  // Build the EOA Signer
-  const account = toAccount({
-    address: validatorAddress,
-    async signMessage({ message }) {
-      // Encode the msg
-      const challenge = hashMessage(message);
-      // Sign it
-      const { authenticatorData, clientData, challengeOffset, signature } =
-        await sign(challenge);
+    // Build the EOA Signer
+    const account = toAccount({
+        address: validatorAddress,
+        async signMessage({ message }) {
+            // Encode the msg
+            const challenge = hashMessage(message);
+            // Sign it
+            const {
+                authenticatorData,
+                clientData,
+                challengeOffset,
+                signature,
+            } = await sign(challenge);
 
-      // Return the encoded stuff for the web auth n validator
-      return encodePacked(webAuthNSignatureLayoutParam, [
-        false,
-        authenticatorData,
-        clientData,
-        challengeOffset,
-        [BigInt(signature.r), BigInt(signature.s)],
-      ]);
-    },
-    async signTransaction(_, __) {
-      throw new SignTransactionNotSupportedBySmartAccount();
-    },
-    async signTypedData() {
-      throw new SignTransactionNotSupportedBySmartAccount();
-    },
-  });
-
-  return {
-    ...account,
-    address: validatorAddress,
-    source: "WebAuthnValidator",
-
-    async getEnableData() {
-      const { x, y } = passkey.pubkeyCoordinates;
-
-      return concatHex([x, y]);
-    },
-    async getNonceKey() {
-      return 0n;
-    },
-    // Sign a user operation
-    async signUserOperation(userOperation: UserOperation) {
-      const hash = getUserOperationHash({
-        userOperation: {
-          ...userOperation,
-          signature: "0x",
+            // Return the encoded stuff for the web auth n validator
+            return encodePacked(webAuthNSignatureLayoutParam, [
+                false,
+                authenticatorData,
+                clientData,
+                challengeOffset,
+                [BigInt(signature.r), BigInt(signature.s)],
+            ]);
         },
-        entryPoint: entryPoint as EntryPoint,
-        chainId: chainId,
-      });
-      // Sign the hash with the P256 signer
-      const { authenticatorData, clientData, challengeOffset, signature } =
-        await sign(hash);
+        async signTransaction(_, __) {
+            throw new SignTransactionNotSupportedBySmartAccount();
+        },
+        async signTypedData() {
+            throw new SignTransactionNotSupportedBySmartAccount();
+        },
+    });
 
-      // Encode the signature with the web auth n validator info
-      const encodedSignature = encodeAbiParameters(
-        webAuthNSignatureLayoutParam,
-        [
-          false,
-          authenticatorData as Hex,
-          clientData as Hex,
-          challengeOffset as unknown as bigint,
-          [BigInt(signature.r), BigInt(signature.s)],
-        ]
-      );
+    return {
+        ...account,
+        address: validatorAddress,
+        source: "WebAuthnValidator",
 
-      // Always use the sudo mode, since we are starting from the postula that this p256 signer is the default one for the smart account
-      return concatHex(["0x00000000", encodedSignature]);
-    },
+        async getEnableData() {
+            const { x, y } = passkey.pubkeyCoordinates;
 
-    /**
-     * Get a dummy signature for this smart account
-     */
-    async getDummySignature() {
-      // The max curve value for p256 signature stuff
-      const maxCurveValue =
-        BigInt(
-          "0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"
-        ) - 1n;
+            return concatHex([x, y]);
+        },
+        async getNonceKey() {
+            return 0n;
+        },
+        // Sign a user operation
+        async signUserOperation(userOperation: UserOperation) {
+            const hash = getUserOperationHash({
+                userOperation: {
+                    ...userOperation,
+                    signature: "0x",
+                },
+                entryPoint: entryPoint as EntryPoint,
+                chainId: chainId,
+            });
+            // Sign the hash with the P256 signer
+            const {
+                authenticatorData,
+                clientData,
+                challengeOffset,
+                signature,
+            } = await sign(hash);
 
-      // Generate a template signature for the webauthn validator
-      const sig = encodeAbiParameters(webAuthNSignatureLayoutParam, [
-        false,
-        // Random 120 byte
-        `0x${maxUint256.toString(16).repeat(2)}`,
-        `0x${maxUint256.toString(16).repeat(6)}`,
-        maxUint256,
-        [maxCurveValue, maxCurveValue],
-      ]);
+            // Encode the signature with the web auth n validator info
+            const encodedSignature = encodeAbiParameters(
+                webAuthNSignatureLayoutParam,
+                [
+                    false,
+                    authenticatorData as Hex,
+                    clientData as Hex,
+                    challengeOffset as unknown as bigint,
+                    [BigInt(signature.r), BigInt(signature.s)],
+                ]
+            );
 
-      // return the coded signature
-      return concatHex(["0x00000000", sig]);
-    },
+            // Always use the sudo mode, since we are starting from the postula that this p256 signer is the default one for the smart account
+            return concatHex(["0x00000000", encodedSignature]);
+        },
 
-    async isEnabled(
-      _kernelAccountAddress: Address,
-      _selector: Hex
-    ): Promise<boolean> {
-      return false;
-    },
-  };
+        /**
+         * Get a dummy signature for this smart account
+         */
+        async getDummySignature() {
+            // The max curve value for p256 signature stuff
+            const maxCurveValue =
+                BigInt(
+                    "0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551"
+                ) - 1n;
+
+            // Generate a template signature for the webauthn validator
+            const sig = encodeAbiParameters(webAuthNSignatureLayoutParam, [
+                false,
+                // Random 120 byte
+                `0x${maxUint256.toString(16).repeat(2)}`,
+                `0x${maxUint256.toString(16).repeat(6)}`,
+                maxUint256,
+                [maxCurveValue, maxCurveValue],
+            ]);
+
+            // return the coded signature
+            return concatHex(["0x00000000", sig]);
+        },
+
+        async isEnabled(
+            _kernelAccountAddress: Address,
+            _selector: Hex
+        ): Promise<boolean> {
+            return false;
+        },
+    };
 }

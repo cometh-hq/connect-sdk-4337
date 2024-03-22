@@ -1,63 +1,64 @@
 {
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "files": {
-    "ignore": [
-      "example",
-      "_cjs",
-      "_esm",
-      "_types",
-      "dist",
-      "node_modules/**",
-      ".open-next/**",
-      "tsconfig.json",
-      "tsconfig.*.json"
-    ]
-  },
-  "organizeImports": {
-    "enabled": true
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "complexity": {
-        "noExcessiveCognitiveComplexity": {
-          "level": "error",
-          "options": {
-            "maxAllowedComplexity": 16
-          }
-        },
-        "useSimplifiedLogicExpression": "error"
-      },
-      "nursery": {
-        "useImportType": "error",
-        "useGroupedTypeImport": "error",
-        "useExportType": "error",
-        "noUnusedPrivateClassMembers": "error",
-        "noUselessTernary": "error"
-      },
-      "correctness": {
-        "useHookAtTopLevel": "error",
-        "noUnusedVariables": "error",
-        "noUndeclaredVariables": "error"
-      },
-      "style": {
-        "useFragmentSyntax": "error",
-        "useShorthandArrayType": "error",
-        "useShorthandAssign": "error"
-      }
-    }
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 4
-  },
-  "javascript": {
+    "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+    "files": {
+        "ignore": [
+            "utils.ts",
+            "example",
+            "_cjs",
+            "_esm",
+            "_types",
+            "dist",
+            "node_modules/**",
+            ".open-next/**",
+            "tsconfig.json",
+            "tsconfig.*.json"
+        ]
+    },
+    "organizeImports": {
+        "enabled": true
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "complexity": {
+                "noExcessiveCognitiveComplexity": {
+                    "level": "error",
+                    "options": {
+                        "maxAllowedComplexity": 16
+                    }
+                },
+                "useSimplifiedLogicExpression": "error"
+            },
+            "nursery": {
+                "useImportType": "error",
+                "useGroupedTypeImport": "error",
+                "useExportType": "error",
+                "noUnusedPrivateClassMembers": "error",
+                "noUselessTernary": "error"
+            },
+            "correctness": {
+                "useHookAtTopLevel": "error",
+                "noUnusedVariables": "error",
+                "noUndeclaredVariables": "error"
+            },
+            "style": {
+                "useFragmentSyntax": "error",
+                "useShorthandArrayType": "error",
+                "useShorthandAssign": "error"
+            }
+        }
+    },
     "formatter": {
-      "quoteStyle": "double",
-      "semicolons": "always",
-      "trailingComma": "es5"
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "double",
+            "semicolons": "always",
+            "trailingComma": "es5"
+        }
     }
-  }
 }

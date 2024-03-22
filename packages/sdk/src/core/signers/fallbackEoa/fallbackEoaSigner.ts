@@ -1,32 +1,35 @@
 import {
-  type Address,
-  generatePrivateKey,
-  privateKeyToAccount,
+    type Address,
+    generatePrivateKey,
+    privateKeyToAccount,
 } from "viem/accounts";
 
 import type { Hex, PrivateKeyAccount } from "viem";
 import { getSignerLocalStorage } from "./services/eoaFallbackService";
 
 export const getFallbackEoaSigner = async ({
-  walletAddress,
-  encryptionSalt,
+    walletAddress,
+    encryptionSalt,
 }: {
-  walletAddress: Address;
-  encryptionSalt?: string;
+    walletAddress: Address;
+    encryptionSalt?: string;
 }): Promise<{ privateKey: Hex; signer: PrivateKeyAccount }> => {
-  const privateKey = await getSignerLocalStorage(walletAddress, encryptionSalt);
+    const privateKey = await getSignerLocalStorage(
+        walletAddress,
+        encryptionSalt
+    );
 
-  if (!privateKey) throw new Error("no account found");
+    if (!privateKey) throw new Error("no account found");
 
-  return { privateKey, signer: privateKeyToAccount(privateKey) };
+    return { privateKey, signer: privateKeyToAccount(privateKey) };
 };
 
 export const createFallbackEoaSigner = async (): Promise<{
-  privateKey: Hex;
-  signer: PrivateKeyAccount;
+    privateKey: Hex;
+    signer: PrivateKeyAccount;
 }> => {
-  const privateKey = generatePrivateKey();
-  const signer = privateKeyToAccount(privateKey);
+    const privateKey = generatePrivateKey();
+    const signer = privateKeyToAccount(privateKey);
 
-  return { signer, privateKey };
+    return { signer, privateKey };
 };
