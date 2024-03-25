@@ -215,7 +215,10 @@ export async function signerToKernelSmartAccount<
 
     if (smartAccountAddress) {
         verifiedSmartAccountAddress = smartAccountAddress;
-        await connectToExistingWallet({ api, smartAccountAddress: verifiedSmartAccountAddress });
+        await connectToExistingWallet({
+            api,
+            smartAccountAddress: verifiedSmartAccountAddress,
+        });
     } else {
         verifiedSmartAccountAddress = await getAccountAddress<
             entryPoint,
@@ -234,11 +237,12 @@ export async function signerToKernelSmartAccount<
         });
     }
 
-    if (!verifiedSmartAccountAddress) throw new Error("Account address not found");
+    if (!verifiedSmartAccountAddress)
+        throw new Error("Account address not found");
 
     let smartAccountDeployed = await isSmartAccountDeployed(
         client,
- verifiedSmartAccountAddress
+        verifiedSmartAccountAddress
     );
 
     return toSmartAccount({

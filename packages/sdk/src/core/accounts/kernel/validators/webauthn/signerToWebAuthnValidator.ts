@@ -60,7 +60,7 @@ export async function signerToWebAuthnValidator<
         type: "public-key",
     };
 
-    // Build the EOA Signer
+    // Build the WebAuthn Signer
     const account = toAccount({
         address: validatorAddress,
         async signMessage({ message }) {
