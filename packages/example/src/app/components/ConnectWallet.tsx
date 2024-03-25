@@ -12,9 +12,11 @@ import { http, encodeFunctionData, type Hex } from "viem";
 
 const COUNTER_CONTRACT_ADDRESS = "0x84ADD3fa2c2463C8cF2C95aD70e4b5F602332160";
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
+const bundlerUrl = process.env.NEXT_4337_BUNDLER_URL;
 
 function ConnectWallet(): JSX.Element {
   if (!apiKey) throw new Error("API key not found");
+  if (!bundlerUrl) throw new Error("Bundler Url not found");
 
   const connect = async () => {
     const localStorageAddress = window.localStorage.getItem(
@@ -23,7 +25,7 @@ function ConnectWallet(): JSX.Element {
 
     const signer = await createSigner({
       apiKey,
-      address: localStorageAddress,
+      //address: localStorageAddress,
       disableEoaFallback: false,
     });
 
@@ -57,7 +59,7 @@ function ConnectWallet(): JSX.Element {
       account: smartAccount,
       entryPoint: ENTRYPOINT_ADDRESS_V06,
       chain: polygonMumbai,
-      bundlerTransport: http("https://mumbai.bundler.develop.core.cometh.tech"),
+      bundlerTransport: http(bundlerUrl),
     });
 
     console.log(smartAccountClient);

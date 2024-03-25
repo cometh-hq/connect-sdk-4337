@@ -82,6 +82,7 @@ export async function createSigner({
     if (webAuthnCompatible && !_isFallbackSigner()) {
         let passkey: PasskeyLocalStorageFormat;
         if (!address) {
+
             passkey = await createPasskeySigner(webAuthnOptions, passKeyName);
 
             if (passkey.publicKeyAlgorithm !== -7) {

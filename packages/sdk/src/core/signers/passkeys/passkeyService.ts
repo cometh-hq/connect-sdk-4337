@@ -40,7 +40,7 @@ const createPasskeySigner = async (
                 },
                 attestation: "none",
                 authenticatorSelection,
-                timeout: 30000,
+                timeout: 60000,
                 challenge: crypto.getRandomValues(new Uint8Array(32)),
                 pubKeyCredParams: [
                     { alg: -7, type: "public-key" },
@@ -77,6 +77,7 @@ const createPasskeySigner = async (
             "jwk",
             key
         );
+
         if (
             !(exportedKeyWithXYCoordinates.x && exportedKeyWithXYCoordinates.y)
         ) {
@@ -86,26 +87,24 @@ const createPasskeySigner = async (
         const publicKeyId = hexArrayStr(passkeyCredential.rawId);
 
         // Create a PasskeyCredentialWithPubkeyCoordinates object
-        const passkeyWithCoordinates: PasskeyLocalStorageFormat = Object.assign(
-            passkeyCredential,
-            {
-                id: publicKeyId,
-                pubkeyCoordinates: {
-                    x: `0x${Buffer.from(
-                        exportedKeyWithXYCoordinates.x,
-                        "base64"
-                    ).toString("hex")}` as Hex,
-                    y: `0x${Buffer.from(
-                        exportedKeyWithXYCoordinates.y,
-                        "base64"
-                    ).toString("hex")}` as Hex,
-                },
-                publicKeyAlgorithm,
-            }
-        );
+        const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
+            id: publicKeyId,
+            pubkeyCoordinates: {
+                x: `0x${Buffer.from(
+                    exportedKeyWithXYCoordinates.x,
+                    "base64"
+                ).toString("hex")}` as Hex,
+                y: `0x${Buffer.from(
+                    exportedKeyWithXYCoordinates.y,
+                    "base64"
+                ).toString("hex")}}` as Hex,
+            },
+            publicKeyAlgorithm,
+        };
 
         return passkeyWithCoordinates;
-    } catch {
+    } catch (err) {
+        console.log(err);
         throw new Error("Error in the passkey creation");
     }
 };

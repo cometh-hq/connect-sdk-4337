@@ -2,8 +2,6 @@ import * as psl from "psl";
 
 import type { webAuthnOptions } from "./types";
 
-
-
 export const challengePrefix = "226368616c6c656e6765223a";
 
 export const DEFAULT_WEBAUTHN_OPTIONS: webAuthnOptions = {
@@ -15,15 +13,20 @@ export const DEFAULT_WEBAUTHN_OPTIONS: webAuthnOptions = {
   },
 };
 
-export const rpId =
-  process.env.IS_LOCAL === "true"
-    ? { name: "localhost" }
-    : {
-        name: (psl.parse(window.location.host) as psl.ParsedDomain)
-          .domain as string,
-        id: (psl.parse(window.location.host) as psl.ParsedDomain)
-          .domain as string,
-      };
+export const rpId = (() => {
+  if(typeof window === undefined) return { name: "localhost" };
+
+  const rootDomain = (psl.parse(window.location.host) as psl.ParsedDomain)
+  .domain as string
+
+  return rootDomain
+    ? {
+        name: rootDomain,
+        id: rootDomain,
+      }
+    : {name:"localhost"};
+
+})
 
 export const hexArrayStr = (array: any): string =>
   new Uint8Array(array).reduce(
