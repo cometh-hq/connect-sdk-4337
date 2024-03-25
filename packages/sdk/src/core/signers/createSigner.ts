@@ -10,9 +10,11 @@ import {
 import {
     createPasskeySigner,
     getPasskeySigner,
+    setPasskeyInStorage,
 } from "./passkeys/passkeyService";
 
 import { API } from "../services/API";
+import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
 import type { eoaFallback } from "./fallbackEoa/types";
 import type {
     PasskeyLocalStorageFormat,
@@ -46,6 +48,26 @@ type SignerConfigParams = {
     encryptionSalt?: string;
     webAuthnOptions?: webAuthnOptions;
     passKeyName?: string;
+};
+
+export const saveSignerInStorage = async (
+    signer: ComethSigner,
+    smartAccountAddress: Hex
+) => {
+    if (signer.type === "localWallet") {
+        await encryptSignerInStorage(
+            smartAccountAddress,
+            signer.eoaFallback.privateKey,
+            signer.eoaFallback.encryptionSalt
+        );
+    } else {
+        setPasskeyInStorage(
+            smartAccountAddress,
+            signer.passkey.id,
+            signer.passkey.pubkeyCoordinates.x,
+            signer.passkey.pubkeyCoordinates.y
+        );
+    }
 };
 
 const throwErrorWhenEoaFallbackDisabled = (
@@ -82,7 +104,6 @@ export async function createSigner({
     if (webAuthnCompatible && !_isFallbackSigner()) {
         let passkey: PasskeyLocalStorageFormat;
         if (!address) {
-
             passkey = await createPasskeySigner(webAuthnOptions, passKeyName);
 
             if (passkey.publicKeyAlgorithm !== -7) {

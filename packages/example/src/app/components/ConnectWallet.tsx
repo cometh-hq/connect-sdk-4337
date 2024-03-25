@@ -12,7 +12,7 @@ import { http, encodeFunctionData, type Hex } from "viem";
 
 const COUNTER_CONTRACT_ADDRESS = "0x84ADD3fa2c2463C8cF2C95aD70e4b5F602332160";
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
-const bundlerUrl = process.env.NEXT_4337_BUNDLER_URL;
+const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
 
 function ConnectWallet(): JSX.Element {
   if (!apiKey) throw new Error("API key not found");
@@ -25,7 +25,7 @@ function ConnectWallet(): JSX.Element {
 
     const signer = await createSigner({
       apiKey,
-      //address: localStorageAddress,
+      address: localStorageAddress,
       disableEoaFallback: false,
     });
 
@@ -40,6 +40,7 @@ function ConnectWallet(): JSX.Element {
         rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
         address: localStorageAddress,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
+        validatorAddress:"0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
         disableEoaFallback: false,
       });
     } else {
@@ -48,6 +49,7 @@ function ConnectWallet(): JSX.Element {
         apiKey,
         rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
         entryPoint: ENTRYPOINT_ADDRESS_V06,
+        validatorAddress:"0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
         disableEoaFallback: false,
       });
       window.localStorage.setItem("walletAddress", smartAccount.address);

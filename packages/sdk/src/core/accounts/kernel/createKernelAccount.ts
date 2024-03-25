@@ -27,8 +27,10 @@ import { API } from "../../services/API";
 import { getClient } from "../utils";
 import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
 
-import type { ComethSigner } from "../../signers/createSigner";
-import { encryptSignerInStorage } from "../../signers/fallbackEoa/services/eoaFallbackService";
+import {
+    type ComethSigner,
+    saveSignerInStorage,
+} from "../../signers/createSigner";
 import { signerToKernelValidator } from "./validators/signerToValidator";
 
 export type KernelSmartAccount<
@@ -231,13 +233,7 @@ export async function signerToKernelSmartAccount<
     api.initWallet({ ownerAddress: comethSigner.signer.address });
   } */
 
-    if (comethSigner.type === "localWallet") {
-        await encryptSignerInStorage(
-            smartAccountAddress,
-            comethSigner.eoaFallback.privateKey,
-            comethSigner.eoaFallback.encryptionSalt
-        );
-    }
+    await saveSignerInStorage(comethSigner, smartAccountAddress);
 
     let smartAccountDeployed = await isSmartAccountDeployed(
         client,

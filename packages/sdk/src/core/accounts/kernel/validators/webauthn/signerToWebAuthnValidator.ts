@@ -23,6 +23,7 @@ import {
 } from "../../../../../config";
 import { sign } from "../../../../signers/passkeys/passkeyService";
 import type { PasskeyLocalStorageFormat } from "../../../../signers/passkeys/types";
+import { parseHex } from "../../../../signers/passkeys/utils";
 import type { UserOperation } from "../../../../types";
 
 /**
@@ -44,7 +45,7 @@ export async function signerToWebAuthnValidator<
     {
         passkey,
         entryPoint = ENTRYPOINT_ADDRESS_V06,
-        validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
+        validatorAddress = KERNEL_ADDRESSES.WEB_AUTHN_VALIDATOR,
     }: {
         passkey: PasskeyLocalStorageFormat;
         entryPoint?: Address;
@@ -53,6 +54,11 @@ export async function signerToWebAuthnValidator<
 ): Promise<KernelValidator<"WebAuthnValidator">> {
     // Fetch chain id
     const chainId = await getChainId(client);
+
+    const publicKeyCredential: PublicKeyCredentialDescriptor = {
+        id: parseHex(passkey.id),
+        type: "public-key",
+    };
 
     // Build the EOA Signer
     const account = toAccount({
@@ -66,7 +72,7 @@ export async function signerToWebAuthnValidator<
                 clientData,
                 challengeOffset,
                 signature,
-            } = await sign(challenge);
+            } = await sign(challenge, [publicKeyCredential]);
 
             // Return the encoded stuff for the web auth n validator
             return encodePacked(webAuthNSignatureLayoutParam, [
@@ -114,7 +120,7 @@ export async function signerToWebAuthnValidator<
                 clientData,
                 challengeOffset,
                 signature,
-            } = await sign(hash);
+            } = await sign(hash, [publicKeyCredential]);
 
             // Encode the signature with the web auth n validator info
             const encodedSignature = encodeAbiParameters(
