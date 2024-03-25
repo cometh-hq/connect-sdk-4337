@@ -15,7 +15,7 @@ import {
 
 import { API } from "../services/API";
 import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
-import type { eoaFallback } from "./fallbackEoa/types";
+
 import type {
     PasskeyLocalStorageFormat,
     webAuthnOptions,
@@ -24,26 +24,11 @@ import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "./passkeys/utils";
-
-interface Signer {
-    type: "localWallet" | "passkey";
-}
-
-export interface FallbackEoaSigner extends Signer {
-    type: "localWallet";
-    eoaFallback: eoaFallback;
-}
-
-export interface PasskeySigner extends Signer {
-    type: "passkey";
-    passkey: PasskeyLocalStorageFormat;
-}
-
-export type ComethSigner = FallbackEoaSigner | PasskeySigner;
+import type { ComethSigner } from "./types";
 
 type SignerConfigParams = {
     apiKey: string;
-    address?: Address;
+    smartAccountAddress?: Address;
     disableEoaFallback?: boolean;
     encryptionSalt?: string;
     webAuthnOptions?: webAuthnOptions;
@@ -92,7 +77,7 @@ const _isFallbackSigner = (): boolean => {
  */
 export async function createSigner({
     apiKey,
-    address,
+    smartAccountAddress,
     disableEoaFallback = false,
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
@@ -103,7 +88,7 @@ export async function createSigner({
 
     if (webAuthnCompatible && !_isFallbackSigner()) {
         let passkey: PasskeyLocalStorageFormat;
-        if (!address) {
+        if (!smartAccountAddress) {
             passkey = await createPasskeySigner(webAuthnOptions, passKeyName);
 
             if (passkey.publicKeyAlgorithm !== -7) {
@@ -116,7 +101,7 @@ export async function createSigner({
                 };
             }
         } else {
-            passkey = await getPasskeySigner({ api, walletAddress: address });
+            passkey = await getPasskeySigner({ api, smartAccountAddress });
         }
 
         return {
@@ -131,11 +116,11 @@ export async function createSigner({
     let privateKey: Hex;
     let signer: SmartAccountSigner;
 
-    if (!address) {
+    if (!smartAccountAddress) {
         ({ privateKey, signer } = await createFallbackEoaSigner());
     } else {
         ({ privateKey, signer } = await getFallbackEoaSigner({
-            walletAddress: address,
+            walletAddress: smartAccountAddress,
             encryptionSalt,
         }));
     }

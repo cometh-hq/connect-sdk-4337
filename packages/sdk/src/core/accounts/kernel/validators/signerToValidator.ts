@@ -5,7 +5,7 @@ import type { KernelValidator } from "@zerodev/sdk/types";
 import { ENTRYPOINT_ADDRESS_V06 } from "../../../../config.js";
 import { signerToEcdsaValidator } from "./ecdsa/signerToEcdsaValidator.js";
 
-import type { ComethSigner } from "../../../signers/createSigner.js";
+import type { ComethSigner } from "../../../signers/types.js";
 import { signerToWebAuthnValidator } from "./webauthn/signerToWebAuthnValidator.js";
 
 type SignerToValidatorParams = {

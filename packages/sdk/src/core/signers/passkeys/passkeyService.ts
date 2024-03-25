@@ -118,7 +118,7 @@ const sign = async (
             challenge: toBytes(challenge),
             allowCredentials: publicKeyCredential || [],
             userVerification: "required",
-            timeout: 30000,
+            timeout: 60000,
         },
     })) as Assertion | null;
 
@@ -145,7 +145,7 @@ const sign = async (
     };
 };
 
-/* const signWithPasskey = async (
+const signWithPasskey = async (
     challenge: string,
     webAuthnSigners?: WebAuthnSigner[]
 ): Promise<WebAuthnSignature> => {
@@ -160,13 +160,13 @@ const sign = async (
         });
     }
 
-    const signature = await sign(
+    const webAuthnSignature = await sign(
         keccak256(hashMessage(challenge)),
         publicKeyCredentials
     );
 
-    return signature;
-}; */
+    return webAuthnSignature;
+};
 
 const setPasskeyInStorage = (
     walletAddress: string,
@@ -224,37 +224,37 @@ const getPasskeyInStorage = (walletAddress: string): string | null => {
 
 const getPasskeySigner = async ({
     api,
-    walletAddress,
+    smartAccountAddress,
 }: {
     api: API;
-    walletAddress: string;
+    smartAccountAddress: string;
 }): Promise<PasskeyLocalStorageFormat> => {
-    /*   const passkeySigners =
-        await api.getPasskeySignersByWalletAddress(walletAddress);
+    const passkeySigners =
+        await api.getPasskeySignersByWalletAddress(smartAccountAddress);
 
-    if (passkeySigners.length === 0) throw new NoPasskeySignerFoundInDBError(); */
+    if (passkeySigners.length === 0) throw new NoPasskeySignerFoundInDBError();
 
     /* Retrieve potentiel WebAuthn credentials in storage */
-    const localStoragePasskey = getPasskeyInStorage(walletAddress);
+    const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
 
-    /*    if (localStoragePasskey) { */
-    const passkey = JSON.parse(
-        localStoragePasskey!
-    ) as PasskeyLocalStorageFormat;
-    /* Check if storage WebAuthn credentials exists in db */
-    /*  const registeredPasskeySigner = await api.getPasskeySignerByPublicKeyId(
+    if (localStoragePasskey) {
+        const passkey = JSON.parse(
+            localStoragePasskey
+        ) as PasskeyLocalStorageFormat;
+        /* Check if storage WebAuthn credentials exists in db */
+        const registeredPasskeySigner = await api.getPasskeySignerByPublicKeyId(
             passkey.id
         );
 
-        if (!registeredPasskeySigner) throw new SignerNotOwnerError(); */
+        if (!registeredPasskeySigner) throw new SignerNotOwnerError();
 
-    return passkey;
-    /*     } */
+        return passkey;
+    }
 
     /* If no local storage or no match in db, Call Webauthn API to get current signer */
-    /*    let signature: WebAuthnSignature;
+    let webAuthnSignature: WebAuthnSignature;
     try {
-        signature = await signWithPasskey(
+        webAuthnSignature = await signWithPasskey(
             "SDK Connection",
             passkeySigners as WebAuthnSigner[]
         );
@@ -263,7 +263,7 @@ const getPasskeySigner = async ({
     }
 
     const signingWebAuthnSigner = await api.getPasskeySignerByPublicKeyId(
-        signature.id
+        webAuthnSignature.id
     );
 
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
@@ -274,15 +274,14 @@ const getPasskeySigner = async ({
         },
     };
 
-
     setPasskeyInStorage(
-        walletAddress,
+        smartAccountAddress,
         passkeyWithCoordinates.id,
         passkeyWithCoordinates.pubkeyCoordinates.x,
         passkeyWithCoordinates.pubkeyCoordinates.y
     );
 
-    return passkeyWithCoordinates; */
+    return passkeyWithCoordinates;
 };
 
 export {
@@ -292,5 +291,4 @@ export {
     /*   getSignerFromCredentials, */
     setPasskeyInStorage,
     sign,
-    /*   signWithPasskey, */
 };

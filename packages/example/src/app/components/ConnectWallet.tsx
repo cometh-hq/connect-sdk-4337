@@ -25,7 +25,7 @@ function ConnectWallet(): JSX.Element {
 
     const signer = await createSigner({
       apiKey,
-      address: localStorageAddress,
+      smartAccountAddress: localStorageAddress,
       disableEoaFallback: false,
     });
 
@@ -38,7 +38,7 @@ function ConnectWallet(): JSX.Element {
         comethSigner: signer,
         apiKey,
         rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
-        address: localStorageAddress,
+        smartAccountAddress: localStorageAddress,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
         validatorAddress:"0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
         disableEoaFallback: false,

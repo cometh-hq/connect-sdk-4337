@@ -29,7 +29,7 @@ import type { UserOperation } from "../../../../types";
 /**
  * Represent the layout of the calldata used for a webauthn signature
  */
-const webAuthNSignatureLayoutParam = [
+const webAuthnSignatureLayoutParam = [
     { name: "useOnChainP256Verifier", type: "bool" },
     { name: "authenticatorData", type: "bytes" },
     { name: "clientData", type: "bytes" },
@@ -75,7 +75,7 @@ export async function signerToWebAuthnValidator<
             } = await sign(challenge, [publicKeyCredential]);
 
             // Return the encoded stuff for the web auth n validator
-            return encodePacked(webAuthNSignatureLayoutParam, [
+            return encodePacked(webAuthnSignatureLayoutParam, [
                 false,
                 authenticatorData,
                 clientData,
@@ -124,7 +124,7 @@ export async function signerToWebAuthnValidator<
 
             // Encode the signature with the web auth n validator info
             const encodedSignature = encodeAbiParameters(
-                webAuthNSignatureLayoutParam,
+                webAuthnSignatureLayoutParam,
                 [
                     false,
                     authenticatorData as Hex,
@@ -149,7 +149,7 @@ export async function signerToWebAuthnValidator<
                 ) - 1n;
 
             // Generate a template signature for the webauthn validator
-            const sig = encodeAbiParameters(webAuthNSignatureLayoutParam, [
+            const sig = encodeAbiParameters(webAuthnSignatureLayoutParam, [
                 false,
                 // Random 120 byte
                 `0x${maxUint256.toString(16).repeat(2)}`,
