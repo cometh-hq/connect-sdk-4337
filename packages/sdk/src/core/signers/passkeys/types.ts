@@ -20,8 +20,8 @@ type PasskeyCredential = {
 
 type PasskeyCredentialWithPubkeyCoordinates = PasskeyCredential & {
     pubkeyCoordinates: {
-        x: string;
-        y: string;
+        x: Hex;
+        y: Hex;
     };
 };
 
@@ -52,8 +52,8 @@ type PasskeyLocalStorageFormat = {
 };
 
 type P256Signature = Readonly<{
-    r: string;
-    s: string;
+    r: Hex;
+    s: Hex;
 }>;
 
 /**

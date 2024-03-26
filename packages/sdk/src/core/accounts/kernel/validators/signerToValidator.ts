@@ -2,7 +2,7 @@ import type { Chain, Client, Transport } from "viem";
 
 import type { KernelValidator } from "@zerodev/sdk/types";
 
-import { ENTRYPOINT_ADDRESS_V06 } from "../../../../config.js";
+import { ENTRYPOINT_ADDRESS_V06 } from "../../../../constants.js";
 import { signerToEcdsaValidator } from "./ecdsa/signerToEcdsaValidator.js";
 
 import type { ComethSigner } from "../../../signers/types.js";
@@ -12,6 +12,11 @@ type SignerToValidatorParams = {
     comethSigner: ComethSigner;
 };
 
+/**
+ * Build a kernel validator from a cometh signer, depending on the signer type
+ * @param client
+ * @param comethSigner
+ */
 export async function signerToKernelValidator<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,

@@ -1,4 +1,4 @@
-import { ENTRYPOINT_ADDRESS_V06 } from "./config";
+import { ENTRYPOINT_ADDRESS_V06 } from "./constants";
 
 import { createSmartAccountClient } from "permissionless";
 import { signerToKernelSmartAccount } from "./core/accounts/kernel/createKernelAccount";

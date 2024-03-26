@@ -37,7 +37,7 @@ type SignerConfigParams = {
 
 export const saveSignerInStorage = async (
     signer: ComethSigner,
-    smartAccountAddress: Hex
+    smartAccountAddress: Address
 ) => {
     if (signer.type === "localWallet") {
         await encryptSignerInStorage(
@@ -71,9 +71,12 @@ const _isFallbackSigner = (): boolean => {
 
 /**
  * Helper to create the Cometh Signer
- * @param address
+ * @param apiKey
+ * @param smartAccountAddress
  * @param disableEoaFallback
  * @param encryptionSalt
+ * @param webAuthnOptions
+ * @param passKeyName
  */
 export async function createSigner({
     apiKey,
@@ -120,7 +123,7 @@ export async function createSigner({
         ({ privateKey, signer } = await createFallbackEoaSigner());
     } else {
         ({ privateKey, signer } = await getFallbackEoaSigner({
-            walletAddress: smartAccountAddress,
+            smartAccountAddress,
             encryptionSalt,
         }));
     }

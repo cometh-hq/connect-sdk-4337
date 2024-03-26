@@ -15,12 +15,12 @@ export const defaultEncryptionSalt = "COMETH-CONNECT";
 export const Pbkdf2Iterations = 1000000;
 
 export const encryptSignerInStorage = async (
-    walletAddress: Address,
+    smartAccountAddress: Address,
     privateKey: Hex,
     salt?: string
 ): Promise<void> => {
     const { encryptedPrivateKey, iv } = await encryptEoaFallback(
-        walletAddress,
+        smartAccountAddress,
         privateKey,
         salt || defaultEncryptionSalt
     );
@@ -34,24 +34,24 @@ export const encryptSignerInStorage = async (
     );
 
     window.localStorage.setItem(
-        `cometh-connect-fallback-${walletAddress}`,
+        `cometh-connect-fallback-${smartAccountAddress}`,
         storageValue
     );
 };
 
 export const getSignerLocalStorage = async (
-    walletAddress: Address,
+    smartAccountAddress: Address,
     salt?: string
 ): Promise<Hex | null> => {
     const localStorage = window.localStorage.getItem(
-        `cometh-connect-fallback-${walletAddress}`
+        `cometh-connect-fallback-${smartAccountAddress}`
     );
 
     if (localStorage) {
         const { encryptedPrivateKey, iv } = unFormatStorageValue(localStorage);
 
         const privateKey = await decryptEoaFallback(
-            walletAddress,
+            smartAccountAddress,
             utils.base64ToArrayBuffer(encryptedPrivateKey),
             utils.base64toUint8Array(iv),
             salt || defaultEncryptionSalt
@@ -64,15 +64,15 @@ export const getSignerLocalStorage = async (
 };
 
 const encryptEoaFallback = async (
-    walletAddress: Address,
+    smartAccountAddress: Address,
     privateKey: Hex,
     salt: string
 ): Promise<{ encryptedPrivateKey: string; iv: string }> => {
-    const encodedWalletAddress = utils.encodeUTF8(walletAddress);
+    const encodedSmartAccountAddress = utils.encodeUTF8(smartAccountAddress);
     const encodedSalt = utils.encodeUTF8(salt);
 
     const encryptionKey = await cryptolib.pbkdf2(
-        encodedWalletAddress,
+        encodedSmartAccountAddress,
         encodedSalt,
         Pbkdf2Iterations
     );
@@ -94,16 +94,16 @@ const encryptEoaFallback = async (
 };
 
 const decryptEoaFallback = async (
-    walletAddress: Address,
+    smartAccountAddress: Address,
     encryptedPrivateKey: ArrayBuffer,
     iv: ArrayBuffer,
     salt: string
 ): Promise<`0x${string}`> => {
-    const encodedWalletAddress = utils.encodeUTF8(walletAddress);
+    const encodedsmartAccountAddress = utils.encodeUTF8(smartAccountAddress);
     const encodedSalt = utils.encodeUTF8(salt);
 
     const encryptionKey = await cryptolib.pbkdf2(
-        encodedWalletAddress,
+        encodedsmartAccountAddress,
         encodedSalt,
         Pbkdf2Iterations
     );
@@ -120,12 +120,12 @@ const decryptEoaFallback = async (
 const formatStorageValue = (
     encryptedPrivateKey: string,
     iv: string,
-    walletAddress: Address
+    smartAccountAddress: Address
 ): string => {
     return JSON.stringify({
         encryptedPrivateKey,
         iv,
-        walletAddress,
+        smartAccountAddress,
     });
 };
 

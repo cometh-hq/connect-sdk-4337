@@ -1,4 +1,4 @@
-import { type Hex, hashMessage, keccak256, toBytes } from "viem";
+import { type Address, type Hex, hashMessage, keccak256, toBytes } from "viem";
 import {
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
@@ -103,8 +103,7 @@ const createPasskeySigner = async (
         };
 
         return passkeyWithCoordinates;
-    } catch (err) {
-        console.log(err);
+    } catch {
         throw new Error("Error in the passkey creation");
     }
 };
@@ -139,8 +138,8 @@ const sign = async (
         clientData: utils.hexArrayStr(assertion.response.clientDataJSON),
         challengeOffset,
         signature: {
-            r: utils.hexArrayStr(rs[0]),
-            s: utils.hexArrayStr(rs[1]),
+            r: utils.hexArrayStr(rs[0]) as Hex,
+            s: utils.hexArrayStr(rs[1]) as Hex,
         },
     };
 };
@@ -169,7 +168,7 @@ const signWithPasskey = async (
 };
 
 const setPasskeyInStorage = (
-    walletAddress: string,
+    smartAccountAddress: Address,
     publicKeyId: string,
     publicKeyX: string,
     publicKeyY: string
@@ -184,13 +183,13 @@ const setPasskeyInStorage = (
 
     const localStoragePasskey = JSON.stringify(passkeyWithCoordinates);
     window.localStorage.setItem(
-        `cometh-connect-${walletAddress}`,
+        `cometh-connect-${smartAccountAddress}`,
         localStoragePasskey
     );
 };
 
-const getPasskeyInStorage = (walletAddress: string): string | null => {
-    return window.localStorage.getItem(`cometh-connect-${walletAddress}`);
+const getPasskeyInStorage = (smartAccountAddress: Address): string | null => {
+    return window.localStorage.getItem(`cometh-connect-${smartAccountAddress}`);
 };
 
 /* const getSignerFromCredentials = async ({
@@ -227,7 +226,7 @@ const getPasskeySigner = async ({
     smartAccountAddress,
 }: {
     api: API;
-    smartAccountAddress: string;
+    smartAccountAddress: Address;
 }): Promise<PasskeyLocalStorageFormat> => {
     const passkeySigners =
         await api.getPasskeySignersByWalletAddress(smartAccountAddress);

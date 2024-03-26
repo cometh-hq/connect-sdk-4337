@@ -9,6 +9,7 @@ import {
 import countContractAbi from "../contract/counterABI.json";
 
 import { http, encodeFunctionData, type Hex } from "viem";
+import { useState } from "react";
 
 const COUNTER_CONTRACT_ADDRESS = "0x84ADD3fa2c2463C8cF2C95aD70e4b5F602332160";
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
@@ -17,6 +18,8 @@ const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
 function ConnectWallet(): JSX.Element {
   if (!apiKey) throw new Error("API key not found");
   if (!bundlerUrl) throw new Error("Bundler Url not found");
+
+  const [txHash, setTxHash] = useState<string>(""); 
 
   const connect = async () => {
     const localStorageAddress = window.localStorage.getItem(
@@ -76,11 +79,20 @@ function ConnectWallet(): JSX.Element {
       data: calldata,
     });
 
-    console.log(txHash);
+    setTxHash(txHash)
   };
   return (
     <>
       <button onClick={connect}>connect</button>
+
+      {txHash && <a
+            href={`https://jiffyscan.xyz/userOpHash/${txHash}?network=mumbai`}
+            target="_blank"
+            className="flex-none rounded-full bg-gray-900 px-3.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
+          >
+           Explorer link <span aria-hidden="true">&rarr;</span>
+          </a>}
+
     </>
   );
 }

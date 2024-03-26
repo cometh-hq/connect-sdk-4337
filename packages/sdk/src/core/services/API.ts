@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
-import { API_URL } from "../../config";
+import { API_URL } from "../../constants";
 
 export type DeviceData = {
     browser: string;

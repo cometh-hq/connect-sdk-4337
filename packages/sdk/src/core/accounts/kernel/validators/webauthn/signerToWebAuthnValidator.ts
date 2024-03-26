@@ -17,14 +17,12 @@ import { toAccount } from "viem/accounts";
 
 import type { EntryPoint } from "permissionless/_types/types";
 import { getChainId } from "viem/actions";
-import {
-    ENTRYPOINT_ADDRESS_V06,
-    KERNEL_ADDRESSES,
-} from "../../../../../config";
+import { ENTRYPOINT_ADDRESS_V06 } from "../../../../../constants";
 import { sign } from "../../../../signers/passkeys/passkeyService";
 import type { PasskeyLocalStorageFormat } from "../../../../signers/passkeys/types";
 import { parseHex } from "../../../../signers/passkeys/utils";
 import type { UserOperation } from "../../../../types";
+import { KERNEL_ADDRESSES } from "../../constants";
 
 /**
  * Represent the layout of the calldata used for a webauthn signature
@@ -37,6 +35,13 @@ const webAuthnSignatureLayoutParam = [
     { name: "rs", type: "uint256[2]" },
 ] as const;
 
+/**
+ * Build a kernel validator from a passkey, that use the webauthn validator behind the scene
+ * @param client
+ * @param passkey
+ * @param entryPoint
+ * @param webAuthnValidatorAddress
+ */
 export async function signerToWebAuthnValidator<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
@@ -45,11 +50,11 @@ export async function signerToWebAuthnValidator<
     {
         passkey,
         entryPoint = ENTRYPOINT_ADDRESS_V06,
-        validatorAddress = KERNEL_ADDRESSES.WEB_AUTHN_VALIDATOR,
+        webAuthnValidatorAddress = KERNEL_ADDRESSES.WEB_AUTHN_VALIDATOR,
     }: {
         passkey: PasskeyLocalStorageFormat;
         entryPoint?: Address;
-        validatorAddress?: Address;
+        webAuthnValidatorAddress?: Address;
     }
 ): Promise<KernelValidator<"WebAuthnValidator">> {
     // Fetch chain id
@@ -62,7 +67,7 @@ export async function signerToWebAuthnValidator<
 
     // Build the WebAuthn Signer
     const account = toAccount({
-        address: validatorAddress,
+        address: webAuthnValidatorAddress,
         async signMessage({ message }) {
             // Encode the msg
             const challenge = hashMessage(message);
@@ -93,7 +98,7 @@ export async function signerToWebAuthnValidator<
 
     return {
         ...account,
-        address: validatorAddress,
+        address: webAuthnValidatorAddress,
         source: "WebAuthnValidator",
 
         async getEnableData() {

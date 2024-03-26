@@ -50,6 +50,10 @@
     // Enable source map by default
     "sourceMap": true,
 
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
     // Declaration files
     "declaration": true,
     "declarationDir": "./dist"

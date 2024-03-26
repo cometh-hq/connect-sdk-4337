@@ -18,12 +18,17 @@ import type {
 import { toAccount } from "viem/accounts";
 import { signMessage, signTypedData } from "viem/actions";
 import { getChainId } from "viem/actions";
-import {
-    ENTRYPOINT_ADDRESS_V06,
-    KERNEL_ADDRESSES,
-} from "../../../../../config";
+import { ENTRYPOINT_ADDRESS_V06 } from "../../../../../constants";
 import type { UserOperation } from "../../../../types";
+import { KERNEL_ADDRESSES } from "../../constants";
 
+/**
+ * Build a kernel validator from a private key, that use the ECDSA signer behind the scene
+ * @param client
+ * @param signer
+ * @param entryPoint
+ * @param ecdsaValidatorAddress
+ */
 export async function signerToEcdsaValidator<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
@@ -34,11 +39,11 @@ export async function signerToEcdsaValidator<
     {
         signer,
         entryPoint = ENTRYPOINT_ADDRESS_V06,
-        validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
+        ecdsaValidatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
     }: {
         signer: SmartAccountSigner<TSource, TAddress>;
         entryPoint?: Address;
-        validatorAddress?: Address;
+        ecdsaValidatorAddress?: Address;
     }
 ): Promise<KernelValidator<"ECDSAValidator">> {
     // Get the private key related account
@@ -79,7 +84,7 @@ export async function signerToEcdsaValidator<
 
     return {
         ...account,
-        address: validatorAddress,
+        address: ecdsaValidatorAddress,
         source: "ECDSAValidator",
 
         async getEnableData() {

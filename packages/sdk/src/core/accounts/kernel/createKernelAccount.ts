@@ -21,7 +21,7 @@ import {
     encodeFunctionData,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
-import { KERNEL_ADDRESSES } from "../../../config";
+
 import { API } from "../../services/API";
 import { getClient } from "../utils";
 import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
@@ -31,6 +31,7 @@ import {
     createNewWalletInDb,
 } from "../../services/comethService";
 import type { ComethSigner } from "../../signers/types";
+import { KERNEL_ADDRESSES } from "./constants";
 import { signerToKernelValidator } from "./validators/signerToValidator";
 
 export type KernelSmartAccount<
@@ -76,11 +77,10 @@ const createAccountAbi = [
 
 /**
  * Get the account initialization code for a kernel smart account
- * @param owner
  * @param index
- * @param factoryAddress
  * @param accountLogicAddress
  * @param validatorAddress
+ * @param enableData
  */
 export const getAccountInitCode = async ({
     index,
@@ -112,11 +112,9 @@ export const getAccountInitCode = async ({
 /**
  * Check the validity of an existing account address, or fetch the pre-deterministic account address for a kernel smart wallet
  * @param client
- * @param owner
  * @param entryPoint
- * @param validatorAddress
  * @param initCodeProvider
- * @param deployedAccountAddress
+ * @param factoryAddress
  */
 export const getAccountAddress = async <
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
@@ -156,15 +154,16 @@ export type signerToKernelSmartAccountParameters<
     validatorAddress?: Address;
 }>;
 /**
- * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene
- * @param client
- * @param privateKey
+ * Build a kernel smart account from a cometh signer
+ * @param comethSigner
+ * @param apiKey
+ * @param rpcUrl
+ * @param smartAccountAddress
  * @param entryPoint
  * @param index
  * @param factoryAddress
  * @param accountLogicAddress
  * @param validatorAddress
- * @param deployedAccountAddress
  */
 export async function signerToKernelSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,

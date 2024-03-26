@@ -2,7 +2,6 @@
     "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
     "files": {
         "ignore": [
-            "utils.ts",
             "example",
             "_cjs",
             "_esm",

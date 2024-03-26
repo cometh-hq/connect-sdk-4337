@@ -8,14 +8,14 @@ import type { Hex, PrivateKeyAccount } from "viem";
 import { getSignerLocalStorage } from "./services/eoaFallbackService";
 
 export const getFallbackEoaSigner = async ({
-    walletAddress,
+    smartAccountAddress,
     encryptionSalt,
 }: {
-    walletAddress: Address;
+    smartAccountAddress: Address;
     encryptionSalt?: string;
 }): Promise<{ privateKey: Hex; signer: PrivateKeyAccount }> => {
     const privateKey = await getSignerLocalStorage(
-        walletAddress,
+        smartAccountAddress,
         encryptionSalt
     );
 
