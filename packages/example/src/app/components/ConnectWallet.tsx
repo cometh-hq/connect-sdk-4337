@@ -4,6 +4,7 @@ import {
   signerToKernelSmartAccount,
   ENTRYPOINT_ADDRESS_V06,
   createSmartAccountClient,
+  signerToModularSmartAccount,
 } from "@cometh/connect-sdk-4337";
 
 import countContractAbi from "../contract/counterABI.json";
@@ -26,34 +27,30 @@ function ConnectWallet(): JSX.Element {
       "walletAddress"
     ) as Hex;
 
-    const signer = await createSigner({
+    const comethSigner = await createSigner({
       apiKey,
       smartAccountAddress: localStorageAddress,
       disableEoaFallback: false,
-    });
+    }) ;
 
-    console.log({ signer });
+
 
     let smartAccount;
 
     if (localStorageAddress) {
-      smartAccount = await signerToKernelSmartAccount({
-        comethSigner: signer,
+      smartAccount = await signerToModularSmartAccount({
+        comethSigner,
         apiKey,
         rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
         smartAccountAddress: localStorageAddress,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
-        validatorAddress:"0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
-        disableEoaFallback: false,
       });
     } else {
-      smartAccount = await signerToKernelSmartAccount({
-        comethSigner: signer,
+      smartAccount = await signerToModularSmartAccount({
+        comethSigner,
         apiKey,
         rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
         entryPoint: ENTRYPOINT_ADDRESS_V06,
-        validatorAddress:"0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
-        disableEoaFallback: false,
       });
       window.localStorage.setItem("walletAddress", smartAccount.address);
     }
@@ -69,7 +66,12 @@ function ConnectWallet(): JSX.Element {
 
     console.log(smartAccountClient);
 
-    const calldata = encodeFunctionData({
+
+    const plugins = await smartAccountClient.readOwners()
+
+    console.log({plugins})
+
+  /*   const calldata = encodeFunctionData({
       abi: countContractAbi,
       functionName: "count",
     });
@@ -79,7 +81,7 @@ function ConnectWallet(): JSX.Element {
       data: calldata,
     });
 
-    setTxHash(txHash)
+    setTxHash(txHash) */
   };
   return (
     <>

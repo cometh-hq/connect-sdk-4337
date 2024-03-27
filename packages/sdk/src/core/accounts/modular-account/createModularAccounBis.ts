@@ -2,9 +2,10 @@ import {
     getAccountNonce,
     getEntryPointVersion,
     getSenderAddress,
+    getUserOperationHash,
     isSmartAccountDeployed,
 } from "permissionless";
-import type { SmartAccount } from "permissionless/accounts";
+import type { SmartAccount, SmartAccountSigner } from "permissionless/accounts";
 import {
     SignTransactionNotSupportedBySmartAccount,
     toSmartAccount,
@@ -19,139 +20,102 @@ import {
     type Transport,
     concatHex,
     encodeFunctionData,
+    hexToBigInt,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
 
 import { API } from "../../services/API";
 import { getClient } from "../utils";
-import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
 
+import type { FallbackEoaSigner } from "@/core/signers/types";
+import type { EntryPoint } from "permissionless/_types/types";
 import {
-    connectToExistingWallet,
+    //connectToExistingWallet,
     createNewWalletInDb,
 } from "../../services/comethService";
-import type { ComethSigner, FallbackEoaSigner } from "../../signers/types";
-import { KERNEL_ADDRESSES } from "./constants";
-import { signerToKernelValidator } from "./validators/signerToValidator";
+import { IStandardExecutorAbi } from "./abis/IStandardExecutor";
+import { MultiOwnerModularAccountFactoryAbi } from "./abis/MultiOwnerModularAccountFactory";
+import { multiOwnerMessageSigner } from "./plugins/multi-owner/signer";
+//import type { ComethSigner } from "../../signers/types";
+import { getDefaultMultiOwnerModularAccountFactoryAddress } from "./utils/utils";
 
-export type KernelSmartAccount<
+export type ModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
-> = SmartAccount<entryPoint, "kernelSmartAccount", transport, chain>;
-
-/**
- * The account creation ABI for a kernel smart account (from the KernelFactory)
- */
-const createAccountAbi = [
-    {
-        inputs: [
-            {
-                internalType: "address",
-                name: "_implementation",
-                type: "address",
-            },
-            {
-                internalType: "bytes",
-                name: "_data",
-                type: "bytes",
-            },
-            {
-                internalType: "uint256",
-                name: "_index",
-                type: "uint256",
-            },
-        ],
-        name: "createAccount",
-        outputs: [
-            {
-                internalType: "address",
-                name: "proxy",
-                type: "address",
-            },
-        ],
-        stateMutability: "payable",
-        type: "function",
-    },
-] as const;
+> = SmartAccount<entryPoint, "modularSmartAccount", transport, chain>;
 
 /**
  * Get the account initialization code for a kernel smart account
- * @param index
- * @param accountLogicAddress
- * @param validatorAddress
- * @param enableData
+ * @param signer
+ * @param factoryAddress
+ * @param owners
+ * @param salt
  */
-export const getAccountInitCode = async ({
-    index,
-    accountLogicAddress,
-    validatorAddress,
-    enableData,
+const getAccountInitCode = async ({
+    signer,
+    factoryAddress,
+    owners,
+    salt,
 }: {
-    index: bigint;
-    accountLogicAddress: Address;
-    validatorAddress: Address;
-    enableData: Hex;
-}): Promise<Hex> => {
-    // Build the account initialization data
+    signer: SmartAccountSigner;
+    factoryAddress: Address;
+    owners: Address[];
+    salt: bigint;
+}) => {
+    // NOTE: the current signer connected will be one of the owners as well
+    const ownerAddress = signer.address;
+    // owners need to be dedupe + ordered in ascending order and not == to zero address
+    const owners_ = Array.from(new Set([...owners, ownerAddress]))
+        .filter((x) => hexToBigInt(x) !== 0n)
+        .sort((a, b) => {
+            const bigintA = hexToBigInt(a);
+            const bigintB = hexToBigInt(b);
 
-    const initialisationData = encodeFunctionData({
-        abi: KernelInitAbi,
-        functionName: "initialize",
-        args: [validatorAddress, enableData],
-    });
+            return bigintA < bigintB ? -1 : bigintA > bigintB ? 1 : 0;
+        });
 
-    // Build the account init code
-    return encodeFunctionData({
-        abi: createAccountAbi,
-        functionName: "createAccount",
-        args: [accountLogicAddress, initialisationData, index],
-    });
+    return concatHex([
+        factoryAddress,
+        encodeFunctionData({
+            abi: MultiOwnerModularAccountFactoryAbi,
+            functionName: "createAccount",
+            args: [salt, owners_],
+        }),
+    ]);
 };
 
-/**
- * Check the validity of an existing account address, or fetch the pre-deterministic account address for a kernel smart wallet
- * @param client
- * @param entryPoint
- * @param initCodeProvider
- * @param factoryAddress
- */
 export const getAccountAddress = async <
-    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
 >({
     client,
-    entryPoint: entryPointAddress,
+    entryPointAddress,
     initCodeProvider,
-    factoryAddress,
 }: {
-    client: Client<TTransport, TChain>;
+    client: Client<TTransport, TChain, undefined>;
+    entryPointAddress: Address;
     initCodeProvider: () => Promise<Hex>;
-    factoryAddress: Address;
-    entryPoint: entryPoint;
-}): Promise<Address> => {
-    // Find the init code for this account
+}) => {
     const initCode = await initCodeProvider();
 
     return getSenderAddress<ENTRYPOINT_ADDRESS_V06_TYPE>(client, {
-        initCode: concatHex([factoryAddress, initCode]),
+        initCode,
         entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V06_TYPE,
     });
 };
 
-export type signerToKernelSmartAccountParameters<
+export type signerToModularSmartAccountParameters<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
 > = Prettify<{
-    comethSigner: ComethSigner;
+    comethSigner: FallbackEoaSigner;
     apiKey: string;
     rpcUrl?: string;
     smartAccountAddress?: Address;
     entryPoint: entryPoint;
-    index?: bigint;
     factoryAddress?: Address;
-    accountLogicAddress?: Address;
-    validatorAddress?: Address;
+    owners?: Address[];
+    salt?: bigint;
 }>;
 /**
  * Build a kernel smart account from a cometh signer
@@ -165,7 +129,7 @@ export type signerToKernelSmartAccountParameters<
  * @param accountLogicAddress
  * @param validatorAddress
  */
-export async function signerToKernelSmartAccount<
+export async function signerToModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
@@ -175,12 +139,11 @@ export async function signerToKernelSmartAccount<
     rpcUrl,
     smartAccountAddress,
     entryPoint: entryPointAddress,
-    index = 0n,
-    factoryAddress = KERNEL_ADDRESSES.FACTORY_ADDRESS,
-    accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_LOGIC,
-    validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
-}: signerToKernelSmartAccountParameters<entryPoint>): Promise<
-    KernelSmartAccount<entryPoint, TTransport, TChain>
+    factoryAddress,
+    owners = [],
+    salt = 0n,
+}: signerToModularSmartAccountParameters<entryPoint>): Promise<
+    ModularSmartAccount<entryPoint, TTransport, TChain>
 > {
     const entryPointVersion = getEntryPointVersion(entryPointAddress);
 
@@ -195,45 +158,42 @@ export async function signerToKernelSmartAccount<
         undefined
     >;
 
-    const validator = await signerToKernelValidator(client, {
-        comethSigner,
-    });
+    factoryAddress = getDefaultMultiOwnerModularAccountFactoryAddress(
+        client.chain as Chain
+    );
 
-    const enableData = await validator.getEnableData();
+    if (!factoryAddress) throw new Error("factoryAddress not found");
+
+    const owner = comethSigner.eoaFallback.signer;
 
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
         getAccountInitCode({
-            index,
-            accountLogicAddress,
-            validatorAddress,
-            enableData,
+            signer: owner,
+            factoryAddress: factoryAddress as Address,
+            owners,
+            salt,
         });
 
     let verifiedSmartAccountAddress: `0x${string}`;
 
     if (smartAccountAddress) {
         verifiedSmartAccountAddress = smartAccountAddress;
-        await connectToExistingWallet({
+        /*    await connectToExistingWallet({
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
-        });
+        }); */
     } else {
-        verifiedSmartAccountAddress = await getAccountAddress<
-            entryPoint,
-            TTransport,
-            TChain
-        >({
+        verifiedSmartAccountAddress = await getAccountAddress({
             client,
-            entryPoint: entryPointAddress,
+            entryPointAddress,
             initCodeProvider: generateInitCode,
-            factoryAddress,
         });
+
         await createNewWalletInDb({
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
-            signer: (comethSigner as FallbackEoaSigner).eoaFallback
-                .signer as any,
+            signer: comethSigner,
         });
     }
 
@@ -245,10 +205,16 @@ export async function signerToKernelSmartAccount<
         verifiedSmartAccountAddress
     );
 
+    const multiOwnerSigner = multiOwnerMessageSigner(
+        client,
+        verifiedSmartAccountAddress,
+        () => owner
+    );
+
     return toSmartAccount({
         address: verifiedSmartAccountAddress,
         async signMessage({ message }) {
-            return validator.signMessage({ message });
+            return multiOwnerSigner.signMessage({ message });
         },
         async signTransaction(_, __) {
             throw new SignTransactionNotSupportedBySmartAccount();
@@ -259,7 +225,7 @@ export async function signerToKernelSmartAccount<
         client: client,
         publicKey: smartAccountAddress,
         entryPoint: entryPointAddress,
-        source: "kernelSmartAccount",
+        source: "modularSmartAccount",
 
         // Get the nonce of the smart account
         async getNonce() {
@@ -271,7 +237,16 @@ export async function signerToKernelSmartAccount<
 
         // Sign a user operation
         async signUserOperation(userOperation) {
-            return validator.signUserOperation(userOperation);
+            const hash = getUserOperationHash({
+                userOperation: {
+                    ...userOperation,
+                    signature: "0x",
+                },
+                entryPoint: entryPointAddress as EntryPoint,
+                chainId: (client.chain as Chain).id,
+            });
+
+            return multiOwnerSigner.signUserOperationHash(hash);
         },
 
         // Encode the init code
@@ -285,7 +260,7 @@ export async function signerToKernelSmartAccount<
 
             if (smartAccountDeployed) return "0x";
 
-            return concatHex([factoryAddress, await generateInitCode()]);
+            return await generateInitCode();
         },
 
         async getFactory() {
@@ -326,28 +301,29 @@ export async function signerToKernelSmartAccount<
             if (Array.isArray(_tx)) {
                 // Encode a batched call
                 return encodeFunctionData({
-                    abi: KernelExecuteAbi,
+                    abi: IStandardExecutorAbi,
                     functionName: "executeBatch",
                     args: [
                         _tx.map((tx) => ({
-                            to: tx.to,
-                            value: tx.value,
+                            target: tx.to,
                             data: tx.data,
+                            value: tx.value ?? 0n,
                         })),
                     ],
                 });
             }
             // Encode a simple call
+
             return encodeFunctionData({
-                abi: KernelExecuteAbi,
+                abi: IStandardExecutorAbi,
                 functionName: "execute",
-                args: [_tx.to, _tx.value, _tx.data, 0],
+                args: [_tx.to, _tx.value, _tx.data],
             });
         },
 
         // Get simple dummy signature
         async getDummySignature(_userOperation) {
-            return validator.getDummySignature(_userOperation);
+            return multiOwnerSigner.getDummySignature();
         },
     });
 }

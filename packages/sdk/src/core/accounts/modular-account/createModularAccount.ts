@@ -1,0 +1,116 @@
+import type { EntryPointDef } from "@alchemy/aa-core";
+import {
+    type Address,
+    type SmartAccountSigner,
+    type SmartContractAccountWithSigner,
+    type UserOperationRequest,
+    createBundlerClient,
+    getAccountAddress,
+    getVersion060EntryPoint,
+    toSmartContractAccount,
+} from "@alchemy/aa-core";
+import {
+    type Chain,
+    type Hex,
+    type Transport,
+    concatHex,
+    encodeFunctionData,
+    hexToBigInt,
+} from "viem";
+import { MultiOwnerModularAccountFactoryAbi } from "./abis/MultiOwnerModularAccountFactory";
+import { multiOwnerMessageSigner } from "./plugins/multi-owner/signer";
+import { standardExecutor } from "./utils/standardExecutor";
+import { getDefaultMultiOwnerModularAccountFactoryAddress } from "./utils/utils";
+
+export type MultiOwnerModularAccount<
+    TSigner extends SmartAccountSigner = SmartAccountSigner,
+> = SmartContractAccountWithSigner<"MultiOwnerModularAccount", TSigner>;
+
+export type CreateMultiOwnerModularAccountParams<
+    TTransport extends Transport = Transport,
+    TSigner extends SmartAccountSigner = SmartAccountSigner,
+> = {
+    transport: TTransport;
+    chain: Chain;
+    signer: TSigner;
+    salt?: bigint;
+    factoryAddress?: Address;
+    owners?: Address[];
+    entryPoint?: EntryPointDef<UserOperationRequest>;
+    accountAddress?: Address;
+    initCode?: Hex;
+};
+
+export async function createMultiOwnerModularAccount<
+    TTransport extends Transport = Transport,
+    TSigner extends SmartAccountSigner = SmartAccountSigner,
+>(
+    config: CreateMultiOwnerModularAccountParams<TTransport, TSigner>
+): Promise<MultiOwnerModularAccount<TSigner>>;
+
+export async function createMultiOwnerModularAccount({
+    transport,
+    chain,
+    signer,
+    accountAddress,
+    initCode,
+    entryPoint = getVersion060EntryPoint(chain),
+    factoryAddress = getDefaultMultiOwnerModularAccountFactoryAddress(chain),
+    owners = [],
+    salt = 0n,
+}: CreateMultiOwnerModularAccountParams): Promise<MultiOwnerModularAccount> {
+    const client = createBundlerClient({
+        transport,
+        chain,
+    });
+    const getAccountInitCode = async () => {
+        if (initCode) {
+            return initCode;
+        }
+
+        // NOTE: the current signer connected will be one of the owners as well
+        const ownerAddress = await signer.getAddress();
+        // owners need to be dedupe + ordered in ascending order and not == to zero address
+        const owners_ = Array.from(new Set([...owners, ownerAddress]))
+            .filter((x) => hexToBigInt(x) !== 0n)
+            .sort((a, b) => {
+                const bigintA = hexToBigInt(a);
+                const bigintB = hexToBigInt(b);
+
+                return bigintA < bigintB ? -1 : bigintA > bigintB ? 1 : 0;
+            });
+
+        return concatHex([
+            factoryAddress,
+            encodeFunctionData({
+                abi: MultiOwnerModularAccountFactoryAbi,
+                functionName: "createAccount",
+                args: [salt, owners_],
+            }),
+        ]);
+    };
+
+    accountAddress = await getAccountAddress({
+        client,
+        entryPointAddress: entryPoint.address,
+        accountAddress: accountAddress,
+        getAccountInitCode,
+    });
+
+    const baseAccount = await toSmartContractAccount({
+        transport,
+        chain,
+        entryPoint,
+        accountAddress,
+        source: `MultiOwnerModularAccount`,
+        getAccountInitCode,
+        ...standardExecutor,
+        ...multiOwnerMessageSigner(client, accountAddress, () => signer),
+    });
+
+    return {
+        ...baseAccount,
+        publicKey: await signer.getAddress(),
+        getSigner: () => signer,
+    };
+}

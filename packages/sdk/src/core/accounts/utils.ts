@@ -9,7 +9,7 @@ const getNetwork = async (api: API): Promise<Chain> => {
     return supportedChains.find((chain) => chain.id === +chainId) as Chain;
 };
 
-const getViemClient = (chain: Chain, rpcUrl: string) => {
+export const getViemClient = (chain: Chain, rpcUrl: string) => {
     const rpcTransport = http(rpcUrl, {
         batch: { wait: 50 },
         retryCount: 5,
