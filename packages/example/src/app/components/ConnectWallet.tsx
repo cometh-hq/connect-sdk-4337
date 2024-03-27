@@ -67,11 +67,8 @@ function ConnectWallet(): JSX.Element {
     console.log(smartAccountClient);
 
 
-    const plugins = await smartAccountClient.readOwners()
 
-    console.log({plugins})
-
-  /*   const calldata = encodeFunctionData({
+    const calldata = encodeFunctionData({
       abi: countContractAbi,
       functionName: "count",
     });
@@ -81,7 +78,7 @@ function ConnectWallet(): JSX.Element {
       data: calldata,
     });
 
-    setTxHash(txHash) */
+    setTxHash(txHash)
   };
   return (
     <>
