@@ -25,26 +25,9 @@ import type { Address, Chain } from "viem";
  * @returns a {@link Address} for the given chain
  * @throws if the chain doesn't have an address currently deployed
  */
-export const getDefaultMultiOwnerModularAccountFactoryAddress = (
+export const getDefaultMultiP256OwnerModularAccountFactoryAddress = (
     chain: Chain
 ): Address => {
-    switch (chain.id) {
-        case sepolia.id:
-        case baseSepolia.id:
-        case polygon.id:
-        case mainnet.id:
-        case goerli.id:
-        case polygonAmoy.id:
-        case polygonMumbai.id:
-        case optimism.id:
-        case optimismGoerli.id:
-        case optimismSepolia.id:
-        case arbitrum.id:
-        case arbitrumGoerli.id:
-        case arbitrumSepolia.id:
-        case base.id:
-        case baseGoerli.id:
-            return "0x000000e92D78D90000007F0082006FDA09BD5f11";
-    }
-    throw new DefaultFactoryNotDefinedError("MultiOwnerModularAccount", chain);
+  
+    return "0xe26D33084dac4F03482e59Fc01C9Fe03dc8603B0"
 };

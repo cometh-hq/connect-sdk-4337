@@ -14,6 +14,10 @@ const API_URL = "https://api.connect.develop.core.cometh.tech";
 const ENTRYPOINT_ADDRESS_V06 = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
 const ENTRYPOINT_ADDRESS_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
 
+//COMETH_CONTRACTS
+const P256_SIGNER_FACTORY = "0x73dA77F0f2daaa88b908413495d3D0e37458212e";
+const P256_SIGNER_SINGLETON = "0x71558e9Ac314B17Eb665441aFF60914EAE391712";
+
 type RpcData = { rpcUrl: string; networkName: string; currency: string };
 
 const networks = {
@@ -94,6 +98,8 @@ export {
     API_URL,
     ENTRYPOINT_ADDRESS_V06,
     ENTRYPOINT_ADDRESS_V07,
+    P256_SIGNER_FACTORY,
+    P256_SIGNER_SINGLETON,
     networks,
     supportedChains,
 };

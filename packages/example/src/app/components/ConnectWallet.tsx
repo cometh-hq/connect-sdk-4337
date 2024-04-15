@@ -41,7 +41,7 @@ function ConnectWallet(): JSX.Element {
       smartAccount = await signerToModularSmartAccount({
         comethSigner,
         apiKey,
-        rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
+        rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/KNNW0UQ8T-LGoYE7dOW31o-fSNqWtg5I",
         smartAccountAddress: localStorageAddress,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
       });
@@ -49,13 +49,13 @@ function ConnectWallet(): JSX.Element {
       smartAccount = await signerToModularSmartAccount({
         comethSigner,
         apiKey,
-        rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
+        rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/KNNW0UQ8T-LGoYE7dOW31o-fSNqWtg5I",
         entryPoint: ENTRYPOINT_ADDRESS_V06,
       });
       window.localStorage.setItem("walletAddress", smartAccount.address);
     }
 
-    console.log(smartAccount);
+    console.log({smartAccount});
 
     const smartAccountClient = createSmartAccountClient({
       account: smartAccount,
@@ -64,7 +64,7 @@ function ConnectWallet(): JSX.Element {
       bundlerTransport: http(bundlerUrl),
     });
 
-    console.log(smartAccountClient);
+    console.log({smartAccountClient});
 
 
 
@@ -73,10 +73,14 @@ function ConnectWallet(): JSX.Element {
       functionName: "count",
     });
 
+    console.log({calldata})
+
     const txHash = await smartAccountClient.sendTransaction({
       to: COUNTER_CONTRACT_ADDRESS,
       data: calldata,
     });
+
+    console.log({txHash})
 
     setTxHash(txHash)
   };

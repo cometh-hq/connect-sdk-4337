@@ -14,9 +14,9 @@ import {
     hashTypedData,
 } from "viem";
 import { signMessage } from "viem/actions";
-import { MultiOwnerPlugin, MultiOwnerPluginAbi } from "./plugin.js";
+import { MultiOwnerPlugin, MultiOwnerPluginAbi } from "../plugin.js";
 
-export const multiOwnerMessageSigner = <
+export const ECDSAMessageSigner = <
     TTransport extends Transport,
     TChain extends Chain | undefined = Chain | undefined,
 >(
@@ -66,7 +66,6 @@ export const multiOwnerMessageSigner = <
         getDummySignature: (): `0x${string}` => {
             return "0xfffffffffffffffffffffffffffffff0000000000000000000000000000000007aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1c";
         },
-
         signUserOperationHash: async (
             uoHash: `0x${string}`
         ): Promise<`0x${string}`> => {

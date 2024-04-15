@@ -5,7 +5,7 @@ import {
     getUserOperationHash,
     isSmartAccountDeployed,
 } from "permissionless";
-import type { SmartAccount, SmartAccountSigner } from "permissionless/accounts";
+import type { SmartAccount } from "permissionless/accounts";
 import {
     SignTransactionNotSupportedBySmartAccount,
     toSmartAccount,
@@ -21,23 +21,28 @@ import {
     concatHex,
     encodeFunctionData,
     hexToBigInt,
+    keccak256,
+    encodePacked,
+    getContractAddress,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
 
 import { API } from "../../services/API";
 import { getClient } from "../utils";
 
-import type { FallbackEoaSigner } from "@/core/signers/types";
+import type { ComethSigner } from "@/core/signers/types";
 import type { EntryPoint } from "permissionless/_types/types";
 import {
-    //connectToExistingWallet,
+    connectToExistingWallet,
     createNewWalletInDb,
 } from "../../services/comethService";
 import { IStandardExecutorAbi } from "./abis/IStandardExecutor";
-import { MultiOwnerModularAccountFactoryAbi } from "./abis/MultiOwnerModularAccountFactory";
-import { multiOwnerMessageSigner } from "./plugins/multi-owner/signer";
-//import type { ComethSigner } from "../../signers/types";
-import { getDefaultMultiOwnerModularAccountFactoryAddress } from "./utils/utils";
+import { MultiP256OwnerModularAccountFactoryAbi } from "./abis/MultiP256OwnerModularAccountFactory";
+import { ECDSAMessageSigner } from "./plugins/multi-owner/signer/ECDSAsigner";
+import { getDefaultMultiP256OwnerModularAccountFactoryAddress } from "./utils/utils";
+import { P256_SIGNER_FACTORY, P256_SIGNER_SINGLETON } from "@/constants";
+import { IP256PluginDeployerAbi } from "./abis/IP256PluginDeployer";
+import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/webauthnSigner";
 
 export type ModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
@@ -46,25 +51,25 @@ export type ModularSmartAccount<
 > = SmartAccount<entryPoint, "modularSmartAccount", transport, chain>;
 
 /**
- * Get the account initialization code for a kernel smart account
- * @param signer
+ * Get the account initialization code for a modular smart account
+ * @param signerAddress
  * @param factoryAddress
  * @param owners
  * @param salt
  */
 const getAccountInitCode = async ({
-    signer,
+    signerAddress,
     factoryAddress,
     owners,
     salt,
 }: {
-    signer: SmartAccountSigner;
+    signerAddress: Address;
     factoryAddress: Address;
     owners: Address[];
     salt: bigint;
 }) => {
     // NOTE: the current signer connected will be one of the owners as well
-    const ownerAddress = signer.address;
+    const ownerAddress = signerAddress;
     // owners need to be dedupe + ordered in ascending order and not == to zero address
     const owners_ = Array.from(new Set([...owners, ownerAddress]))
         .filter((x) => hexToBigInt(x) !== 0n)
@@ -75,10 +80,12 @@ const getAccountInitCode = async ({
             return bigintA < bigintB ? -1 : bigintA > bigintB ? 1 : 0;
         });
 
+        console.log({owners_})
+
     return concatHex([
         factoryAddress,
         encodeFunctionData({
-            abi: MultiOwnerModularAccountFactoryAbi,
+            abi: MultiP256OwnerModularAccountFactoryAbi,
             functionName: "createAccount",
             args: [salt, owners_],
         }),
@@ -108,7 +115,7 @@ export const getAccountAddress = async <
 export type signerToModularSmartAccountParameters<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
 > = Prettify<{
-    comethSigner: FallbackEoaSigner;
+    comethSigner: ComethSigner;
     apiKey: string;
     rpcUrl?: string;
     smartAccountAddress?: Address;
@@ -118,7 +125,7 @@ export type signerToModularSmartAccountParameters<
     salt?: bigint;
 }>;
 /**
- * Build a kernel smart account from a cometh signer
+ * Build a modular smart account from a cometh signer
  * @param comethSigner
  * @param apiKey
  * @param rpcUrl
@@ -126,7 +133,6 @@ export type signerToModularSmartAccountParameters<
  * @param entryPoint
  * @param index
  * @param factoryAddress
- * @param accountLogicAddress
  * @param validatorAddress
  */
 export async function signerToModularSmartAccount<
@@ -151,25 +157,55 @@ export async function signerToModularSmartAccount<
         throw new Error("Only EntryPoint 0.6 is supported");
     }
 
-    const api = new API(apiKey);
+    const api = new API(apiKey, "https://api.connect.develop.core.cometh.tech");
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
         TChain,
         undefined
     >;
 
-    factoryAddress = getDefaultMultiOwnerModularAccountFactoryAddress(
+    factoryAddress = getDefaultMultiP256OwnerModularAccountFactoryAddress(
         client.chain as Chain
     );
 
+    console.log({factoryAddress})
+
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
-    const owner = comethSigner.eoaFallback.signer;
+    let ownerAddress: Address 
+
+    if (comethSigner.type === "localWallet") {
+        ownerAddress = comethSigner.eoaFallback.signer.address;
+    } else {
+    //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
+      const {x, y} = comethSigner.passkey.pubkeyCoordinates;
+      const salt = keccak256(
+        encodePacked(['uint256', 'uint256'], [hexToBigInt(x), hexToBigInt(y)])
+      )
+    
+      // Init code of minimal proxy from solady 0.0.123
+      const initCode = `0x602c3d8160093d39f33d3d3d3d363d3d37363d73${P256_SIGNER_SINGLETON.substring(
+        2
+      )}5af43d3d93803e602a57fd5bf3` as `0x${string}`
+    
+      const initCodeHash = keccak256(initCode)
+    
+      ownerAddress =  getContractAddress({ 
+        bytecode: initCodeHash, 
+        from: P256_SIGNER_FACTORY, 
+        opcode: 'CREATE2', 
+        salt: salt, 
+      })
+    }
+
+    console.log({ownerAddress})
+
+   
 
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
         getAccountInitCode({
-            signer: owner,
+            signerAddress: ownerAddress,
             factoryAddress: factoryAddress as Address,
             owners,
             salt,
@@ -179,10 +215,10 @@ export async function signerToModularSmartAccount<
 
     if (smartAccountAddress) {
         verifiedSmartAccountAddress = smartAccountAddress;
-        /*    await connectToExistingWallet({
+           await connectToExistingWallet({
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
-        }); */
+        });
     } else {
         verifiedSmartAccountAddress = await getAccountAddress({
             client,
@@ -205,15 +241,30 @@ export async function signerToModularSmartAccount<
         verifiedSmartAccountAddress
     );
 
-    const multiOwnerSigner = multiOwnerMessageSigner(
-        client,
-        verifiedSmartAccountAddress,
-        () => owner
-    );
+    
+
+    let multiOwnerSigner: any;
+
+    
+
+    if (comethSigner.type === "localWallet") {
+
+        multiOwnerSigner = ECDSAMessageSigner(
+            client,
+            verifiedSmartAccountAddress,
+            () => comethSigner.eoaFallback.signer
+        );
+    } else {
+    //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
+      multiOwnerSigner = WebauthnMessageSigner(client, comethSigner.passkey)
+    }
+
+    console.log({multiOwnerSigner})
 
     return toSmartAccount({
         address: verifiedSmartAccountAddress,
         async signMessage({ message }) {
+            console.log({message})
             return multiOwnerSigner.signMessage({ message });
         },
         async signTransaction(_, __) {
@@ -237,6 +288,8 @@ export async function signerToModularSmartAccount<
 
         // Sign a user operation
         async signUserOperation(userOperation) {
+            console.log({userOperation})
+
             const hash = getUserOperationHash({
                 userOperation: {
                     ...userOperation,
@@ -245,6 +298,8 @@ export async function signerToModularSmartAccount<
                 entryPoint: entryPointAddress as EntryPoint,
                 chainId: (client.chain as Chain).id,
             });
+
+            console.log({hash})
 
             return multiOwnerSigner.signUserOperationHash(hash);
         },
@@ -292,12 +347,36 @@ export async function signerToModularSmartAccount<
         // Encode the deploy call data
         async encodeDeployCallData(_) {
             throw new Error(
-                "Simple account doesn't support account deployment"
+                "Modular account doesn't support account deployment"
             );
         },
 
         // Encode a call
         async encodeCallData(_tx) {
+            
+            if(!smartAccountDeployed && comethSigner.type === "passkey") {
+                const {x, y} = comethSigner.passkey.pubkeyCoordinates;
+
+               const Calls = Array.isArray(_tx) ? [ _tx.map((tx) => ({
+                target: tx.to,
+                data: tx.data,
+                value: tx.value ?? 0n,
+            }))] : [{
+                target: _tx.to,
+                data: _tx.data,
+                value: _tx.value ?? 0n,
+            }]
+
+            const result = encodeFunctionData({
+                abi: IP256PluginDeployerAbi,
+                functionName: "executeAndDeployPasskey",
+                args: [x, y, P256_SIGNER_FACTORY , Calls],
+            })
+
+
+                return result
+            }
+
             if (Array.isArray(_tx)) {
                 // Encode a batched call
                 return encodeFunctionData({
