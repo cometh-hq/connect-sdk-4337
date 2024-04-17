@@ -133,3 +133,10 @@ export async function createSigner({
         eoaFallback: { privateKey, signer, encryptionSalt },
     };
 }
+
+// export const paymasterClient = createPimlicoPaymasterClient({
+//     transport: http(
+//         "https://api.pimlico.io/v2/mumbai/rpc?apikey=690deb0b-19a1-4bab-8684-30b7667da883"
+//     ),
+//     entryPoint: ENTRYPOINT_ADDRESS_V06,
+// });

@@ -80,6 +80,13 @@ const networks = {
         networkName: "Redstone Holesky",
         currency: "ETH",
     },
+    421614: {
+        rpcUrl:
+            process.env.RPC_URL_ARBITRUM_SEPOLIA ||
+            "https://arbitrum-sepolia.infura.io/v3/2e1346349a5d4a24aeba9dee6c7b20b5",
+        networkName: "Arbitrum Sepolia",
+        currency: "ETH",
+    },
 } as Record<number, RpcData>;
 
 const supportedChains = [
