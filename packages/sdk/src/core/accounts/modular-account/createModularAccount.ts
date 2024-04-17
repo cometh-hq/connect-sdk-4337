@@ -288,7 +288,6 @@ export async function signerToModularSmartAccount<
 
         // Sign a user operation
         async signUserOperation(userOperation) {
-            console.log({userOperation})
 
             const hash = getUserOperationHash({
                 userOperation: {
@@ -402,7 +401,18 @@ export async function signerToModularSmartAccount<
 
         // Get simple dummy signature
         async getDummySignature(_userOperation) {
-            return multiOwnerSigner.getDummySignature();
+            console.log({_userOperation})
+            const hash = getUserOperationHash({
+                userOperation: {
+                    ..._userOperation,
+                    signature: "0x",
+                },
+                entryPoint: entryPointAddress as EntryPoint,
+                chainId: (client.chain as Chain).id,
+            });
+
+            console.log({hash})
+            return multiOwnerSigner.getDummySignature(hash);
         },
     });
 }
