@@ -8,23 +8,23 @@ import {
     getFallbackEoaSigner,
 } from "./fallbackEoa/fallbackEoaSigner";
 import {
-        createPasskeySigner,
-    getPasskeySigner,
+    //     createPasskeySigner,
+    // getPasskeySigner,
     setPasskeyInStorage,
 } from "./passkeys/passkeyService";
 
-import { API } from "../services/API";
+//import { API } from "../services/API";
 import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
 
 import type {
-        PasskeyLocalStorageFormat,
+        // PasskeyLocalStorageFormat,
     webAuthnOptions,
 } from "./passkeys/types";
-import {
-    DEFAULT_WEBAUTHN_OPTIONS,
-    isWebAuthnCompatible,
-} from "./passkeys/utils";
-import type { ComethSigner } from "./types";
+// import {
+//     DEFAULT_WEBAUTHN_OPTIONS,
+//     isWebAuthnCompatible,
+// } from "./passkeys/utils";
+import type { ComethSigner, FallbackEoaSigner } from "./types";
 
 type SignerConfigParams = {
     apiKey: string;
@@ -62,12 +62,12 @@ const throwErrorWhenEoaFallbackDisabled = (
         throw new Error("Passkeys are not compatible with your device");
 };
 
-const _isFallbackSigner = (): boolean => {
-    const fallbackSigner = Object.keys(localStorage).find((key) =>
-        key.startsWith("cometh-connect-fallback-")
-    );
-    return !!fallbackSigner;
-};
+// const _isFallbackSigner = (): boolean => {
+//     const fallbackSigner = Object.keys(localStorage).find((key) =>
+//         key.startsWith("cometh-connect-fallback-")
+//     );
+//     return !!fallbackSigner;
+// };
 
 /**
  * Helper to create the Cometh Signer
@@ -79,15 +79,15 @@ const _isFallbackSigner = (): boolean => {
  * @param passKeyName
  */
 export async function createSigner({
-        apiKey,
+        // apiKey,
     smartAccountAddress,
     disableEoaFallback = false,
     encryptionSalt,
-       webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
-    passKeyName,
-}: SignerConfigParams): Promise<ComethSigner> {
-    const api = new API(apiKey);
-    const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
+    //    webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+    // passKeyName,
+}: SignerConfigParams): Promise<FallbackEoaSigner> {
+    // const api = new API(apiKey);
+  /*   const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
     if (webAuthnCompatible && !_isFallbackSigner()) {
         let passkey: PasskeyLocalStorageFormat;
@@ -111,7 +111,7 @@ export async function createSigner({
             type: "passkey",
             passkey,
         };
-    }
+    } */
 
     console.warn("ECC passkey are not supported by your device");
     throwErrorWhenEoaFallbackDisabled(disableEoaFallback);

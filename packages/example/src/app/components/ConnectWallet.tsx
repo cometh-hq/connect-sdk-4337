@@ -1,4 +1,4 @@
-import { polygonMumbai } from "viem/chains";
+import { polygon, polygonMumbai } from "viem/chains";
 import {
   createSigner,
   signerToKernelSmartAccount,
@@ -60,7 +60,7 @@ function ConnectWallet(): JSX.Element {
     const smartAccountClient = createSmartAccountClient({
       account: smartAccount,
       entryPoint: ENTRYPOINT_ADDRESS_V06,
-      chain: polygonMumbai,
+      chain: polygon,
       bundlerTransport: http(bundlerUrl),
     });
 

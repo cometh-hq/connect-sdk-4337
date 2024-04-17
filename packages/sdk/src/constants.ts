@@ -8,7 +8,7 @@ import {
 } from "viem/chains";
 import { muster, musterTestnet, redstoneHolesky } from "./customChains";
 
-const API_URL = "https://api.connect.develop.core.cometh.tech";
+const API_URL = "https://api.connect.cometh.io";
 
 // 4337 Contracts
 const ENTRYPOINT_ADDRESS_V06 = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";

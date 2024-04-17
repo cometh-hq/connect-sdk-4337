@@ -33,7 +33,7 @@ import { getClient } from "../utils";
 import type { ComethSigner } from "@/core/signers/types";
 import type { EntryPoint } from "permissionless/_types/types";
 import {
-    connectToExistingWallet,
+    //connectToExistingWallet,
     createNewWalletInDb,
 } from "../../services/comethService";
 import { IStandardExecutorAbi } from "./abis/IStandardExecutor";
@@ -157,7 +157,7 @@ export async function signerToModularSmartAccount<
         throw new Error("Only EntryPoint 0.6 is supported");
     }
 
-    const api = new API(apiKey, "https://api.connect.develop.core.cometh.tech");
+    const api = new API(apiKey);
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
         TChain,
@@ -215,10 +215,10 @@ export async function signerToModularSmartAccount<
 
     if (smartAccountAddress) {
         verifiedSmartAccountAddress = smartAccountAddress;
-           await connectToExistingWallet({
+         /*   await connectToExistingWallet({
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
-        });
+        }); */
     } else {
         verifiedSmartAccountAddress = await getAccountAddress({
             client,

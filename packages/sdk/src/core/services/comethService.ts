@@ -2,14 +2,14 @@ import type { Address } from "viem";
 import { saveSignerInStorage } from "../signers/createSigner";
 import type { ComethSigner } from "../signers/types";
 import type { API } from "./API";
-import { getDeviceData } from "./deviceService";
+// import { getDeviceData } from "./deviceService";
 
 export const createNewWalletInDb = async ({
     api,
     smartAccountAddress,
     signer,
 }: { api: API; smartAccountAddress: Address; signer: ComethSigner }) => {
-    {
+   /*  {
         if (signer.type === "localWallet") {
             await api.initWallet({
                 ownerAddress: signer.eoaFallback.signer.address,
@@ -23,7 +23,7 @@ export const createNewWalletInDb = async ({
                 deviceData: getDeviceData(),
             });
         }
-    }
+    } */
     await saveSignerInStorage(signer, smartAccountAddress);
 };
 
