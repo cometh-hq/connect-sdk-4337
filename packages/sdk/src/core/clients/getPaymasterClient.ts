@@ -32,7 +32,7 @@ export const getPaymasterClient = (
                         "x-consumer-groups": "connect",
                         "x-consumer-username":
                             "a1c5eeaa6e874d74bc6c80a08cde44dc",
-                        "x-project-chain-id": "421614",
+                        "x-project-chain-id": "137",
                     },
                 },
             }

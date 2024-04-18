@@ -1,9 +1,9 @@
 import { polygon, polygonMumbai } from "viem/chains";
 import {
     createSigner,
-    signerToKernelSmartAccount,
     ENTRYPOINT_ADDRESS_V06,
     createSmartAccountClient,
+    signerToModularSmartAccount,
 } from "@cometh/connect-sdk-4337";
 
 import countContractAbi from "../contract/counterABI.json";
@@ -26,60 +26,57 @@ function ConnectWallet(): JSX.Element {
             "walletAddress"
         ) as Hex;
 
-        const signer = await createSigner({
+        const comethSigner = await createSigner({
             apiKey,
             smartAccountAddress: localStorageAddress,
             disableEoaFallback: false,
         });
 
-        console.log({ signer });
-
         let smartAccount;
 
         if (localStorageAddress) {
-            smartAccount = await signerToKernelSmartAccount({
-                comethSigner: signer,
+            smartAccount = await signerToModularSmartAccount({
+                comethSigner,
                 apiKey,
-                rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
+                rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/KNNW0UQ8T-LGoYE7dOW31o-fSNqWtg5I",
                 smartAccountAddress: localStorageAddress,
                 entryPoint: ENTRYPOINT_ADDRESS_V06,
-                validatorAddress: "0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
-                disableEoaFallback: false,
             });
         } else {
-            smartAccount = await signerToKernelSmartAccount({
-                comethSigner: signer,
+            smartAccount = await signerToModularSmartAccount({
+                comethSigner,
                 apiKey,
-                rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
+                rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/KNNW0UQ8T-LGoYE7dOW31o-fSNqWtg5I",
                 entryPoint: ENTRYPOINT_ADDRESS_V06,
-                validatorAddress: "0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
-                disableEoaFallback: false,
             });
             window.localStorage.setItem("walletAddress", smartAccount.address);
         }
 
-        console.log(smartAccount);
+        console.log({ smartAccount });
 
         const smartAccountClient = createSmartAccountClient({
             account: smartAccount,
             entryPoint: ENTRYPOINT_ADDRESS_V06,
-            chain: polygonMumbai,
+            chain: polygon,
             bundlerTransport: http(bundlerUrl),
         });
 
-        console.log(smartAccountClient);
+        console.log({ smartAccountClient });
 
         const calldata = encodeFunctionData({
             abi: countContractAbi,
             functionName: "count",
         });
 
+        console.log({ calldata });
+
         const txHash = await smartAccountClient.sendTransaction({
             to: COUNTER_CONTRACT_ADDRESS,
             data: calldata,
         });
 
-        console.log(txHash);
+        console.log({ txHash });
+
         setTxHash(txHash);
     };
     return (
