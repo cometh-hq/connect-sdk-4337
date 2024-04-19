@@ -18,7 +18,7 @@ import { MultiOwnerPlugin, MultiOwnerPluginAbi } from "../plugin.js";
 
 export const ECDSAMessageSigner = <
     TTransport extends Transport,
-    TChain extends Chain | undefined = Chain | undefined,
+    TChain extends Chain | undefined = Chain | undefined
 >(
     client: Client<TTransport, TChain, undefined>,
     smartAccountAddress: Address,
@@ -88,7 +88,7 @@ export const ECDSAMessageSigner = <
             const typedData extends TypedData | Record<string, unknown>,
             primaryType extends
                 | keyof typedData
-                | "EIP712Domain" = keyof typedData,
+                | "EIP712Domain" = keyof typedData
         >(
             typedDataDefinition: TypedDataDefinition<typedData, primaryType>
         ): Promise<Hex> => {

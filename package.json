@@ -1,29 +1,29 @@
 {
-  "name": "@cometh/connect-sdk",
-  "version": "0.0.1",
-  "description": "SDK Cometh Connect",
-  "private": true,
-  "type": "module",
-  "license": "ISC",
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
-    "build": "sh builder.sh bun install",
-    "lint": "biome lint .",
-    "format:check": "biome check .",
-    "format": "biome check --apply .",
-    "changeset": "changeset",
-    "changeset:release": "bun run build && changeset publish",
-    "changeset:version": "changeset version && bun install --lockfile-only"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.5.3",
-    "@types/node": "^20",
-    "rimraf": "^5.0.5",
-    "typescript": "^5",
-    "@changesets/changelog-git": "^0.2.0",
-    "@changesets/changelog-github": "^0.5.0",
-    "@changesets/cli": "^2.27.1"
-  }
+    "name": "@cometh/connect-sdk",
+    "version": "0.0.1",
+    "description": "SDK Cometh Connect",
+    "private": true,
+    "type": "module",
+    "license": "ISC",
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "sh builder.sh bun install",
+        "lint": "biome lint .",
+        "format:check": "biome check .",
+        "format": "biome check --apply .",
+        "changeset": "changeset",
+        "changeset:release": "bun run build && changeset publish",
+        "changeset:version": "changeset version && bun install --lockfile-only"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.5.3",
+        "@types/node": "^20",
+        "rimraf": "^5.0.5",
+        "typescript": "^5",
+        "@changesets/changelog-git": "^0.2.0",
+        "@changesets/changelog-github": "^0.5.0",
+        "@changesets/cli": "^2.27.1"
+    }
 }

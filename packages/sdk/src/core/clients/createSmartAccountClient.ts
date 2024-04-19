@@ -1,19 +1,33 @@
 import { createSmartAccountClient as createPermissionlessSmartAccountClient } from "permissionless";
-import { getPaymasterClient } from "./getPaymasterClient";
-// import { pimlicoPaymasterActions } from "permissionless/actions/pimlico";
-// import { ENTRYPOINT_ADDRESS_V06 } from "@/constants";
-// import { polygon } from "viem/chains";
-// import { createClient, http } from "viem";
+// import { getPaymasterClient } from "./getPaymasterClient";
+import { pimlicoPaymasterActions } from "permissionless/actions/pimlico";
+import { ENTRYPOINT_ADDRESS_V06 } from "@/constants";
+import { polygon } from "viem/chains";
+import { createClient, http } from "viem";
 
 export const createSmartAccountClient: typeof createPermissionlessSmartAccountClient =
     (parameters) => {
-        const paymasterClient = getPaymasterClient(parameters.bundlerTransport);
-        // const paymasterClient = createClient({
-        //     transport: http(
-        //         "https://api.pimlico.io/v2/137/rpc?apikey=22fca35d-bdc6-4d4f-b7dc-75c056fe7f13"
-        //     ),
-        //     chain: polygon,
-        // }).extend(pimlicoPaymasterActions(ENTRYPOINT_ADDRESS_V06));
+        // const paymasterClient = getPaymasterClient(parameters.bundlerTransport);
+        const paymasterClient = createClient({
+            transport: http(
+                // "https://api.pimlico.io/v1/80001/rpc?apikey=690deb0b-19a1-4bab-8684-30b7667da883",
+                "http://localhost:3001/verifying-paymaster/validate",
+                {
+                    fetchOptions: {
+                        headers: {
+                            apiKey:
+                                process.env.NEXT_PUBLIC_COMETH_API_KEY || "",
+                            "x-consumer-access": "public",
+                            "x-consumer-groups": "connect",
+                            "x-consumer-username":
+                                "a1c5eeaa6e874d74bc6c80a08cde44dc",
+                            "x-project-chain-id": "137",
+                        },
+                    },
+                }
+            ),
+            chain: polygon,
+        }).extend(pimlicoPaymasterActions(ENTRYPOINT_ADDRESS_V06));
 
         return createPermissionlessSmartAccountClient({
             middleware: {

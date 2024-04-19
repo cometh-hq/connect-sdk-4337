@@ -47,7 +47,7 @@ import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/webauthnSi
 export type ModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     transport extends Transport = Transport,
-    chain extends Chain | undefined = Chain | undefined,
+    chain extends Chain | undefined = Chain | undefined
 > = SmartAccount<entryPoint, "modularSmartAccount", transport, chain>;
 
 /**
@@ -80,7 +80,7 @@ const getAccountInitCode = async ({
             return bigintA < bigintB ? -1 : bigintA > bigintB ? 1 : 0;
         });
 
-        console.log({owners_})
+    console.log({ owners_ });
 
     return concatHex([
         factoryAddress,
@@ -94,7 +94,7 @@ const getAccountInitCode = async ({
 
 export const getAccountAddress = async <
     TTransport extends Transport = Transport,
-    TChain extends Chain | undefined = Chain | undefined,
+    TChain extends Chain | undefined = Chain | undefined
 >({
     client,
     entryPointAddress,
@@ -113,7 +113,7 @@ export const getAccountAddress = async <
 };
 
 export type signerToModularSmartAccountParameters<
-    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
+    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE
 > = Prettify<{
     comethSigner: ComethSigner;
     apiKey: string;
@@ -138,7 +138,7 @@ export type signerToModularSmartAccountParameters<
 export async function signerToModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     TTransport extends Transport = Transport,
-    TChain extends Chain | undefined = Chain | undefined,
+    TChain extends Chain | undefined = Chain | undefined
 >({
     comethSigner,
     apiKey,
@@ -168,39 +168,41 @@ export async function signerToModularSmartAccount<
         client.chain as Chain
     );
 
-    console.log({factoryAddress})
+    console.log({ factoryAddress });
 
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
-    let ownerAddress: Address 
+    let ownerAddress: Address;
 
     if (comethSigner.type === "localWallet") {
         ownerAddress = comethSigner.eoaFallback.signer.address;
     } else {
-    //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
-      const {x, y} = comethSigner.passkey.pubkeyCoordinates;
-      const salt = keccak256(
-        encodePacked(['uint256', 'uint256'], [hexToBigInt(x), hexToBigInt(y)])
-      )
-    
-      // Init code of minimal proxy from solady 0.0.123
-      const initCode = `0x602c3d8160093d39f33d3d3d3d363d3d37363d73${P256_SIGNER_SINGLETON.substring(
-        2
-      )}5af43d3d93803e602a57fd5bf3` as `0x${string}`
-    
-      const initCodeHash = keccak256(initCode)
-    
-      ownerAddress =  getContractAddress({ 
-        bytecode: initCodeHash, 
-        from: P256_SIGNER_FACTORY, 
-        opcode: 'CREATE2', 
-        salt: salt, 
-      })
+        //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
+        const { x, y } = comethSigner.passkey.pubkeyCoordinates;
+        const salt = keccak256(
+            encodePacked(
+                ["uint256", "uint256"],
+                [hexToBigInt(x), hexToBigInt(y)]
+            )
+        );
+
+        // Init code of minimal proxy from solady 0.0.123
+        const initCode =
+            `0x602c3d8160093d39f33d3d3d3d363d3d37363d73${P256_SIGNER_SINGLETON.substring(
+                2
+            )}5af43d3d93803e602a57fd5bf3` as `0x${string}`;
+
+        const initCodeHash = keccak256(initCode);
+
+        ownerAddress = getContractAddress({
+            bytecode: initCodeHash,
+            from: P256_SIGNER_FACTORY,
+            opcode: "CREATE2",
+            salt: salt,
+        });
     }
 
-    console.log({ownerAddress})
-
-   
+    console.log({ ownerAddress });
 
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
@@ -215,7 +217,7 @@ export async function signerToModularSmartAccount<
 
     if (smartAccountAddress) {
         verifiedSmartAccountAddress = smartAccountAddress;
-         /*   await connectToExistingWallet({
+        /*   await connectToExistingWallet({
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
         }); */
@@ -241,30 +243,25 @@ export async function signerToModularSmartAccount<
         verifiedSmartAccountAddress
     );
 
-    
-
     let multiOwnerSigner: any;
 
-    
-
     if (comethSigner.type === "localWallet") {
-
         multiOwnerSigner = ECDSAMessageSigner(
             client,
             verifiedSmartAccountAddress,
             () => comethSigner.eoaFallback.signer
         );
     } else {
-    //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
-      multiOwnerSigner = WebauthnMessageSigner(client, comethSigner.passkey)
+        //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
+        multiOwnerSigner = WebauthnMessageSigner(client, comethSigner.passkey);
     }
 
-    console.log({multiOwnerSigner})
+    console.log({ multiOwnerSigner });
 
     return toSmartAccount({
         address: verifiedSmartAccountAddress,
         async signMessage({ message }) {
-            console.log({message})
+            console.log({ message });
             return multiOwnerSigner.signMessage({ message });
         },
         async signTransaction(_, __) {
@@ -288,6 +285,7 @@ export async function signerToModularSmartAccount<
 
         // Sign a user operation
         async signUserOperation(userOperation) {
+            console.log("signUserOperation", userOperation);
 
             const hash = getUserOperationHash({
                 userOperation: {
@@ -298,7 +296,7 @@ export async function signerToModularSmartAccount<
                 chainId: (client.chain as Chain).id,
             });
 
-            console.log({hash})
+            console.log({ hash });
 
             return multiOwnerSigner.signUserOperationHash(hash);
         },
@@ -352,28 +350,32 @@ export async function signerToModularSmartAccount<
 
         // Encode a call
         async encodeCallData(_tx) {
-            
-            if(!smartAccountDeployed && comethSigner.type === "passkey") {
-                const {x, y} = comethSigner.passkey.pubkeyCoordinates;
+            if (!smartAccountDeployed && comethSigner.type === "passkey") {
+                const { x, y } = comethSigner.passkey.pubkeyCoordinates;
 
-               const Calls = Array.isArray(_tx) ? [ _tx.map((tx) => ({
-                target: tx.to,
-                data: tx.data,
-                value: tx.value ?? 0n,
-            }))] : [{
-                target: _tx.to,
-                data: _tx.data,
-                value: _tx.value ?? 0n,
-            }]
+                const Calls = Array.isArray(_tx)
+                    ? [
+                          _tx.map((tx) => ({
+                              target: tx.to,
+                              data: tx.data,
+                              value: tx.value ?? 0n,
+                          })),
+                      ]
+                    : [
+                          {
+                              target: _tx.to,
+                              data: _tx.data,
+                              value: _tx.value ?? 0n,
+                          },
+                      ];
 
-            const result = encodeFunctionData({
-                abi: IP256PluginDeployerAbi,
-                functionName: "executeAndDeployPasskey",
-                args: [x, y, P256_SIGNER_FACTORY , Calls],
-            })
+                const result = encodeFunctionData({
+                    abi: IP256PluginDeployerAbi,
+                    functionName: "executeAndDeployPasskey",
+                    args: [x, y, P256_SIGNER_FACTORY, Calls],
+                });
 
-
-                return result
+                return result;
             }
 
             if (Array.isArray(_tx)) {
@@ -401,7 +403,7 @@ export async function signerToModularSmartAccount<
 
         // Get simple dummy signature
         async getDummySignature(_userOperation) {
-            console.log({_userOperation})
+            console.log({ _userOperation });
             const hash = getUserOperationHash({
                 userOperation: {
                     ..._userOperation,
@@ -411,7 +413,7 @@ export async function signerToModularSmartAccount<
                 chainId: (client.chain as Chain).id,
             });
 
-            console.log({hash})
+            console.log({ hash });
             return multiOwnerSigner.getDummySignature(hash);
         },
     });

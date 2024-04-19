@@ -38,7 +38,7 @@ function ConnectWallet(): JSX.Element {
             smartAccount = await signerToModularSmartAccount({
                 comethSigner,
                 apiKey,
-                rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/KNNW0UQ8T-LGoYE7dOW31o-fSNqWtg5I",
+                rpcUrl: "https://polygon.meowrpc.com",
                 smartAccountAddress: localStorageAddress,
                 entryPoint: ENTRYPOINT_ADDRESS_V06,
             });
@@ -46,7 +46,7 @@ function ConnectWallet(): JSX.Element {
             smartAccount = await signerToModularSmartAccount({
                 comethSigner,
                 apiKey,
-                rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/KNNW0UQ8T-LGoYE7dOW31o-fSNqWtg5I",
+                rpcUrl: "https://polygon.meowrpc.com",
                 entryPoint: ENTRYPOINT_ADDRESS_V06,
             });
             window.localStorage.setItem("walletAddress", smartAccount.address);

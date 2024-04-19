@@ -14,6 +14,7 @@ import {
 } from "viem";
 import type { EntryPoint } from "permissionless/types/entrypoint";
 import type { Prettify } from "permissionless/types";
+import { defaultAbiCoder, hexConcat } from "ethers/lib/utils";
 
 export const getPaymasterClient = (
     transport: any
@@ -78,16 +79,11 @@ const sponsorUserOperation = async <
     client: Client<TTransport, TChain, TAccount, any>,
     args: Prettify<any>
 ) => {
+    console.log("args", args);
+
     const response = await client.request({
         method: "pm_sponsorUserOperation",
-        params: [
-            deepHexlify({
-                ...args.userOperation,
-                validUntil: "0x00000000deadbeef",
-                validAfter: "0x0000000000001234",
-            }),
-            args.entryPoint,
-        ],
+        params: [deepHexlify(args.userOperation), args.entryPoint],
     });
 
     console.log("response", response);
@@ -102,14 +98,12 @@ const sponsorUserOperation = async <
             paymasterVerificationGasLimit?: never;
             paymasterPostOpGasLimit?: never;
             paymasterData?: never;
-            signature: Hex;
         };
         return {
             paymasterAndData: responseV06.paymasterAndData,
             preVerificationGas: BigInt(responseV06.preVerificationGas),
             verificationGasLimit: BigInt(responseV06.verificationGasLimit),
             callGasLimit: BigInt(responseV06.callGasLimit),
-            signature: responseV06.signature,
         };
     }
 

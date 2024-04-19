@@ -33,7 +33,7 @@ export async function signerToEcdsaValidator<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TSource extends string = "custom",
-    TAddress extends Address = Address,
+    TAddress extends Address = Address
 >(
     client: Client<TTransport, TChain, undefined>,
     {
@@ -70,7 +70,7 @@ export async function signerToEcdsaValidator<
             const TTypedData extends TypedData | Record<string, unknown>,
             TPrimaryType extends
                 | keyof TTypedData
-                | "EIP712Domain" = keyof TTypedData,
+                | "EIP712Domain" = keyof TTypedData
         >(typedData: TypedDataDefinition<TTypedData, TPrimaryType>) {
             return signTypedData<TTypedData, TPrimaryType, TChain, undefined>(
                 client,
@@ -95,6 +95,7 @@ export async function signerToEcdsaValidator<
         },
         // Sign a user operation
         async signUserOperation(userOperation: UserOperation) {
+            console.log("signUserOperation", userOperation);
             const hash = getUserOperationHash({
                 userOperation: {
                     ...userOperation,
