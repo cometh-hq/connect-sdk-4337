@@ -41,14 +41,14 @@ export type WebAuthnSigner = {
 
 export type WalletInfos = {
     chainId: string;
-    address: string;
+    address: Address;
     creationDate: Date;
-    initiatorAddress: string;
+    initiatorAddress: Address;
     recoveryContext?: {
-        moduleFactoryAddress: string;
-        delayModuleAddress: string;
+        moduleFactoryAddress: Address;
+        delayModuleAddress: Address;
         recoveryCooldown: number;
         recoveryExpiration: number;
     };
-    proxyDelayAddress: string;
+    proxyDelayAddress: Address;
 };

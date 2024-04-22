@@ -16,24 +16,12 @@ import {
 import { API } from "../services/API";
 import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
 
-import type {
-    PasskeyLocalStorageFormat,
-    webAuthnOptions,
-} from "./passkeys/types";
+import type { PasskeyLocalStorageFormat } from "./passkeys/types";
 import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "./passkeys/utils";
-import type { ComethSigner } from "./types";
-
-type SignerConfigParams = {
-    apiKey: string;
-    smartAccountAddress?: Address;
-    disableEoaFallback?: boolean;
-    encryptionSalt?: string;
-    webAuthnOptions?: webAuthnOptions;
-    passKeyName?: string;
-};
+import type { ComethSigner, SignerConfigParams } from "./types";
 
 export const saveSignerInStorage = async (
     signer: ComethSigner,

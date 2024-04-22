@@ -49,6 +49,12 @@ export type ModularSmartAccount<
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "modularSmartAccount", transport, chain>;
 
+/**
+ * Encode the p256 deployment and call for a modular smart account
+ * @param _tx
+ * @param passkey
+ * @param p256FactoryAddress
+ */
 const encodeP256DeploymentCall = ({
     _tx,
     passkey,
@@ -91,6 +97,12 @@ const encodeP256DeploymentCall = ({
     });
 };
 
+/**
+ * Get the multi owner signer for a modular smart account
+ * @param client
+ * @param smartAccountAddress
+ * @param signer
+ */
 const getMultiOwnerSigner = <
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
@@ -113,6 +125,15 @@ const getMultiOwnerSigner = <
     return WebauthnMessageSigner(signer.passkey);
 };
 
+/**
+ * Authenticate the wallet to the cometh api
+ * @param client
+ * @param entryPointAddress
+ * @param initCodeProvider
+ * @param smartAccountAddress
+ * @param signer
+ * @param api
+ */
 const authenticateToComethApi = async <
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
@@ -190,6 +211,12 @@ const getAccountInitCode = async ({
     ]);
 };
 
+/**
+ * Predict Account address from the entrypoint
+ * @param client
+ * @param entryPointAddress
+ * @param initCodeProvider
+ */
 export const getAccountAddress = async <
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
