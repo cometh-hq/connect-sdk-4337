@@ -1,4 +1,4 @@
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 import type { DeviceData } from "../../types";
 
 type Assertion = {
@@ -48,6 +48,7 @@ type PasskeyLocalStorageFormat = {
         x: Hex;
         y: Hex;
     };
+    signerAddress: Address;
     publicKeyAlgorithm?: number;
 };
 

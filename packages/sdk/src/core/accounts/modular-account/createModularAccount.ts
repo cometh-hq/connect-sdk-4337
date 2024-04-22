@@ -28,8 +28,6 @@ import type { Prettify } from "viem/types/utils";
 import { API } from "../../services/API";
 import { getClient } from "../utils";
 
-import { P256_SIGNER_FACTORY } from "@/constants";
-import { predictSignerAddress } from "@/core/services/p256SignerService";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import type { ComethSigner } from "@/core/signers/types";
 import type { EntryPoint } from "permissionless/_types/types";
@@ -40,8 +38,8 @@ import {
 import { IP256PluginDeployerAbi } from "./abis/IP256PluginDeployer";
 import { IStandardExecutorAbi } from "./abis/IStandardExecutor";
 import { MultiP256OwnerModularAccountFactoryAbi } from "./abis/MultiP256OwnerModularAccountFactory";
-import { ECDSAMessageSigner } from "./plugins/multi-owner/signer/ECDSAsigner";
-import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/WebauthnSigner";
+import { ECDSAMessageSigner } from "./plugins/multi-owner/ecdsa/ECDSAsigner";
+import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/webauthnSigner";
 import type { MultiOwnerSigner } from "./plugins/types";
 import { getDefaultMultiP256OwnerModularAccountFactoryAddress } from "./utils/utils";
 
@@ -51,7 +49,11 @@ export type ModularSmartAccount<
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "modularSmartAccount", transport, chain>;
 
-const encodeP256DeploymentCall = (
+const encodeP256DeploymentCall = ({
+    _tx,
+    passkey,
+    p256FactoryAddress,
+}: {
     _tx:
         | {
               to: `0x${string}`;
@@ -62,9 +64,10 @@ const encodeP256DeploymentCall = (
               to: `0x${string}`;
               value: bigint;
               data: `0x${string}`;
-          }[],
-    passkey: PasskeyLocalStorageFormat
-) => {
+          }[];
+    passkey: PasskeyLocalStorageFormat;
+    p256FactoryAddress: Address;
+}) => {
     const { x, y } = passkey.pubkeyCoordinates;
 
     const Calls = [
@@ -84,8 +87,69 @@ const encodeP256DeploymentCall = (
     return encodeFunctionData({
         abi: IP256PluginDeployerAbi,
         functionName: "executeAndDeployPasskey",
-        args: [x, y, P256_SIGNER_FACTORY, Calls],
+        args: [x, y, p256FactoryAddress, Calls],
     });
+};
+
+const getMultiOwnerSigner = <
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = Chain | undefined,
+>({
+    client,
+    smartAccountAddress,
+    signer,
+}: {
+    client: Client<TTransport, TChain, undefined>;
+    smartAccountAddress: Address;
+    signer: ComethSigner;
+}): MultiOwnerSigner => {
+    if (signer.type === "localWallet") {
+        return ECDSAMessageSigner(
+            client,
+            smartAccountAddress,
+            () => signer.eoaFallback.signer
+        );
+    }
+    return WebauthnMessageSigner(signer.passkey);
+};
+
+const authenticateToComethApi = async <
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = Chain | undefined,
+>({
+    client,
+    entryPointAddress,
+    initCodeProvider,
+    smartAccountAddress,
+    signer,
+    api,
+}: {
+    client: Client<TTransport, TChain, undefined>;
+    entryPointAddress: Address;
+    initCodeProvider: () => Promise<Hex>;
+    smartAccountAddress?: Address;
+    signer: ComethSigner;
+    api: API;
+}): Promise<Address> => {
+    if (smartAccountAddress) {
+        await connectToExistingWallet({
+            api,
+            smartAccountAddress,
+        });
+    } else {
+        smartAccountAddress = await getAccountAddress({
+            client,
+            entryPointAddress,
+            initCodeProvider,
+        });
+
+        await createNewWalletInDb({
+            api,
+            smartAccountAddress,
+            signer,
+        });
+    }
+    return smartAccountAddress;
 };
 
 /**
@@ -106,10 +170,8 @@ const getAccountInitCode = async ({
     owners: Address[];
     salt: bigint;
 }) => {
-    // NOTE: the current signer connected will be one of the owners as well
-    const ownerAddress = signerAddress;
     // owners need to be dedupe + ordered in ascending order and not == to zero address
-    const owners_ = Array.from(new Set([...owners, ownerAddress]))
+    const owners_ = Array.from(new Set([...owners, signerAddress]))
         .filter((x) => hexToBigInt(x) !== 0n)
         .sort((a, b) => {
             const bigintA = hexToBigInt(a);
@@ -140,10 +202,8 @@ export const getAccountAddress = async <
     entryPointAddress: Address;
     initCodeProvider: () => Promise<Hex>;
 }) => {
-    const initCode = await initCodeProvider();
-
     return getSenderAddress<ENTRYPOINT_ADDRESS_V06_TYPE>(client, {
-        initCode,
+        initCode: await initCodeProvider(),
         entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V06_TYPE,
     });
 };
@@ -167,9 +227,9 @@ export type signerToModularSmartAccountParameters<
  * @param rpcUrl
  * @param smartAccountAddress
  * @param entryPoint
- * @param index
  * @param factoryAddress
- * @param validatorAddress
+ * @param owners
+ * @param salt
  */
 export async function signerToModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
@@ -188,6 +248,7 @@ export async function signerToModularSmartAccount<
     ModularSmartAccount<entryPoint, TTransport, TChain>
 > {
     const api = new API(apiKey);
+    const projectParams = await api.getProjectParams();
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
         TChain,
@@ -202,8 +263,7 @@ export async function signerToModularSmartAccount<
     if (comethSigner.type === "localWallet") {
         ownerAddress = comethSigner.eoaFallback.signer.address;
     } else {
-        //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
-        ownerAddress = await predictSignerAddress(comethSigner);
+        ownerAddress = comethSigner.passkey.signerAddress;
     }
 
     // Helper to generate the init code for the smart account
@@ -215,50 +275,30 @@ export async function signerToModularSmartAccount<
             salt,
         });
 
-    let verifiedSmartAccountAddress: `0x${string}`;
+    smartAccountAddress = await authenticateToComethApi({
+        client,
+        entryPointAddress,
+        initCodeProvider: generateInitCode,
+        smartAccountAddress,
+        signer: comethSigner,
+        api,
+    });
 
-    if (smartAccountAddress) {
-        verifiedSmartAccountAddress = smartAccountAddress;
-        await connectToExistingWallet({
-            api,
-            smartAccountAddress: verifiedSmartAccountAddress,
-        });
-    } else {
-        verifiedSmartAccountAddress = await getAccountAddress({
-            client,
-            entryPointAddress,
-            initCodeProvider: generateInitCode,
-        });
-
-        await createNewWalletInDb({
-            api,
-            smartAccountAddress: verifiedSmartAccountAddress,
-            signer: comethSigner,
-        });
-    }
-
-    if (!verifiedSmartAccountAddress)
-        throw new Error("Account address not found");
+    if (!smartAccountAddress) throw new Error("Account address not found");
 
     let smartAccountDeployed = await isSmartAccountDeployed(
         client,
-        verifiedSmartAccountAddress
+        smartAccountAddress
     );
 
-    let multiOwnerSigner: MultiOwnerSigner;
-
-    if (comethSigner.type === "localWallet") {
-        multiOwnerSigner = ECDSAMessageSigner(
-            client,
-            verifiedSmartAccountAddress,
-            () => comethSigner.eoaFallback.signer
-        );
-    } else {
-        multiOwnerSigner = WebauthnMessageSigner(comethSigner.passkey);
-    }
+    const multiOwnerSigner = getMultiOwnerSigner({
+        client,
+        smartAccountAddress,
+        signer: comethSigner,
+    });
 
     return toSmartAccount({
-        address: verifiedSmartAccountAddress,
+        address: smartAccountAddress,
         async signMessage({ message }) {
             return multiOwnerSigner.signMessage({ message });
         },
@@ -269,14 +309,13 @@ export async function signerToModularSmartAccount<
             throw new SignTransactionNotSupportedBySmartAccount();
         },
         client: client,
-        publicKey: smartAccountAddress,
         entryPoint: entryPointAddress,
         source: "modularSmartAccount",
 
         // Get the nonce of the smart account
         async getNonce() {
             return getAccountNonce(client, {
-                sender: verifiedSmartAccountAddress,
+                sender: smartAccountAddress,
                 entryPoint: entryPointAddress,
             });
         },
@@ -288,7 +327,7 @@ export async function signerToModularSmartAccount<
                 transport: http(),
             });
 
-            const { maxFeePerGas, /* maxPriorityFeePerGas */ } =
+            const { maxFeePerGas } =
                 (await publicClient.estimateFeesPerGas()) as {
                     maxFeePerGas: bigint;
                     maxPriorityFeePerGas: bigint;
@@ -317,7 +356,7 @@ export async function signerToModularSmartAccount<
 
             smartAccountDeployed = await isSmartAccountDeployed(
                 client,
-                verifiedSmartAccountAddress
+                smartAccountAddress
             );
 
             if (smartAccountDeployed) return "0x";
@@ -330,7 +369,7 @@ export async function signerToModularSmartAccount<
 
             smartAccountDeployed = await isSmartAccountDeployed(
                 client,
-                verifiedSmartAccountAddress
+                smartAccountAddress
             );
 
             if (smartAccountDeployed) return undefined;
@@ -343,7 +382,7 @@ export async function signerToModularSmartAccount<
 
             smartAccountDeployed = await isSmartAccountDeployed(
                 client,
-                verifiedSmartAccountAddress
+                smartAccountAddress
             );
 
             if (smartAccountDeployed) return undefined;
@@ -361,7 +400,12 @@ export async function signerToModularSmartAccount<
         // Encode a call
         async encodeCallData(_tx) {
             if (!smartAccountDeployed && comethSigner.type === "passkey") {
-                return encodeP256DeploymentCall(_tx, comethSigner.passkey);
+                return encodeP256DeploymentCall({
+                    _tx,
+                    passkey: comethSigner.passkey,
+                    p256FactoryAddress:
+                        projectParams.P256FactoryContractAddress,
+                });
             }
 
             if (Array.isArray(_tx)) {

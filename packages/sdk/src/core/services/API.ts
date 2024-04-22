@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
+import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
 
 export type DeviceData = {
@@ -12,11 +13,11 @@ export type WebAuthnSigner = {
     projectId: string;
     userId: string;
     chainId: string;
-    walletAddress: string;
-    publicKeyId: string;
-    publicKeyX: string;
-    publicKeyY: string;
-    signerAddress: string;
+    walletAddress: Address;
+    publicKeyId: Hex;
+    publicKeyX: Hex;
+    publicKeyY: Hex;
+    signerAddress: Address;
     deviceData: DeviceData;
 };
 
@@ -44,23 +45,23 @@ export class API {
 
     async getProjectParams(): Promise<{
         chainId: string;
-        P256FactoryContractAddress: string;
-        multisendContractAddress: string;
-        singletonAddress: string;
-        simulateTxAcessorAddress: string;
+        P256FactoryContractAddress: Address;
+        multisendContractAddress: Address;
+        singletonAddress: Address;
+        simulateTxAcessorAddress: Address;
     }> {
         const response = await this.api.get("/project/params");
         return response?.data?.projectParams;
     }
 
-    async getWalletAddress(ownerAddress: string): Promise<string> {
+    async getWalletAddress(ownerAddress: Address): Promise<Address> {
         const response = await this.api.get(
             `/wallets/${ownerAddress}/wallet-address`
         );
         return response?.data?.walletAddress;
     }
 
-    async getWalletInfos(walletAddress: string): Promise<WalletInfos> {
+    async getWalletInfos(walletAddress: Address): Promise<WalletInfos> {
         const response = await this.api.get(
             `/wallets/${walletAddress}/wallet-infos`
         );
@@ -70,8 +71,8 @@ export class API {
     async initWallet({
         ownerAddress,
     }: {
-        ownerAddress: string;
-    }): Promise<string> {
+        ownerAddress: Address;
+    }): Promise<Address> {
         const body = {
             ownerAddress,
         };
@@ -88,10 +89,10 @@ export class API {
         publicKeyY,
         deviceData,
     }: {
-        walletAddress: string;
-        publicKeyId: string;
-        publicKeyX: string;
-        publicKeyY: string;
+        walletAddress: Address;
+        publicKeyId: Hex;
+        publicKeyX: Hex;
+        publicKeyY: Hex;
         deviceData: DeviceData;
     }): Promise<void> {
         const body = {
@@ -110,7 +111,7 @@ export class API {
      */
 
     async getPasskeySignerByPublicKeyId(
-        publicKeyId: string
+        publicKeyId: Hex
     ): Promise<WebAuthnSigner> {
         const response = await this.api.get(
             `/webauthn-signer/public-key-id/${publicKeyId}`
@@ -119,11 +120,30 @@ export class API {
     }
 
     async getPasskeySignersByWalletAddress(
-        walletAddress: string
+        walletAddress: Address
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
             `/webauthn-signer/${walletAddress}`
         );
         return response?.data?.webAuthnSigners;
+    }
+
+    async predictWebAuthnSignerAddress({
+        publicKeyX,
+        publicKeyY,
+    }: {
+        publicKeyX: Hex;
+        publicKeyY: Hex;
+    }): Promise<Hex> {
+        const body = {
+            publicKeyX,
+            publicKeyY,
+        };
+
+        const response = await this.api.post(
+            "/webauthn-signer/predict-address",
+            body
+        );
+        return response.data?.signerAddress;
     }
 }

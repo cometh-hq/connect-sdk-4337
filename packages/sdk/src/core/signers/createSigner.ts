@@ -50,7 +50,8 @@ export const saveSignerInStorage = async (
             smartAccountAddress,
             signer.passkey.id,
             signer.passkey.pubkeyCoordinates.x,
-            signer.passkey.pubkeyCoordinates.y
+            signer.passkey.pubkeyCoordinates.y,
+            signer.passkey.signerAddress
         );
     }
 };
@@ -92,7 +93,11 @@ export async function createSigner({
     if (webAuthnCompatible && !_isFallbackSigner()) {
         let passkey: PasskeyLocalStorageFormat;
         if (!smartAccountAddress) {
-            passkey = await createPasskeySigner(webAuthnOptions, passKeyName);
+            passkey = await createPasskeySigner(
+                webAuthnOptions,
+                api,
+                passKeyName
+            );
 
             if (passkey.publicKeyAlgorithm !== -7) {
                 console.warn("ECC passkey are not supported by your device");
