@@ -20,8 +20,10 @@ function ConnectWallet(): JSX.Element {
   if (!bundlerUrl) throw new Error("Bundler Url not found");
 
   const [txHash, setTxHash] = useState<string>(""); 
+  const [pendingTx, setPendingTx] = useState<boolean>(false);
 
   const connect = async () => {
+    setPendingTx(true)
     const localStorageAddress = window.localStorage.getItem(
       "walletAddress"
     ) as Hex;
@@ -75,14 +77,17 @@ function ConnectWallet(): JSX.Element {
       data: calldata,
     });
 
+
     setTxHash(txHash)
+    setPendingTx(false)
   };
   return (
     <>
-      <button onClick={connect}>connect</button>
+     <button onClick={connect}>{pendingTx ? "loading..." :  "mint"}</button>
+      
 
       {txHash && <a
-            href={`https://jiffyscan.xyz/userOpHash/${txHash}?network=mumbai`}
+            href={`https://jiffyscan.xyz/bundle/${txHash}?network=arbitrum-sepolia&pageNo=0&pageSize=10`}
             target="_blank"
             className="flex-none rounded-full bg-gray-900 px-3.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
           >
