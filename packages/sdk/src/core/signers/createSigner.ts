@@ -8,7 +8,7 @@ import {
     getFallbackEoaSigner,
 } from "./fallbackEoa/fallbackEoaSigner";
 import {
-        createPasskeySigner,
+    createPasskeySigner,
     getPasskeySigner,
     setPasskeyInStorage,
 } from "./passkeys/passkeyService";
@@ -17,7 +17,7 @@ import { API } from "../services/API";
 import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
 
 import type {
-        PasskeyLocalStorageFormat,
+    PasskeyLocalStorageFormat,
     webAuthnOptions,
 } from "./passkeys/types";
 import {
@@ -79,11 +79,11 @@ const _isFallbackSigner = (): boolean => {
  * @param passKeyName
  */
 export async function createSigner({
-        apiKey,
+    apiKey,
     smartAccountAddress,
     disableEoaFallback = false,
     encryptionSalt,
-       webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+    webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
 }: SignerConfigParams): Promise<ComethSigner> {
     const api = new API(apiKey);

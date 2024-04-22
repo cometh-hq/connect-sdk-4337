@@ -27,95 +27,94 @@ const P256_SIGNER_SINGLETON = "0x71558e9Ac314B17Eb665441aFF60914EAE391712";
 
 type RpcData = { rpcUrl: string; networkName: string; currency: string };
 
- const networks = {
+const networks = {
     // Default network: Polygon
     137: {
-      rpcUrl: 'https://polygon-rpc.com',
-      networkName: 'Polygon',
-      currency: 'MATIC'
+        rpcUrl: "https://polygon-rpc.com",
+        networkName: "Polygon",
+        currency: "MATIC",
     },
     80001: {
-      rpcUrl: 'https://rpc-mumbai.maticvigil.com',
-      networkName: 'Mumbai',
-      currency: 'MATIC'
+        rpcUrl: "https://rpc-mumbai.maticvigil.com",
+        networkName: "Mumbai",
+        currency: "MATIC",
     },
     80002: {
-      rpcUrl: 'https://rpc-amoy.polygon.technology',
-      networkName: 'Amoy',
-      currency: 'MATIC'
+        rpcUrl: "https://rpc-amoy.polygon.technology",
+        networkName: "Amoy",
+        currency: "MATIC",
     },
     43114: {
-      rpcUrl: 'https://avalanche.drpc.org',
-      networkName: 'Avalanche',
-      currency: 'AVAX'
+        rpcUrl: "https://avalanche.drpc.org",
+        networkName: "Avalanche",
+        currency: "AVAX",
     },
     43113: {
-      rpcUrl: 'https://avalanche-fuji-c-chain-rpc.publicnode.com',
-      networkName: 'Fuji',
-      currency: 'AVAX'
+        rpcUrl: "https://avalanche-fuji-c-chain-rpc.publicnode.com",
+        networkName: "Fuji",
+        currency: "AVAX",
     },
     3084: {
-      rpcUrl: '',
-      networkName: 'XL network',
-      currency: 'XL'
+        rpcUrl: "",
+        networkName: "XL network",
+        currency: "XL",
     },
     100: {
-      rpcUrl: 'https://rpc.gnosischain.com',
-      networkName: 'Gnosis Chain',
-      currency: 'xDai'
+        rpcUrl: "https://rpc.gnosischain.com",
+        networkName: "Gnosis Chain",
+        currency: "xDai",
     },
     10200: {
-      rpcUrl:
-        'https://nd-244-554-535.p2pify.com/3e6f7fedad74cbc0637859cf91e7d676',
-      networkName: 'Chiado Chain',
-      currency: 'xDai'
+        rpcUrl: "https://nd-244-554-535.p2pify.com/3e6f7fedad74cbc0637859cf91e7d676",
+        networkName: "Chiado Chain",
+        currency: "xDai",
     },
     4078: {
-      rpcUrl: 'https://muster.alt.technology/',
-      networkName: 'Muster',
-      currency: 'ETH'
+        rpcUrl: "https://muster.alt.technology/",
+        networkName: "Muster",
+        currency: "ETH",
     },
     2121337: {
-      rpcUrl: 'https://muster-anytrust.alt.technology',
-      networkName: 'Muster Testnet',
-      currency: 'ETH'
+        rpcUrl: "https://muster-anytrust.alt.technology",
+        networkName: "Muster Testnet",
+        currency: "ETH",
     },
     17001: {
-      rpcUrl: 'https://rpc.holesky.redstone.xyz',
-      networkName: 'Redstone Holesky',
-      currency: 'ETH'
+        rpcUrl: "https://rpc.holesky.redstone.xyz",
+        networkName: "Redstone Holesky",
+        currency: "ETH",
     },
     10: {
-      rpcUrl: 'https://mainnet.optimism.io',
-      networkName: 'Optimism',
-      currency: 'ETH'
+        rpcUrl: "https://mainnet.optimism.io",
+        networkName: "Optimism",
+        currency: "ETH",
     },
     11155420: {
-      rpcUrl: 'https://sepolia.optimism.io/',
-      networkName: 'Optimism sepolia',
-      currency: 'ETH'
+        rpcUrl: "https://sepolia.optimism.io/",
+        networkName: "Optimism sepolia",
+        currency: "ETH",
     },
     42161: {
-      rpcUrl: 'https://arb1.arbitrum.io/rpc',
-      networkName: 'Arbitrum One',
-      currency: 'ETH'
+        rpcUrl: "https://arb1.arbitrum.io/rpc",
+        networkName: "Arbitrum One",
+        currency: "ETH",
     },
     421614: {
-      rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
-      networkName: 'Arbitrum sepolia',
-      currency: 'ETH'
+        rpcUrl: "https://sepolia-rollup.arbitrum.io/rpc",
+        networkName: "Arbitrum sepolia",
+        currency: "ETH",
     },
     8453: {
-      rpcUrl: 'https://mainnet.base.org',
-      networkName: 'Base',
-      currency: 'ETH'
+        rpcUrl: "https://mainnet.base.org",
+        networkName: "Base",
+        currency: "ETH",
     },
     84532: {
-      rpcUrl: 'https://sepolia.base.org',
-      networkName: 'Base sepolia',
-      currency: 'ETH'
-    }
-  } as Record<number, RpcData>;
+        rpcUrl: "https://sepolia.base.org",
+        networkName: "Base sepolia",
+        currency: "ETH",
+    },
+} as Record<number, RpcData>;
 
 const supportedChains = [
     arbitrum,

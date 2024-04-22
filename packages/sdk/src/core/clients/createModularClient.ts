@@ -33,7 +33,7 @@ export function createSmartAccountClient<
         name,
         transport: bundlerTransport,
         type: "smartAccountClient",
-    }) as any;
+    });
 
     return client.extend(
         smartAccountActions({

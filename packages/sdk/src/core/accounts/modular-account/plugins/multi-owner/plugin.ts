@@ -235,7 +235,7 @@ export const multiOwnerPluginActions: <
 
         if (!pluginAddress) {
             throw new Error(
-                "missing MultiOwnerPlugin address for chain " + chain.name
+                `missing MultiOwnerPlugin address for chain ${chain.name}`
             );
         }
 

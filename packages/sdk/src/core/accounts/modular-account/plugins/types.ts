@@ -3,7 +3,9 @@ import type {
     Address,
     Client,
     GetContractReturnType,
+    Hex,
     PublicClient,
+    SignableMessage,
 } from "viem";
 
 export type GetPluginAddressParameter = { pluginAddress?: Address };
@@ -18,4 +20,10 @@ export type Plugin<TAbi extends Abi = Abi> = {
         client: C,
         address?: Address
     ) => GetContractReturnType<TAbi, PublicClient, Address>;
+};
+
+export type MultiOwnerSigner = {
+    getDummySignature(uoHash: Hex): Hex;
+    signMessage: ({ message }: { message: SignableMessage }) => Promise<Hex>;
+    signUserOperationHash: (uoHash: Hex) => Promise<Hex>;
 };

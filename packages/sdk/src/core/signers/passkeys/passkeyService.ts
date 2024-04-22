@@ -227,7 +227,7 @@ const getPasskeySigner = async ({
 }: {
     api: API;
     smartAccountAddress: Address;
-}): Promise<any> => {
+}): Promise<PasskeyLocalStorageFormat> => {
     const passkeySigners =
         await api.getPasskeySignersByWalletAddress(smartAccountAddress);
 

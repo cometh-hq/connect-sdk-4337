@@ -12,39 +12,38 @@ import {
 
 import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types/entrypoint";
 import {
+    http,
     type Address,
     type Chain,
     type Client,
     type Hex,
     type Transport,
     concatHex,
+    createPublicClient,
     encodeFunctionData,
     hexToBigInt,
-    createPublicClient,
-    http,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
 
 import { API } from "../../services/API";
 import { getClient } from "../utils";
 
+import { P256_SIGNER_FACTORY } from "@/constants";
+import { predictSignerAddress } from "@/core/services/p256SignerService";
+import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import type { ComethSigner } from "@/core/signers/types";
 import type { EntryPoint } from "permissionless/_types/types";
 import {
     connectToExistingWallet,
     createNewWalletInDb,
 } from "../../services/comethService";
+import { IP256PluginDeployerAbi } from "./abis/IP256PluginDeployer";
 import { IStandardExecutorAbi } from "./abis/IStandardExecutor";
 import { MultiP256OwnerModularAccountFactoryAbi } from "./abis/MultiP256OwnerModularAccountFactory";
 import { ECDSAMessageSigner } from "./plugins/multi-owner/signer/ECDSAsigner";
+import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/WebauthnSigner";
+import type { MultiOwnerSigner } from "./plugins/types";
 import { getDefaultMultiP256OwnerModularAccountFactoryAddress } from "./utils/utils";
-import { P256_SIGNER_FACTORY } from "@/constants";
-import { IP256PluginDeployerAbi } from "./abis/IP256PluginDeployer";
-import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/webauthnSigner";
-import { predictSignerAddress } from "@/core/services/p256SignerService";
-import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
-
-
 
 export type ModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
@@ -52,34 +51,42 @@ export type ModularSmartAccount<
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "modularSmartAccount", transport, chain>;
 
+const encodeP256DeploymentCall = (
+    _tx:
+        | {
+              to: `0x${string}`;
+              value: bigint;
+              data: `0x${string}`;
+          }
+        | {
+              to: `0x${string}`;
+              value: bigint;
+              data: `0x${string}`;
+          }[],
+    passkey: PasskeyLocalStorageFormat
+) => {
+    const { x, y } = passkey.pubkeyCoordinates;
 
-const encodeP256DeploymentCall = (_tx:  {
-    to: `0x${string}`;
-    value: bigint;
-    data: `0x${string}`;
-} | {
-    to: `0x${string}`;
-    value: bigint;
-    data: `0x${string}`;
-}[], passkey: PasskeyLocalStorageFormat) => {
-    const {x, y} = passkey.pubkeyCoordinates;
+    const Calls = [
+        Array.isArray(_tx)
+            ? _tx.map((tx) => ({
+                  target: tx.to,
+                  data: tx.data,
+                  value: tx.value ?? 0n,
+              }))
+            : {
+                  target: _tx.to,
+                  data: _tx.data,
+                  value: _tx.value ?? 0n,
+              },
+    ];
 
-    const Calls = Array.isArray(_tx) ? [ _tx.map((tx) => ({
-     target: tx.to,
-     data: tx.data,
-     value: tx.value ?? 0n,
- }))] : [{
-     target: _tx.to,
-     data: _tx.data,
-     value: _tx.value ?? 0n,
- }]
-
-     return encodeFunctionData({
-         abi: IP256PluginDeployerAbi,
-         functionName: "executeAndDeployPasskey",
-         args: [x, y, P256_SIGNER_FACTORY , Calls],
-     })
-}
+    return encodeFunctionData({
+        abi: IP256PluginDeployerAbi,
+        functionName: "executeAndDeployPasskey",
+        args: [x, y, P256_SIGNER_FACTORY, Calls],
+    });
+};
 
 /**
  * Get the account initialization code for a modular smart account
@@ -187,17 +194,16 @@ export async function signerToModularSmartAccount<
         undefined
     >;
 
-
     factoryAddress = getDefaultMultiP256OwnerModularAccountFactoryAddress();
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
-    let ownerAddress: Address 
+    let ownerAddress: Address;
 
     if (comethSigner.type === "localWallet") {
         ownerAddress = comethSigner.eoaFallback.signer.address;
     } else {
-    //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
-      ownerAddress = await predictSignerAddress(comethSigner)
+        //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
+        ownerAddress = await predictSignerAddress(comethSigner);
     }
 
     // Helper to generate the init code for the smart account
@@ -213,7 +219,7 @@ export async function signerToModularSmartAccount<
 
     if (smartAccountAddress) {
         verifiedSmartAccountAddress = smartAccountAddress;
-           await connectToExistingWallet({
+        await connectToExistingWallet({
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
         });
@@ -239,20 +245,17 @@ export async function signerToModularSmartAccount<
         verifiedSmartAccountAddress
     );
 
-    let multiOwnerSigner: any;
-
+    let multiOwnerSigner: MultiOwnerSigner;
 
     if (comethSigner.type === "localWallet") {
-
         multiOwnerSigner = ECDSAMessageSigner(
             client,
             verifiedSmartAccountAddress,
             () => comethSigner.eoaFallback.signer
         );
     } else {
-      multiOwnerSigner = WebauthnMessageSigner(comethSigner.passkey)
+        multiOwnerSigner = WebauthnMessageSigner(comethSigner.passkey);
     }
-
 
     return toSmartAccount({
         address: verifiedSmartAccountAddress,
@@ -279,22 +282,22 @@ export async function signerToModularSmartAccount<
         },
 
         // Sign a user operation
-        async signUserOperation(userOperation) {   
-            
-             const publicClient = createPublicClient({
+        async signUserOperation(userOperation) {
+            const publicClient = createPublicClient({
                 chain: client.chain,
-                transport: http()
-              })
+                transport: http(),
+            });
 
-            const {
-                maxFeePerGas,
-                maxPriorityFeePerGas
-              } = await publicClient.estimateFeesPerGas() as {maxFeePerGas: bigint, maxPriorityFeePerGas: bigint}
+            const { maxFeePerGas, maxPriorityFeePerGas } =
+                (await publicClient.estimateFeesPerGas()) as {
+                    maxFeePerGas: bigint;
+                    maxPriorityFeePerGas: bigint;
+                };
 
-            userOperation.maxFeePerGas = maxFeePerGas * 2n
-            userOperation.maxPriorityFeePerGas = maxPriorityFeePerGas 
+            userOperation.maxFeePerGas = maxFeePerGas * 2n;
+            userOperation.maxPriorityFeePerGas = maxPriorityFeePerGas;
             // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
-            userOperation.verificationGasLimit = 1000000n
+            userOperation.verificationGasLimit = 1000000n;
 
             const hash = getUserOperationHash({
                 userOperation: {
@@ -357,13 +360,11 @@ export async function signerToModularSmartAccount<
 
         // Encode a call
         async encodeCallData(_tx) {
-            
-            if(!smartAccountDeployed && comethSigner.type === "passkey") {
-                return encodeP256DeploymentCall(_tx, comethSigner.passkey)
+            if (!smartAccountDeployed && comethSigner.type === "passkey") {
+                return encodeP256DeploymentCall(_tx, comethSigner.passkey);
             }
 
             if (Array.isArray(_tx)) {
-
                 // Encode a batched call
                 return encodeFunctionData({
                     abi: IStandardExecutorAbi,
@@ -388,7 +389,6 @@ export async function signerToModularSmartAccount<
 
         // Get simple dummy signature
         async getDummySignature(_userOperation) {
-    
             const hash = getUserOperationHash({
                 userOperation: {
                     ..._userOperation,
@@ -398,7 +398,7 @@ export async function signerToModularSmartAccount<
                 chainId: (client.chain as Chain).id,
             });
 
-            return  multiOwnerSigner.getDummySignature(hash);
+            return multiOwnerSigner.getDummySignature(hash);
         },
     });
 }

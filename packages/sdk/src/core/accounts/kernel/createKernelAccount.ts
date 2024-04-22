@@ -30,7 +30,7 @@ import {
     connectToExistingWallet,
     createNewWalletInDb,
 } from "../../services/comethService";
-import type { ComethSigner, FallbackEoaSigner } from "../../signers/types";
+import type { ComethSigner } from "../../signers/types";
 import { KERNEL_ADDRESSES } from "./constants";
 import { signerToKernelValidator } from "./validators/signerToValidator";
 
@@ -232,8 +232,7 @@ export async function signerToKernelSmartAccount<
         await createNewWalletInDb({
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
-            signer: (comethSigner as FallbackEoaSigner).eoaFallback
-                .signer as any,
+            signer: comethSigner,
         });
     }
 
