@@ -427,7 +427,7 @@ export async function signerToModularSmartAccount<
             return encodeFunctionData({
                 abi: IStandardExecutorAbi,
                 functionName: "execute",
-                args: [_tx.to, _tx.value, _tx.data],
+                args: [_tx.to, _tx.value ?? 0n, _tx.data],
             });
         },
 

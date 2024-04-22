@@ -13,4 +13,13 @@ for DIR in ${DIRECTORIES[@]}; do
     fi
 done
 
+# Loop through each directory and run 'bun install' if next project.
+for DIR in ${DIRECTORIES[@]}; do
+  # Check if the directory contains a next.config.json file.
+  if [ -f "$DIR/.next.config.js" ]; then
+      echo "Building $DIR"
+      (cd $DIR && bun install)
+    fi
+done
+
 echo "Build process completed."

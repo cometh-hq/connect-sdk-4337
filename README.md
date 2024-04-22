@@ -12,7 +12,6 @@ Go to the example folder, install dependencies and run the next project
 
 ```bash
 cd packages/example
-bun install
 bun dev
 ```
 

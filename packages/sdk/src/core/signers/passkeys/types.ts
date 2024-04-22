@@ -43,7 +43,7 @@ interface webAuthnOptions {
 }
 
 type PasskeyLocalStorageFormat = {
-    id: string;
+    id: Hex;
     pubkeyCoordinates: {
         x: Hex;
         y: Hex;

@@ -1,7 +1,6 @@
-import { arbitrumSepolia, polygon, polygonMumbai } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import {
   createSigner,
-  signerToKernelSmartAccount,
   ENTRYPOINT_ADDRESS_V06,
   createSmartAccountClient,
   signerToModularSmartAccount,
@@ -72,8 +71,8 @@ function ConnectWallet(): JSX.Element {
 
 
     const txHash = await smartAccountClient.sendTransaction({
-      to: "0x39946fd82C9C86c9A61BceeD86fbdd284590bDd9",
-      data: "0x00",
+      to: COUNTER_CONTRACT_ADDRESS,
+      data: calldata,
     });
 
     setTxHash(txHash)

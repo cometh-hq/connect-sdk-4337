@@ -85,7 +85,7 @@ const createPasskeySigner = async (
             throw new Error("Failed to retrieve x and y coordinates");
         }
 
-        const publicKeyId = hexArrayStr(passkeyCredential.rawId);
+        const publicKeyId = hexArrayStr(passkeyCredential.rawId) as Hex;
         const x = `0x${Buffer.from(
             exportedKeyWithXYCoordinates.x,
             "base64"
@@ -178,16 +178,16 @@ const signWithPasskey = async (
 
 const setPasskeyInStorage = (
     smartAccountAddress: Address,
-    publicKeyId: string,
-    publicKeyX: string,
-    publicKeyY: string,
-    signerAddress: string
+    publicKeyId: Hex,
+    publicKeyX: Hex,
+    publicKeyY: Hex,
+    signerAddress: Address
 ): void => {
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
         id: publicKeyId,
         pubkeyCoordinates: {
-            x: publicKeyX as Hex,
-            y: publicKeyY as Hex,
+            x: publicKeyX,
+            y: publicKeyY,
         },
         signerAddress,
     };
@@ -202,35 +202,6 @@ const setPasskeyInStorage = (
 const getPasskeyInStorage = (smartAccountAddress: Address): string | null => {
     return window.localStorage.getItem(`cometh-connect-${smartAccountAddress}`);
 };
-
-/* const getSignerFromCredentials = async ({
-  publicKeyX,
-  publicKeyY,
-  walletAddress,
-}: {
-  publicKeyX: string;
-  publicKeyY: string;
-  walletAddress?: string;
-}): Promise<{
-  deviceData: DeviceData;
-  signerAddress: string;
-  walletAddress: string;
-}> => {
-  const deviceData = getDeviceData();
-
-  const signerAddress = getSignerAddressFromPubkeyCoords(
-    publicKeyX,
-    publicKeyY
-  );
-
-  walletAddress = walletAddress || (await API.getWalletAddress(signerAddress));
-
-  return {
-    deviceData,
-    signerAddress,
-    walletAddress,
-  };
-}; */
 
 const getPasskeySigner = async ({
     api,
@@ -273,7 +244,7 @@ const getPasskeySigner = async ({
     }
 
     const signingWebAuthnSigner = await api.getPasskeySignerByPublicKeyId(
-        webAuthnSignature.id
+        webAuthnSignature.id as Hex
     );
 
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
@@ -300,7 +271,6 @@ export {
     createPasskeySigner,
     getPasskeyInStorage,
     getPasskeySigner,
-    /*   getSignerFromCredentials, */
     setPasskeyInStorage,
     sign,
 };

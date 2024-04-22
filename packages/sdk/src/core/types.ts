@@ -26,3 +26,29 @@ export type DeviceData = {
     os: string;
     platform: string;
 };
+
+export type WebAuthnSigner = {
+    projectId: string;
+    userId: string;
+    chainId: string;
+    walletAddress: Address;
+    publicKeyId: Hex;
+    publicKeyX: Hex;
+    publicKeyY: Hex;
+    signerAddress: Address;
+    deviceData: DeviceData;
+};
+
+export type WalletInfos = {
+    chainId: string;
+    address: string;
+    creationDate: Date;
+    initiatorAddress: string;
+    recoveryContext?: {
+        moduleFactoryAddress: string;
+        delayModuleAddress: string;
+        recoveryCooldown: number;
+        recoveryExpiration: number;
+    };
+    proxyDelayAddress: string;
+};

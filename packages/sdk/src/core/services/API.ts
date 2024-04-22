@@ -2,38 +2,7 @@ import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
-
-export type DeviceData = {
-    browser: string;
-    os: string;
-    platform: string;
-};
-
-export type WebAuthnSigner = {
-    projectId: string;
-    userId: string;
-    chainId: string;
-    walletAddress: Address;
-    publicKeyId: Hex;
-    publicKeyX: Hex;
-    publicKeyY: Hex;
-    signerAddress: Address;
-    deviceData: DeviceData;
-};
-
-export type WalletInfos = {
-    chainId: string;
-    address: string;
-    creationDate: Date;
-    initiatorAddress: string;
-    recoveryContext?: {
-        moduleFactoryAddress: string;
-        delayModuleAddress: string;
-        recoveryCooldown: number;
-        recoveryExpiration: number;
-    };
-    proxyDelayAddress: string;
-};
+import type { DeviceData, WalletInfos, WebAuthnSigner } from "../types";
 
 export class API {
     private readonly api: AxiosInstance;
