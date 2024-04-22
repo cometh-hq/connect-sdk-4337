@@ -1,4 +1,4 @@
-import { polygonMumbai } from "viem/chains";
+import { arbitrumSepolia, polygon, polygonMumbai } from "viem/chains";
 import {
   createSigner,
   signerToKernelSmartAccount,
@@ -12,7 +12,7 @@ import countContractAbi from "../contract/counterABI.json";
 import { http, encodeFunctionData, type Hex } from "viem";
 import { useState } from "react";
 
-const COUNTER_CONTRACT_ADDRESS = "0x84ADD3fa2c2463C8cF2C95aD70e4b5F602332160";
+const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
 const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
 
@@ -41,7 +41,7 @@ function ConnectWallet(): JSX.Element {
       smartAccount = await signerToModularSmartAccount({
         comethSigner,
         apiKey,
-        rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/KNNW0UQ8T-LGoYE7dOW31o-fSNqWtg5I",
+        rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
         smartAccountAddress: localStorageAddress,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
       });
@@ -49,22 +49,19 @@ function ConnectWallet(): JSX.Element {
       smartAccount = await signerToModularSmartAccount({
         comethSigner,
         apiKey,
-        rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/KNNW0UQ8T-LGoYE7dOW31o-fSNqWtg5I",
+        rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
         entryPoint: ENTRYPOINT_ADDRESS_V06,
       });
       window.localStorage.setItem("walletAddress", smartAccount.address);
     }
 
-    console.log({smartAccount});
 
     const smartAccountClient = createSmartAccountClient({
       account: smartAccount,
       entryPoint: ENTRYPOINT_ADDRESS_V06,
-      chain: polygonMumbai,
+      chain: arbitrumSepolia,
       bundlerTransport: http(bundlerUrl),
     });
-
-    console.log({smartAccountClient});
 
 
 
@@ -73,14 +70,11 @@ function ConnectWallet(): JSX.Element {
       functionName: "count",
     });
 
-    console.log({calldata})
 
     const txHash = await smartAccountClient.sendTransaction({
-      to: COUNTER_CONTRACT_ADDRESS,
-      data: calldata,
+      to: "0x39946fd82C9C86c9A61BceeD86fbdd284590bDd9",
+      data: "0x00",
     });
-
-    console.log({txHash})
 
     setTxHash(txHash)
   };
