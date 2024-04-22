@@ -288,14 +288,14 @@ export async function signerToModularSmartAccount<
                 transport: http(),
             });
 
-            const { maxFeePerGas, maxPriorityFeePerGas } =
+            const { maxFeePerGas, /* maxPriorityFeePerGas */ } =
                 (await publicClient.estimateFeesPerGas()) as {
                     maxFeePerGas: bigint;
                     maxPriorityFeePerGas: bigint;
                 };
 
             userOperation.maxFeePerGas = maxFeePerGas * 2n;
-            userOperation.maxPriorityFeePerGas = maxPriorityFeePerGas;
+            userOperation.maxPriorityFeePerGas = maxFeePerGas;
             // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
             userOperation.verificationGasLimit = 1000000n;
 
