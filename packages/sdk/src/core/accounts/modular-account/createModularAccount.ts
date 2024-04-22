@@ -1,6 +1,5 @@
 import {
     getAccountNonce,
-    getEntryPointVersion,
     getSenderAddress,
     getUserOperationHash,
     isSmartAccountDeployed,
@@ -21,9 +20,8 @@ import {
     concatHex,
     encodeFunctionData,
     hexToBigInt,
-    keccak256,
-    encodePacked,
-    getContractAddress,
+    createPublicClient,
+    http,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
 
@@ -40,15 +38,48 @@ import { IStandardExecutorAbi } from "./abis/IStandardExecutor";
 import { MultiP256OwnerModularAccountFactoryAbi } from "./abis/MultiP256OwnerModularAccountFactory";
 import { ECDSAMessageSigner } from "./plugins/multi-owner/signer/ECDSAsigner";
 import { getDefaultMultiP256OwnerModularAccountFactoryAddress } from "./utils/utils";
-import { P256_SIGNER_FACTORY, P256_SIGNER_SINGLETON } from "@/constants";
+import { P256_SIGNER_FACTORY } from "@/constants";
 import { IP256PluginDeployerAbi } from "./abis/IP256PluginDeployer";
 import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/webauthnSigner";
+import { predictSignerAddress } from "@/core/services/p256SignerService";
+import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
+
+
 
 export type ModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "modularSmartAccount", transport, chain>;
+
+
+const encodeP256DeploymentCall = (_tx:  {
+    to: `0x${string}`;
+    value: bigint;
+    data: `0x${string}`;
+} | {
+    to: `0x${string}`;
+    value: bigint;
+    data: `0x${string}`;
+}[], passkey: PasskeyLocalStorageFormat) => {
+    const {x, y} = passkey.pubkeyCoordinates;
+
+    const Calls = Array.isArray(_tx) ? [ _tx.map((tx) => ({
+     target: tx.to,
+     data: tx.data,
+     value: tx.value ?? 0n,
+ }))] : [{
+     target: _tx.to,
+     data: _tx.data,
+     value: _tx.value ?? 0n,
+ }]
+
+     return encodeFunctionData({
+         abi: IP256PluginDeployerAbi,
+         functionName: "executeAndDeployPasskey",
+         args: [x, y, P256_SIGNER_FACTORY , Calls],
+     })
+}
 
 /**
  * Get the account initialization code for a modular smart account
@@ -79,8 +110,6 @@ const getAccountInitCode = async ({
 
             return bigintA < bigintB ? -1 : bigintA > bigintB ? 1 : 0;
         });
-
-        console.log({owners_})
 
     return concatHex([
         factoryAddress,
@@ -151,25 +180,15 @@ export async function signerToModularSmartAccount<
 }: signerToModularSmartAccountParameters<entryPoint>): Promise<
     ModularSmartAccount<entryPoint, TTransport, TChain>
 > {
-    const entryPointVersion = getEntryPointVersion(entryPointAddress);
-
-    if (entryPointVersion !== "v0.6") {
-        throw new Error("Only EntryPoint 0.6 is supported");
-    }
-
-    const api = new API(apiKey, "https://api.connect.develop.core.cometh.tech");
+    const api = new API(apiKey);
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
         TChain,
         undefined
     >;
 
-    factoryAddress = getDefaultMultiP256OwnerModularAccountFactoryAddress(
-        client.chain as Chain
-    );
 
-    console.log({factoryAddress})
-
+    factoryAddress = getDefaultMultiP256OwnerModularAccountFactoryAddress();
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
     let ownerAddress: Address 
@@ -178,29 +197,8 @@ export async function signerToModularSmartAccount<
         ownerAddress = comethSigner.eoaFallback.signer.address;
     } else {
     //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
-      const {x, y} = comethSigner.passkey.pubkeyCoordinates;
-      const salt = keccak256(
-        encodePacked(['uint256', 'uint256'], [hexToBigInt(x), hexToBigInt(y)])
-      )
-    
-      // Init code of minimal proxy from solady 0.0.123
-      const initCode = `0x602c3d8160093d39f33d3d3d3d363d3d37363d73${P256_SIGNER_SINGLETON.substring(
-        2
-      )}5af43d3d93803e602a57fd5bf3` as `0x${string}`
-    
-      const initCodeHash = keccak256(initCode)
-    
-      ownerAddress =  getContractAddress({ 
-        bytecode: initCodeHash, 
-        from: P256_SIGNER_FACTORY, 
-        opcode: 'CREATE2', 
-        salt: salt, 
-      })
+      ownerAddress = await predictSignerAddress(comethSigner)
     }
-
-    console.log({ownerAddress})
-
-   
 
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
@@ -241,11 +239,8 @@ export async function signerToModularSmartAccount<
         verifiedSmartAccountAddress
     );
 
-    
-
     let multiOwnerSigner: any;
 
-    
 
     if (comethSigner.type === "localWallet") {
 
@@ -255,16 +250,13 @@ export async function signerToModularSmartAccount<
             () => comethSigner.eoaFallback.signer
         );
     } else {
-    //TO DO: CHANGE SIGNER AND FACTORY TO GET FROM BACKEND
-      multiOwnerSigner = WebauthnMessageSigner(client, comethSigner.passkey)
+      multiOwnerSigner = WebauthnMessageSigner(comethSigner.passkey)
     }
 
-    console.log({multiOwnerSigner})
 
     return toSmartAccount({
         address: verifiedSmartAccountAddress,
         async signMessage({ message }) {
-            console.log({message})
             return multiOwnerSigner.signMessage({ message });
         },
         async signTransaction(_, __) {
@@ -287,7 +279,22 @@ export async function signerToModularSmartAccount<
         },
 
         // Sign a user operation
-        async signUserOperation(userOperation) {
+        async signUserOperation(userOperation) {   
+            
+             const publicClient = createPublicClient({
+                chain: client.chain,
+                transport: http()
+              })
+
+            const {
+                maxFeePerGas,
+                maxPriorityFeePerGas
+              } = await publicClient.estimateFeesPerGas() as {maxFeePerGas: bigint, maxPriorityFeePerGas: bigint}
+
+            userOperation.maxFeePerGas = maxFeePerGas * 2n
+            userOperation.maxPriorityFeePerGas = maxPriorityFeePerGas 
+            // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
+            userOperation.verificationGasLimit = 1000000n
 
             const hash = getUserOperationHash({
                 userOperation: {
@@ -297,8 +304,6 @@ export async function signerToModularSmartAccount<
                 entryPoint: entryPointAddress as EntryPoint,
                 chainId: (client.chain as Chain).id,
             });
-
-            console.log({hash})
 
             return multiOwnerSigner.signUserOperationHash(hash);
         },
@@ -340,7 +345,7 @@ export async function signerToModularSmartAccount<
 
             if (smartAccountDeployed) return undefined;
 
-            return generateInitCode();
+            return await generateInitCode();
         },
 
         // Encode the deploy call data
@@ -354,29 +359,11 @@ export async function signerToModularSmartAccount<
         async encodeCallData(_tx) {
             
             if(!smartAccountDeployed && comethSigner.type === "passkey") {
-                const {x, y} = comethSigner.passkey.pubkeyCoordinates;
-
-               const Calls = Array.isArray(_tx) ? [ _tx.map((tx) => ({
-                target: tx.to,
-                data: tx.data,
-                value: tx.value ?? 0n,
-            }))] : [{
-                target: _tx.to,
-                data: _tx.data,
-                value: _tx.value ?? 0n,
-            }]
-
-            const result = encodeFunctionData({
-                abi: IP256PluginDeployerAbi,
-                functionName: "executeAndDeployPasskey",
-                args: [x, y, P256_SIGNER_FACTORY , Calls],
-            })
-
-
-                return result
+                return encodeP256DeploymentCall(_tx, comethSigner.passkey)
             }
 
             if (Array.isArray(_tx)) {
+
                 // Encode a batched call
                 return encodeFunctionData({
                     abi: IStandardExecutorAbi,
@@ -390,8 +377,8 @@ export async function signerToModularSmartAccount<
                     ],
                 });
             }
-            // Encode a simple call
 
+            // Encode a simple call
             return encodeFunctionData({
                 abi: IStandardExecutorAbi,
                 functionName: "execute",
@@ -401,7 +388,7 @@ export async function signerToModularSmartAccount<
 
         // Get simple dummy signature
         async getDummySignature(_userOperation) {
-            console.log({_userOperation})
+    
             const hash = getUserOperationHash({
                 userOperation: {
                     ..._userOperation,
@@ -411,8 +398,7 @@ export async function signerToModularSmartAccount<
                 chainId: (client.chain as Chain).id,
             });
 
-            console.log({hash})
-            return multiOwnerSigner.getDummySignature(hash);
+            return  multiOwnerSigner.getDummySignature(hash);
         },
     });
 }

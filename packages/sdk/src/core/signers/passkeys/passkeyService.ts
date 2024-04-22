@@ -130,12 +130,6 @@ const sign = async (
         challengePrefix
     );
 
-    console.log("authenticatorData", utils.hexArrayStr(
-        assertion.response.authenticatorData
-    ))
-    console.log("clientData", utils.hexArrayStr(assertion.response.clientDataJSON))
-    console.log("challengeOffset", challengeOffset)
-
     return {
         id: hexArrayStr(assertion.rawId),
         authenticatorData: utils.hexArrayStr(
@@ -233,7 +227,7 @@ const getPasskeySigner = async ({
 }: {
     api: API;
     smartAccountAddress: Address;
-}): Promise<PasskeyLocalStorageFormat> => {
+}): Promise<any> => {
     const passkeySigners =
         await api.getPasskeySignersByWalletAddress(smartAccountAddress);
 

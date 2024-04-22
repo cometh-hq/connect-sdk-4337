@@ -22,6 +22,7 @@ export const ECDSAMessageSigner = <
 >(
     client: Client<TTransport, TChain, undefined>,
     smartAccountAddress: Address,
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     signer: () => any,
     pluginAddress: Address = MultiOwnerPlugin.meta.addresses[client.chain!.id]
 ) => {

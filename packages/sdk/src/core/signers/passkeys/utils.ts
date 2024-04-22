@@ -135,9 +135,8 @@ export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
 };
 
 export const  base64ToBase64Url =(base64:string)  => {
-    let base64Url = base64.replace(/\+/g, '-').replace(/\//g, '_');
 
-    return base64Url.replace(/=+$/, '');
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 export const isWebAuthnCompatible = async (

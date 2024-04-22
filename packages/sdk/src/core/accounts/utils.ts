@@ -6,6 +6,7 @@ const getNetwork = async (api: API): Promise<Chain> => {
     const chainId = await api
         .getProjectParams()
         .then((params) => params.chainId);
+
     return supportedChains.find((chain) => chain.id === +chainId) as Chain;
 };
 
