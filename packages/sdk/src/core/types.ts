@@ -50,3 +50,27 @@ export enum WalletImplementation {
     Safe = "safe",
     Modular_Account = "modular",
 }
+
+export enum NewSignerRequestType {
+    WEBAUTHN = "WEBAUTHN",
+    BURNER_WALLET = "BURNER_WALLET",
+}
+
+export type Signer = {
+    smartAccountAddress: Address;
+    signerAddress: Address;
+    deviceData: DeviceData;
+    publicKeyId?: Hex;
+    publicKeyX?: Hex;
+    publicKeyY?: Hex;
+};
+
+export type NewSignerRequestBody = Signer & {
+    type: NewSignerRequestType;
+};
+
+export type NewSignerRequest = NewSignerRequestBody & {
+    projectId: string;
+    userId: string;
+    chainId: string;
+};

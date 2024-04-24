@@ -2,6 +2,7 @@ import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
+import type { NewSignerRequest } from "../hooks/useSignerRequests";
 import type {
     DeviceData,
     WalletImplementation,
@@ -133,5 +134,19 @@ export class API {
             body
         );
         return response.data.signerAddress;
+    }
+
+    /**
+     * New signer request
+     */
+
+    async getNewSignerRequests(
+        smartAccountAddress: string
+    ): Promise<NewSignerRequest[] | null> {
+        const response = await this.api.get(
+            `/new-signer-request/${smartAccountAddress}`
+        );
+
+        return response.data.signerRequests;
     }
 }

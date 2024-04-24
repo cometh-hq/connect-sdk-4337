@@ -2,6 +2,7 @@ import { type Address, type Hex, hashMessage, keccak256, toBytes } from "viem";
 import {
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
+    RetrieveWalletFromPasskeyError,
     SignerNotOwnerError,
 } from "../../../errors";
 import type { API } from "../../services/API";
@@ -21,11 +22,15 @@ import type {
 } from "./types";
 import * as utils from "./utils";
 
-const createPasskeySigner = async (
-    webAuthnOptions: webAuthnOptions,
-    api: API,
-    passKeyName?: string
-): Promise<PasskeyLocalStorageFormat> => {
+const createPasskeySigner = async ({
+    webAuthnOptions,
+    api,
+    passKeyName,
+}: {
+    webAuthnOptions: webAuthnOptions;
+    api: API;
+    passKeyName?: string;
+}): Promise<PasskeyLocalStorageFormat> => {
     try {
         const name = passKeyName || "Cometh Connect";
         const authenticatorSelection = webAuthnOptions?.authenticatorSelection;
@@ -267,10 +272,44 @@ const getPasskeySigner = async ({
     return passkeyWithCoordinates;
 };
 
+const retrieveSmartAccountAddressFromPasskey = async (
+    API: API
+): Promise<Address> => {
+    let publicKeyId: Hex;
+
+    try {
+        publicKeyId = (await signWithPasskey("Retrieve user wallet")).id as Hex;
+    } catch {
+        throw new RetrieveWalletFromPasskeyError();
+    }
+
+    const signingPasskeySigner =
+        await API.getPasskeySignerByPublicKeyId(publicKeyId);
+    if (!signingPasskeySigner) throw new NoPasskeySignerFoundInDBError();
+
+    const {
+        walletAddress: smartAccountAddress,
+        publicKeyX,
+        publicKeyY,
+        signerAddress,
+    } = signingPasskeySigner;
+
+    setPasskeyInStorage(
+        smartAccountAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        signerAddress
+    );
+
+    return smartAccountAddress;
+};
+
 export {
     createPasskeySigner,
     getPasskeyInStorage,
     getPasskeySigner,
     setPasskeyInStorage,
     sign,
+    retrieveSmartAccountAddressFromPasskey,
 };

@@ -51,7 +51,7 @@ const throwErrorWhenEoaFallbackDisabled = (
         throw new Error("Passkeys are not compatible with your device");
 };
 
-const _isFallbackSigner = (): boolean => {
+export const isFallbackSigner = (): boolean => {
     const fallbackSigner = Object.keys(localStorage).find((key) =>
         key.startsWith("cometh-connect-fallback-")
     );
@@ -78,14 +78,14 @@ export async function createSigner({
     const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
-    if (webAuthnCompatible && !_isFallbackSigner()) {
+    if (webAuthnCompatible && !isFallbackSigner()) {
         let passkey: PasskeyLocalStorageFormat;
         if (!smartAccountAddress) {
-            passkey = await createPasskeySigner(
+            passkey = await createPasskeySigner({
                 webAuthnOptions,
                 api,
-                passKeyName
-            );
+                passKeyName,
+            });
 
             if (passkey.publicKeyAlgorithm !== -7) {
                 console.warn("ECC passkey are not supported by your device");
