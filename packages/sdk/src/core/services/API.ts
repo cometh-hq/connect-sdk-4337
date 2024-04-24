@@ -2,9 +2,9 @@ import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
-import type { NewSignerRequest } from "../hooks/useSignerRequests";
 import type {
     DeviceData,
+    NewSignerRequest,
     WalletImplementation,
     WalletInfos,
     WebAuthnSigner,
