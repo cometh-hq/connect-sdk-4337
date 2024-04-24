@@ -36,14 +36,14 @@ export class API {
         P256FactoryContractAddress: Address;
     }> {
         const response = await this.api.get(
-            `/wallets-4337/${walletImplementation}/contracts-params`
+            `/4337/wallets/${walletImplementation}/contracts-params`
         );
         return response.data.contractParams;
     }
 
     async getWalletInfos(walletAddress: Address): Promise<WalletInfos> {
         const response = await this.api.get(
-            `/wallets-4337/${walletAddress}/wallet-infos`
+            `/4337/wallets/${walletAddress}/wallet-infos`
         );
         return response.data.walletInfos;
     }
@@ -58,25 +58,25 @@ export class API {
         walletImplementation: WalletImplementation;
     }): Promise<Address> {
         const body = {
-            smartAccountAddress,
+            walletAddress:smartAccountAddress,
             ownerAddress,
             walletImplementation,
         };
 
-        const response = await this.api.post("/wallets-4337/init", body);
+        const response = await this.api.post("/4337/wallets/init", body);
 
         return response.data.walletAddress;
     }
 
     async initWalletWithPasskey({
-        walletAddress,
+        smartAccountAddress,
         publicKeyId,
         publicKeyX,
         publicKeyY,
         deviceData,
         walletImplementation,
     }: {
-        walletAddress: Address;
+        smartAccountAddress: Address;
         publicKeyId: Hex;
         publicKeyX: Hex;
         publicKeyY: Hex;
@@ -84,7 +84,7 @@ export class API {
         walletImplementation: WalletImplementation;
     }): Promise<void> {
         const body = {
-            walletAddress,
+            walletAddress: smartAccountAddress,
             publicKeyId,
             publicKeyX,
             publicKeyY,
@@ -92,7 +92,7 @@ export class API {
             walletImplementation,
         };
 
-        await this.api.post("/wallets-4337/init-with-webauthn", body);
+        await this.api.post("/4337/wallets/init-with-webauthn", body);
     }
 
     /**

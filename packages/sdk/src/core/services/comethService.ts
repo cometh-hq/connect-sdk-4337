@@ -19,12 +19,13 @@ export const createNewWalletInDb = async ({
     {
         if (signer.type === "localWallet") {
             await api.initWallet({
+                smartAccountAddress,
                 ownerAddress: signer.eoaFallback.signer.address,
                 walletImplementation,
             });
         } else {
             await api.initWalletWithPasskey({
-                walletAddress: smartAccountAddress,
+             smartAccountAddress,
                 publicKeyId: signer.passkey.id,
                 publicKeyX: signer.passkey.pubkeyCoordinates.x,
                 publicKeyY: signer.passkey.pubkeyCoordinates.y,
