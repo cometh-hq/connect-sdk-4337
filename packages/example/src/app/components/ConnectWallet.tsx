@@ -4,6 +4,8 @@ import {
   ENTRYPOINT_ADDRESS_V06,
   createSmartAccountClient,
   signerToModularSmartAccount,
+  retrieveAccountAddressFromPasskey,
+  useSignerRequests
 } from "@cometh/connect-sdk-4337";
 
 import countContractAbi from "../contract/counterABI.json";
@@ -22,6 +24,8 @@ function ConnectWallet(): JSX.Element {
   const [txHash, setTxHash] = useState<string>(""); 
   const [pendingTx, setPendingTx] = useState<boolean>(false);
 
+  const {initNewSignerRequest, getNewSignerRequests} = useSignerRequests(apiKey)
+
   const connect = async () => {
     setPendingTx(true)
     const localStorageAddress = window.localStorage.getItem(
@@ -34,7 +38,9 @@ function ConnectWallet(): JSX.Element {
       disableEoaFallback: false,
     }) ;
 
+    const signerRequest = await getNewSignerRequests(localStorageAddress)
 
+    console.log({signerRequest})
 
     let smartAccount;
 
@@ -81,9 +87,18 @@ function ConnectWallet(): JSX.Element {
     setTxHash(txHash)
     setPendingTx(false)
   };
+
+  const retrieveAccount = async() => {
+  const walletAddress = await retrieveAccountAddressFromPasskey(apiKey)
+  console.log({walletAddress})
+  }
+
   return (
     <>
+    
      <button onClick={connect}>{pendingTx ? "loading..." :  "mint"}</button>
+
+     <button onClick={retrieveAccount}>retrieveAccount</button>
       
 
       {txHash && <a

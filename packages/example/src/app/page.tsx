@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 
 import ConnectWallet from "./components/ConnectWallet";
 
 export default function App() {
-  const [transactionSuccess, setTransactionSuccess] = useState(false);
 
   return (
     <div
