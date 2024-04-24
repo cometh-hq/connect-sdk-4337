@@ -30,6 +30,7 @@ import { getClient } from "../utils";
 
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import type { ComethSigner } from "@/core/signers/types";
+import { WalletImplementation } from "@/core/types";
 import type { EntryPoint } from "permissionless/_types/types";
 import {
     connectToExistingWallet,
@@ -41,7 +42,6 @@ import { MultiP256OwnerModularAccountFactoryAbi } from "./abis/MultiP256OwnerMod
 import { ECDSAMessageSigner } from "./plugins/multi-owner/ecdsa/ECDSAsigner";
 import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/webauthnSigner";
 import type { MultiOwnerSigner } from "./plugins/types";
-import { getDefaultMultiP256OwnerModularAccountFactoryAddress } from "./utils/utils";
 
 export type ModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
@@ -168,6 +168,7 @@ const authenticateToComethApi = async <
             api,
             smartAccountAddress,
             signer,
+            walletImplementation: WalletImplementation.Modular_Account,
         });
     }
     return smartAccountAddress;
@@ -274,15 +275,17 @@ export async function signerToModularSmartAccount<
 }: signerToModularSmartAccountParameters<entryPoint>): Promise<
     ModularSmartAccount<entryPoint, TTransport, TChain>
 > {
-    const api = new API(apiKey);
-    const projectParams = await api.getProjectParams();
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
+    const contractParams = await api.getContractParams(
+        WalletImplementation.Modular_Account
+    );
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
         TChain,
         undefined
     >;
 
-    factoryAddress = getDefaultMultiP256OwnerModularAccountFactoryAddress();
+    factoryAddress = contractParams.walletFactoryAddress;
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
     let ownerAddress: Address;
@@ -431,7 +434,7 @@ export async function signerToModularSmartAccount<
                     _tx,
                     passkey: comethSigner.passkey,
                     p256FactoryAddress:
-                        projectParams.P256FactoryContractAddress,
+                        contractParams.P256FactoryContractAddress,
                 });
             }
 

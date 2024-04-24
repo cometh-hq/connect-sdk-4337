@@ -26,6 +26,7 @@ import { API } from "../../services/API";
 import { getClient } from "../utils";
 import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
 
+import { WalletImplementation } from "@/core/types";
 import {
     connectToExistingWallet,
     createNewWalletInDb,
@@ -233,6 +234,7 @@ export async function signerToKernelSmartAccount<
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
             signer: comethSigner,
+            walletImplementation: WalletImplementation.Modular_Account,
         });
     }
 

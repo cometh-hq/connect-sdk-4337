@@ -44,11 +44,9 @@ export type WalletInfos = {
     address: Address;
     creationDate: Date;
     initiatorAddress: Address;
-    recoveryContext?: {
-        moduleFactoryAddress: Address;
-        delayModuleAddress: Address;
-        recoveryCooldown: number;
-        recoveryExpiration: number;
-    };
-    proxyDelayAddress: Address;
 };
+
+export enum WalletImplementation {
+    Safe = "safe",
+    Modular_Account = "modular",
+}

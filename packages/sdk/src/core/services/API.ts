@@ -2,7 +2,12 @@ import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
-import type { DeviceData, WalletInfos, WebAuthnSigner } from "../types";
+import type {
+    DeviceData,
+    WalletImplementation,
+    WalletInfos,
+    WebAuthnSigner,
+} from "../types";
 
 export class API {
     private readonly api: AxiosInstance;
@@ -20,35 +25,46 @@ export class API {
         simulateTxAcessorAddress: Address;
     }> {
         const response = await this.api.get("/project/params");
-        return response?.data?.projectParams;
+        return response.data.projectParams;
     }
 
-    async getWalletAddress(ownerAddress: Address): Promise<Address> {
+    async getContractParams(
+        walletImplementation: WalletImplementation
+    ): Promise<{
+        walletFactoryAddress: Address;
+        P256FactoryContractAddress: Address;
+    }> {
         const response = await this.api.get(
-            `/wallets/${ownerAddress}/wallet-address`
+            `/wallets-4337/${walletImplementation}/contracts-params`
         );
-        return response?.data?.walletAddress;
+        return response.data.contractParams;
     }
 
     async getWalletInfos(walletAddress: Address): Promise<WalletInfos> {
         const response = await this.api.get(
-            `/wallets/${walletAddress}/wallet-infos`
+            `/wallets-4337/${walletAddress}/wallet-infos`
         );
-        return response?.data?.walletInfos;
+        return response.data.walletInfos;
     }
 
     async initWallet({
+        smartAccountAddress,
         ownerAddress,
+        walletImplementation,
     }: {
+        smartAccountAddress: Address;
         ownerAddress: Address;
+        walletImplementation: WalletImplementation;
     }): Promise<Address> {
         const body = {
+            smartAccountAddress,
             ownerAddress,
+            walletImplementation,
         };
 
-        const response = await this.api.post("/wallets/init", body);
+        const response = await this.api.post("/wallets-4337/init", body);
 
-        return response?.data.walletAddress;
+        return response.data.walletAddress;
     }
 
     async initWalletWithPasskey({
@@ -57,12 +73,14 @@ export class API {
         publicKeyX,
         publicKeyY,
         deviceData,
+        walletImplementation,
     }: {
         walletAddress: Address;
         publicKeyId: Hex;
         publicKeyX: Hex;
         publicKeyY: Hex;
         deviceData: DeviceData;
+        walletImplementation: WalletImplementation;
     }): Promise<void> {
         const body = {
             walletAddress,
@@ -70,9 +88,10 @@ export class API {
             publicKeyX,
             publicKeyY,
             deviceData,
+            walletImplementation,
         };
 
-        await this.api.post("/wallets/init-with-webauthn", body);
+        await this.api.post("/wallets-4337/init-with-webauthn", body);
     }
 
     /**
@@ -85,7 +104,7 @@ export class API {
         const response = await this.api.get(
             `/webauthn-signer/public-key-id/${publicKeyId}`
         );
-        return response?.data?.webAuthnSigner;
+        return response.data.webAuthnSigner;
     }
 
     async getPasskeySignersByWalletAddress(
@@ -94,7 +113,7 @@ export class API {
         const response = await this.api.get(
             `/webauthn-signer/${walletAddress}`
         );
-        return response?.data?.webAuthnSigners;
+        return response.data.webAuthnSigners;
     }
 
     async predictWebAuthnSignerAddress({
@@ -113,6 +132,6 @@ export class API {
             "/webauthn-signer/predict-address",
             body
         );
-        return response.data?.signerAddress;
+        return response.data.signerAddress;
     }
 }
