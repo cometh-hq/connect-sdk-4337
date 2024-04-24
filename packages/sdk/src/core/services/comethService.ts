@@ -25,7 +25,7 @@ export const createNewWalletInDb = async ({
             });
         } else {
             await api.initWalletWithPasskey({
-             smartAccountAddress,
+                smartAccountAddress,
                 publicKeyId: signer.passkey.id,
                 publicKeyX: signer.passkey.pubkeyCoordinates.x,
                 publicKeyY: signer.passkey.pubkeyCoordinates.y,

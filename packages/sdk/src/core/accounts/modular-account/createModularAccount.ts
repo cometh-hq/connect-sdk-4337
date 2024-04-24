@@ -275,7 +275,7 @@ export async function signerToModularSmartAccount<
 }: signerToModularSmartAccountParameters<entryPoint>): Promise<
     ModularSmartAccount<entryPoint, TTransport, TChain>
 > {
-    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
+    const api = new API(apiKey);
     const contractParams = await api.getContractParams(
         WalletImplementation.Modular_Account
     );

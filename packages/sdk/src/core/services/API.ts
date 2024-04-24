@@ -58,7 +58,7 @@ export class API {
         walletImplementation: WalletImplementation;
     }): Promise<Address> {
         const body = {
-            walletAddress:smartAccountAddress,
+            walletAddress: smartAccountAddress,
             ownerAddress,
             walletImplementation,
         };
