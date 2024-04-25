@@ -21,7 +21,7 @@ import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "./passkeys/utils";
-import type { ComethSigner, SignerConfigParams } from "./types";
+import type { ComethSigner, CreateSignerParams } from "./types";
 
 export const saveSignerInStorage = async (
     signer: ComethSigner,
@@ -74,8 +74,8 @@ export async function createSigner({
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
-}: SignerConfigParams): Promise<ComethSigner> {
-    const api = new API(apiKey);
+}: CreateSignerParams): Promise<ComethSigner> {
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
     if (webAuthnCompatible && !isFallbackSigner()) {

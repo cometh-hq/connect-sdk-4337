@@ -189,7 +189,7 @@ export async function signerToKernelSmartAccount<
         throw new Error("Only EntryPoint 0.6 is supported");
     }
 
-    const api = new API(apiKey);
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
         TChain,

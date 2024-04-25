@@ -1,4 +1,5 @@
 import {
+    deepHexlify,
     getAccountNonce,
     getSenderAddress,
     getUserOperationHash,
@@ -22,14 +23,18 @@ import {
     createPublicClient,
     encodeFunctionData,
     hexToBigInt,
+    concat,
+    encodeAbiParameters,
+    parseAbiParameters,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
 
 import { API } from "../../services/API";
 import { getClient } from "../utils";
 
+import { createSigner } from "@/core/signers/createSigner";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
-import type { ComethSigner } from "@/core/signers/types";
+import type { ComethSigner, SignerConfig } from "@/core/signers/types";
 import { WalletImplementation } from "@/core/types";
 import type { EntryPoint } from "permissionless/_types/types";
 import {
@@ -236,17 +241,18 @@ export const getAccountAddress = async <
     });
 };
 
-export type signerToModularSmartAccountParameters<
+export type createModularSmartAccountParameters<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
 > = Prettify<{
-    comethSigner: ComethSigner;
     apiKey: string;
+    comethSigner?: ComethSigner;
     rpcUrl?: string;
     smartAccountAddress?: Address;
     entryPoint: entryPoint;
     factoryAddress?: Address;
     owners?: Address[];
     salt?: bigint;
+    comethSignerConfig?: SignerConfig;
 }>;
 /**
  * Build a modular smart account from a cometh signer
@@ -259,23 +265,24 @@ export type signerToModularSmartAccountParameters<
  * @param owners
  * @param salt
  */
-export async function signerToModularSmartAccount<
+export async function createModularSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
 >({
-    comethSigner,
     apiKey,
+    comethSigner,
     rpcUrl,
     smartAccountAddress,
     entryPoint: entryPointAddress,
     factoryAddress,
     owners = [],
     salt = 0n,
-}: signerToModularSmartAccountParameters<entryPoint>): Promise<
+    comethSignerConfig,
+}: createModularSmartAccountParameters<entryPoint>): Promise<
     ModularSmartAccount<entryPoint, TTransport, TChain>
 > {
-    const api = new API(apiKey);
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const contractParams = await api.getContractParams(
         WalletImplementation.Modular_Account
     );
@@ -284,6 +291,14 @@ export async function signerToModularSmartAccount<
         TChain,
         undefined
     >;
+
+    if (!comethSigner) {
+        comethSigner = await createSigner({
+            apiKey,
+            smartAccountAddress,
+            ...comethSignerConfig,
+        });
+    }
 
     factoryAddress = contractParams.walletFactoryAddress;
     if (!factoryAddress) throw new Error("factoryAddress not found");
@@ -357,6 +372,11 @@ export async function signerToModularSmartAccount<
                 transport: http(),
             });
 
+            const MOCK_VALID_UNTIL = "0x00000000deadbeef";
+            const MOCK_VALID_AFTER = "0x0000000000001234";
+            const paymasterAddresss = "0x6f010FB33E6dce2789c714b19c385035122e664E";
+      
+    
             const { maxFeePerGas } =
                 (await publicClient.estimateFeesPerGas()) as {
                     maxFeePerGas: bigint;
@@ -366,7 +386,35 @@ export async function signerToModularSmartAccount<
             userOperation.maxFeePerGas = maxFeePerGas * 2n;
             userOperation.maxPriorityFeePerGas = maxFeePerGas;
             // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
-            userOperation.verificationGasLimit = 1000000n;
+            userOperation.verificationGasLimit = 2000000n;
+            userOperation.preVerificationGas = 100000n;
+
+            const placeHolderPaymasterData = concat([
+                paymasterAddresss,
+                encodeAbiParameters(
+                  parseAbiParameters("uint48, uint48"),
+                  [+MOCK_VALID_UNTIL, +MOCK_VALID_AFTER]
+                ),
+                ("0x" + "00".repeat(65)) as `0x${string}`,
+              ]);
+        
+              console.log("placeHolderPaymasterData", placeHolderPaymasterData);
+        
+              userOperation.paymasterAndData = placeHolderPaymasterData;
+
+              console.log("USER OPERATION", userOperation);
+              const paymasterAPIResult = await api.validatePaymaster(
+                deepHexlify(userOperation),
+                MOCK_VALID_UNTIL,
+                MOCK_VALID_AFTER
+              );
+        
+              console.log("API Result", paymasterAPIResult);
+        
+              userOperation.paymasterAndData =
+                paymasterAPIResult.paymasterAndData;
+
+            console.log({userOperation})
 
             const hash = getUserOperationHash({
                 userOperation: {
@@ -377,7 +425,7 @@ export async function signerToModularSmartAccount<
                 chainId: (client.chain as Chain).id,
             });
 
-            return multiOwnerSigner.signUserOperationHash(hash);
+            return await multiOwnerSigner.signUserOperationHash(hash);
         },
 
         // Encode the init code

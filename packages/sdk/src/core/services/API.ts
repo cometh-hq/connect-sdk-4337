@@ -5,6 +5,7 @@ import { API_URL } from "../../constants";
 import type {
     DeviceData,
     NewSignerRequest,
+    UserOperation,
     WalletImplementation,
     WalletInfos,
     WebAuthnSigner,
@@ -149,4 +150,29 @@ export class API {
 
         return response.data.signerRequests;
     }
+
+
+      /**
+     * Paymaster request
+     */
+
+
+    async validatePaymaster(
+        userOp: any,
+        validUntil: string,
+        validAfter: string
+      ): Promise<any> {
+    
+        const body = {
+          userOp,
+          validUntil,
+          validAfter,
+        };
+    
+        const response = await this.api.post(
+          "/verifying-paymaster/validate",
+          body
+        );
+        return response.data.result;
+      }
 }

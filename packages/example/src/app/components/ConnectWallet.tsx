@@ -1,9 +1,8 @@
 import { arbitrumSepolia } from "viem/chains";
 import {
-  createSigner,
   ENTRYPOINT_ADDRESS_V06,
   createSmartAccountClient,
-  signerToModularSmartAccount,
+  createModularSmartAccount,
   retrieveAccountAddressFromPasskey,
   useSignerRequests
 } from "@cometh/connect-sdk-4337";
@@ -32,29 +31,25 @@ function ConnectWallet(): JSX.Element {
       "walletAddress"
     ) as Hex;
 
+    //optionnal
+    /* 
     const comethSigner = await createSigner({
       apiKey,
       smartAccountAddress: localStorageAddress,
       disableEoaFallback: false,
-    }) ;
-
-    const signerRequest = await getNewSignerRequests(localStorageAddress)
-
-    console.log({signerRequest})
+    }) ; */
 
     let smartAccount;
 
     if (localStorageAddress) {
-      smartAccount = await signerToModularSmartAccount({
-        comethSigner,
+      smartAccount = await createModularSmartAccount({
         apiKey,
         rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
         smartAccountAddress: localStorageAddress,
         entryPoint: ENTRYPOINT_ADDRESS_V06,
       });
     } else {
-      smartAccount = await signerToModularSmartAccount({
-        comethSigner,
+      smartAccount = await createModularSmartAccount({
         apiKey,
         rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
         entryPoint: ENTRYPOINT_ADDRESS_V06,

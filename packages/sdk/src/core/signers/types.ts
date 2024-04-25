@@ -21,11 +21,14 @@ export interface PasskeySigner extends Signer {
 
 export type ComethSigner = FallbackEoaSigner | PasskeySigner;
 
-export type SignerConfigParams = {
-    apiKey: string;
-    smartAccountAddress?: Address;
+export type SignerConfig = {
     disableEoaFallback?: boolean;
     encryptionSalt?: string;
     webAuthnOptions?: webAuthnOptions;
     passKeyName?: string;
 };
+
+export type CreateSignerParams = {
+    apiKey: string;
+    smartAccountAddress?: Address;
+} & SignerConfig;
