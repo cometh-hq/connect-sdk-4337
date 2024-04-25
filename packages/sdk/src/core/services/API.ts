@@ -173,6 +173,6 @@ export class API {
           "/verifying-paymaster/validate",
           body
         );
-        return response.data.result;
+        return response.data;
       }
 }

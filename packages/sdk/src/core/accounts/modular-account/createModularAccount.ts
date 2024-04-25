@@ -1,5 +1,5 @@
 import {
-    deepHexlify,
+    //deepHexlify,
     getAccountNonce,
     getSenderAddress,
     getUserOperationHash,
@@ -23,9 +23,9 @@ import {
     createPublicClient,
     encodeFunctionData,
     hexToBigInt,
-    concat,
+/*     concat,
     encodeAbiParameters,
-    parseAbiParameters,
+    parseAbiParameters, */
 } from "viem";
 import type { Prettify } from "viem/types/utils";
 
@@ -286,6 +286,8 @@ export async function createModularSmartAccount<
     const contractParams = await api.getContractParams(
         WalletImplementation.Modular_Account
     );
+
+    console.log("contractParams", contractParams);
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
         TChain,
@@ -300,8 +302,12 @@ export async function createModularSmartAccount<
         });
     }
 
+    console.log("comethSigner", comethSigner);
+
     factoryAddress = contractParams.walletFactoryAddress;
     if (!factoryAddress) throw new Error("factoryAddress not found");
+
+    console.log("factoryAddress", factoryAddress);
 
     let ownerAddress: Address;
 
@@ -310,6 +316,8 @@ export async function createModularSmartAccount<
     } else {
         ownerAddress = comethSigner.passkey.signerAddress;
     }
+
+    console.log("ownerAddress", ownerAddress);
 
     // Helper to generate the init code for the smart account
     const generateInitCode = () =>
@@ -366,67 +374,76 @@ export async function createModularSmartAccount<
         },
 
         // Sign a user operation
-        async signUserOperation(userOperation) {
-            const publicClient = createPublicClient({
-                chain: client.chain,
-                transport: http(),
-            });
-
-            const MOCK_VALID_UNTIL = "0x00000000deadbeef";
-            const MOCK_VALID_AFTER = "0x0000000000001234";
-            const paymasterAddresss = "0x6f010FB33E6dce2789c714b19c385035122e664E";
-      
-    
-            const { maxFeePerGas } =
-                (await publicClient.estimateFeesPerGas()) as {
-                    maxFeePerGas: bigint;
-                    maxPriorityFeePerGas: bigint;
-                };
-
-            userOperation.maxFeePerGas = maxFeePerGas * 2n;
-            userOperation.maxPriorityFeePerGas = maxFeePerGas;
-            // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
-            userOperation.verificationGasLimit = 2000000n;
-            userOperation.preVerificationGas = 100000n;
-
-            const placeHolderPaymasterData = concat([
-                paymasterAddresss,
-                encodeAbiParameters(
-                  parseAbiParameters("uint48, uint48"),
-                  [+MOCK_VALID_UNTIL, +MOCK_VALID_AFTER]
-                ),
-                ("0x" + "00".repeat(65)) as `0x${string}`,
-              ]);
-        
-              console.log("placeHolderPaymasterData", placeHolderPaymasterData);
-        
-              userOperation.paymasterAndData = placeHolderPaymasterData;
-
-              console.log("USER OPERATION", userOperation);
-              const paymasterAPIResult = await api.validatePaymaster(
-                deepHexlify(userOperation),
-                MOCK_VALID_UNTIL,
-                MOCK_VALID_AFTER
-              );
-        
-              console.log("API Result", paymasterAPIResult);
-        
-              userOperation.paymasterAndData =
-                paymasterAPIResult.paymasterAndData;
-
-            console.log({userOperation})
-
-            const hash = getUserOperationHash({
-                userOperation: {
-                    ...userOperation,
-                    signature: "0x",
-                },
-                entryPoint: entryPointAddress as EntryPoint,
-                chainId: (client.chain as Chain).id,
-            });
-
-            return await multiOwnerSigner.signUserOperationHash(hash);
-        },
+    async signUserOperation(userOperation) {
+        const publicClient = createPublicClient({
+          chain: client.chain,
+          transport: http(),
+        });
+/*   
+        const MOCK_VALID_UNTIL = "0x00000000deadbeef";
+        const MOCK_VALID_AFTER = "0x0000000000001234"; */
+        //const paymasterAddresss = "0x6f010FB33E6dce2789c714b19c385035122e664E";
+  
+        console.log("USER OP", userOperation);
+        const { maxFeePerGas /* maxPriorityFeePerGas */ } =
+          (await publicClient.estimateFeesPerGas()) as {
+            maxFeePerGas: bigint;
+            maxPriorityFeePerGas: bigint;
+          };
+  
+        userOperation.maxFeePerGas = maxFeePerGas * 2n;
+        userOperation.maxPriorityFeePerGas = maxFeePerGas;
+        // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
+        userOperation.verificationGasLimit = 2000000n;
+        userOperation.preVerificationGas = 150000n;
+  
+        /*
+        const placeHolderPaymasterData = concat([
+          paymasterAddresss,
+          encodeAbiParameters(
+            parseAbiParameters("uint48, uint48"),
+            [0x00000000deadbeef, 0x0000000000001234]
+          ),
+          ("0x" + "00".repeat(65)) as `0x${string}`,
+        ]);
+   
+        console.log("placeHolderPaymasterData", placeHolderPaymasterData);
+  
+        userOperation.paymasterAndData = placeHolderPaymasterData;
+  
+        /// START PAYMASTER
+  
+        const api = new API(apiKey, "http://127.0.0.1:8000/connect");
+  
+        console.log("USER OPERATION", userOperation);
+        const paymasterAPIResult = await api.validatePaymaster(
+          deepHexlify(userOperation),
+          MOCK_VALID_UNTIL,
+          MOCK_VALID_AFTER
+        );
+  
+        console.log("API Result", paymasterAPIResult);
+  
+        userOperation.paymasterAndData =
+          paymasterAPIResult.result.paymasterAndData; */
+  
+        /// END PAYMASTER
+  
+        const hash = getUserOperationHash({
+          userOperation: {
+            ...userOperation,
+            signature: "0x",
+          },
+          entryPoint: entryPointAddress as EntryPoint,
+          chainId: (client.chain as Chain).id,
+        });
+  
+        const signature = await multiOwnerSigner.signUserOperationHash(hash);
+  
+        userOperation.signature = signature;
+  
+        return signature;
+      },
 
         // Encode the init code
         async getInitCode() {

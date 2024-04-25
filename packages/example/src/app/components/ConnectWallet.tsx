@@ -4,7 +4,8 @@ import {
   createSmartAccountClient,
   createModularSmartAccount,
   retrieveAccountAddressFromPasskey,
-  useSignerRequests
+  useSignerRequests,
+  createSigner
 } from "@cometh/connect-sdk-4337";
 
 import countContractAbi from "../contract/counterABI.json";
@@ -32,17 +33,18 @@ function ConnectWallet(): JSX.Element {
     ) as Hex;
 
     //optionnal
-    /* 
+    
     const comethSigner = await createSigner({
       apiKey,
       smartAccountAddress: localStorageAddress,
       disableEoaFallback: false,
-    }) ; */
+    }) ;
 
     let smartAccount;
 
     if (localStorageAddress) {
       smartAccount = await createModularSmartAccount({
+        comethSigner,
         apiKey,
         rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
         smartAccountAddress: localStorageAddress,
@@ -50,6 +52,7 @@ function ConnectWallet(): JSX.Element {
       });
     } else {
       smartAccount = await createModularSmartAccount({
+        comethSigner,
         apiKey,
         rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
         entryPoint: ENTRYPOINT_ADDRESS_V06,
@@ -74,8 +77,8 @@ function ConnectWallet(): JSX.Element {
 
 
     const txHash = await smartAccountClient.sendTransaction({
-      to: COUNTER_CONTRACT_ADDRESS,
-      data: calldata,
+      to: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
+      data: "0x00",
     });
 
 
