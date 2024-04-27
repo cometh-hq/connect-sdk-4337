@@ -6,7 +6,7 @@ import {
   retrieveAccountAddressFromPasskey,
   useSignerRequests,
   createSigner,
-  getPaymasterClient
+  createComethPaymasterClient
 } from "@cometh/connect-sdk-4337";
 
 import countContractAbi from "../contract/counterABI.json";
@@ -61,7 +61,7 @@ function ConnectWallet(): JSX.Element {
       window.localStorage.setItem("walletAddress", smartAccount.address);
     }
 
-    const paymasterClient = await getPaymasterClient(apiKey)
+    const paymasterClient = await createComethPaymasterClient({apiKey, bundlerUrl})
 
 
     const smartAccountClient = createSmartAccountClient({
@@ -86,7 +86,6 @@ function ConnectWallet(): JSX.Element {
     const txHash = await smartAccountClient.sendTransaction({
       to: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
       data: "0x00",
- 
     });
 
 

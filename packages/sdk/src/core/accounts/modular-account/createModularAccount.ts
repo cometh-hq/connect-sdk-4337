@@ -362,7 +362,6 @@ export async function createModularSmartAccount<
 
         // Sign a user operation
         async signUserOperation(userOperation) {
-        
             const hash = getUserOperationHash({
                 userOperation: {
                     ...userOperation,

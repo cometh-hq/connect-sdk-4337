@@ -1,7 +1,14 @@
-import type { UserOperation } from "@/core/types";
+import type { ComethPaymasterRpcSchema } from "@/core/clients/types";
 import { deepHexlify } from "permissionless";
-import type { Prettify } from "permissionless/types";
+import type { BundlerRpcSchema } from "permissionless/_types/types/bundler";
+import type {
+    EntryPoint,
+    GetEntryPointVersion,
+    Prettify,
+} from "permissionless/types";
+import type { UserOperation } from "permissionless/types/userOperation.js";
 import {
+    http,
     type Account,
     type Address,
     type Chain,
@@ -9,27 +16,34 @@ import {
     type Hex,
     type Transport,
     concat,
+    createClient,
     encodeAbiParameters,
     parseAbiParameters,
 } from "viem";
 
-export type SponsorUserOperationReturnType = Pick<
-    UserOperation,
-    | "callGasLimit"
-    | "verificationGasLimit"
-    | "preVerificationGas"
-    | "paymasterAndData"
->;
+export type SponsorUserOperationReturnType = {
+    callGasLimit: bigint;
+    verificationGasLimit: bigint;
+    preVerificationGas: bigint;
+    paymasterAndData: Hex;
+};
 
 export const sponsorUserOperation = async <
+    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends Account | undefined = Account | undefined,
 >(
-    client: Client<TTransport, TChain, TAccount, any>,
+    client: Client<
+        TTransport,
+        TChain,
+        TAccount,
+        ComethPaymasterRpcSchema<entryPoint>
+    >,
     args: Prettify<{
-        userOperation: UserOperation;
+        userOperation: UserOperation<GetEntryPointVersion<entryPoint>>;
         entryPoint: Address;
+        bundlerUrl: string;
     }>
 ): Promise<SponsorUserOperationReturnType> => {
     const validAfter = "0x0000000000001234";
@@ -42,33 +56,35 @@ export const sponsorUserOperation = async <
             +validUntil,
             +validAfter,
         ]),
-        ("0x" + "00".repeat(65)) as `0x${string}`,
+        `0x${"00".repeat(65)}` as `0x${string}`,
     ]);
 
-    console.log(args.userOperation);
+    const bundlerClient = createClient({
+        transport: http(args.bundlerUrl),
+        type: "smartAccountClient",
+    }) as Client<TTransport, TChain, TAccount, BundlerRpcSchema<entryPoint>>;
 
-    /*    const gasParameters = await getAction(client, estimateUserOperationGas)(
-        {
-            userOperation:deepHexlify(args.userOperation),
-            entryPoint: args.entryPoint
-        } as {
-            userOperation: any
-            entryPoint: any
-        }
-    )
-
-    console.log("gasParameters", gasParameters) */
+    const gasParameters = (await bundlerClient.request({
+        method: "eth_estimateUserOperationGas",
+        params: [
+            deepHexlify(args.userOperation),
+            args.entryPoint as entryPoint,
+        ],
+    })) as {
+        callGasLimit: Hex;
+        verificationGasLimit: Hex;
+        preVerificationGas: Hex;
+    };
 
     const userOperation = {
         ...args.userOperation,
-        callGasLimit: 201853n,
+        callGasLimit: BigInt(gasParameters.callGasLimit),
         // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
-        verificationGasLimit: 2000000n,
-        preVerificationGas: 120000n,
+        verificationGasLimit:
+            BigInt(gasParameters.verificationGasLimit) + 500000n,
+        preVerificationGas: BigInt(gasParameters.preVerificationGas),
         paymasterAndData: dummyPaymasterData,
     };
-
-    console.log("userOperation", userOperation);
 
     const response = await client.request({
         method: "pm_sponsorUserOperation",
@@ -79,8 +95,6 @@ export const sponsorUserOperation = async <
             args.entryPoint,
         ],
     });
-
-    console.log("response", response);
 
     const responseV06 = response as {
         paymasterAndData: Hex;

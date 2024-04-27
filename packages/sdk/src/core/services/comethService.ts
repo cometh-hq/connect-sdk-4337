@@ -15,7 +15,7 @@ export const createNewWalletInDb = async ({
     smartAccountAddress: Address;
     signer: ComethSigner;
     walletImplementation: WalletImplementation;
-}) => {
+}): Promise<void> => {
     {
         if (signer.type === "localWallet") {
             await api.initWallet({

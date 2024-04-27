@@ -24,7 +24,7 @@ export function createSmartAccountClient<
 ): SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount> {
     const {
         key = "Account",
-        name = "Smart Account Client",
+        name = "Cometh Smart Account Client",
         bundlerTransport,
     } = parameters;
     const client = createClient({

@@ -12,7 +12,7 @@ export const gasPrice = async <
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends Account | undefined = Account | undefined,
 >(
-    client: Client<TTransport, TChain, TAccount, any>
+    client: Client<TTransport, TChain, TAccount, undefined>
 ) => {
     const publicClient = createPublicClient({
         chain: client.chain as Chain,

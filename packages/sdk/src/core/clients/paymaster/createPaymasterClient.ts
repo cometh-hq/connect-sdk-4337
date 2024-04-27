@@ -1,5 +1,9 @@
 import { ENTRYPOINT_ADDRESS_V06 } from "@/constants";
-import type { EntryPoint } from "permissionless/types/entrypoint";
+import type { UserOperation } from "permissionless";
+import type {
+    EntryPoint,
+    GetEntryPointVersion,
+} from "permissionless/types/entrypoint";
 import {
     type Account,
     type Chain,
@@ -16,14 +20,13 @@ import {
     sponsorUserOperation,
 } from "../../actions/paymaster/sponsorUserOperation";
 import { API } from "../../services/API";
-import type { UserOperation } from "../../types";
 import type { ComethPaymasterRpcSchema } from "../types";
 
-export type ComethPaymasterClient = Client<
+export type ComethPaymasterClient<entryPoint extends EntryPoint> = Client<
     Transport,
     Chain | undefined,
     Account | undefined,
-    ComethPaymasterRpcSchema,
+    ComethPaymasterRpcSchema<entryPoint>,
     ComethPaymasterClientActions
 >;
 
@@ -31,9 +34,12 @@ export type ComethPaymasterClientActions = {
     /**
      * Returns paymasterAndData & updated gas parameters required to sponsor a userOperation.
      */
-    sponsorUserOperation: (args: {
-        userOperation: UserOperation;
+    sponsorUserOperation: <entryPoint extends EntryPoint>(args: {
+        userOperation: UserOperation<GetEntryPointVersion<entryPoint>>;
     }) => Promise<SponsorUserOperationReturnType>;
+    /**
+     * Returns maxFeePerGas & maxPriorityFeePerGas required to sponsor a userOperation.
+     */
     gasPrice: () => Promise<{
         maxFeePerGas: bigint;
         maxPriorityFeePerGas: bigint;
@@ -41,25 +47,35 @@ export type ComethPaymasterClientActions = {
 };
 
 const comethPaymasterActions =
-    <entryPoint extends EntryPoint>(entryPointAddress: entryPoint) =>
+    <entryPoint extends EntryPoint>(
+        entryPointAddress: entryPoint,
+        bundlerUrl: string
+    ) =>
     (client: Client): ComethPaymasterClientActions => ({
-        sponsorUserOperation: async (args: {
-            userOperation: UserOperation;
+        sponsorUserOperation: async <entryPoint extends EntryPoint>(args: {
+            userOperation: UserOperation<GetEntryPointVersion<entryPoint>>;
         }) =>
-            sponsorUserOperation(client as ComethPaymasterClient, {
+            sponsorUserOperation(client as ComethPaymasterClient<entryPoint>, {
                 ...args,
                 entryPoint: entryPointAddress,
+                bundlerUrl,
             }),
-        gasPrice: async () => gasPrice(client as ComethPaymasterClient),
+        gasPrice: async () =>
+            gasPrice(client as ComethPaymasterClient<entryPoint>),
     });
 
-export const getPaymasterClient = async (
-    apiKey: string
-): Promise<ComethPaymasterClient> => {
+export const createComethPaymasterClient = async <
+    entryPoint extends EntryPoint,
+>({
+    apiKey,
+    bundlerUrl,
+}: { apiKey: string; bundlerUrl: string }): Promise<
+    ComethPaymasterClient<entryPoint>
+> => {
     const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const chain = await getNetwork(api);
 
-    return createComethPaymasterClient({
+    return createPaymasterClient({
         chain,
         transport: custom({
             async request({ method, params }) {
@@ -71,21 +87,25 @@ export const getPaymasterClient = async (
                         validAfter
                     );
                 }
+
+                throw new Error(`Method ${method} not found`);
             },
         }),
         entryPoint: ENTRYPOINT_ADDRESS_V06,
+        bundlerUrl,
     });
 };
 
-const createComethPaymasterClient = <
+const createPaymasterClient = <
     entryPoint extends EntryPoint,
     transport extends Transport = Transport,
     chain extends Chain | undefined = undefined,
 >(
     parameters: PublicClientConfig<transport, chain> & {
         entryPoint: entryPoint;
+        bundlerUrl: string;
     }
-): ComethPaymasterClient => {
+): ComethPaymasterClient<entryPoint> => {
     const { key = "public", name = "Cometh Paymaster Client" } = parameters;
     const client = createClient({
         ...parameters,
@@ -93,5 +113,7 @@ const createComethPaymasterClient = <
         name,
         type: "comethPaymasterClient",
     });
-    return client.extend(comethPaymasterActions(parameters.entryPoint));
+    return client.extend(
+        comethPaymasterActions(parameters.entryPoint, parameters.bundlerUrl)
+    );
 };

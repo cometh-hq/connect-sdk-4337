@@ -155,10 +155,18 @@ export class API {
      */
 
     async validatePaymaster(
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         userOperation: any,
         validUntil: string,
         validAfter: string
-    ): Promise<any> {
+    ): Promise<{
+        paymasterAndData: Hex;
+        hash: Hex;
+        signature: Hex;
+        preVerificationGas: Hex;
+        verificationGasLimit: Hex;
+        callGasLimit: Hex;
+    }> {
         const body = {
             userOperation,
             validUntil,
