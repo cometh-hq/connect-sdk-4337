@@ -5,7 +5,6 @@ import { API_URL } from "../../constants";
 import type {
     DeviceData,
     NewSignerRequest,
-    UserOperation,
     WalletImplementation,
     WalletInfos,
     WebAuthnSigner,
@@ -142,7 +141,7 @@ export class API {
      */
 
     async getNewSignerRequests(
-        smartAccountAddress: string
+        smartAccountAddress: Address
     ): Promise<NewSignerRequest[] | null> {
         const response = await this.api.get(
             `/new-signer-request/${smartAccountAddress}`
@@ -151,28 +150,34 @@ export class API {
         return response.data.signerRequests;
     }
 
-
-      /**
+    /**
      * Paymaster request
      */
 
-
     async validatePaymaster(
-        userOp: any,
+        userOperation: any,
         validUntil: string,
         validAfter: string
-      ): Promise<any> {
-    
+    ): Promise<any> {
         const body = {
-          userOp,
-          validUntil,
-          validAfter,
+            userOperation,
+            validUntil,
+            validAfter,
         };
-    
+
         const response = await this.api.post(
-          "/verifying-paymaster/validate",
-          body
+            "/verifying-paymaster/validate",
+            body,
+            {
+                headers: {
+                    apiKey: process.env.NEXT_PUBLIC_COMETH_API_KEY || "",
+                    "x-consumer-access": "public",
+                    "x-consumer-groups": "connect",
+                    "x-consumer-username": "65bcb5da4dfe88b6cf60af74",
+                    "x-project-chain-id": "421614",
+                },
+            }
         );
-        return response.data;
-      }
+        return response.data.result;
+    }
 }

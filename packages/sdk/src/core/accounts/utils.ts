@@ -2,7 +2,7 @@ import { http, type Chain, createClient } from "viem";
 import { networks, supportedChains } from "../../constants";
 import type { API } from "../services/API";
 
-const getNetwork = async (api: API): Promise<Chain> => {
+export const getNetwork = async (api: API): Promise<Chain> => {
     const chainId = await api
         .getProjectParams()
         .then((params) => params.chainId);

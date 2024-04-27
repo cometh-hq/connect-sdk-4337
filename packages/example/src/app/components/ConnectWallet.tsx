@@ -5,7 +5,8 @@ import {
   createModularSmartAccount,
   retrieveAccountAddressFromPasskey,
   useSignerRequests,
-  createSigner
+  createSigner,
+  getPaymasterClient
 } from "@cometh/connect-sdk-4337";
 
 import countContractAbi from "../contract/counterABI.json";
@@ -60,13 +61,19 @@ function ConnectWallet(): JSX.Element {
       window.localStorage.setItem("walletAddress", smartAccount.address);
     }
 
+    const paymasterClient = await getPaymasterClient(apiKey)
+
 
     const smartAccountClient = createSmartAccountClient({
       account: smartAccount,
       entryPoint: ENTRYPOINT_ADDRESS_V06,
       chain: arbitrumSepolia,
       bundlerTransport: http(bundlerUrl),
-    });
+      middleware: {
+        sponsorUserOperation: paymasterClient.sponsorUserOperation,
+        gasPrice: paymasterClient.gasPrice,
+    }
+    })
 
 
 
@@ -79,6 +86,7 @@ function ConnectWallet(): JSX.Element {
     const txHash = await smartAccountClient.sendTransaction({
       to: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
       data: "0x00",
+ 
     });
 
 

@@ -4,6 +4,7 @@ import { signerToKernelSmartAccount } from "./core/accounts/kernel/createKernelA
 import { createModularSmartAccount } from "./core/accounts/modular-account/createModularAccount";
 import { retrieveAccountAddressFromPasskey } from "./core/actions/retrieveAccountAddressFromPasskey";
 import { createSmartAccountClient } from "./core/clients/createModularClient";
+import { getPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
 import { useSignerRequests } from "./core/hooks/useSignerRequests";
 import { createSigner } from "./core/signers/createSigner";
 
@@ -14,5 +15,6 @@ export {
     createSmartAccountClient,
     useSignerRequests,
     retrieveAccountAddressFromPasskey,
+    getPaymasterClient,
     ENTRYPOINT_ADDRESS_V06,
 };
