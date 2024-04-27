@@ -34,18 +34,16 @@ function ConnectWallet(): JSX.Element {
     ) as Hex;
 
     //optionnal
-    
-    const comethSigner = await createSigner({
+   /*  const comethSigner = await createSigner({
       apiKey,
       smartAccountAddress: localStorageAddress,
       disableEoaFallback: false,
-    }) ;
+    }) ; */
 
     let smartAccount;
 
     if (localStorageAddress) {
       smartAccount = await createModularSmartAccount({
-        comethSigner,
         apiKey,
         rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
         smartAccountAddress: localStorageAddress,
@@ -53,7 +51,6 @@ function ConnectWallet(): JSX.Element {
       });
     } else {
       smartAccount = await createModularSmartAccount({
-        comethSigner,
         apiKey,
         rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
         entryPoint: ENTRYPOINT_ADDRESS_V06,
