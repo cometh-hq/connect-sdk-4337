@@ -6,7 +6,7 @@ import type { UserOperationWithBigIntAsHex } from "permissionless/types/userOper
 import type { Address, Hex } from "viem";
 
 /**
- * RPC interface that's used for the connect api communication
+ * RPC interface that's used for the cometh paymaster communication
  */
 export type ComethPaymasterRpcSchema<entryPoint extends EntryPoint> = [
     {

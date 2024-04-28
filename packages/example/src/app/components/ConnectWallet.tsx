@@ -5,8 +5,7 @@ import {
   createModularSmartAccount,
   retrieveAccountAddressFromPasskey,
   useSignerRequests,
-  createSigner,
-  createComethPaymasterClient
+  createComethPaymasterClient,
 } from "@cometh/connect-sdk-4337";
 
 import countContractAbi from "../contract/counterABI.json";
@@ -24,8 +23,10 @@ function ConnectWallet(): JSX.Element {
 
   const [txHash, setTxHash] = useState<string>(""); 
   const [pendingTx, setPendingTx] = useState<boolean>(false);
+  const [accountClient, setAccountClient] = useState({}); 
 
   const {initNewSignerRequest, getNewSignerRequests} = useSignerRequests(apiKey)
+
 
   const connect = async () => {
     setPendingTx(true)
@@ -72,8 +73,14 @@ function ConnectWallet(): JSX.Element {
     }
     })
 
+    setAccountClient(smartAccountClient)
+
+    const isowner = await smartAccountClient.isOwnerOf({address:"0x53011E110CAd8685F4911508B4E2413f526Df73E",rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY"})
+
+    console.log({isowner})
 
 
+/* 
     const calldata = encodeFunctionData({
       abi: countContractAbi,
       functionName: "count",
@@ -81,9 +88,18 @@ function ConnectWallet(): JSX.Element {
 
 
     const txHash = await smartAccountClient.sendTransaction({
-      to: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
-      data: "0x00",
-    });
+      to: COUNTER_CONTRACT_ADDRESS,
+      data: calldata,
+    }); */
+
+    const txHash = await smartAccountClient.removeOwners({ ownersToRemove: ["0x53011E110CAd8685F4911508B4E2413f526Df73E"]})
+
+    console.log({txHash})
+
+
+    const owners2 = await smartAccountClient.getOwners({rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY"})
+
+    console.log({owners2})
 
 
     setTxHash(txHash)

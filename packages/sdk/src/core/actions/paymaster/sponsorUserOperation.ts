@@ -82,7 +82,7 @@ export const sponsorUserOperation = async <
         // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
         verificationGasLimit:
             BigInt(gasParameters.verificationGasLimit) + 500000n,
-        preVerificationGas: BigInt(gasParameters.preVerificationGas),
+        preVerificationGas: BigInt(gasParameters.preVerificationGas) + 10000n,
         paymasterAndData: dummyPaymasterData,
     };
 
