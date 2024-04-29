@@ -13,7 +13,18 @@ import {
 } from "viem";
 import { MultiOwnerPluginAbi } from "../../accounts/modular-account/plugins/multi-owner";
 
-const MultiOwnerPlugin = "0xcE0000007B008F50d762D155002600004cD6c647";
+const MultiOwnerPlugin = {
+    10: "0x3A5b4e3E9Cf968405632eF72d4A00822Ed8e5A22" as Address,
+    137: "0x50d3F4c4422D0F2A4383Fdc6178FB49b1CF71Dc2" as Address,
+    8453: "0xcE0000007B008F50d762D155002600004cD6c647" as Address,
+    42161: "0xcE0000007B008F50d762D155002600004cD6c647" as Address,
+    80001: "0xcE0000007B008F50d762D155002600004cD6c647" as Address,
+    80002: "0xcE0000007B008F50d762D155002600004cD6c647" as Address,
+    84532: "0xcE0000007B008F50d762D155002600004cD6c647" as Address,
+    421614: "0xcE0000007B008F50d762D155002600004cD6c647" as Address,
+    11155111: "0xcE0000007B008F50d762D155002600004cD6c647" as Address,
+    11155420: "0xcE0000007B008F50d762D155002600004cD6c647" as Address,
+} as Record<number, Address>;
 
 export type MultiOwnerPluginActions = {
     addOwners: (args: { ownersToAdd: Address[] }) => Promise<Hash>;
@@ -73,7 +84,7 @@ export const multiOwnerPluginActions: <
         });
 
         const multiOwnerPluginContract = getContract({
-            address: MultiOwnerPlugin,
+            address: MultiOwnerPlugin[client.chain.id],
             abi: MultiOwnerPluginAbi,
             client: publicClient,
         });
@@ -94,7 +105,7 @@ export const multiOwnerPluginActions: <
         });
 
         const multiOwnerPluginContract = getContract({
-            address: MultiOwnerPlugin,
+            address: MultiOwnerPlugin[client.chain.id],
             abi: MultiOwnerPluginAbi,
             client: publicClient,
         });

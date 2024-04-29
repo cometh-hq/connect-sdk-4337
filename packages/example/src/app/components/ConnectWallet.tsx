@@ -1,132 +1,63 @@
-import { arbitrumSepolia } from "viem/chains";
-import {
-  ENTRYPOINT_ADDRESS_V06,
-  createSmartAccountClient,
-  createModularSmartAccount,
-  retrieveAccountAddressFromPasskey,
-  useSignerRequests,
-  createComethPaymasterClient,
-} from "@cometh/connect-sdk-4337";
+import { Icons } from "@/app/lib/ui/components";
+import { CheckIcon } from "@radix-ui/react-icons";
 
-import countContractAbi from "../contract/counterABI.json";
+interface ConnectWalletProps {
+  connectionError: string | null;
+  isConnecting: boolean;
+  isConnected: boolean;
+  connect: () => Promise<void>;
+  account : any;
+}
 
-import { http, encodeFunctionData, type Hex } from "viem";
-import { useState } from "react";
-
-const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
-const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
-const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
-
-function ConnectWallet(): JSX.Element {
-  if (!apiKey) throw new Error("API key not found");
-  if (!bundlerUrl) throw new Error("Bundler Url not found");
-
-  const [txHash, setTxHash] = useState<string>(""); 
-  const [pendingTx, setPendingTx] = useState<boolean>(false);
-  const [accountClient, setAccountClient] = useState({}); 
-
-  const {initNewSignerRequest, getNewSignerRequests} = useSignerRequests(apiKey)
-
-
-  const connect = async () => {
-    setPendingTx(true)
-    const localStorageAddress = window.localStorage.getItem(
-      "walletAddress"
-    ) as Hex;
-
-    //optionnal
-   /*  const comethSigner = await createSigner({
-      apiKey,
-      smartAccountAddress: localStorageAddress,
-      disableEoaFallback: false,
-    }) ; */
-
-    let smartAccount;
-
-    if (localStorageAddress) {
-      smartAccount = await createModularSmartAccount({
-        apiKey,
-        rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
-        smartAccountAddress: localStorageAddress,
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
-      });
+function ConnectWallet({
+  connectionError,
+  isConnecting,
+  isConnected,
+  connect,
+  account,
+}: ConnectWalletProps): JSX.Element {
+  const getTextButton = () => {
+    if (isConnected) {
+      return (
+        <>
+          <CheckIcon width={20} height={20} />
+          <a
+            href={`${
+              process.env.NEXT_PUBLIC_SCAN_URL
+            }address/${account.account.address}`}
+            target="_blank"
+          >
+            {"Wallet connected"}
+          </a>
+        </>
+      );
+    } else if (isConnecting) {
+      return (
+        <>
+          <Icons.spinner className="h-6 w-6 animate-spin" />
+          {"Getting wallet..."}
+        </>
+      );
     } else {
-      smartAccount = await createModularSmartAccount({
-        apiKey,
-        rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
-      });
-      window.localStorage.setItem("walletAddress", smartAccount.address);
+      return "Get your Wallet";
     }
-
-    const paymasterClient = await createComethPaymasterClient({apiKey, bundlerUrl})
-
-
-    const smartAccountClient = createSmartAccountClient({
-      account: smartAccount,
-      entryPoint: ENTRYPOINT_ADDRESS_V06,
-      chain: arbitrumSepolia,
-      bundlerTransport: http(bundlerUrl),
-      middleware: {
-        sponsorUserOperation: paymasterClient.sponsorUserOperation,
-        gasPrice: paymasterClient.gasPrice,
-    }
-    })
-
-    setAccountClient(smartAccountClient)
-
-    const isowner = await smartAccountClient.isOwnerOf({address:"0x53011E110CAd8685F4911508B4E2413f526Df73E",rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY"})
-
-    console.log({isowner})
-
-
-/* 
-    const calldata = encodeFunctionData({
-      abi: countContractAbi,
-      functionName: "count",
-    });
-
-
-    const txHash = await smartAccountClient.sendTransaction({
-      to: COUNTER_CONTRACT_ADDRESS,
-      data: calldata,
-    }); */
-
-    const txHash = await smartAccountClient.removeOwners({ ownersToRemove: ["0x53011E110CAd8685F4911508B4E2413f526Df73E"]})
-
-    console.log({txHash})
-
-
-    const owners2 = await smartAccountClient.getOwners({rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY"})
-
-    console.log({owners2})
-
-
-    setTxHash(txHash)
-    setPendingTx(false)
   };
-
-  const retrieveAccount = async() => {
-  const walletAddress = await retrieveAccountAddressFromPasskey(apiKey)
-  console.log({walletAddress})
-  }
 
   return (
     <>
-    
-     <button onClick={connect}>{pendingTx ? "loading..." :  "mint"}</button>
-
-     <button onClick={retrieveAccount}>retrieveAccount</button>
-      
-
-      {txHash && <a
-            href={`https://jiffyscan.xyz/bundle/${txHash}?network=arbitrum-sepolia&pageNo=0&pageSize=10`}
-            target="_blank"
-            className="flex-none rounded-full bg-gray-900 px-3.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
-          >
-           Explorer link <span aria-hidden="true">&rarr;</span>
-          </a>}
-
+      {!connectionError ? (
+        <button
+          disabled={isConnecting || isConnected || !!connectionError}
+          className="flex items-center justify-center gap-x-2.5 p-3 font-semibold text-gray-900 hover:bg-gray-100 disabled:bg-white"
+          onClick={connect}
+        >
+          {getTextButton()}
+        </button>
+      ) : (
+        <p className="flex items-center justify-center text-gray-900 bg-red-50">
+          Connection denied
+        </p>
+      )}
     </>
   );
 }
