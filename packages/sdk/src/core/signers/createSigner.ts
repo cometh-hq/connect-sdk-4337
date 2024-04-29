@@ -16,24 +16,12 @@ import {
 import { API } from "../services/API";
 import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
 
-import type {
-    PasskeyLocalStorageFormat,
-    webAuthnOptions,
-} from "./passkeys/types";
+import type { PasskeyLocalStorageFormat } from "./passkeys/types";
 import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "./passkeys/utils";
-import type { ComethSigner } from "./types";
-
-type SignerConfigParams = {
-    apiKey: string;
-    smartAccountAddress?: Address;
-    disableEoaFallback?: boolean;
-    encryptionSalt?: string;
-    webAuthnOptions?: webAuthnOptions;
-    passKeyName?: string;
-};
+import type { ComethSigner, CreateSignerParams } from "./types";
 
 export const saveSignerInStorage = async (
     signer: ComethSigner,
@@ -50,7 +38,8 @@ export const saveSignerInStorage = async (
             smartAccountAddress,
             signer.passkey.id,
             signer.passkey.pubkeyCoordinates.x,
-            signer.passkey.pubkeyCoordinates.y
+            signer.passkey.pubkeyCoordinates.y,
+            signer.passkey.signerAddress
         );
     }
 };
@@ -62,7 +51,7 @@ const throwErrorWhenEoaFallbackDisabled = (
         throw new Error("Passkeys are not compatible with your device");
 };
 
-const _isFallbackSigner = (): boolean => {
+export const isFallbackSigner = (): boolean => {
     const fallbackSigner = Object.keys(localStorage).find((key) =>
         key.startsWith("cometh-connect-fallback-")
     );
@@ -85,14 +74,18 @@ export async function createSigner({
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
-}: SignerConfigParams): Promise<ComethSigner> {
-    const api = new API(apiKey);
+}: CreateSignerParams): Promise<ComethSigner> {
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
-    if (webAuthnCompatible && !_isFallbackSigner()) {
+    if (webAuthnCompatible && !isFallbackSigner()) {
         let passkey: PasskeyLocalStorageFormat;
         if (!smartAccountAddress) {
-            passkey = await createPasskeySigner(webAuthnOptions, passKeyName);
+            passkey = await createPasskeySigner({
+                webAuthnOptions,
+                api,
+                passKeyName,
+            });
 
             if (passkey.publicKeyAlgorithm !== -7) {
                 console.warn("ECC passkey are not supported by your device");

@@ -26,3 +26,51 @@ export type DeviceData = {
     os: string;
     platform: string;
 };
+
+export type WebAuthnSigner = {
+    projectId: string;
+    userId: string;
+    chainId: string;
+    walletAddress: Address;
+    publicKeyId: Hex;
+    publicKeyX: Hex;
+    publicKeyY: Hex;
+    signerAddress: Address;
+    deviceData: DeviceData;
+};
+
+export type WalletInfos = {
+    chainId: string;
+    address: Address;
+    creationDate: Date;
+    initiatorAddress: Address;
+};
+
+export enum WalletImplementation {
+    Safe = "safe",
+    Modular_Account = "modular",
+}
+
+export enum NewSignerRequestType {
+    WEBAUTHN = "WEBAUTHN",
+    BURNER_WALLET = "BURNER_WALLET",
+}
+
+export type Signer = {
+    smartAccountAddress: Address;
+    signerAddress: Address;
+    deviceData: DeviceData;
+    publicKeyId?: Hex;
+    publicKeyX?: Hex;
+    publicKeyY?: Hex;
+};
+
+export type NewSignerRequestBody = Signer & {
+    type: NewSignerRequestType;
+};
+
+export type NewSignerRequest = NewSignerRequestBody & {
+    projectId: string;
+    userId: string;
+    chainId: string;
+};

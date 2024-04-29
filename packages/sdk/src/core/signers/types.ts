@@ -1,5 +1,9 @@
+import type { Address } from "viem";
 import type { eoaFallback } from "./fallbackEoa/types";
-import type { PasskeyLocalStorageFormat } from "./passkeys/types";
+import type {
+    PasskeyLocalStorageFormat,
+    webAuthnOptions,
+} from "./passkeys/types";
 
 interface Signer {
     type: "localWallet" | "passkey";
@@ -16,3 +20,15 @@ export interface PasskeySigner extends Signer {
 }
 
 export type ComethSigner = FallbackEoaSigner | PasskeySigner;
+
+export type SignerConfig = {
+    disableEoaFallback?: boolean;
+    encryptionSalt?: string;
+    webAuthnOptions?: webAuthnOptions;
+    passKeyName?: string;
+};
+
+export type CreateSignerParams = {
+    apiKey: string;
+    smartAccountAddress?: Address;
+} & SignerConfig;

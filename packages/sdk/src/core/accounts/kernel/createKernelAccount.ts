@@ -26,6 +26,7 @@ import { API } from "../../services/API";
 import { getClient } from "../utils";
 import { KernelExecuteAbi, KernelInitAbi } from "./abi/KernelAccountAbi";
 
+import { WalletImplementation } from "@/core/types";
 import {
     connectToExistingWallet,
     createNewWalletInDb,
@@ -188,7 +189,7 @@ export async function signerToKernelSmartAccount<
         throw new Error("Only EntryPoint 0.6 is supported");
     }
 
-    const api = new API(apiKey);
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
         TChain,
@@ -233,6 +234,7 @@ export async function signerToKernelSmartAccount<
             api,
             smartAccountAddress: verifiedSmartAccountAddress,
             signer: comethSigner,
+            walletImplementation: WalletImplementation.Modular_Account,
         });
     }
 

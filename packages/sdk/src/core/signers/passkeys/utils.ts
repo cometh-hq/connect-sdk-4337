@@ -134,6 +134,10 @@ export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
     return bytes.buffer;
 };
 
+export const base64ToBase64Url = (base64: string) => {
+    return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+
 export const isWebAuthnCompatible = async (
     webAuthnOptions: webAuthnOptions
 ): Promise<boolean> => {

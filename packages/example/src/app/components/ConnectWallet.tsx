@@ -1,98 +1,63 @@
-import { polygonMumbai } from "viem/chains";
-import {
-  createSigner,
-  signerToKernelSmartAccount,
-  ENTRYPOINT_ADDRESS_V06,
-  createSmartAccountClient,
-} from "@cometh/connect-sdk-4337";
+import { Icons } from "@/app/lib/ui/components";
+import { CheckIcon } from "@radix-ui/react-icons";
 
-import countContractAbi from "../contract/counterABI.json";
+interface ConnectWalletProps {
+  connectionError: string | null;
+  isConnecting: boolean;
+  isConnected: boolean;
+  connect: () => Promise<void>;
+  account : any;
+}
 
-import { http, encodeFunctionData, type Hex } from "viem";
-import { useState } from "react";
-
-const COUNTER_CONTRACT_ADDRESS = "0x84ADD3fa2c2463C8cF2C95aD70e4b5F602332160";
-const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
-const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
-
-function ConnectWallet(): JSX.Element {
-  if (!apiKey) throw new Error("API key not found");
-  if (!bundlerUrl) throw new Error("Bundler Url not found");
-
-  const [txHash, setTxHash] = useState<string>(""); 
-
-  const connect = async () => {
-    const localStorageAddress = window.localStorage.getItem(
-      "walletAddress"
-    ) as Hex;
-
-    const signer = await createSigner({
-      apiKey,
-      smartAccountAddress: localStorageAddress,
-      disableEoaFallback: false,
-    });
-
-    console.log({ signer });
-
-    let smartAccount;
-
-    if (localStorageAddress) {
-      smartAccount = await signerToKernelSmartAccount({
-        comethSigner: signer,
-        apiKey,
-        rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
-        smartAccountAddress: localStorageAddress,
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
-        validatorAddress:"0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
-        disableEoaFallback: false,
-      });
+function ConnectWallet({
+  connectionError,
+  isConnecting,
+  isConnected,
+  connect,
+  account,
+}: ConnectWalletProps): JSX.Element {
+  const getTextButton = () => {
+    if (isConnected) {
+      return (
+        <>
+          <CheckIcon width={20} height={20} />
+          <a
+            href={`${
+              process.env.NEXT_PUBLIC_SCAN_URL
+            }address/${account.account.address}`}
+            target="_blank"
+          >
+            {"Wallet connected"}
+          </a>
+        </>
+      );
+    } else if (isConnecting) {
+      return (
+        <>
+          <Icons.spinner className="h-6 w-6 animate-spin" />
+          {"Getting wallet..."}
+        </>
+      );
     } else {
-      smartAccount = await signerToKernelSmartAccount({
-        comethSigner: signer,
-        apiKey,
-        rpcUrl: "https://polygon-mumbai-bor-rpc.publicnode.com",
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
-        validatorAddress:"0x07540183E6BE3b15B3bD50798385095Ff3D55cD5",
-        disableEoaFallback: false,
-      });
-      window.localStorage.setItem("walletAddress", smartAccount.address);
+      return "Get your Wallet";
     }
-
-    console.log(smartAccount);
-
-    const smartAccountClient = createSmartAccountClient({
-      account: smartAccount,
-      entryPoint: ENTRYPOINT_ADDRESS_V06,
-      chain: polygonMumbai,
-      bundlerTransport: http(bundlerUrl),
-    });
-
-    console.log(smartAccountClient);
-
-    const calldata = encodeFunctionData({
-      abi: countContractAbi,
-      functionName: "count",
-    });
-
-    const txHash = await smartAccountClient.sendTransaction({
-      to: COUNTER_CONTRACT_ADDRESS,
-      data: calldata,
-    });
-
-    setTxHash(txHash)
   };
+
   return (
     <>
-      <button onClick={connect}>connect</button>
-
-      {txHash && <a
-            href={`https://jiffyscan.xyz/userOpHash/${txHash}?network=mumbai`}
-            target="_blank"
-            className="flex-none rounded-full bg-gray-900 px-3.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
-          >
-           Explorer link <span aria-hidden="true">&rarr;</span>
-          </a>}
-
+      {!connectionError ? (
+        <button
+          disabled={isConnecting || isConnected || !!connectionError}
+          className="flex items-center justify-center gap-x-2.5 p-3 font-semibold text-gray-900 hover:bg-gray-100 disabled:bg-white"
+          onClick={connect}
+        >
+          {getTextButton()}
+        </button>
+      ) : (
+        <p className="flex items-center justify-center text-gray-900 bg-red-50">
+          Connection denied
+        </p>
+      )}
     </>
   );
 }

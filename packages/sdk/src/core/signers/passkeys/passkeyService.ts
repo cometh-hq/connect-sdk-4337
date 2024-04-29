@@ -2,6 +2,7 @@ import { type Address, type Hex, hashMessage, keccak256, toBytes } from "viem";
 import {
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
+    RetrieveWalletFromPasskeyError,
     SignerNotOwnerError,
 } from "../../../errors";
 import type { API } from "../../services/API";
@@ -21,10 +22,15 @@ import type {
 } from "./types";
 import * as utils from "./utils";
 
-const createPasskeySigner = async (
-    webAuthnOptions: webAuthnOptions,
-    passKeyName?: string
-): Promise<PasskeyLocalStorageFormat> => {
+const createPasskeySigner = async ({
+    webAuthnOptions,
+    api,
+    passKeyName,
+}: {
+    webAuthnOptions: webAuthnOptions;
+    api: API;
+    passKeyName?: string;
+}): Promise<PasskeyLocalStorageFormat> => {
     try {
         const name = passKeyName || "Cometh Connect";
         const authenticatorSelection = webAuthnOptions?.authenticatorSelection;
@@ -84,22 +90,30 @@ const createPasskeySigner = async (
             throw new Error("Failed to retrieve x and y coordinates");
         }
 
-        const publicKeyId = hexArrayStr(passkeyCredential.rawId);
+        const publicKeyId = hexArrayStr(passkeyCredential.rawId) as Hex;
+        const x = `0x${Buffer.from(
+            exportedKeyWithXYCoordinates.x,
+            "base64"
+        ).toString("hex")}` as Hex;
+        const y = `0x${Buffer.from(
+            exportedKeyWithXYCoordinates.y,
+            "base64"
+        ).toString("hex")}` as Hex;
+
+        const signerAddress = await api.predictWebAuthnSignerAddress({
+            publicKeyX: x,
+            publicKeyY: y,
+        });
 
         // Create a PasskeyCredentialWithPubkeyCoordinates object
         const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
             id: publicKeyId,
             pubkeyCoordinates: {
-                x: `0x${Buffer.from(
-                    exportedKeyWithXYCoordinates.x,
-                    "base64"
-                ).toString("hex")}` as Hex,
-                y: `0x${Buffer.from(
-                    exportedKeyWithXYCoordinates.y,
-                    "base64"
-                ).toString("hex")}` as Hex,
+                x,
+                y,
             },
             publicKeyAlgorithm,
+            signerAddress,
         };
 
         return passkeyWithCoordinates;
@@ -169,16 +183,18 @@ const signWithPasskey = async (
 
 const setPasskeyInStorage = (
     smartAccountAddress: Address,
-    publicKeyId: string,
-    publicKeyX: string,
-    publicKeyY: string
+    publicKeyId: Hex,
+    publicKeyX: Hex,
+    publicKeyY: Hex,
+    signerAddress: Address
 ): void => {
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
         id: publicKeyId,
         pubkeyCoordinates: {
-            x: publicKeyX as Hex,
-            y: publicKeyY as Hex,
+            x: publicKeyX,
+            y: publicKeyY,
         },
+        signerAddress,
     };
 
     const localStoragePasskey = JSON.stringify(passkeyWithCoordinates);
@@ -191,35 +207,6 @@ const setPasskeyInStorage = (
 const getPasskeyInStorage = (smartAccountAddress: Address): string | null => {
     return window.localStorage.getItem(`cometh-connect-${smartAccountAddress}`);
 };
-
-/* const getSignerFromCredentials = async ({
-  publicKeyX,
-  publicKeyY,
-  walletAddress,
-}: {
-  publicKeyX: string;
-  publicKeyY: string;
-  walletAddress?: string;
-}): Promise<{
-  deviceData: DeviceData;
-  signerAddress: string;
-  walletAddress: string;
-}> => {
-  const deviceData = getDeviceData();
-
-  const signerAddress = getSignerAddressFromPubkeyCoords(
-    publicKeyX,
-    publicKeyY
-  );
-
-  walletAddress = walletAddress || (await API.getWalletAddress(signerAddress));
-
-  return {
-    deviceData,
-    signerAddress,
-    walletAddress,
-  };
-}; */
 
 const getPasskeySigner = async ({
     api,
@@ -262,7 +249,7 @@ const getPasskeySigner = async ({
     }
 
     const signingWebAuthnSigner = await api.getPasskeySignerByPublicKeyId(
-        webAuthnSignature.id
+        webAuthnSignature.id as Hex
     );
 
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
@@ -271,23 +258,58 @@ const getPasskeySigner = async ({
             x: signingWebAuthnSigner.publicKeyX as Hex,
             y: signingWebAuthnSigner.publicKeyY as Hex,
         },
+        signerAddress: signingWebAuthnSigner.signerAddress,
     };
 
     setPasskeyInStorage(
         smartAccountAddress,
         passkeyWithCoordinates.id,
         passkeyWithCoordinates.pubkeyCoordinates.x,
-        passkeyWithCoordinates.pubkeyCoordinates.y
+        passkeyWithCoordinates.pubkeyCoordinates.y,
+        passkeyWithCoordinates.signerAddress
     );
 
     return passkeyWithCoordinates;
+};
+
+const retrieveSmartAccountAddressFromPasskey = async (
+    API: API
+): Promise<Address> => {
+    let publicKeyId: Hex;
+
+    try {
+        publicKeyId = (await signWithPasskey("Retrieve user wallet")).id as Hex;
+    } catch {
+        throw new RetrieveWalletFromPasskeyError();
+    }
+
+    const signingPasskeySigner =
+        await API.getPasskeySignerByPublicKeyId(publicKeyId);
+    if (!signingPasskeySigner) throw new NoPasskeySignerFoundInDBError();
+
+    const {
+        walletAddress: smartAccountAddress,
+        publicKeyX,
+        publicKeyY,
+        signerAddress,
+    } = signingPasskeySigner;
+
+    setPasskeyInStorage(
+        smartAccountAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        signerAddress
+    );
+
+    return smartAccountAddress;
 };
 
 export {
     createPasskeySigner,
     getPasskeyInStorage,
     getPasskeySigner,
-    /*   getSignerFromCredentials, */
     setPasskeyInStorage,
     sign,
+    retrieveSmartAccountAddressFromPasskey,
 };

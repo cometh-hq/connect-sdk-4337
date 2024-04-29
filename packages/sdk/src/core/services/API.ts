@@ -1,38 +1,14 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
+import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
-
-export type DeviceData = {
-    browser: string;
-    os: string;
-    platform: string;
-};
-
-export type WebAuthnSigner = {
-    projectId: string;
-    userId: string;
-    chainId: string;
-    walletAddress: string;
-    publicKeyId: string;
-    publicKeyX: string;
-    publicKeyY: string;
-    signerAddress: string;
-    deviceData: DeviceData;
-};
-
-export type WalletInfos = {
-    chainId: string;
-    address: string;
-    creationDate: Date;
-    initiatorAddress: string;
-    recoveryContext?: {
-        moduleFactoryAddress: string;
-        delayModuleAddress: string;
-        recoveryCooldown: number;
-        recoveryExpiration: number;
-    };
-    proxyDelayAddress: string;
-};
+import type {
+    DeviceData,
+    NewSignerRequest,
+    WalletImplementation,
+    WalletInfos,
+    WebAuthnSigner,
+} from "../types";
 
 export class API {
     private readonly api: AxiosInstance;
@@ -44,65 +20,79 @@ export class API {
 
     async getProjectParams(): Promise<{
         chainId: string;
-        P256FactoryContractAddress: string;
-        multisendContractAddress: string;
-        singletonAddress: string;
-        simulateTxAcessorAddress: string;
+        P256FactoryContractAddress: Address;
+        multisendContractAddress: Address;
+        singletonAddress: Address;
+        simulateTxAcessorAddress: Address;
     }> {
         const response = await this.api.get("/project/params");
-        return response?.data?.projectParams;
+        return response.data.projectParams;
     }
 
-    async getWalletAddress(ownerAddress: string): Promise<string> {
+    async getContractParams(
+        walletImplementation: WalletImplementation
+    ): Promise<{
+        walletFactoryAddress: Address;
+        P256FactoryContractAddress: Address;
+    }> {
         const response = await this.api.get(
-            `/wallets/${ownerAddress}/wallet-address`
+            `/4337/wallets/${walletImplementation}/contracts-params`
         );
-        return response?.data?.walletAddress;
+        return response.data.contractParams;
     }
 
-    async getWalletInfos(walletAddress: string): Promise<WalletInfos> {
+    async getWalletInfos(walletAddress: Address): Promise<WalletInfos> {
         const response = await this.api.get(
-            `/wallets/${walletAddress}/wallet-infos`
+            `/4337/wallets/${walletAddress}/wallet-infos`
         );
-        return response?.data?.walletInfos;
+        return response.data.walletInfos;
     }
 
     async initWallet({
+        smartAccountAddress,
         ownerAddress,
+        walletImplementation,
     }: {
-        ownerAddress: string;
-    }): Promise<string> {
+        smartAccountAddress: Address;
+        ownerAddress: Address;
+        walletImplementation: WalletImplementation;
+    }): Promise<Address> {
         const body = {
+            walletAddress: smartAccountAddress,
             ownerAddress,
+            walletImplementation,
         };
 
-        const response = await this.api.post("/wallets/init", body);
+        const response = await this.api.post("/4337/wallets/init", body);
 
-        return response?.data.walletAddress;
+        return response.data.walletAddress;
     }
 
     async initWalletWithPasskey({
-        walletAddress,
+        smartAccountAddress,
         publicKeyId,
         publicKeyX,
         publicKeyY,
         deviceData,
+        walletImplementation,
     }: {
-        walletAddress: string;
-        publicKeyId: string;
-        publicKeyX: string;
-        publicKeyY: string;
+        smartAccountAddress: Address;
+        publicKeyId: Hex;
+        publicKeyX: Hex;
+        publicKeyY: Hex;
         deviceData: DeviceData;
+        walletImplementation: WalletImplementation;
     }): Promise<void> {
         const body = {
-            walletAddress,
+            walletAddress: smartAccountAddress,
             publicKeyId,
             publicKeyX,
             publicKeyY,
             deviceData,
+            walletImplementation,
         };
 
-        await this.api.post("/wallets/init-with-webauthn", body);
+        await this.api.post("/4337/wallets/init-with-webauthn", body);
     }
 
     /**
@@ -110,20 +100,92 @@ export class API {
      */
 
     async getPasskeySignerByPublicKeyId(
-        publicKeyId: string
+        publicKeyId: Hex
     ): Promise<WebAuthnSigner> {
         const response = await this.api.get(
             `/webauthn-signer/public-key-id/${publicKeyId}`
         );
-        return response?.data?.webAuthnSigner;
+        return response.data.webAuthnSigner;
     }
 
     async getPasskeySignersByWalletAddress(
-        walletAddress: string
+        walletAddress: Address
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
             `/webauthn-signer/${walletAddress}`
         );
-        return response?.data?.webAuthnSigners;
+        return response.data.webAuthnSigners;
+    }
+
+    async predictWebAuthnSignerAddress({
+        publicKeyX,
+        publicKeyY,
+    }: {
+        publicKeyX: Hex;
+        publicKeyY: Hex;
+    }): Promise<Hex> {
+        const body = {
+            publicKeyX,
+            publicKeyY,
+        };
+
+        const response = await this.api.post(
+            "/webauthn-signer/predict-address",
+            body
+        );
+        return response.data.signerAddress;
+    }
+
+    /**
+     * New signer request
+     */
+
+    async getNewSignerRequests(
+        smartAccountAddress: Address
+    ): Promise<NewSignerRequest[] | null> {
+        const response = await this.api.get(
+            `/new-signer-request/${smartAccountAddress}`
+        );
+
+        return response.data.signerRequests;
+    }
+
+    /**
+     * Paymaster request
+     */
+
+    async validatePaymaster(
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        userOperation: any,
+        validUntil: string,
+        validAfter: string
+    ): Promise<{
+        paymasterAndData: Hex;
+        hash: Hex;
+        signature: Hex;
+        preVerificationGas: Hex;
+        verificationGasLimit: Hex;
+        callGasLimit: Hex;
+    }> {
+        const body = {
+            userOperation,
+            validUntil,
+            validAfter,
+        };
+
+        const response = await this.api.post(
+            "/verifying-paymaster/validate",
+            body,
+            {
+                headers: {
+                    apiKey: process.env.NEXT_PUBLIC_COMETH_API_KEY || "",
+                    "x-consumer-access": "public",
+                    "x-consumer-groups": "connect",
+                    "x-consumer-username": "65bcb5da4dfe88b6cf60af74",
+                    "x-project-chain-id": "421614",
+                },
+            }
+        );
+        return response.data.result;
     }
 }
