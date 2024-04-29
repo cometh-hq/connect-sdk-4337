@@ -37,7 +37,7 @@ import {
 } from "../../services/comethService";
 import { IP256PluginDeployerAbi } from "./abis/IP256PluginDeployer";
 import { IStandardExecutorAbi } from "./abis/IStandardExecutor";
-import { MultiP256OwnerModularAccountFactoryAbi } from "./abis/MultiP256OwnerModularAccountFactory";
+import { multiP256OwnerModularAccountFactoryAbi } from "./abis/MultiP256OwnerModularAccountFactory";
 import { ECDSAMessageSigner } from "./plugins/multi-owner/ecdsa/ECDSAsigner";
 import { WebauthnMessageSigner } from "./plugins/multi-owner/webauthn/webauthnSigner";
 import type { MultiOwnerSigner } from "./plugins/types";
@@ -204,7 +204,7 @@ const getAccountInitCode = async ({
     return concatHex([
         factoryAddress,
         encodeFunctionData({
-            abi: MultiP256OwnerModularAccountFactoryAbi,
+            abi: multiP256OwnerModularAccountFactoryAbi,
             functionName: "createAccount",
             args: [salt, owners_],
         }),
@@ -296,6 +296,7 @@ export async function createModularSmartAccount<
     }
 
     factoryAddress = contractParams.walletFactoryAddress;
+    console.log("factoryAddress", factoryAddress);
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
     let ownerAddress: Address;

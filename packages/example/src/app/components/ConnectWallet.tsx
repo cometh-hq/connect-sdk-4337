@@ -24,7 +24,7 @@ function ConnectWallet({
           <a
             href={`${
               process.env.NEXT_PUBLIC_SCAN_URL
-            }address/${smartAccount.smartAccount.address}`}
+            }address/${smartAccount.account.address}`}
             target="_blank"
           >
             {"Wallet connected"}

@@ -74,7 +74,7 @@ interface TransactionProps {
   useEffect(() => {
     if (smartAccount) {
       (async () => {
-        const balance = await multiOwnerPluginContract.read.counters([smartAccount.smartAccount.address]);
+        const balance = await multiOwnerPluginContract.read.counters([smartAccount.account.address]);
         setNftBalance(Number(balance));
       })();
     }
@@ -101,7 +101,7 @@ interface TransactionProps {
 
 
       setTransactionSended(txHash);
-      const balance = await multiOwnerPluginContract.read.counters([smartAccount.smartAccount.address]);
+      const balance = await multiOwnerPluginContract.read.counters([smartAccount.account.address]);
       setNftBalance(Number(balance));
 
       setTransactionSuccess(true);
