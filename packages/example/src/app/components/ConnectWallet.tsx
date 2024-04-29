@@ -6,7 +6,7 @@ interface ConnectWalletProps {
   isConnecting: boolean;
   isConnected: boolean;
   connect: () => Promise<void>;
-  account : any;
+  smartAccount : any;
 }
 
 function ConnectWallet({
@@ -14,7 +14,7 @@ function ConnectWallet({
   isConnecting,
   isConnected,
   connect,
-  account,
+  smartAccount,
 }: ConnectWalletProps): JSX.Element {
   const getTextButton = () => {
     if (isConnected) {
@@ -24,7 +24,7 @@ function ConnectWallet({
           <a
             href={`${
               process.env.NEXT_PUBLIC_SCAN_URL
-            }address/${account.account.address}`}
+            }address/${smartAccount.smartAccount.address}`}
             target="_blank"
           >
             {"Wallet connected"}

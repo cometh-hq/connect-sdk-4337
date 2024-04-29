@@ -8,7 +8,7 @@ import { useSmartAccount } from "./modules/hooks/useSmartAccount";
 
 export default function App() {
 
-  const { isConnecting, isConnected, connect, connectionError, account } =
+  const { isConnecting, isConnected, connect, connectionError, smartAccount } =
   useSmartAccount();
   const [transactionSuccess, setTransactionSuccess] = useState(false);
 
@@ -32,13 +32,13 @@ export default function App() {
                 isConnecting={isConnecting}
                 connect={connect}
                 connectionError={connectionError}
-                account={account!}
+                smartAccount={smartAccount!}
               />
             </div>
 
             {isConnected && (
               <Transaction
-              account={account}
+              smartAccount={smartAccount}
                 transactionSuccess={transactionSuccess}
                 setTransactionSuccess={setTransactionSuccess}
               />

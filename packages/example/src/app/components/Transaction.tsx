@@ -28,13 +28,13 @@ const multiOwnerPluginContract = getContract({
 
 
 interface TransactionProps {
-  account:any;
+  smartAccount:any;
   transactionSuccess: boolean;
   setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
  function Transaction({
-  account,
+  smartAccount,
   transactionSuccess,
   setTransactionSuccess,
 }: TransactionProps) {
@@ -72,9 +72,9 @@ interface TransactionProps {
   }
 
   useEffect(() => {
-    if (account) {
+    if (smartAccount) {
       (async () => {
-        const balance = await multiOwnerPluginContract.read.counters([account.account.address]);
+        const balance = await multiOwnerPluginContract.read.counters([smartAccount.smartAccount.address]);
         setNftBalance(Number(balance));
       })();
     }
@@ -87,21 +87,21 @@ interface TransactionProps {
 
     setIsTransactionLoading(true);
     try {
-      if (!account) throw new Error("No wallet instance");
+      if (!smartAccount) throw new Error("No wallet instance");
 
       const calldata = encodeFunctionData({
         abi: countContractAbi,
         functionName: "count",
       });
   
-      const txHash =  await account.sendTransaction({
+      const txHash =  await smartAccount.sendTransaction({
         to: COUNTER_CONTRACT_ADDRESS,
         data: calldata,
       });
 
 
       setTransactionSended(txHash);
-      const balance = await multiOwnerPluginContract.read.counters([account.account.address]);
+      const balance = await multiOwnerPluginContract.read.counters([smartAccount.smartAccount.address]);
       setNftBalance(Number(balance));
 
       setTransactionSuccess(true);

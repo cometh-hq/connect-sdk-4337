@@ -3,11 +3,11 @@ import  { createContext, useState } from "react";
 import type {  Dispatch, SetStateAction } from "react";
 
 export const AccountContext = createContext<{
-  account: any | null;
-  setAccount: Dispatch<SetStateAction<any | null>>;
+  smartAccount: any | null;
+  setSmartAccount: Dispatch<SetStateAction<any | null>>;
 }>({
-  account: null,
-  setAccount: () => {},
+  smartAccount: null,
+  setSmartAccount: () => {},
 });
 
 export function WalletProvider({
@@ -15,14 +15,14 @@ export function WalletProvider({
 }: {
   children: React.ReactNode;
 }): JSX.Element {
-  const [account, setAccount] = useState<any | null>(null);
+  const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
 
   return (
     <AccountContext.Provider
     value={{
-      account,
-      setAccount,
+      smartAccount,
+      setSmartAccount,
     }}
   >
     {children}

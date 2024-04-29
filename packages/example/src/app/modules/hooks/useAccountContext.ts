@@ -3,11 +3,11 @@ import { AccountContext } from "../services/context";
 
 export function useAccountContext() {
   const {
-    account,
-    setAccount,
+    smartAccount,
+    setSmartAccount,
   } = useContext(AccountContext);
   return {
-    account,
-    setAccount,
+    smartAccount,
+    setSmartAccount,
   };
 }

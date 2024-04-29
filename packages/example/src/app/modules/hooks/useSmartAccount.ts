@@ -13,7 +13,7 @@ export function useSmartAccount() {
 
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  const [account, setAccount] = useState<any | null>(null);
+  const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
   const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
   const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
@@ -65,7 +65,7 @@ export function useSmartAccount() {
           }
           })
 
-      setAccount(smartAccountClient);
+          setSmartAccount(smartAccountClient);
       setIsConnected(true);
 
     } catch (e) {
@@ -76,7 +76,7 @@ export function useSmartAccount() {
   }
 
   return {
-    account,
+    smartAccount,
     connect,
     isConnected,
     isConnecting,
