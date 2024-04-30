@@ -241,6 +241,7 @@ export type createModularSmartAccountParameters<
     apiKey: string;
     comethSigner?: ComethSigner;
     rpcUrl?: string;
+    baseUrl?: string;
     smartAccountAddress?: Address;
     entryPoint: entryPoint;
     factoryAddress?: Address;
@@ -267,6 +268,7 @@ export async function createModularSmartAccount<
     apiKey,
     comethSigner,
     rpcUrl,
+    baseUrl,
     smartAccountAddress,
     entryPoint: entryPointAddress,
     factoryAddress,
@@ -276,7 +278,7 @@ export async function createModularSmartAccount<
 }: createModularSmartAccountParameters<entryPoint>): Promise<
     ModularSmartAccount<entryPoint, TTransport, TChain>
 > {
-    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
+    const api = new API(apiKey, baseUrl);
     const contractParams = await api.getContractParams(
         WalletImplementation.Modular_Account
     );
@@ -290,6 +292,7 @@ export async function createModularSmartAccount<
     if (!comethSigner) {
         comethSigner = await createSigner({
             apiKey,
+            baseUrl,
             smartAccountAddress,
             ...comethSignerConfig,
         });

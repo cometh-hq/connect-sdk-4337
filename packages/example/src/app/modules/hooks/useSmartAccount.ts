@@ -34,11 +34,14 @@ export function useSmartAccount() {
           ) as Hex;
     
           let smartAccount;
+
+          const baseUrl = "http://127.0.0.1:8000/connect"
     
           if (localStorageAddress) {
             smartAccount = await createModularSmartAccount({
               apiKey,
               rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
+              baseUrl,
               smartAccountAddress: localStorageAddress,
               entryPoint: ENTRYPOINT_ADDRESS_V06,
             });
@@ -46,12 +49,13 @@ export function useSmartAccount() {
             smartAccount = await createModularSmartAccount({
               apiKey,
               rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
+              baseUrl,
               entryPoint: ENTRYPOINT_ADDRESS_V06,
             });
             window.localStorage.setItem("walletAddress", smartAccount.address);
           }
       
-          const paymasterClient = await createComethPaymasterClient({apiKey, bundlerUrl})
+          const paymasterClient = await createComethPaymasterClient({apiKey, bundlerUrl, baseUrl})
     
     
         const smartAccountClient = createSmartAccountClient({

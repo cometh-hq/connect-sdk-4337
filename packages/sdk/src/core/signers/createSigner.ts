@@ -70,12 +70,13 @@ export const isFallbackSigner = (): boolean => {
 export async function createSigner({
     apiKey,
     smartAccountAddress,
+    baseUrl,
     disableEoaFallback = false,
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
 }: CreateSignerParams): Promise<ComethSigner> {
-    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
+    const api = new API(apiKey, baseUrl);
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
     if (webAuthnCompatible && !isFallbackSigner()) {

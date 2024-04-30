@@ -31,4 +31,5 @@ export type SignerConfig = {
 export type CreateSignerParams = {
     apiKey: string;
     smartAccountAddress?: Address;
+    baseUrl?: string;
 } & SignerConfig;
