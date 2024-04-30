@@ -72,7 +72,7 @@ export const createComethPaymasterClient = async <
 }: { apiKey: string; bundlerUrl: string }): Promise<
     ComethPaymasterClient<entryPoint>
 > => {
-    const api = new API(apiKey);
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const chain = await getNetwork(api);
 
     return createPaymasterClient({

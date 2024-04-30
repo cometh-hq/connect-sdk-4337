@@ -276,7 +276,7 @@ export async function createModularSmartAccount<
 }: createModularSmartAccountParameters<entryPoint>): Promise<
     ModularSmartAccount<entryPoint, TTransport, TChain>
 > {
-    const api = new API(apiKey);
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const contractParams = await api.getContractParams(
         WalletImplementation.Modular_Account
     );
@@ -296,7 +296,6 @@ export async function createModularSmartAccount<
     }
 
     factoryAddress = contractParams.walletFactoryAddress;
-    console.log("factoryAddress", factoryAddress);
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
     let ownerAddress: Address;
@@ -424,6 +423,11 @@ export async function createModularSmartAccount<
 
         // Encode a call
         async encodeCallData(_tx) {
+            smartAccountDeployed = await isSmartAccountDeployed(
+                client,
+                smartAccountAddress
+            );
+
             if (!smartAccountDeployed && comethSigner.type === "passkey") {
                 return encodeP256DeploymentCall({
                     _tx,

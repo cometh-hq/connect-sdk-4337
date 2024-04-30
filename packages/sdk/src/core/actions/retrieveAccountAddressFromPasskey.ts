@@ -9,7 +9,7 @@ import { retrieveSmartAccountAddressFromPasskey } from "../signers/passkeys/pass
 export const retrieveAccountAddressFromPasskey = async (
     apiKey: string
 ): Promise<Address> => {
-    const api = new API(apiKey);
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
 
     return await retrieveSmartAccountAddressFromPasskey(api);
 };

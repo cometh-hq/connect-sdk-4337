@@ -21,7 +21,7 @@ import {
 } from "../types";
 
 export const useSignerRequests = (apiKey: string) => {
-    const api = new API(apiKey);
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
 
     const _createNewSigner = async (
         smartAccountAddress: Address,

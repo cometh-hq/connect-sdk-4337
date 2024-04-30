@@ -124,12 +124,7 @@ interface TransactionProps {
           <p className=" text-gray-600">{nftBalance}</p>
         </div>
       </div>
-      {transactionSended  && (
-        <Alert
-          state="information"
-          content="Transaction in progress.. (est. time 10 sec)"
-        />
-      )}
+  
       {transactionSuccess && (
         <Alert
           state="success"

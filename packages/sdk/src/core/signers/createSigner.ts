@@ -75,7 +75,7 @@ export async function createSigner({
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
 }: CreateSignerParams): Promise<ComethSigner> {
-    const api = new API(apiKey);
+    const api = new API(apiKey, "http://127.0.0.1:8000/connect");
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
     if (webAuthnCompatible && !isFallbackSigner()) {

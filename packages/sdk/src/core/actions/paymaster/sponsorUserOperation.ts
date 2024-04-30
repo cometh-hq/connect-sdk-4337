@@ -1,6 +1,6 @@
+import { PAYMASTER_ADDRESS } from "@/constants";
 import type { ComethPaymasterRpcSchema } from "@/core/clients/types";
 import { deepHexlify } from "permissionless";
-import type { BundlerRpcSchema } from "permissionless/_types/types/bundler";
 import type {
     EntryPoint,
     GetEntryPointVersion,
@@ -8,7 +8,6 @@ import type {
 } from "permissionless/types";
 import type { UserOperation } from "permissionless/types/userOperation.js";
 import {
-    http,
     type Account,
     type Address,
     type Chain,
@@ -16,7 +15,6 @@ import {
     type Hex,
     type Transport,
     concat,
-    createClient,
     encodeAbiParameters,
     parseAbiParameters,
 } from "viem";
@@ -48,10 +46,9 @@ export const sponsorUserOperation = async <
 ): Promise<SponsorUserOperationReturnType> => {
     const validAfter = "0x0000000000001234";
     const validUntil = "0x00000000deadbeef";
-    const paymasterAddress = "0x6f010FB33E6dce2789c714b19c385035122e664E";
 
     const dummyPaymasterData = concat([
-        paymasterAddress,
+        PAYMASTER_ADDRESS,
         encodeAbiParameters(parseAbiParameters("uint48, uint48"), [
             +validUntil,
             +validAfter,
@@ -59,7 +56,7 @@ export const sponsorUserOperation = async <
         `0x${"00".repeat(65)}` as `0x${string}`,
     ]);
 
-    const bundlerClient = createClient({
+    /*  const bundlerClient = createClient({
         transport: http(args.bundlerUrl),
         type: "smartAccountClient",
     }) as Client<TTransport, TChain, TAccount, BundlerRpcSchema<entryPoint>>;
@@ -74,15 +71,14 @@ export const sponsorUserOperation = async <
         callGasLimit: Hex;
         verificationGasLimit: Hex;
         preVerificationGas: Hex;
-    };
+    }; */
 
+    // hardcode gas values waiting for fix gas estimation as bundler struggles with p256 verifcation estimate
     const userOperation = {
         ...args.userOperation,
-        callGasLimit: BigInt(gasParameters.callGasLimit),
-        // hardcode verificationGasLimit as bundler struggles with p256 verifcation estimate
-        verificationGasLimit:
-            BigInt(gasParameters.verificationGasLimit) + 500000n,
-        preVerificationGas: BigInt(gasParameters.preVerificationGas) + 10000n,
+        callGasLimit: 200000n,
+        verificationGasLimit: 1600000n,
+        preVerificationGas: 400000n,
         paymasterAndData: dummyPaymasterData,
     };
 

@@ -5,6 +5,7 @@ import {
     encodeAbiParameters,
     encodePacked,
     hashMessage,
+    hexToString,
     keccak256,
     toHex,
 } from "viem";
@@ -13,6 +14,8 @@ import { sign } from "@/core/signers/passkeys/passkeyService.js";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types.js";
 import {
     base64ToBase64Url,
+    encodeUTF8,
+    getChallengeOffset,
     parseHex,
     uint8ArrayToBase64,
 } from "@/core/signers/passkeys/utils.js";
@@ -39,11 +42,15 @@ export const WebauthnMessageSigner = (
     return {
         // authenticatorData, clientData and challenge offset are hardcoded from a value that matches a webauthn signature
         getDummySignature(uoHash: Hex): Hex {
+            const challengePrefix = "226368616c6c656e6765223a";
             const authenticatorData =
                 "0x49960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97630500000000" as Hex;
             const encodedChallenge = toHex(
-                base64ToBase64Url(uint8ArrayToBase64(parseHex(uoHash)))
+                base64ToBase64Url(
+                    uint8ArrayToBase64(parseHex(keccak256(uoHash)))
+                )
             );
+
             const clientDataStart =
                 "0x7b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a22" as Hex;
             const clientDataEnd =
@@ -55,9 +62,15 @@ export const WebauthnMessageSigner = (
                 clientDataEnd,
             ]);
 
+            const challengeOffset = getChallengeOffset(
+                encodeUTF8(hexToString(clientData)),
+                challengePrefix
+            );
+
             const randomR = BigInt(
                 "32418570922385826632603674026792362539561286741521108784221695596970723721722"
             );
+
             const randomS = BigInt(
                 "82780238788852460400382712504839357697933178996887203926987723829670460663887"
             );
@@ -66,7 +79,7 @@ export const WebauthnMessageSigner = (
                 authenticatorData: authenticatorData,
                 clientData: clientData,
                 // precalculated challenge offset
-                challengeOffset: 36n,
+                challengeOffset: BigInt(challengeOffset),
                 rs: [randomR, randomS],
             };
 
