@@ -76,9 +76,9 @@ export const sponsorUserOperation = async <
     // hardcode gas values waiting for fix gas estimation as bundler struggles with p256 verifcation estimate
     const userOperation = {
         ...args.userOperation,
-        callGasLimit: 200000n,
+        callGasLimit: 400000n,
         verificationGasLimit: 1600000n,
-        preVerificationGas: 400000n,
+        preVerificationGas: 1000000n,
         paymasterAndData: dummyPaymasterData,
     };
 
