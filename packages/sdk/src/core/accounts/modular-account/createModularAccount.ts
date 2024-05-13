@@ -80,12 +80,12 @@ const encodeP256DeploymentCall = ({
             ? _tx.map((tx) => ({
                   target: tx.to,
                   data: tx.data,
-                  value: tx.value ?? 0n,
+                  value: tx.value ?? BigInt(0),
               }))
             : {
                   target: _tx.to,
                   data: _tx.data,
-                  value: _tx.value ?? 0n,
+                  value: _tx.value ?? BigInt(0),
               },
     ];
 
@@ -193,7 +193,7 @@ const getAccountInitCode = async ({
 }) => {
     // owners need to be dedupe + ordered in ascending order and not == to zero address
     const owners_ = Array.from(new Set([...owners, signerAddress]))
-        .filter((x) => hexToBigInt(x) !== 0n)
+        .filter((x) => hexToBigInt(x) !== BigInt(0))
         .sort((a, b) => {
             const bigintA = hexToBigInt(a);
             const bigintB = hexToBigInt(b);
@@ -273,7 +273,7 @@ export async function createModularSmartAccount<
     entryPoint: entryPointAddress,
     factoryAddress,
     owners = [],
-    salt = 0n,
+    salt = BigInt(0),
     comethSignerConfig,
 }: createModularSmartAccountParameters<entryPoint>): Promise<
     ModularSmartAccount<entryPoint, TTransport, TChain>
@@ -449,7 +449,7 @@ export async function createModularSmartAccount<
                         _tx.map((tx) => ({
                             target: tx.to,
                             data: tx.data,
-                            value: tx.value ?? 0n,
+                            value: tx.value ?? BigInt(0),
                         })),
                     ],
                 });
@@ -459,7 +459,7 @@ export async function createModularSmartAccount<
             return encodeFunctionData({
                 abi: IStandardExecutorAbi,
                 functionName: "execute",
-                args: [_tx.to, _tx.value ?? 0n, _tx.data],
+                args: [_tx.to, _tx.value ?? BigInt(0), _tx.data],
             });
         },
 

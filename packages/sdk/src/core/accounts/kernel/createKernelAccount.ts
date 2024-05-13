@@ -178,7 +178,7 @@ export async function signerToKernelSmartAccount<
     baseUrl,
     smartAccountAddress,
     entryPoint: entryPointAddress,
-    index = 0n,
+    index = BigInt(0),
     factoryAddress = KERNEL_ADDRESSES.FACTORY_ADDRESS,
     accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_LOGIC,
     validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,

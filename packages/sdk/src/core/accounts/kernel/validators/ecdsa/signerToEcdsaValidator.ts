@@ -91,7 +91,7 @@ export async function signerToEcdsaValidator<
             return viemSigner.address;
         },
         async getNonceKey() {
-            return 0n;
+            return BigInt(0);
         },
         // Sign a user operation
         async signUserOperation(userOperation: UserOperation) {
