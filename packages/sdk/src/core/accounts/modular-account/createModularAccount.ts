@@ -80,12 +80,12 @@ const encodeP256DeploymentCall = ({
             ? _tx.map((tx) => ({
                   target: tx.to,
                   data: tx.data,
-                  value: tx.value ?? BigInt(0),
+                  value: tx.value ?? 0n,
               }))
             : {
                   target: _tx.to,
                   data: _tx.data,
-                  value: _tx.value ?? BigInt(0),
+                  value: _tx.value ?? 0n,
               },
     ];
 
@@ -193,7 +193,7 @@ const getAccountInitCode = async ({
 }) => {
     // owners need to be dedupe + ordered in ascending order and not == to zero address
     const owners_ = Array.from(new Set([...owners, signerAddress]))
-        .filter((x) => hexToBigInt(x) !== BigInt(0))
+        .filter((x) => hexToBigInt(x) !== 0n)
         .sort((a, b) => {
             const bigintA = hexToBigInt(a);
             const bigintB = hexToBigInt(b);
@@ -273,7 +273,7 @@ export async function createModularSmartAccount<
     entryPoint: entryPointAddress,
     factoryAddress,
     owners = [],
-    salt = BigInt(0),
+    salt = 0n,
     comethSignerConfig,
 }: createModularSmartAccountParameters<entryPoint>): Promise<
     ModularSmartAccount<entryPoint, TTransport, TChain>
@@ -299,6 +299,7 @@ export async function createModularSmartAccount<
     }
 
     factoryAddress = contractParams.walletFactoryAddress;
+
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
     let ownerAddress: Address;
@@ -449,7 +450,7 @@ export async function createModularSmartAccount<
                         _tx.map((tx) => ({
                             target: tx.to,
                             data: tx.data,
-                            value: tx.value ?? BigInt(0),
+                            value: tx.value ?? 0n,
                         })),
                     ],
                 });
@@ -459,7 +460,7 @@ export async function createModularSmartAccount<
             return encodeFunctionData({
                 abi: IStandardExecutorAbi,
                 functionName: "execute",
-                args: [_tx.to, _tx.value ?? BigInt(0), _tx.data],
+                args: [_tx.to, _tx.value ?? 0n, _tx.data],
             });
         },
 

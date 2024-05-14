@@ -107,7 +107,7 @@ export async function signerToWebAuthnValidator<
             return concatHex([x, y]);
         },
         async getNonceKey() {
-            return BigInt(0);
+            return 0n;
         },
         // Sign a user operation
         async signUserOperation(userOperation: UserOperation) {
