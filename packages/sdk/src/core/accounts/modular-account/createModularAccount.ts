@@ -75,19 +75,17 @@ const encodeP256DeploymentCall = ({
 }) => {
     const { x, y } = passkey.pubkeyCoordinates;
 
-    const Calls = [
-        Array.isArray(_tx)
-            ? _tx.map((tx) => ({
-                  target: tx.to,
-                  data: tx.data,
-                  value: tx.value ?? 0n,
-              }))
-            : {
-                  target: _tx.to,
-                  data: _tx.data,
-                  value: _tx.value ?? 0n,
-              },
-    ];
+    const Calls = Array.isArray(_tx)
+        ? _tx.map((tx) => ({
+              target: tx.to,
+              data: tx.data,
+              value: tx.value ?? 0n,
+          }))
+        : {
+              target: _tx.to,
+              data: _tx.data,
+              value: _tx.value ?? 0n,
+          };
 
     return encodeFunctionData({
         abi: IP256PluginDeployerAbi,

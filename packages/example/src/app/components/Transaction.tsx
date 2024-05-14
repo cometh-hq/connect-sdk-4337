@@ -94,10 +94,20 @@ interface TransactionProps {
         functionName: "count",
       });
   
-      const txHash =  await smartAccount.sendTransaction({
-        to: COUNTER_CONTRACT_ADDRESS,
-        data: calldata,
-      });
+      const txHash =  await smartAccount.sendTransactions(
+      {
+        transactions: [
+          {
+            to: COUNTER_CONTRACT_ADDRESS,
+            data: calldata,
+          },
+          {
+            to: COUNTER_CONTRACT_ADDRESS,
+            data: calldata,
+          },
+        ],
+      }
+    );
 
 
       setTransactionSended(txHash);

@@ -102,6 +102,12 @@ export const sponsorUserOperation = async <
         paymasterPostOpGasLimit?: never;
         paymasterData?: never;
     };
+
+    if (responseV06.paymaster === "0x")
+        console.debug(
+            "This transaction is not sponsored by a paymaster. Please verify if your sponsored your targeted addresses"
+        );
+
     return {
         paymasterAndData: responseV06.paymasterAndData,
         preVerificationGas: BigInt(responseV06.preVerificationGas),
