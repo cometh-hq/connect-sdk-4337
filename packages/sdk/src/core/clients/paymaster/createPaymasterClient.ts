@@ -81,11 +81,9 @@ export const createComethPaymasterClient = async <
         transport: custom({
             async request({ method, params }) {
                 if (method === "pm_sponsorUserOperation") {
-                    const [userOperation, validUntil, validAfter] = params;
+                    const [userOperation] = params;
                     return await api.validatePaymaster(
                         userOperation,
-                        validUntil,
-                        validAfter
                     );
                 }
 

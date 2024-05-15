@@ -15,8 +15,6 @@ export type ComethPaymasterRpcSchema<entryPoint extends EntryPoint> = [
             userOperation: UserOperationWithBigIntAsHex<
                 GetEntryPointVersion<entryPoint>
             >,
-            validUntil: string,
-            validAfter: string,
             EntryPoint: Address,
         ];
         ReturnType: {

@@ -19,6 +19,7 @@ import {
     zeroAddress,
 } from "viem";
 
+
 export type SponsorUserOperationReturnType = {
     callGasLimit: bigint;
     verificationGasLimit: bigint;
@@ -44,14 +45,12 @@ export const sponsorUserOperation = async <
         bundlerUrl: string;
     }>
 ): Promise<SponsorUserOperationReturnType> => {
-    const validAfter = "0x0000000000001234";
-    const validUntil = "0x00000000deadbeef";
-
+  
     const dummyPaymasterData = concat([
         zeroAddress,
         encodeAbiParameters(parseAbiParameters("uint48, uint48"), [
-            +validUntil,
-            +validAfter,
+            +0x0000000000000000,
+            +0x0000000000000000,
         ]),
         `0x${"00".repeat(65)}` as `0x${string}`,
     ]);
@@ -78,7 +77,7 @@ export const sponsorUserOperation = async <
         ...args.userOperation,
         callGasLimit: 400000n,
         verificationGasLimit: 1600000n,
-        preVerificationGas: 1000000n,
+        preVerificationGas: 1500000n,
         paymasterAndData: dummyPaymasterData,
     };
 
@@ -86,15 +85,12 @@ export const sponsorUserOperation = async <
         method: "pm_sponsorUserOperation",
         params: [
             deepHexlify(userOperation),
-            validUntil,
-            validAfter,
             args.entryPoint,
         ],
     });
 
     const responseV06 = response as {
         paymasterAndData: Hex;
-        signature: Hex;
         preVerificationGas: Hex;
         verificationGasLimit: Hex;
         callGasLimit: Hex;
