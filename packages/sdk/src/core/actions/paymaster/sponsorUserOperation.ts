@@ -77,7 +77,7 @@ export const sponsorUserOperation = async <
         ...args.userOperation,
         callGasLimit: 400000n,
         verificationGasLimit: 1600000n,
-        preVerificationGas: 2000000n,
+        preVerificationGas: 1500000n,
         paymasterAndData: dummyPaymasterData,
     };
 
