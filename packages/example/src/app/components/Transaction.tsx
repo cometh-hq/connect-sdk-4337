@@ -19,7 +19,7 @@ const publicClient = createPublicClient({
   },
 });
 
-const multiOwnerPluginContract = getContract({
+const counterContract = getContract({
   address: COUNTER_CONTRACT_ADDRESS,
   abi: countContractAbi,
   client: publicClient,
@@ -74,7 +74,7 @@ interface TransactionProps {
   useEffect(() => {
     if (smartAccount) {
       (async () => {
-        const balance = await multiOwnerPluginContract.read.counters([smartAccount.account.address]);
+        const balance = await counterContract.read.counters([smartAccount.account.address]);
         setNftBalance(Number(balance));
       })();
     }
@@ -111,7 +111,7 @@ interface TransactionProps {
 
 
       setTransactionSended(txHash);
-      const balance = await multiOwnerPluginContract.read.counters([smartAccount.account.address]);
+      const balance = await counterContract.read.counters([smartAccount.account.address]);
       setNftBalance(Number(balance));
 
       setTransactionSuccess(true);

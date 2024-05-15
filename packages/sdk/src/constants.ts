@@ -21,9 +21,6 @@ const API_URL = "https://api.connect.cometh.io";
 const ENTRYPOINT_ADDRESS_V06 = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";
 const ENTRYPOINT_ADDRESS_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
 
-//COMETH_CONTRACTS
-const PAYMASTER_ADDRESS = "0x2Acd631FB3F4D10AabF3c9217d53caAe2c2E65e0";
-
 type RpcData = { rpcUrl: string; networkName: string; currency: string };
 
 const networks = {
@@ -138,7 +135,6 @@ export {
     API_URL,
     ENTRYPOINT_ADDRESS_V06,
     ENTRYPOINT_ADDRESS_V07,
-    PAYMASTER_ADDRESS,
     networks,
     supportedChains,
 };

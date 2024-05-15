@@ -1,4 +1,3 @@
-import { PAYMASTER_ADDRESS } from "@/constants";
 import type { ComethPaymasterRpcSchema } from "@/core/clients/types";
 import { deepHexlify } from "permissionless";
 import type {
@@ -17,6 +16,7 @@ import {
     concat,
     encodeAbiParameters,
     parseAbiParameters,
+    zeroAddress,
 } from "viem";
 
 export type SponsorUserOperationReturnType = {
@@ -48,7 +48,7 @@ export const sponsorUserOperation = async <
     const validUntil = "0x00000000deadbeef";
 
     const dummyPaymasterData = concat([
-        PAYMASTER_ADDRESS,
+        zeroAddress,
         encodeAbiParameters(parseAbiParameters("uint48, uint48"), [
             +validUntil,
             +validAfter,
@@ -94,6 +94,7 @@ export const sponsorUserOperation = async <
 
     const responseV06 = response as {
         paymasterAndData: Hex;
+        signature: Hex;
         preVerificationGas: Hex;
         verificationGasLimit: Hex;
         callGasLimit: Hex;
@@ -102,11 +103,6 @@ export const sponsorUserOperation = async <
         paymasterPostOpGasLimit?: never;
         paymasterData?: never;
     };
-
-    if (responseV06.paymaster === "0x")
-        console.debug(
-            "This transaction is not sponsored by a paymaster. Please verify if your sponsored your targeted addresses"
-        );
 
     return {
         paymasterAndData: responseV06.paymasterAndData,

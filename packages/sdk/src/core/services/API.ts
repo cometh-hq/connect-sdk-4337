@@ -175,16 +175,7 @@ export class API {
 
         const response = await this.api.post(
             "/verifying-paymaster/validate",
-            body,
-            {
-                headers: {
-                    apiKey: process.env.NEXT_PUBLIC_COMETH_API_KEY || "",
-                    "x-consumer-access": "public",
-                    "x-consumer-groups": "connect",
-                    "x-consumer-username": "65bcb5da4dfe88b6cf60af74",
-                    "x-project-chain-id": "421614",
-                },
-            }
+            body
         );
         return response.data.result;
     }
