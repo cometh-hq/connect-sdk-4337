@@ -82,9 +82,7 @@ export const createComethPaymasterClient = async <
             async request({ method, params }) {
                 if (method === "pm_sponsorUserOperation") {
                     const [userOperation] = params;
-                    return await api.validatePaymaster(
-                        userOperation,
-                    );
+                    return await api.validatePaymaster(userOperation);
                 }
 
                 throw new Error(`Method ${method} not found`);

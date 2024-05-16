@@ -5,6 +5,7 @@ import { API_URL } from "../../constants";
 import type {
     DeviceData,
     NewSignerRequest,
+    UserOperation,
     WalletImplementation,
     WalletInfos,
     WebAuthnSigner,
@@ -98,7 +99,6 @@ export class API {
     /**
      * WebAuthn Section
      */
-
     async getPasskeySignerByPublicKeyId(
         publicKeyId: Hex
     ): Promise<WebAuthnSigner> {
@@ -139,7 +139,6 @@ export class API {
     /**
      * New signer request
      */
-
     async getNewSignerRequests(
         smartAccountAddress: Address
     ): Promise<NewSignerRequest[] | null> {
@@ -153,11 +152,7 @@ export class API {
     /**
      * Paymaster request
      */
-
-    async validatePaymaster(
-        // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-        userOperation: any,
-    ): Promise<{
+    async validatePaymaster(userOperation: UserOperation): Promise<{
         paymasterAndData: Hex;
         hash: Hex;
         signature: Hex;
