@@ -81,11 +81,13 @@ const encodeP256DeploymentCall = ({
               data: tx.data,
               value: tx.value ?? 0n,
           }))
-        : {
-              target: _tx.to,
-              data: _tx.data,
-              value: _tx.value ?? 0n,
-          };
+        : [
+              {
+                  target: _tx.to,
+                  data: _tx.data,
+                  value: _tx.value ?? 0n,
+              },
+          ];
 
     return encodeFunctionData({
         abi: IP256PluginDeployerAbi,
