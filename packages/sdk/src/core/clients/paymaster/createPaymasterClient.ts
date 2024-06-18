@@ -1,4 +1,4 @@
-import { packPaymasterData } from "@/core/accounts/safe/utils";
+import { packPaymasterData } from "@/core/accounts/safe/services/utils";
 import type { UserOperation } from "permissionless";
 import type {
     EntryPoint,
@@ -87,25 +87,29 @@ export const createComethPaymasterClient = async <
                     const userOp = {
                         callData: userOperation.callData,
                         nonce: userOperation.nonce,
-                        initCode: `${userOperation.factory}${userOperation.factoryData?.slice(
+                        initCode: `${
+                            userOperation.factory
+                        }${userOperation.factoryData?.slice(
                             2
                         )}` as `0x${string}`,
                         paymasterAndData: packPaymasterData({
                             paymaster: userOperation.paymaster as Hex,
                             paymasterVerificationGasLimit:
-                            userOperation.paymasterVerificationGasLimit as bigint,
+                                userOperation.paymasterVerificationGasLimit as bigint,
                             paymasterPostOpGasLimit:
-                            userOperation.paymasterPostOpGasLimit as bigint,
+                                userOperation.paymasterPostOpGasLimit as bigint,
                             paymasterData: userOperation.paymasterData as Hex,
                         }),
                         preVerificationGas: userOperation.preVerificationGas,
                         sender: userOperation.sender,
-                        verificationGasLimit: userOperation.verificationGasLimit,
+                        verificationGasLimit:
+                            userOperation.verificationGasLimit,
                         callGasLimit: userOperation.callGasLimit,
-                        maxPriorityFeePerGas: userOperation.maxPriorityFeePerGas,
+                        maxPriorityFeePerGas:
+                            userOperation.maxPriorityFeePerGas,
                         maxFeePerGas: userOperation.maxFeePerGas,
                         signature: userOperation.signature,
-                    }
+                    };
                     return await api.validatePaymaster(userOp);
                 }
 

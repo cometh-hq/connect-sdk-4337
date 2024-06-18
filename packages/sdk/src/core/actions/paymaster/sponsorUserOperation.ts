@@ -18,20 +18,20 @@ import {
     concat,
     createClient,
     encodeAbiParameters,
-    parseAbiParameters,
-    zeroAddress,
-    slice,
     hexToBigInt,
+    parseAbiParameters,
+    slice,
+    zeroAddress,
 } from "viem";
 
 export type SponsorUserOperationReturnType = {
-    callGasLimit: bigint
-    verificationGasLimit: bigint
-    preVerificationGas: bigint
-    paymaster: Address
-    paymasterVerificationGasLimit: bigint
-    paymasterPostOpGasLimit: bigint
-    paymasterData: Hex
+    callGasLimit: bigint;
+    verificationGasLimit: bigint;
+    preVerificationGas: bigint;
+    paymaster: Address;
+    paymasterVerificationGasLimit: bigint;
+    paymasterPostOpGasLimit: bigint;
+    paymasterData: Hex;
 };
 
 export const sponsorUserOperation = async <
@@ -88,21 +88,21 @@ export const sponsorUserOperation = async <
         paymasterAndData: dummyPaymasterData,
     };
 
-    const response = await client.request({
+    const response = (await client.request({
         method: "pm_sponsorUserOperation",
         params: [deepHexlify(userOperation), args.entryPoint],
-    }) as {
-    paymasterAndData: Hex;
-    preVerificationGas: Hex;
-    verificationGasLimit: Hex;
-    callGasLimit: Hex;
-    paymaster?: never;
-    paymasterVerificationGasLimit?: never;
-    paymasterPostOpGasLimit?: never;
-    paymasterData?: never;
-};
+    })) as {
+        paymasterAndData: Hex;
+        preVerificationGas: Hex;
+        verificationGasLimit: Hex;
+        callGasLimit: Hex;
+        paymaster?: never;
+        paymasterVerificationGasLimit?: never;
+        paymasterPostOpGasLimit?: never;
+        paymasterData?: never;
+    };
 
-    console.log({response})
+    console.log({ response });
 
     /* const responseV06 = response as {
         paymasterAndData: Hex;
@@ -115,19 +115,21 @@ export const sponsorUserOperation = async <
         paymasterData?: never;
     }; */
 
-    const paymasterFields =
-     {
-          paymaster: "0x6f010FB33E6dce2789c714b19c385035122e664E" as Address,
-          paymasterVerificationGasLimit: hexToBigInt(slice(response.paymasterAndData, 20, 36)),
-          paymasterPostOpGasLimit: hexToBigInt(slice(response.paymasterAndData, 36, 52)),
-          paymasterData: slice(response.paymasterAndData, 52),
-        }
-
+    const paymasterFields = {
+        paymaster: "0x6f010FB33E6dce2789c714b19c385035122e664E" as Address,
+        paymasterVerificationGasLimit: hexToBigInt(
+            slice(response.paymasterAndData, 20, 36)
+        ),
+        paymasterPostOpGasLimit: hexToBigInt(
+            slice(response.paymasterAndData, 36, 52)
+        ),
+        paymasterData: slice(response.paymasterAndData, 52),
+    };
 
     return {
         callGasLimit: BigInt(response.callGasLimit),
         verificationGasLimit: BigInt(response.verificationGasLimit),
         preVerificationGas: BigInt(response.preVerificationGas),
-       ...paymasterFields
+        ...paymasterFields,
     };
 };

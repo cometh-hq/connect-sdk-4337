@@ -1,11 +1,5 @@
-import { type Address, type Hex, toBytes, toHex } from "viem";
-
-export interface SafeSignature {
-    signer: string;
-    data: string;
-    // a flag to indicate if the signature is a contract signature and the data has to be appended to the dynamic part of signature bytes
-    dynamic?: true;
-}
+import { type Address, type Hex, concat, toBytes, toHex } from "viem";
+import type { SafeSignature } from "../types";
 
 export const DUMMY_AUTHENTICATOR_DATA = new Uint8Array(37);
 DUMMY_AUTHENTICATOR_DATA.fill(0xfe);
@@ -163,4 +157,19 @@ export const packPaymasterData = ({
 
     // Convert the Uint8Array back to a hex string
     return toHex(paymasterAndData);
+};
+
+export const packInitCode = ({
+    factory,
+    factoryData,
+}: {
+    factory?: Address;
+    factoryData?: Hex;
+}) => {
+    if (!factoryData || !factory) return "0x";
+
+    const factoryBytes = toBytes(factory);
+    const factoryDataBytes = toBytes(factoryData);
+
+    return toHex(concat([factoryBytes, factoryDataBytes]));
 };

@@ -97,10 +97,13 @@ export async function createSigner({
                 };
             }
         } else {
+            console.log("yo");
             passkey = await getPasskeySigner({
                 api,
                 smartAccountAddress,
             });
+
+            console.log({ passkey });
         }
 
         return {
