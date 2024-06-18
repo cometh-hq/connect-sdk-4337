@@ -1,13 +1,15 @@
-import { ENTRYPOINT_ADDRESS_V06 } from "@/constants";
+import { packPaymasterData } from "@/core/accounts/safe/utils";
 import type { UserOperation } from "permissionless";
 import type {
     EntryPoint,
     GetEntryPointVersion,
 } from "permissionless/types/entrypoint";
+import { ENTRYPOINT_ADDRESS_V07 } from "permissionless/utils";
 import {
     type Account,
     type Chain,
     type Client,
+    type Hex,
     type PublicClientConfig,
     type Transport,
     createClient,
@@ -82,13 +84,35 @@ export const createComethPaymasterClient = async <
             async request({ method, params }) {
                 if (method === "pm_sponsorUserOperation") {
                     const [userOperation] = params;
-                    return await api.validatePaymaster(userOperation);
+                    const userOp = {
+                        callData: userOperation.callData,
+                        nonce: userOperation.nonce,
+                        initCode: `${userOperation.factory}${userOperation.factoryData?.slice(
+                            2
+                        )}` as `0x${string}`,
+                        paymasterAndData: packPaymasterData({
+                            paymaster: userOperation.paymaster as Hex,
+                            paymasterVerificationGasLimit:
+                            userOperation.paymasterVerificationGasLimit as bigint,
+                            paymasterPostOpGasLimit:
+                            userOperation.paymasterPostOpGasLimit as bigint,
+                            paymasterData: userOperation.paymasterData as Hex,
+                        }),
+                        preVerificationGas: userOperation.preVerificationGas,
+                        sender: userOperation.sender,
+                        verificationGasLimit: userOperation.verificationGasLimit,
+                        callGasLimit: userOperation.callGasLimit,
+                        maxPriorityFeePerGas: userOperation.maxPriorityFeePerGas,
+                        maxFeePerGas: userOperation.maxFeePerGas,
+                        signature: userOperation.signature,
+                    }
+                    return await api.validatePaymaster(userOp);
                 }
 
                 throw new Error(`Method ${method} not found`);
             },
         }),
-        entryPoint: ENTRYPOINT_ADDRESS_V06,
+        entryPoint: ENTRYPOINT_ADDRESS_V07,
         bundlerUrl,
     });
 };

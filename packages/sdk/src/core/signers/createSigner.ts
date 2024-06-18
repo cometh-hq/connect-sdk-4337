@@ -84,7 +84,6 @@ export async function createSigner({
         if (!smartAccountAddress) {
             passkey = await createPasskeySigner({
                 webAuthnOptions,
-                api,
                 passKeyName,
             });
 
@@ -98,7 +97,10 @@ export async function createSigner({
                 };
             }
         } else {
-            passkey = await getPasskeySigner({ api, smartAccountAddress });
+            passkey = await getPasskeySigner({
+                api,
+                smartAccountAddress,
+            });
         }
 
         return {

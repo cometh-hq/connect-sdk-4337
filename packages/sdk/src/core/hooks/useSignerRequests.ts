@@ -36,7 +36,7 @@ export const useSignerRequests = (apiKey: string, baseUrl?: string) => {
         if (webAuthnCompatible && !isFallbackSigner()) {
             const passkeyWithCoordinates = await createPasskeySigner({
                 webAuthnOptions,
-                api,
+                //api,
                 passKeyName,
             });
 
