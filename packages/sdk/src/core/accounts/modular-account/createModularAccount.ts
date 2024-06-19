@@ -296,7 +296,7 @@ export async function createModularSmartAccount<
         });
     }
 
-    factoryAddress = contractParams.walletFactoryAddress;
+    factoryAddress = contractParams.walletFactoryAddress as Address;
 
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
@@ -435,7 +435,7 @@ export async function createModularSmartAccount<
                     _tx,
                     passkey: comethSigner.passkey,
                     p256FactoryAddress:
-                        contractParams.P256FactoryContractAddress,
+                        contractParams.P256FactoryContractAddress as Address,
                 });
             }
 

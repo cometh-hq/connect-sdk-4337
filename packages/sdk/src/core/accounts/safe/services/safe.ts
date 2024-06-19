@@ -8,13 +8,12 @@ import {
     hexToBigInt,
     size,
     zeroAddress,
-    zeroHash,
 } from "viem";
 import { MultiSendContractABI } from "../abi/Multisend";
 import { EnableModuleAbi } from "../abi/enableModule";
 import { SafeAbi } from "../abi/safe";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
-import type { MultiSendTransaction, WebAuthnSharedSignerData } from "../types";
+import type { MultiSendTransaction } from "../types";
 
 export const encodeMultiSendTransactions = (
     transactions: MultiSendTransaction[]
@@ -31,14 +30,16 @@ export const encodeMultiSendTransactions = (
 
 export const getSetUpData = ({
     modules,
-    signer,
+    comethSigner,
     setUpContractAddress,
-    SafeWebAuthnSharedSignerContractAddress,
+    safeWebAuthnSharedSignerContractAddress,
+    safeP256VerifierAddress,
 }: {
-    modules: Address[];
-    signer: WebAuthnSharedSignerData;
+    modules: Hex[];
+    comethSigner: ComethSigner;
     setUpContractAddress: Address;
-    SafeWebAuthnSharedSignerContractAddress: Address;
+    safeWebAuthnSharedSignerContractAddress: Address;
+    safeP256VerifierAddress: Address;
 }) => {
     const enableModuleCallData = encodeFunctionData({
         abi: EnableModuleAbi,
@@ -46,36 +47,40 @@ export const getSetUpData = ({
         args: [modules],
     });
 
-    const sharedSignerConfigCallData = encodeFunctionData({
-        abi: SafeWebAuthnSharedSignerAbi,
-        functionName: "configure",
-        args: [
-            {
-                x: hexToBigInt(signer.x),
-                y: hexToBigInt(signer.y),
-                verifiers: hexToBigInt(signer.verifiers),
-            },
-        ],
-    });
+    if (comethSigner.type === "passkey") {
+        const sharedSignerConfigCallData = encodeFunctionData({
+            abi: SafeWebAuthnSharedSignerAbi,
+            functionName: "configure",
+            args: [
+                {
+                    x: hexToBigInt(comethSigner.passkey.pubkeyCoordinates.x),
+                    y: hexToBigInt(comethSigner.passkey.pubkeyCoordinates.y),
+                    verifiers: hexToBigInt(safeP256VerifierAddress),
+                },
+            ],
+        });
 
-    return encodeFunctionData({
-        abi: MultiSendContractABI,
-        functionName: "multiSend",
-        args: [
-            encodeMultiSendTransactions([
-                {
-                    op: 1 as const,
-                    to: setUpContractAddress,
-                    data: enableModuleCallData,
-                },
-                {
-                    op: 1 as const,
-                    to: SafeWebAuthnSharedSignerContractAddress,
-                    data: sharedSignerConfigCallData,
-                },
-            ]),
-        ],
-    });
+        return encodeFunctionData({
+            abi: MultiSendContractABI,
+            functionName: "multiSend",
+            args: [
+                encodeMultiSendTransactions([
+                    {
+                        op: 1 as const,
+                        to: setUpContractAddress,
+                        data: enableModuleCallData,
+                    },
+                    {
+                        op: 1 as const,
+                        to: safeWebAuthnSharedSignerContractAddress,
+                        data: sharedSignerConfigCallData,
+                    },
+                ]),
+            ],
+        });
+    }
+
+    return enableModuleCallData;
 };
 
 export const getSafeInitializer = (
@@ -86,43 +91,46 @@ export const getSafeInitializer = (
     setUpContractAddress: Address,
     safeWebAuthnSharedSignerContractAddress: Address,
     p256Verifier: Address,
-    setupTo: Address
+    multisendAddress: Address
 ): Hex => {
-    let setUpData: Hex;
-    let owners: Address[];
+    const setUpData = getSetUpData({
+        modules,
+        comethSigner,
+        setUpContractAddress: setUpContractAddress,
+        safeWebAuthnSharedSignerContractAddress:
+            safeWebAuthnSharedSignerContractAddress,
+        safeP256VerifierAddress: p256Verifier,
+    });
 
     if (comethSigner.type === "localWallet") {
-        owners = [comethSigner.eoaFallback.signer.address];
-        setupTo = zeroAddress;
-        setUpData = zeroHash;
+        return encodeFunctionData({
+            abi: SafeAbi,
+            functionName: "setup",
+            args: [
+                [comethSigner.eoaFallback.signer.address],
+                threshold,
+                setUpContractAddress,
+                setUpData,
+                fallbackHandler,
+                zeroAddress,
+                0,
+                zeroAddress,
+            ],
+        });
     } else {
-        owners = [safeWebAuthnSharedSignerContractAddress];
-
-        setUpData = getSetUpData({
-            modules,
-            signer: {
-                x: comethSigner.passkey.pubkeyCoordinates.x,
-                y: comethSigner.passkey.pubkeyCoordinates.y,
-                verifiers: p256Verifier,
-            },
-            setUpContractAddress: setUpContractAddress,
-            SafeWebAuthnSharedSignerContractAddress:
-                safeWebAuthnSharedSignerContractAddress,
+        return encodeFunctionData({
+            abi: SafeAbi,
+            functionName: "setup",
+            args: [
+                [safeWebAuthnSharedSignerContractAddress],
+                threshold,
+                multisendAddress,
+                setUpData,
+                fallbackHandler,
+                zeroAddress,
+                0,
+                zeroAddress,
+            ],
         });
     }
-
-    return encodeFunctionData({
-        abi: SafeAbi,
-        functionName: "setup",
-        args: [
-            owners,
-            threshold,
-            setupTo,
-            setUpData,
-            fallbackHandler,
-            zeroAddress,
-            0,
-            zeroAddress,
-        ],
-    });
 };

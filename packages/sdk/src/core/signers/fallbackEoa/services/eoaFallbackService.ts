@@ -120,12 +120,12 @@ const decryptEoaFallback = async (
 const formatStorageValue = (
     encryptedPrivateKey: string,
     iv: string,
-    smartAccountAddress: Address
+    signerAddress: Address
 ): string => {
     return JSON.stringify({
         encryptedPrivateKey,
         iv,
-        smartAccountAddress,
+        signerAddress,
     });
 };
 

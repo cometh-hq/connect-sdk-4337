@@ -33,8 +33,16 @@ export class API {
     async getContractParams(
         walletImplementation: WalletImplementation
     ): Promise<{
-        walletFactoryAddress: Address;
-        P256FactoryContractAddress: Address;
+        safeWebAuthnSharedSignerAddress?: string;
+        safe4337ModuleAddress?: string;
+        safeModuleSetUpAddress?: string;
+        safeP256VerifierAddress?: string;
+        webAuthnSignerFactoryAddress?: string;
+        safeProxyFactoryAddress?: string;
+        safeSingletonAddress?: string;
+        multisendAddress?: string;
+        walletFactoryAddress?: string;
+        P256FactoryContractAddress?: string;
     }> {
         const response = await this.api.get(
             `/4337/wallets/${walletImplementation}/contracts-params`

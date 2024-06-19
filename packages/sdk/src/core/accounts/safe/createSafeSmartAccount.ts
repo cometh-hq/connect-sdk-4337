@@ -28,7 +28,7 @@ import { getClient } from "../utils";
 import { createSigner, saveSignerInStorage } from "@/core/signers/createSigner";
 import type { ComethSigner, SignerConfig } from "@/core/signers/types";
 
-import { ENTRYPOINT_ADDRESS_V07, SAFE_ADDRESSES } from "@/constants";
+import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
 import {
     connectToExistingWallet,
     createNewWalletInDb,
@@ -220,11 +220,15 @@ export async function createSafeSmartAccount<
 > {
     const api = new API(apiKey, baseUrl);
 
-    console.log({ api });
-    /*   const contractParams = await api.getContractParams(
-        WalletImplementation.Safe
-    ); */
-    const contractParams = SAFE_ADDRESSES;
+    const {
+        safeWebAuthnSharedSignerAddress,
+        safe4337ModuleAddress,
+        safeModuleSetUpAddress,
+        safeP256VerifierAddress,
+        safeProxyFactoryAddress,
+        safeSingletonAddress,
+        multisendAddress,
+    } = await api.getContractParams(WalletImplementation.Safe);
 
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
@@ -241,28 +245,25 @@ export async function createSafeSmartAccount<
         });
     }
 
-    console.log({ comethSigner });
-
-    factoryAddress = contractParams.SAFE_PROXY_FACTORY_ADDRESS;
+    factoryAddress = safeProxyFactoryAddress as Address;
 
     if (!factoryAddress) throw new Error("factoryAddress not found");
 
     const initializer = getSafeInitializer(
         comethSigner,
         1,
-        contractParams.SAFE_4337_MODULE_ADDRESS,
-        [contractParams.SAFE_4337_MODULE_ADDRESS],
-        contractParams.SAFE_MODULE_SETUP_ADDRESS,
-        contractParams.SAFE_WEBAUTHN_SHARED_SIGNER_ADDRESS,
-        contractParams.P256_VERIFIER_ADDRESS,
-        contractParams.MULTISEND_ADDRESS
+        safe4337ModuleAddress as Address,
+        [safe4337ModuleAddress as Address],
+        safeModuleSetUpAddress as Address,
+        safeWebAuthnSharedSignerAddress as Address,
+        safeP256VerifierAddress as Address,
+        multisendAddress as Address
     );
 
-    // Helper to generate the init code for the smart account
     const generateInitCode = () =>
         getAccountInitCode({
             initializer,
-            singletonAddress: contractParams.SINGLETON_ADDRESS,
+            singletonAddress: safeSingletonAddress as Address,
             safeFactoryAddress: factoryAddress,
         });
 
@@ -271,7 +272,7 @@ export async function createSafeSmartAccount<
         smartAccountAddress,
         signer: comethSigner,
         api,
-        singletonAddress: contractParams.SINGLETON_ADDRESS,
+        singletonAddress: safeSingletonAddress as Address,
         safeProxyFactoryAddress: factoryAddress,
     });
 
@@ -297,7 +298,6 @@ export async function createSafeSmartAccount<
         entryPoint: entryPointAddress,
         source: "safeSmartAccount",
 
-        // Get the nonce of the smart account
         async getNonce() {
             return getAccountNonce(client, {
                 sender: smartAccountAddress,
@@ -332,67 +332,59 @@ export async function createSafeSmartAccount<
                 maxFeePerGas: userOp.maxFeePerGas,
             };
 
-            if (comethSigner.type === "localWallet") {
-                const fallbackSigner = comethSigner.eoaFallback.signer;
+            let signatureBytes: Hex;
 
-                const signatureBytes = buildSignatureBytes([
+            if (comethSigner.type === "localWallet") {
+                signatureBytes = buildSignatureBytes([
                     {
                         signer: comethSigner.eoaFallback.signer.address,
-                        data: await fallbackSigner.signTypedData({
-                            domain: {
-                                chainId: client.chain?.id,
-                                verifyingContract:
-                                    contractParams.SAFE_4337_MODULE_ADDRESS,
-                            },
-                            types: EIP712_SAFE_OPERATION_TYPE,
-                            primaryType: "SafeOp",
-                            message: safeOp,
-                        }),
+                        data: await comethSigner.eoaFallback.signer.signTypedData(
+                            {
+                                domain: {
+                                    chainId: client.chain?.id,
+                                    verifyingContract:
+                                        safe4337ModuleAddress as Address,
+                                },
+                                types: EIP712_SAFE_OPERATION_TYPE,
+                                primaryType: "SafeOp",
+                                message: safeOp,
+                            }
+                        ),
                     },
                 ]) as Hex;
-
-                return encodePacked(
-                    ["uint48", "uint48", "bytes"],
-                    [0, 0, signatureBytes]
-                );
             } else {
                 const hash = hashTypedData({
                     domain: {
                         chainId: client.chain?.id,
-                        verifyingContract:
-                            contractParams.SAFE_4337_MODULE_ADDRESS,
+                        verifyingContract: safe4337ModuleAddress as Address,
                     },
                     types: EIP712_SAFE_OPERATION_TYPE,
                     primaryType: "SafeOp",
                     message: safeOp,
                 });
 
-                console.log({ hash });
-
                 const publicKeyCredential: PublicKeyCredentialDescriptor = {
                     id: parseHex(comethSigner.passkey.id),
                     type: "public-key",
                 };
 
-                console.log({ publicKeyCredential });
-
                 const passkeySignature = await sign(hash, [
                     publicKeyCredential,
                 ]);
 
-                const signatureBytes = buildSignatureBytes([
+                signatureBytes = buildSignatureBytes([
                     {
-                        signer: contractParams.SAFE_WEBAUTHN_SHARED_SIGNER_ADDRESS,
+                        signer: safeWebAuthnSharedSignerAddress as Address,
                         data: passkeySignature.signature,
                         dynamic: true,
                     },
                 ]) as Hex;
-
-                return encodePacked(
-                    ["uint48", "uint48", "bytes"],
-                    [0, 0, signatureBytes]
-                );
             }
+
+            return encodePacked(
+                ["uint48", "uint48", "bytes"],
+                [0, 0, signatureBytes]
+            );
         },
 
         // Encode the init code
@@ -464,7 +456,7 @@ export async function createSafeSmartAccount<
                     abi: safe4337ModuleAbi,
                     functionName: "executeUserOpWithErrorString",
                     args: [
-                        contractParams.MULTISEND_ADDRESS,
+                        multisendAddress as Address,
                         BigInt(0),
                         userOpCalldata,
                         1,
@@ -490,7 +482,7 @@ export async function createSafeSmartAccount<
                         0,
                         buildSignatureBytes([
                             {
-                                signer: contractParams.SAFE_WEBAUTHN_SHARED_SIGNER_ADDRESS,
+                                signer: safeWebAuthnSharedSignerAddress as Address,
                                 data: getSignatureBytes({
                                     authenticatorData: DUMMY_AUTHENTICATOR_DATA,
                                     clientDataFields: DUMMY_CLIENT_DATA_FIELDS,

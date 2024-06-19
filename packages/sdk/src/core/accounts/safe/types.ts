@@ -27,7 +27,14 @@ export type MultiSendTransaction = {
     op: 0 | 1;
     to: Address;
     value?: any;
-    data: Hex;
+    data: `0x${string}`;
+};
+
+export type InternalTx = {
+    to: Address;
+    data: `0x${string}`;
+    value: bigint;
+    operation: 0 | 1;
 };
 
 export type WebAuthnSharedSignerData = {

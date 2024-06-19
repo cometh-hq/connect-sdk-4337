@@ -1,4 +1,3 @@
-//import * as utils from "./utils";
 import { SAFE_ADDRESSES } from "@/constants";
 import {
     type Address,
@@ -12,14 +11,11 @@ import {
 import {
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
-    //NoPasskeySignerFoundInDeviceError,
     RetrieveWalletFromPasskeyError,
     SignerNotOwnerError,
-    //SignerNotOwnerError,
 } from "../../../errors";
 import type { API } from "../../services/API";
 import {
-    //challengePrefix,
     extractClientDataFields,
     extractSignature,
     hexArrayStr,
