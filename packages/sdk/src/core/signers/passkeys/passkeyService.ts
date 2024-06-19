@@ -257,12 +257,12 @@ const getPasskeySigner = async ({
     );
 
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
-        id: signingWebAuthnSigner.publicKeyId,
+        id: signingWebAuthnSigner.publicKeyId as Hex,
         pubkeyCoordinates: {
             x: signingWebAuthnSigner.publicKeyX as Hex,
             y: signingWebAuthnSigner.publicKeyY as Hex,
         },
-        signerAddress: signingWebAuthnSigner.signerAddress,
+        signerAddress: signingWebAuthnSigner.signerAddress as Address,
     };
 
     setPasskeyInStorage(
@@ -299,14 +299,14 @@ const retrieveSmartAccountAddressFromPasskey = async (
     } = signingPasskeySigner;
 
     setPasskeyInStorage(
-        smartAccountAddress,
+        smartAccountAddress as Address,
         publicKeyId,
-        publicKeyX,
-        publicKeyY,
-        signerAddress
+        publicKeyX as Hex,
+        publicKeyY as Hex,
+        signerAddress as Address
     );
 
-    return smartAccountAddress;
+    return smartAccountAddress as Address;
 };
 
 export {

@@ -3,8 +3,8 @@
 
 import { useState } from "react";
 import { http, type Hex } from "viem";
-import { ENTRYPOINT_ADDRESS_V07, createComethPaymasterClient, createModularSmartAccount, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
-import { arbitrumSepolia, polygon } from "viem/chains";
+import { ENTRYPOINT_ADDRESS_V07, createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
+import { arbitrumSepolia } from "viem/chains";
 
 
 export function useSmartAccount() {
@@ -55,9 +55,15 @@ export function useSmartAccount() {
             window.localStorage.setItem("walletAddress", smartAccount.address);
           }
 
-          console.log(smartAccount)
       
-          const paymasterClient = await createComethPaymasterClient({apiKey, bundlerUrl, baseUrl})
+          const paymasterClient = await createComethPaymasterClient(
+            {
+            transport: http(bundlerUrl),
+            chain: arbitrumSepolia,
+          entryPoint: ENTRYPOINT_ADDRESS_V07,
+        }
+        )
+
 
        
     
@@ -68,10 +74,12 @@ export function useSmartAccount() {
             chain: arbitrumSepolia,
             bundlerTransport: http(bundlerUrl),
             middleware: {
-              //sponsorUserOperation: paymasterClient.sponsorUserOperation,
+              sponsorUserOperation: paymasterClient.sponsorUserOperation,
               gasPrice: paymasterClient.gasPrice,
           }
-          })
+          }) 
+          
+          console.log({smartAccountClient})
 
           setSmartAccount(smartAccountClient);
       setIsConnected(true);

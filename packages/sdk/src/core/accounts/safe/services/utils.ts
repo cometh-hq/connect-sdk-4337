@@ -1,4 +1,4 @@
-import { type Address, type Hex, concat, toBytes, toHex } from "viem";
+import { type Address, type Hex, concat, pad, toBytes, toHex } from "viem";
 import type { SafeSignature } from "../types";
 
 export const DUMMY_AUTHENTICATOR_DATA = new Uint8Array(37);
@@ -114,7 +114,7 @@ export const buildSignatureBytes = (signatures: SafeSignature[]): string => {
     return signatureBytes + dynamicBytes;
 };
 
-export const packPaymasterData = ({
+export function packPaymasterData({
     paymaster,
     paymasterVerificationGasLimit,
     paymasterPostOpGasLimit,
@@ -124,40 +124,14 @@ export const packPaymasterData = ({
     paymasterVerificationGasLimit: bigint;
     paymasterPostOpGasLimit: bigint;
     paymasterData: Hex;
-}) => {
-    if (!paymasterVerificationGasLimit || !paymasterPostOpGasLimit) return "0x";
-
-    // Convert address and data from hex string to Uint8Array
-    const paymasterBytes = toBytes(paymaster);
-    const paymasterVerificationGasLimitBytes = toBytes(
-        toHex(paymasterVerificationGasLimit)
-    );
-    const paymasterPostOpGasLimitBytes = toBytes(
-        toHex(paymasterPostOpGasLimit)
-    );
-    const paymasterDataBytes = toBytes(paymasterData);
-
-    // Concatenate the byte arrays into a single Uint8Array
-    const combinedLength =
-        paymasterBytes.length +
-        paymasterVerificationGasLimitBytes.length +
-        paymasterPostOpGasLimitBytes.length +
-        paymasterDataBytes.length;
-
-    const paymasterAndData = new Uint8Array(combinedLength);
-
-    let offset = 0;
-    paymasterAndData.set(paymasterBytes, offset);
-    offset += paymasterBytes.length;
-    paymasterAndData.set(paymasterVerificationGasLimitBytes, offset);
-    offset += paymasterVerificationGasLimitBytes.length;
-    paymasterAndData.set(paymasterPostOpGasLimitBytes, offset);
-    offset += paymasterPostOpGasLimitBytes.length;
-    paymasterAndData.set(paymasterDataBytes, offset);
-
-    // Convert the Uint8Array back to a hex string
-    return toHex(paymasterAndData);
-};
+}): any {
+    return concat([
+        paymaster,
+        pad(toHex(paymasterVerificationGasLimit), { size: 16 }),
+        pad(toHex(paymasterPostOpGasLimit), { size: 16 }),
+        paymasterData,
+    ]);
+}
 
 export const packInitCode = ({
     factory,

@@ -31,12 +31,13 @@ export type WebAuthnSigner = {
     projectId: string;
     userId: string;
     chainId: string;
-    walletAddress: Address;
-    publicKeyId: Hex;
-    publicKeyX: Hex;
-    publicKeyY: Hex;
-    signerAddress: Address;
+    walletAddress: string;
+    publicKeyId: string;
+    publicKeyX: string;
+    publicKeyY: string;
+    signerAddress: string;
     deviceData: DeviceData;
+    creationDate?: Date;
 };
 
 export type WalletInfos = {

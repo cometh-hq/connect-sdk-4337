@@ -1,4 +1,8 @@
 import {
+    type SafeOwnerPluginActions,
+    safeOwnerPluginActions,
+} from "@/core/actions/accounts/safe/safeOwnerActions";
+import {
     type SmartAccountActions,
     type SmartAccountClient,
     type SmartAccountClientConfig,
@@ -9,10 +13,6 @@ import type { SmartAccount } from "permissionless/accounts";
 import type { EntryPoint } from "permissionless/types/entrypoint";
 import { type Chain, type Client, type Transport, createClient } from "viem";
 import type { Prettify } from "viem/chains";
-import {
-    type MultiOwnerPluginActions,
-    multiOwnerPluginActions,
-} from "../actions/plugin/multiOwnerPlugin";
 
 export type ComethAccountClientActions<
     TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
@@ -21,7 +21,7 @@ export type ComethAccountClientActions<
         ? U
         : never,
 > = SmartAccountActions<TEntryPoint, TChain, TSmartAccount> &
-    MultiOwnerPluginActions;
+    SafeOwnerPluginActions;
 
 type ComethSmartAccountClient<
     TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
@@ -72,7 +72,7 @@ export function createSmartAccountClient<
         })
     ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
 
-    return client.extend(multiOwnerPluginActions) as ComethSmartAccountClient<
+    return client.extend(safeOwnerPluginActions) as ComethSmartAccountClient<
         TSmartAccount,
         TTransport,
         TChain,

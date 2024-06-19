@@ -5,7 +5,6 @@ import { API_URL } from "../../constants";
 import type {
     DeviceData,
     NewSignerRequest,
-    UserOperation,
     WalletImplementation,
     WalletInfos,
     WebAuthnSigner,
@@ -144,6 +143,15 @@ export class API {
         return response.data.signerAddress;
     }
 
+    async getWebAuthnSignersByWalletAddress(
+        walletAddress: string
+    ): Promise<WebAuthnSigner[]> {
+        const response = await this.api.get(
+            `/webauthn-signer/${walletAddress}`
+        );
+        return response?.data?.webAuthnSigners;
+    }
+
     /**
      * New signer request
      */
@@ -155,27 +163,5 @@ export class API {
         );
 
         return response.data.signerRequests;
-    }
-
-    /**
-     * Paymaster request
-     */
-    async validatePaymaster(userOperation: UserOperation): Promise<{
-        paymasterAndData: Hex;
-        hash: Hex;
-        signature: Hex;
-        preVerificationGas: Hex;
-        verificationGasLimit: Hex;
-        callGasLimit: Hex;
-    }> {
-        const body = {
-            userOperation,
-        };
-
-        const response = await this.api.post(
-            "/verifying-paymaster/validate",
-            body
-        );
-        return response.data.result;
     }
 }

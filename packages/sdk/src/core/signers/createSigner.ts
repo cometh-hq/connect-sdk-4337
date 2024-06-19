@@ -77,6 +77,7 @@ export async function createSigner({
     passKeyName,
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
+
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
     if (webAuthnCompatible && !isFallbackSigner()) {
@@ -97,13 +98,10 @@ export async function createSigner({
                 };
             }
         } else {
-            console.log("yo");
             passkey = await getPasskeySigner({
                 api,
                 smartAccountAddress,
             });
-
-            console.log({ passkey });
         }
 
         return {

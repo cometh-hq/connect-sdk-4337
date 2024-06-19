@@ -61,12 +61,12 @@ export type SafeSmartAccount<
 
 /**
  * Authenticate the wallet to the cometh api
- * @param client
- * @param entryPointAddress
- * @param initCodeProvider
+ * @param initializer
  * @param smartAccountAddress
  * @param signer
  * @param api
+ * @param singletonAddress
+ * @param safeProxyFactoryAddress
  */
 const authenticateToComethApi = async ({
     initializer,
@@ -109,8 +109,9 @@ const authenticateToComethApi = async ({
 
 /**
  * Get the account initialization code for a modular smart account
- * @param modules
- * @param signer
+ * @param initializer
+ * @param singletonAddress
+ * @param safeFactoryAddress
  * @param saltNonce
  */
 const getAccountInitCode = async ({
@@ -139,9 +140,10 @@ const getAccountInitCode = async ({
 
 /**
  * Predict Account address from the entrypoint
- * @param client
- * @param entryPointAddress
- * @param initCodeProvider
+ * @param singletonAddress
+ * @param safeProxyFactoryAddress
+ * @param saltNonce
+ * @param initializer
  */
 export const getAccountAddress = async ({
     singletonAddress,
@@ -193,14 +195,13 @@ export type createSafeSmartAccountParameters<
 }>;
 /**
  * Build a safe smart account from a cometh signer
- * @param comethSigner
  * @param apiKey
+ * @param comethSigner
  * @param rpcUrl
  * @param smartAccountAddress
  * @param entryPoint
  * @param factoryAddress
- * @param owners
- * @param salt
+ * @param comethSignerConfig
  */
 export async function createSafeSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,

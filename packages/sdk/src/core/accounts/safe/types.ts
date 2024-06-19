@@ -22,6 +22,8 @@ export const EIP712_SAFE_OPERATION_TYPE = {
     ],
 };
 
+export const SAFE_SENTINEL_OWNERS = "0x1";
+
 export type MultiSendTransaction = {
     // 0 for CALL, 1 for DELEGATECALL
     op: 0 | 1;
