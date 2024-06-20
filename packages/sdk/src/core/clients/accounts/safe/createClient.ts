@@ -2,17 +2,17 @@ import {
     type SafeOwnerPluginActions,
     safeOwnerPluginActions,
 } from "@/core/actions/accounts/safe/safeOwnerActions";
-import {
-    type SmartAccountActions,
-    type SmartAccountClient,
-    type SmartAccountClientConfig,
-    smartAccountActions,
+import type {
+    SmartAccountActions,
+    SmartAccountClient,
+    SmartAccountClientConfig,
 } from "permissionless";
 import type { BundlerRpcSchema } from "permissionless/_types/types/bundler";
 import type { SmartAccount } from "permissionless/accounts";
 import type { EntryPoint } from "permissionless/types/entrypoint";
 import { type Chain, type Client, type Transport, createClient } from "viem";
 import type { Prettify } from "viem/chains";
+import { comethAccountClientActions } from "../../decorators/cometh";
 
 export type ComethAccountClientActions<
     TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
@@ -67,7 +67,7 @@ export function createSmartAccountClient<
         transport: bundlerTransport,
         type: "smartAccountClient",
     }).extend(
-        smartAccountActions({
+        comethAccountClientActions({
             middleware: parameters.middleware,
         })
     ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;

@@ -53,20 +53,9 @@ export enum NewSignerRequestType {
 }
 
 export type Signer = {
-    smartAccountAddress: Address;
     signerAddress: Address;
     deviceData: DeviceData;
     publicKeyId?: Hex;
     publicKeyX?: Hex;
     publicKeyY?: Hex;
-};
-
-export type NewSignerRequestBody = Signer & {
-    type: NewSignerRequestType;
-};
-
-export type NewSignerRequest = NewSignerRequestBody & {
-    projectId: string;
-    userId: string;
-    chainId: string;
 };

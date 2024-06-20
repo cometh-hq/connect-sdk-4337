@@ -20,17 +20,6 @@ export type SafeOwnerPluginActions = {
     addOwner: (args: { ownerToAdd: Address }) => Promise<Hash>;
     removeOwner: (args: { ownerToRemove: Address }) => Promise<Hash>;
     getOwners: (args?: { rpcUrl: string }) => Promise<readonly Address[]>;
-    /*   getEnrichedOwners: (args: {
-        apiKey: string;
-        baseUrl?: string;
-        rpcUrl?: string;
-    }) => Promise<
-        {
-            address: `0x${string}`;
-            deviceData?: DeviceData;
-            creationDate?: Date;
-        }[]
-    >; */
 };
 
 export const safeOwnerPluginActions: <

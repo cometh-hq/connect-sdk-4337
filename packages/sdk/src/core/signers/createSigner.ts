@@ -16,6 +16,7 @@ import {
 import { API } from "../services/API";
 import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
 
+import { getDeviceData } from "../services/deviceService";
 import type { PasskeyLocalStorageFormat } from "./passkeys/types";
 import {
     DEFAULT_WEBAUTHN_OPTIONS,
@@ -23,7 +24,8 @@ import {
 } from "./passkeys/utils";
 import type { ComethSigner, CreateSignerParams } from "./types";
 
-export const saveSignerInStorage = async (
+export const saveSigner = async (
+    api: API,
     signer: ComethSigner,
     smartAccountAddress: Address
 ) => {
@@ -41,6 +43,16 @@ export const saveSignerInStorage = async (
             signer.passkey.pubkeyCoordinates.y,
             signer.passkey.signerAddress
         );
+
+        await api.createWebAuthnSigner({
+            walletAddress: smartAccountAddress,
+            publicKeyId: signer.passkey.id,
+            publicKeyX: signer.passkey.pubkeyCoordinates.x,
+            publicKeyY: signer.passkey.pubkeyCoordinates.y,
+            deviceData: getDeviceData(),
+            signerAddress: signer.passkey.signerAddress,
+            isSharedWebAuthnSigner: true,
+        });
     }
 };
 
@@ -85,6 +97,7 @@ export async function createSigner({
         let passkey: PasskeyLocalStorageFormat;
         if (!smartAccountAddress) {
             passkey = await createPasskeySigner({
+                api,
                 webAuthnOptions,
                 passKeyName,
                 safeWebAuthnSharedSignerAddress,

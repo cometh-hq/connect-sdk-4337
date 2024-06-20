@@ -2,7 +2,7 @@ import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
-import type { NewSignerRequest, WebAuthnSigner } from "../types";
+import type { DeviceData, WebAuthnSigner } from "../types";
 
 export class API {
     private readonly api: AxiosInstance;
@@ -28,12 +28,10 @@ export class API {
         safe4337ModuleAddress?: string;
         safeModuleSetUpAddress?: string;
         safeP256VerifierAddress?: string;
-        webAuthnSignerFactoryAddress?: string;
+        safeWebAuthnSignerFactoryAddress?: string;
         safeProxyFactoryAddress?: string;
         safeSingletonAddress?: string;
         multisendAddress?: string;
-        walletFactoryAddress?: string;
-        P256FactoryContractAddress?: string;
     }> {
         return {
             safeWebAuthnSharedSignerAddress:
@@ -43,7 +41,7 @@ export class API {
                 "0x2dd68b007B46fBe91B9A7c3EDa5A7a1063cB5b47",
             safeP256VerifierAddress:
                 "0x445a0683e494ea0c5AF3E83c5159fBE47Cf9e765",
-            webAuthnSignerFactoryAddress:
+            safeWebAuthnSignerFactoryAddress:
                 "0x05234efAd657358b56Fbe05e38800179261F429C",
             safeProxyFactoryAddress:
                 "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
@@ -55,6 +53,36 @@ export class API {
     /**
      * WebAuthn Section
      */
+    async createWebAuthnSigner({
+        walletAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        deviceData,
+        signerAddress,
+        isSharedWebAuthnSigner,
+    }: {
+        walletAddress: Hex;
+        publicKeyId: Hex;
+        publicKeyX: Hex;
+        publicKeyY: Hex;
+        deviceData: DeviceData;
+        signerAddress: Address;
+        isSharedWebAuthnSigner: boolean;
+    }): Promise<void> {
+        const body = {
+            walletAddress,
+            publicKeyId,
+            publicKeyX,
+            publicKeyY,
+            deviceData,
+            signerAddress,
+            isSharedWebAuthnSigner,
+        };
+
+        await this.api.post("/webauthn-signer/create", body);
+    }
+
     async getPasskeySignerByPublicKeyId(
         publicKeyId: Hex
     ): Promise<WebAuthnSigner> {
@@ -76,13 +104,16 @@ export class API {
     async predictWebAuthnSignerAddress({
         publicKeyX,
         publicKeyY,
+        verifier,
     }: {
         publicKeyX: Hex;
         publicKeyY: Hex;
+        verifier: Hex;
     }): Promise<Hex> {
         const body = {
             publicKeyX,
             publicKeyY,
+            verifier,
         };
 
         const response = await this.api.post(
@@ -99,18 +130,5 @@ export class API {
             `/webauthn-signer/${walletAddress}`
         );
         return response?.data?.webAuthnSigners;
-    }
-
-    /**
-     * New signer request
-     */
-    async getNewSignerRequests(
-        smartAccountAddress: Address
-    ): Promise<NewSignerRequest[] | null> {
-        const response = await this.api.get(
-            `/new-signer-request/${smartAccountAddress}`
-        );
-
-        return response.data.signerRequests;
     }
 }

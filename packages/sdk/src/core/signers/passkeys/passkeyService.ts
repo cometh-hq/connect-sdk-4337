@@ -31,13 +31,17 @@ import type {
 } from "./types";
 
 const createPasskeySigner = async ({
+    api,
     webAuthnOptions,
     passKeyName,
     safeWebAuthnSharedSignerAddress,
+    safeP256VerifierAddress,
 }: {
+    api: API;
     webAuthnOptions: webAuthnOptions;
     passKeyName?: string;
-    safeWebAuthnSharedSignerAddress: Address;
+    safeWebAuthnSharedSignerAddress?: Address;
+    safeP256VerifierAddress?: Hex;
 }): Promise<PasskeyLocalStorageFormat> => {
     try {
         const name = passKeyName || "Cometh Connect";
@@ -108,10 +112,15 @@ const createPasskeySigner = async ({
             "base64"
         ).toString("hex")}` as Hex;
 
-        /*    const signerAddress = await api.predictWebAuthnSignerAddress({
-            publicKeyX: x,
-            publicKeyY: y,
-        }); */
+        const signerAddress =
+            safeWebAuthnSharedSignerAddress ??
+            (await api.predictWebAuthnSignerAddress({
+                publicKeyX: x,
+                publicKeyY: y,
+                verifier: safeP256VerifierAddress as Hex,
+            }));
+
+        console.log({ signerAddress });
 
         // Create a PasskeyCredentialWithPubkeyCoordinates object
         const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
@@ -121,7 +130,7 @@ const createPasskeySigner = async ({
                 y,
             },
             publicKeyAlgorithm,
-            signerAddress: safeWebAuthnSharedSignerAddress,
+            signerAddress,
         };
 
         return passkeyWithCoordinates;

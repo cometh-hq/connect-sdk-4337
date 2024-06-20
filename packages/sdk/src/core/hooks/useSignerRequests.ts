@@ -1,6 +1,7 @@
 import { NoFallbackSignerError } from "@/errors";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+
 import type { SafeContractConfig } from "../accounts/safe/types";
 import { API } from "../services/API";
 import { getDeviceData } from "../services/deviceService";
@@ -15,42 +16,36 @@ import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "../signers/passkeys/utils";
-import {
-    type NewSignerRequest,
-    type NewSignerRequestBody,
-    NewSignerRequestType,
-} from "../types";
+import type { Signer } from "../types";
 
-export const useSignerRequests = async (apiKey: string, baseUrl?: string) => {
+export const useAddDevice = async (apiKey: string, baseUrl?: string) => {
     const api = new API(apiKey, baseUrl);
 
-    const { safeWebAuthnSharedSignerAddress } =
+    const { safeP256VerifierAddress } =
         (await api.getContractParams()) as SafeContractConfig;
 
     const _createNewSigner = async (
-        smartAccountAddress: Address,
         passKeyName?: string,
         webAuthnOptions: webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS
     ): Promise<{
-        addNewSignerRequest: NewSignerRequestBody;
+        signer: Signer;
         localPrivateKey?: string;
     }> => {
         const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
         if (webAuthnCompatible && !isFallbackSigner()) {
             const passkeyWithCoordinates = await createPasskeySigner({
+                api,
                 webAuthnOptions,
                 passKeyName,
-                safeWebAuthnSharedSignerAddress,
+                safeP256VerifierAddress,
             });
 
             if (passkeyWithCoordinates.publicKeyAlgorithm === -7) {
                 return {
-                    addNewSignerRequest: {
-                        smartAccountAddress,
+                    signer: {
                         signerAddress: passkeyWithCoordinates.signerAddress,
                         deviceData: getDeviceData(),
-                        type: NewSignerRequestType.WEBAUTHN,
                         publicKeyId: passkeyWithCoordinates.id,
                         publicKeyX: passkeyWithCoordinates.pubkeyCoordinates.x,
                         publicKeyY: passkeyWithCoordinates.pubkeyCoordinates.y,
@@ -63,17 +58,15 @@ export const useSignerRequests = async (apiKey: string, baseUrl?: string) => {
         const signer = privateKeyToAccount(privateKey);
 
         return {
-            addNewSignerRequest: {
-                smartAccountAddress,
+            signer: {
                 signerAddress: signer.address,
                 deviceData: getDeviceData(),
-                type: NewSignerRequestType.FALLBACK_WALLET,
             },
             localPrivateKey: privateKey,
         };
     };
 
-    const initNewSignerRequest = async ({
+    const createNewSigner = async ({
         smartAccountAddress,
         passKeyName,
         encryptionSalt,
@@ -81,15 +74,12 @@ export const useSignerRequests = async (apiKey: string, baseUrl?: string) => {
         smartAccountAddress: Address;
         passKeyName?: string;
         encryptionSalt?: string;
-    }): Promise<NewSignerRequestBody> => {
-        const { addNewSignerRequest, localPrivateKey } = await _createNewSigner(
-            smartAccountAddress,
-            passKeyName
-        );
+    }): Promise<Signer> => {
+        const { signer, localPrivateKey } = await _createNewSigner(passKeyName);
 
-        if (addNewSignerRequest.type === NewSignerRequestType.WEBAUTHN) {
+        if (signer.publicKeyId) {
             const { publicKeyId, publicKeyX, publicKeyY, signerAddress } =
-                addNewSignerRequest;
+                signer;
 
             if (!(publicKeyId && publicKeyX && publicKeyY && signerAddress))
                 throw new Error("Invalid signer data");
@@ -110,15 +100,8 @@ export const useSignerRequests = async (apiKey: string, baseUrl?: string) => {
                 encryptionSalt
             );
         }
-
-        return addNewSignerRequest;
+        return signer;
     };
 
-    const getNewSignerRequests = async (
-        smartAccountAddress: Address
-    ): Promise<NewSignerRequest[] | null> => {
-        return await api.getNewSignerRequests(smartAccountAddress);
-    };
-
-    return { initNewSignerRequest, getNewSignerRequests };
+    return { createNewSigner };
 };

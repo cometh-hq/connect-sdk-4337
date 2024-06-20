@@ -30,6 +30,7 @@ export type SafeContractConfig = {
     safeProxyFactoryAddress: Address;
     safeSingletonAddress: Address;
     multisendAddress: Address;
+    safeWebAuthnSignerFactoryAddress: Address;
 };
 
 export const SAFE_SENTINEL_OWNERS = "0x1";

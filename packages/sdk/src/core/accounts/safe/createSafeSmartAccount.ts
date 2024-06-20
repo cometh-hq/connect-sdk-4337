@@ -25,7 +25,7 @@ import type { Prettify } from "viem/types/utils";
 import { API } from "../../services/API";
 import { getClient } from "../utils";
 
-import { createSigner, saveSignerInStorage } from "@/core/signers/createSigner";
+import { createSigner, saveSigner } from "@/core/signers/createSigner";
 import type { SignerConfig } from "@/core/signers/types";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
@@ -232,7 +232,7 @@ export async function createSafeSmartAccount<
             initializer,
         });
 
-        await saveSignerInStorage(comethSigner, smartAccountAddress);
+        await saveSigner(api, comethSigner, smartAccountAddress);
     }
 
     if (!smartAccountAddress) throw new Error("Account address not found");
