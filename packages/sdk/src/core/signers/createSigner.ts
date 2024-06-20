@@ -75,6 +75,7 @@ export async function createSigner({
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
+    safeWebAuthnSharedSignerAddress,
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
 
@@ -86,6 +87,7 @@ export async function createSigner({
             passkey = await createPasskeySigner({
                 webAuthnOptions,
                 passKeyName,
+                safeWebAuthnSharedSignerAddress,
             });
 
             if (passkey.publicKeyAlgorithm !== -7) {

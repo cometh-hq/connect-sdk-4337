@@ -26,16 +26,12 @@ import { API } from "../../services/API";
 import { getClient } from "../utils";
 
 import { createSigner, saveSignerInStorage } from "@/core/signers/createSigner";
-import type { ComethSigner, SignerConfig } from "@/core/signers/types";
+import type { SignerConfig } from "@/core/signers/types";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
-import {
-    connectToExistingWallet,
-    createNewWalletInDb,
-} from "@/core/services/comethService";
+
 import { sign } from "@/core/signers/passkeys/passkeyService";
 import { parseHex } from "@/core/signers/passkeys/utils";
-import { WalletImplementation } from "@/core/types";
 import { MultiSendContractABI } from "./abi/Multisend";
 import { safe4337ModuleAbi } from "./abi/safe4337ModuleAbi";
 import { SafeProxyContractFactoryABI } from "./abi/safeProxyFactory";
@@ -46,12 +42,17 @@ import {
 import {
     DUMMY_AUTHENTICATOR_DATA,
     DUMMY_CLIENT_DATA_FIELDS,
+    ECDSA_DUMMY_SIGNATURE,
     buildSignatureBytes,
     getSignatureBytes,
     packInitCode,
     packPaymasterData,
 } from "./services/utils";
-import { EIP712_SAFE_OPERATION_TYPE, SafeProxyBytecode } from "./types";
+import {
+    EIP712_SAFE_OPERATION_TYPE,
+    type SafeContractConfig,
+    SafeProxyBytecode,
+} from "./types";
 
 export type SafeSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
@@ -68,44 +69,6 @@ export type SafeSmartAccount<
  * @param singletonAddress
  * @param safeProxyFactoryAddress
  */
-const authenticateToComethApi = async ({
-    initializer,
-    smartAccountAddress,
-    signer,
-    api,
-    singletonAddress,
-    safeProxyFactoryAddress,
-}: {
-    initializer: Hex;
-    smartAccountAddress?: Address;
-    signer: ComethSigner;
-    api: API;
-    singletonAddress: Address;
-    safeProxyFactoryAddress: Address;
-}): Promise<Address> => {
-    if (smartAccountAddress) {
-        await connectToExistingWallet({
-            api,
-            smartAccountAddress,
-        });
-    } else {
-        smartAccountAddress = await getAccountAddress({
-            singletonAddress,
-            safeProxyFactoryAddress,
-            saltNonce: zeroHash,
-            initializer,
-        });
-
-        await createNewWalletInDb({
-            api,
-            smartAccountAddress,
-            signer,
-            walletImplementation: WalletImplementation.Safe,
-        });
-        await saveSignerInStorage(signer, smartAccountAddress);
-    }
-    return smartAccountAddress;
-};
 
 /**
  * Get the account initialization code for a modular smart account
@@ -183,15 +146,12 @@ export type createSafeSmartAccountParameters<
     entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
 > = Prettify<{
     apiKey: string;
-    comethSigner?: ComethSigner;
     rpcUrl?: string;
     baseUrl?: string;
     smartAccountAddress?: Address;
     entryPoint: entryPoint;
-    factoryAddress?: Address;
-    owners?: Address[];
-    salt?: bigint;
     comethSignerConfig?: SignerConfig;
+    safeContractConfig?: SafeContractConfig;
 }>;
 /**
  * Build a safe smart account from a cometh signer
@@ -209,13 +169,12 @@ export async function createSafeSmartAccount<
     TChain extends Chain | undefined = Chain | undefined,
 >({
     apiKey,
-    comethSigner,
     rpcUrl,
     baseUrl,
     smartAccountAddress,
     entryPoint: entryPointAddress,
-    factoryAddress,
     comethSignerConfig,
+    safeContractConfig,
 }: createSafeSmartAccountParameters<entryPoint>): Promise<
     SafeSmartAccount<entryPoint, TTransport, TChain>
 > {
@@ -229,7 +188,9 @@ export async function createSafeSmartAccount<
         safeProxyFactoryAddress,
         safeSingletonAddress,
         multisendAddress,
-    } = await api.getContractParams(WalletImplementation.Safe);
+    } =
+        safeContractConfig ??
+        ((await api.getContractParams()) as SafeContractConfig);
 
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
@@ -237,45 +198,42 @@ export async function createSafeSmartAccount<
         undefined
     >;
 
-    if (!comethSigner) {
-        comethSigner = await createSigner({
-            apiKey,
-            baseUrl,
-            smartAccountAddress,
-            ...comethSignerConfig,
-        });
-    }
-
-    factoryAddress = safeProxyFactoryAddress as Address;
-
-    if (!factoryAddress) throw new Error("factoryAddress not found");
+    const comethSigner = await createSigner({
+        apiKey,
+        baseUrl,
+        smartAccountAddress,
+        safeWebAuthnSharedSignerAddress,
+        ...comethSignerConfig,
+    });
 
     const initializer = getSafeInitializer(
         comethSigner,
         1,
-        safe4337ModuleAddress as Address,
-        [safe4337ModuleAddress as Address],
-        safeModuleSetUpAddress as Address,
-        safeWebAuthnSharedSignerAddress as Address,
-        safeP256VerifierAddress as Address,
-        multisendAddress as Address
+        safe4337ModuleAddress,
+        [safe4337ModuleAddress],
+        safeModuleSetUpAddress,
+        safeWebAuthnSharedSignerAddress,
+        safeP256VerifierAddress,
+        multisendAddress
     );
 
     const generateInitCode = () =>
         getAccountInitCode({
             initializer,
-            singletonAddress: safeSingletonAddress as Address,
-            safeFactoryAddress: factoryAddress,
+            singletonAddress: safeSingletonAddress,
+            safeFactoryAddress: safeProxyFactoryAddress,
         });
 
-    smartAccountAddress = await authenticateToComethApi({
-        initializer,
-        smartAccountAddress,
-        signer: comethSigner,
-        api,
-        singletonAddress: safeSingletonAddress as Address,
-        safeProxyFactoryAddress: factoryAddress,
-    });
+    if (!smartAccountAddress) {
+        smartAccountAddress = await getAccountAddress({
+            singletonAddress: safeSingletonAddress,
+            safeProxyFactoryAddress,
+            saltNonce: zeroHash,
+            initializer,
+        });
+
+        await saveSignerInStorage(comethSigner, smartAccountAddress);
+    }
 
     if (!smartAccountAddress) throw new Error("Account address not found");
 
@@ -307,84 +265,80 @@ export async function createSafeSmartAccount<
         },
 
         async signUserOperation(userOp) {
-            const safeOp = {
-                callData: userOp.callData,
-                nonce: userOp.nonce,
-                initCode: packInitCode({
-                    factory: userOp.factory,
-                    factoryData: userOp.factoryData,
-                }),
-                paymasterAndData: packPaymasterData({
-                    paymaster: userOp.paymaster as Hex,
-                    paymasterVerificationGasLimit:
-                        userOp.paymasterVerificationGasLimit as bigint,
-                    paymasterPostOpGasLimit:
-                        userOp.paymasterPostOpGasLimit as bigint,
-                    paymasterData: userOp.paymasterData as Hex,
-                }),
-                preVerificationGas: userOp.preVerificationGas,
-                entryPoint: ENTRYPOINT_ADDRESS_V07,
-                validAfter: 0,
-                validUntil: 0,
-                safe: userOp.sender,
-                verificationGasLimit: userOp.verificationGasLimit,
-                callGasLimit: userOp.callGasLimit,
-                maxPriorityFeePerGas: userOp.maxPriorityFeePerGas,
-                maxFeePerGas: userOp.maxFeePerGas,
+            const payload = {
+                domain: {
+                    chainId: client.chain?.id,
+                    verifyingContract: safe4337ModuleAddress,
+                },
+                types: EIP712_SAFE_OPERATION_TYPE,
+                primaryType: "SafeOp" as const,
+                message: {
+                    callData: userOp.callData,
+                    nonce: userOp.nonce,
+                    initCode: packInitCode({
+                        factory: userOp.factory,
+                        factoryData: userOp.factoryData,
+                    }),
+                    paymasterAndData: packPaymasterData({
+                        paymaster: userOp.paymaster as Hex,
+                        paymasterVerificationGasLimit:
+                            userOp.paymasterVerificationGasLimit as bigint,
+                        paymasterPostOpGasLimit:
+                            userOp.paymasterPostOpGasLimit as bigint,
+                        paymasterData: userOp.paymasterData as Hex,
+                    }),
+                    preVerificationGas: userOp.preVerificationGas,
+                    entryPoint: ENTRYPOINT_ADDRESS_V07,
+                    validAfter: 0,
+                    validUntil: 0,
+                    safe: userOp.sender,
+                    verificationGasLimit: userOp.verificationGasLimit,
+                    callGasLimit: userOp.callGasLimit,
+                    maxPriorityFeePerGas: userOp.maxPriorityFeePerGas,
+                    maxFeePerGas: userOp.maxFeePerGas,
+                },
             };
 
-            let signatureBytes: Hex;
-
             if (comethSigner.type === "localWallet") {
-                signatureBytes = buildSignatureBytes([
-                    {
-                        signer: comethSigner.eoaFallback.signer.address,
-                        data: await comethSigner.eoaFallback.signer.signTypedData(
+                return encodePacked(
+                    ["uint48", "uint48", "bytes"],
+                    [
+                        0,
+                        0,
+                        buildSignatureBytes([
                             {
-                                domain: {
-                                    chainId: client.chain?.id,
-                                    verifyingContract:
-                                        safe4337ModuleAddress as Address,
-                                },
-                                types: EIP712_SAFE_OPERATION_TYPE,
-                                primaryType: "SafeOp",
-                                message: safeOp,
-                            }
-                        ),
-                    },
-                ]) as Hex;
-            } else {
-                const hash = hashTypedData({
-                    domain: {
-                        chainId: client.chain?.id,
-                        verifyingContract: safe4337ModuleAddress as Address,
-                    },
-                    types: EIP712_SAFE_OPERATION_TYPE,
-                    primaryType: "SafeOp",
-                    message: safeOp,
-                });
-
-                const publicKeyCredential: PublicKeyCredentialDescriptor = {
-                    id: parseHex(comethSigner.passkey.id),
-                    type: "public-key",
-                };
-
-                const passkeySignature = await sign(hash, [
-                    publicKeyCredential,
-                ]);
-
-                signatureBytes = buildSignatureBytes([
-                    {
-                        signer: safeWebAuthnSharedSignerAddress as Address,
-                        data: passkeySignature.signature,
-                        dynamic: true,
-                    },
-                ]) as Hex;
+                                signer: comethSigner.eoaFallback.signer.address,
+                                data:
+                                    await comethSigner.eoaFallback.signer.signTypedData(
+                                        payload
+                                    ),
+                            },
+                        ]) as Hex,
+                    ]
+                );
             }
+            const hash = hashTypedData(payload);
+
+            const publicKeyCredential: PublicKeyCredentialDescriptor = {
+                id: parseHex(comethSigner.passkey.id),
+                type: "public-key",
+            };
+
+            const passkeySignature = await sign(hash, [publicKeyCredential]);
 
             return encodePacked(
                 ["uint48", "uint48", "bytes"],
-                [0, 0, signatureBytes]
+                [
+                    0,
+                    0,
+                    buildSignatureBytes([
+                        {
+                            signer: safeWebAuthnSharedSignerAddress,
+                            data: passkeySignature.signature,
+                            dynamic: true,
+                        },
+                    ]) as Hex,
+                ]
             );
         },
 
@@ -412,7 +366,7 @@ export async function createSafeSmartAccount<
 
             if (smartAccountDeployed) return undefined;
 
-            return factoryAddress;
+            return safeProxyFactoryAddress;
         },
 
         async getFactoryData() {
@@ -427,7 +381,7 @@ export async function createSafeSmartAccount<
 
             const initCode = await generateInitCode();
 
-            return `0x${initCode.slice(factoryAddress.length)}`;
+            return `0x${initCode.slice(safeProxyFactoryAddress.length)}`;
         },
 
         // Encode the deploy call data
@@ -456,46 +410,41 @@ export async function createSafeSmartAccount<
                 return encodeFunctionData({
                     abi: safe4337ModuleAbi,
                     functionName: "executeUserOpWithErrorString",
-                    args: [
-                        multisendAddress as Address,
-                        BigInt(0),
-                        userOpCalldata,
-                        1,
-                    ],
-                });
-            } else {
-                return encodeFunctionData({
-                    abi: safe4337ModuleAbi,
-                    functionName: "executeUserOpWithErrorString",
-                    args: [_tx.to, _tx.value, _tx.data, 0],
+                    args: [multisendAddress, BigInt(0), userOpCalldata, 1],
                 });
             }
+
+            return encodeFunctionData({
+                abi: safe4337ModuleAbi,
+                functionName: "executeUserOpWithErrorString",
+                args: [_tx.to, _tx.value, _tx.data, 0],
+            });
         },
 
         async getDummySignature() {
             if (comethSigner.type === "localWallet") {
-                return "0x000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
-            } else {
-                return encodePacked(
-                    ["uint48", "uint48", "bytes"],
-                    [
-                        0,
-                        0,
-                        buildSignatureBytes([
-                            {
-                                signer: safeWebAuthnSharedSignerAddress as Address,
-                                data: getSignatureBytes({
-                                    authenticatorData: DUMMY_AUTHENTICATOR_DATA,
-                                    clientDataFields: DUMMY_CLIENT_DATA_FIELDS,
-                                    r: BigInt(`0x${"ec".repeat(32)}`),
-                                    s: BigInt(`0x${"d5a".repeat(21)}f`),
-                                }),
-                                dynamic: true,
-                            },
-                        ]) as Hex,
-                    ]
-                );
+                return ECDSA_DUMMY_SIGNATURE;
             }
+
+            return encodePacked(
+                ["uint48", "uint48", "bytes"],
+                [
+                    0,
+                    0,
+                    buildSignatureBytes([
+                        {
+                            signer: safeWebAuthnSharedSignerAddress,
+                            data: getSignatureBytes({
+                                authenticatorData: DUMMY_AUTHENTICATOR_DATA,
+                                clientDataFields: DUMMY_CLIENT_DATA_FIELDS,
+                                r: BigInt(`0x${"ec".repeat(32)}`),
+                                s: BigInt(`0x${"d5a".repeat(21)}f`),
+                            }),
+                            dynamic: true,
+                        },
+                    ]) as Hex,
+                ]
+            );
         },
     });
 }

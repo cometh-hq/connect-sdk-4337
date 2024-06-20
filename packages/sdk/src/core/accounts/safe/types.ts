@@ -22,6 +22,16 @@ export const EIP712_SAFE_OPERATION_TYPE = {
     ],
 };
 
+export type SafeContractConfig = {
+    safeWebAuthnSharedSignerAddress: Address;
+    safe4337ModuleAddress: Address;
+    safeModuleSetUpAddress: Address;
+    safeP256VerifierAddress: Address;
+    safeProxyFactoryAddress: Address;
+    safeSingletonAddress: Address;
+    multisendAddress: Address;
+};
+
 export const SAFE_SENTINEL_OWNERS = "0x1";
 
 export type MultiSendTransaction = {

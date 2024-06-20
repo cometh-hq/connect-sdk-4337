@@ -1,6 +1,7 @@
-import { NoFallbackSignerError, WalletDoesNotExistsError } from "@/errors";
+import { NoFallbackSignerError } from "@/errors";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import type { SafeContractConfig } from "../accounts/safe/types";
 import { API } from "../services/API";
 import { getDeviceData } from "../services/deviceService";
 import { isFallbackSigner } from "../signers/createSigner";
@@ -20,8 +21,11 @@ import {
     NewSignerRequestType,
 } from "../types";
 
-export const useSignerRequests = (apiKey: string, baseUrl?: string) => {
+export const useSignerRequests = async (apiKey: string, baseUrl?: string) => {
     const api = new API(apiKey, baseUrl);
+
+    const { safeWebAuthnSharedSignerAddress } =
+        (await api.getContractParams()) as SafeContractConfig;
 
     const _createNewSigner = async (
         smartAccountAddress: Address,
@@ -36,8 +40,8 @@ export const useSignerRequests = (apiKey: string, baseUrl?: string) => {
         if (webAuthnCompatible && !isFallbackSigner()) {
             const passkeyWithCoordinates = await createPasskeySigner({
                 webAuthnOptions,
-                //api,
                 passKeyName,
+                safeWebAuthnSharedSignerAddress,
             });
 
             if (passkeyWithCoordinates.publicKeyAlgorithm === -7) {
@@ -63,7 +67,7 @@ export const useSignerRequests = (apiKey: string, baseUrl?: string) => {
                 smartAccountAddress,
                 signerAddress: signer.address,
                 deviceData: getDeviceData(),
-                type: NewSignerRequestType.BURNER_WALLET,
+                type: NewSignerRequestType.FALLBACK_WALLET,
             },
             localPrivateKey: privateKey,
         };
@@ -78,9 +82,6 @@ export const useSignerRequests = (apiKey: string, baseUrl?: string) => {
         passKeyName?: string;
         encryptionSalt?: string;
     }): Promise<NewSignerRequestBody> => {
-        const wallet = await api.getWalletInfos(smartAccountAddress);
-        if (!wallet) throw new WalletDoesNotExistsError();
-
         const { addNewSignerRequest, localPrivateKey } = await _createNewSigner(
             smartAccountAddress,
             passKeyName

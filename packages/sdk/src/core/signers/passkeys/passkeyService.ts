@@ -1,4 +1,3 @@
-import { SAFE_ADDRESSES } from "@/constants";
 import {
     type Address,
     type Hex,
@@ -34,9 +33,11 @@ import type {
 const createPasskeySigner = async ({
     webAuthnOptions,
     passKeyName,
+    safeWebAuthnSharedSignerAddress,
 }: {
     webAuthnOptions: webAuthnOptions;
     passKeyName?: string;
+    safeWebAuthnSharedSignerAddress: Address;
 }): Promise<PasskeyLocalStorageFormat> => {
     try {
         const name = passKeyName || "Cometh Connect";
@@ -120,7 +121,7 @@ const createPasskeySigner = async ({
                 y,
             },
             publicKeyAlgorithm,
-            signerAddress: SAFE_ADDRESSES.SAFE_WEBAUTHN_SHARED_SIGNER_ADDRESS,
+            signerAddress: safeWebAuthnSharedSignerAddress,
         };
 
         return passkeyWithCoordinates;
@@ -219,11 +220,6 @@ const getPasskeySigner = async ({
     api: API;
     smartAccountAddress: Address;
 }): Promise<PasskeyLocalStorageFormat> => {
-    const passkeySigners =
-        await api.getPasskeySignersByWalletAddress(smartAccountAddress);
-
-    if (passkeySigners.length === 0) throw new NoPasskeySignerFoundInDBError();
-
     /* Retrieve potentiel WebAuthn credentials in storage */
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
 
@@ -240,6 +236,11 @@ const getPasskeySigner = async ({
 
         return passkey;
     }
+
+    const passkeySigners =
+        await api.getPasskeySignersByWalletAddress(smartAccountAddress);
+
+    if (passkeySigners.length === 0) throw new NoPasskeySignerFoundInDBError();
 
     //If no local storage or no match in db, Call Webauthn API to get current signer
     let webAuthnSignature: WebAuthnSignature;

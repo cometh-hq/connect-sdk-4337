@@ -47,14 +47,9 @@ export type WalletInfos = {
     initiatorAddress: Address;
 };
 
-export enum WalletImplementation {
-    Safe = "safe",
-    Modular_Account = "modular",
-}
-
 export enum NewSignerRequestType {
     WEBAUTHN = "WEBAUTHN",
-    BURNER_WALLET = "BURNER_WALLET",
+    FALLBACK_WALLET = "FALLBACK_WALLET",
 }
 
 export type Signer = {

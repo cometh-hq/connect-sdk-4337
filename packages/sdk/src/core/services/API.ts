@@ -2,13 +2,7 @@ import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
-import type {
-    DeviceData,
-    NewSignerRequest,
-    WalletImplementation,
-    WalletInfos,
-    WebAuthnSigner,
-} from "../types";
+import type { NewSignerRequest, WebAuthnSigner } from "../types";
 
 export class API {
     private readonly api: AxiosInstance;
@@ -29,9 +23,7 @@ export class API {
         return response.data.projectParams;
     }
 
-    async getContractParams(
-        walletImplementation: WalletImplementation
-    ): Promise<{
+    async getContractParams(): Promise<{
         safeWebAuthnSharedSignerAddress?: string;
         safe4337ModuleAddress?: string;
         safeModuleSetUpAddress?: string;
@@ -43,64 +35,21 @@ export class API {
         walletFactoryAddress?: string;
         P256FactoryContractAddress?: string;
     }> {
-        const response = await this.api.get(
-            `/4337/wallets/${walletImplementation}/contracts-params`
-        );
-        return response.data.contractParams;
-    }
-
-    async getWalletInfos(walletAddress: Address): Promise<WalletInfos> {
-        const response = await this.api.get(
-            `/4337/wallets/${walletAddress}/wallet-infos`
-        );
-        return response.data.walletInfos;
-    }
-
-    async initWallet({
-        smartAccountAddress,
-        ownerAddress,
-        walletImplementation,
-    }: {
-        smartAccountAddress: Address;
-        ownerAddress: Address;
-        walletImplementation: WalletImplementation;
-    }): Promise<Address> {
-        const body = {
-            walletAddress: smartAccountAddress,
-            ownerAddress,
-            walletImplementation,
+        return {
+            safeWebAuthnSharedSignerAddress:
+                "0xfD90FAd33ee8b58f32c00aceEad1358e4AFC23f9",
+            safe4337ModuleAddress: "0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226",
+            safeModuleSetUpAddress:
+                "0x2dd68b007B46fBe91B9A7c3EDa5A7a1063cB5b47",
+            safeP256VerifierAddress:
+                "0x445a0683e494ea0c5AF3E83c5159fBE47Cf9e765",
+            webAuthnSignerFactoryAddress:
+                "0x05234efAd657358b56Fbe05e38800179261F429C",
+            safeProxyFactoryAddress:
+                "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
+            safeSingletonAddress: "0x29fcB43b46531BcA003ddC8FCB67FFE91900C762",
+            multisendAddress: "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526",
         };
-
-        const response = await this.api.post("/4337/wallets/init", body);
-
-        return response.data.walletAddress;
-    }
-
-    async initWalletWithPasskey({
-        smartAccountAddress,
-        publicKeyId,
-        publicKeyX,
-        publicKeyY,
-        deviceData,
-        walletImplementation,
-    }: {
-        smartAccountAddress: Address;
-        publicKeyId: Hex;
-        publicKeyX: Hex;
-        publicKeyY: Hex;
-        deviceData: DeviceData;
-        walletImplementation: WalletImplementation;
-    }): Promise<void> {
-        const body = {
-            walletAddress: smartAccountAddress,
-            publicKeyId,
-            publicKeyX,
-            publicKeyY,
-            deviceData,
-            walletImplementation,
-        };
-
-        await this.api.post("/4337/wallets/init-with-webauthn", body);
     }
 
     /**

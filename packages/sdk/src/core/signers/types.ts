@@ -32,4 +32,5 @@ export type CreateSignerParams = {
     apiKey: string;
     smartAccountAddress?: Address;
     baseUrl?: string;
+    safeWebAuthnSharedSignerAddress: Address;
 } & SignerConfig;
