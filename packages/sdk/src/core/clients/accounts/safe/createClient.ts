@@ -3,7 +3,6 @@ import {
     safeOwnerPluginActions,
 } from "@/core/actions/accounts/safe/safeOwnerActions";
 import type {
-    SmartAccountActions,
     SmartAccountClient,
     SmartAccountClientConfig,
 } from "permissionless";
@@ -12,7 +11,10 @@ import type { SmartAccount } from "permissionless/accounts";
 import type { EntryPoint } from "permissionless/types/entrypoint";
 import { type Chain, type Client, type Transport, createClient } from "viem";
 import type { Prettify } from "viem/chains";
-import { comethAccountClientActions } from "../../decorators/cometh";
+import {
+    type ComethClientActions,
+    comethAccountClientActions,
+} from "../../decorators/cometh";
 
 export type ComethAccountClientActions<
     TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
@@ -20,10 +22,10 @@ export type ComethAccountClientActions<
     TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<infer U>
         ? U
         : never,
-> = SmartAccountActions<TEntryPoint, TChain, TSmartAccount> &
+> = ComethClientActions<TEntryPoint, TChain, TSmartAccount> &
     SafeOwnerPluginActions;
 
-type ComethSmartAccountClient<
+export type ComethSmartAccountClient<
     TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = undefined,

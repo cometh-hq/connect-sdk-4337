@@ -265,6 +265,7 @@ export async function createSafeSmartAccount<
         },
 
         async signUserOperation(userOp) {
+            console.log({ userOp });
             const payload = {
                 domain: {
                     chainId: client.chain?.id,

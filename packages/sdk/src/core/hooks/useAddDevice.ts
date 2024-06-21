@@ -18,16 +18,18 @@ import {
 } from "../signers/passkeys/utils";
 import type { Signer } from "../types";
 
-export const useAddDevice = async (apiKey: string, baseUrl?: string) => {
+export const useAddDevice = (apiKey: string, baseUrl?: string) => {
     const api = new API(apiKey, baseUrl);
 
-    const { safeP256VerifierAddress } =
-        (await api.getContractParams()) as SafeContractConfig;
-
-    const _createNewSigner = async (
-        passKeyName?: string,
-        webAuthnOptions: webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS
-    ): Promise<{
+    const _createNewSigner = async ({
+        passKeyName,
+        webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+        safeP256VerifierAddress,
+    }: {
+        passKeyName?: string;
+        webAuthnOptions?: webAuthnOptions;
+        safeP256VerifierAddress?: Address;
+    }): Promise<{
         signer: Signer;
         localPrivateKey?: string;
     }> => {
@@ -75,7 +77,13 @@ export const useAddDevice = async (apiKey: string, baseUrl?: string) => {
         passKeyName?: string;
         encryptionSalt?: string;
     }): Promise<Signer> => {
-        const { signer, localPrivateKey } = await _createNewSigner(passKeyName);
+        const { safeP256VerifierAddress } =
+            (await api.getContractParams()) as SafeContractConfig;
+
+        const { signer, localPrivateKey } = await _createNewSigner({
+            passKeyName,
+            safeP256VerifierAddress,
+        });
 
         if (signer.publicKeyId) {
             const { publicKeyId, publicKeyX, publicKeyY, signerAddress } =

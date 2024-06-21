@@ -5,18 +5,21 @@ import { API } from "@/core/services/API";
 import type { Signer } from "@/core/types";
 import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
 import type { SmartAccount } from "permissionless/accounts/types";
-import { sendTransactions } from "permissionless/actions/smartAccount";
+import {
+    type Middleware,
+    sendTransactions,
+} from "permissionless/actions/smartAccount";
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
 import type { Chain, Client, Hash, Transport } from "viem";
 import { encodeFunctionData, getAction } from "viem/utils";
 
-export type ValidateAddDevice = {
+export type ValidateAddDevice<entryPoint extends EntryPoint> = {
     apiKey: string;
     signer: Signer;
     baseUrl?: string;
-};
+} & Middleware<entryPoint>;
 
 export async function validateAddDevice<
     entryPoint extends EntryPoint,
@@ -27,14 +30,11 @@ export async function validateAddDevice<
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<ValidateAddDevice>
+    args: Prettify<ValidateAddDevice<entryPoint>>
 ): Promise<Hash> {
-    const { apiKey, baseUrl, signer } = args;
+    const { apiKey, baseUrl, signer, middleware } = args;
 
     const api = new API(apiKey, baseUrl);
-
-    const { safeP256VerifierAddress, safeWebAuthnSignerFactoryAddress } =
-        (await api.getContractParams()) as SafeContractConfig;
 
     const addOwnerCalldata = encodeFunctionData({
         abi: SafeAbi,
@@ -49,12 +49,15 @@ export async function validateAddDevice<
     const txs = [
         {
             to: smartAccountAddress,
-            value: 0,
+            value: BigInt(0),
             data: addOwnerCalldata,
         },
     ];
 
     if (signer.publicKeyX && signer.publicKeyY) {
+        const { safeP256VerifierAddress, safeWebAuthnSignerFactoryAddress } =
+            (await api.getContractParams()) as SafeContractConfig;
+
         const deployWebAuthnSignerCalldata = encodeFunctionData({
             abi: safeWebauthnSignerFactory,
             functionName: "createSigner",
@@ -67,7 +70,7 @@ export async function validateAddDevice<
 
         txs.unshift({
             to: safeWebAuthnSignerFactoryAddress,
-            value: 0,
+            value: BigInt(0),
             data: deployWebAuthnSignerCalldata,
         });
     }
@@ -78,6 +81,7 @@ export async function validateAddDevice<
         "sendTransactions"
     )({
         transactions: txs,
+        middleware,
     } as unknown as SendTransactionsWithPaymasterParameters<
         entryPoint,
         TAccount

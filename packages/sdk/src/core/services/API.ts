@@ -42,7 +42,7 @@ export class API {
             safeP256VerifierAddress:
                 "0x445a0683e494ea0c5AF3E83c5159fBE47Cf9e765",
             safeWebAuthnSignerFactoryAddress:
-                "0x05234efAd657358b56Fbe05e38800179261F429C",
+                "0xF7488fFbe67327ac9f37D5F722d83Fc900852Fbf",
             safeProxyFactoryAddress:
                 "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
             safeSingletonAddress: "0x29fcB43b46531BcA003ddC8FCB67FFE91900C762",

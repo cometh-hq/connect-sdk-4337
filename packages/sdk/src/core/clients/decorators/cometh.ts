@@ -42,7 +42,7 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware,
-                } as ValidateAddDevice
+                } as ValidateAddDevice<entryPoint>
             ),
     });
 }
