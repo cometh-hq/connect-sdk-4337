@@ -13,6 +13,8 @@ export function useSmartAccount() {
 
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
+  const [newSigner, setNewSigner] = useState<any | null>(null);
+
   const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
   const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
@@ -78,6 +80,11 @@ export function useSmartAccount() {
               gasPrice: paymasterClient.gasPrice,
           }
           }) 
+
+          const owners = await smartAccountClient.getOwners();
+
+          console.log([owners])
+
           
           console.log({smartAccountClient})
 
@@ -97,6 +104,8 @@ export function useSmartAccount() {
     isConnected,
     isConnecting,
     connectionError,
+    newSigner,
+    setNewSigner,
     setConnectionError,
   };
 }

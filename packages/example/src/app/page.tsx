@@ -8,9 +8,24 @@ import { useSmartAccount } from "./modules/hooks/useSmartAccount";
 
 export default function App() {
 
-  const { isConnecting, isConnected, connect, connectionError, smartAccount } =
+  const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
+  const baseUrl = "http://127.0.0.1:8000/connect"
+
+
+
+  const { isConnecting, isConnected, connect, connectionError, smartAccount, newSigner } =
   useSmartAccount();
   const [transactionSuccess, setTransactionSuccess] = useState(false);
+
+
+  const validate = async() => {
+
+    const signer = { signerAddress: "0xc24bdc3D083ccd21B1E77514b58BAB45ED413955", deviceData: { browser: "Firefox", os: "macOS", platform: "desktop" }}
+
+    console.log({signer})
+
+    await smartAccount.validateAddDevice({apiKey, baseUrl, signer})
+  }
 
 
   return (
@@ -37,11 +52,15 @@ export default function App() {
             </div>
 
             {isConnected && (
+              <>
               <Transaction
               smartAccount={smartAccount}
                 transactionSuccess={transactionSuccess}
                 setTransactionSuccess={setTransactionSuccess}
               />
+
+              <button onClick={validate}>Validate Add Device</button>
+              </>
             )}
 
             
