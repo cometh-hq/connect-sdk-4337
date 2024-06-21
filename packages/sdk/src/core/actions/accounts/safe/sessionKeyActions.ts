@@ -1,3 +1,4 @@
+import { safe4337SessionKeyModuleAbi } from "@/core/accounts/safe/abi/safe4337SessionKeyModuleAbi";
 import { createFallbackEoaSigner } from "@/core/signers/fallbackEoa/fallbackEoaSigner";
 import { encryptSessionKeyInStorage } from "@/core/signers/fallbackEoa/services/eoaFallbackService";
 import type { SmartAccountClient } from "permissionless";
@@ -61,7 +62,7 @@ export const safeSessionKeyActions: <
         return await client.sendTransaction({
             to: client.account?.address,
             data: encodeFunctionData({
-                abi: Safe4447SessionKeyAbi,
+                abi: safe4337SessionKeyModuleAbi,
                 functionName: "addSessionKey",
                 args: [fallbackEoaSigner.signer.address, validAfter, validUntil, destinations],
             }),
@@ -72,7 +73,7 @@ export const safeSessionKeyActions: <
         return await client.sendTransaction({
             to: client.account?.address,
             data: encodeFunctionData({
-                abi: Safe4447SessionKeyAbi,
+                abi: safe4337SessionKeyModuleAbi,
                 functionName: "revokeSessionKey",
                 args: [args.sessionKey],
             }),
@@ -83,7 +84,7 @@ export const safeSessionKeyActions: <
         return await client.sendTransaction({
             to: client.account?.address,
             data: encodeFunctionData({
-                abi: Safe4447SessionKeyAbi,
+                abi: safe4337SessionKeyModuleAbi,
                 functionName: "sessionKeys",
                 args: [args.sessionKey],
             }),
@@ -94,7 +95,7 @@ export const safeSessionKeyActions: <
         return await client.sendTransaction({
             to: client.account?.address,
             data: encodeFunctionData({
-                abi: Safe4447SessionKeyAbi,
+                abi: safe4337SessionKeyModuleAbi,
                 functionName: "addWhitelistDestination",
                 args: [args.sessionKey, args.destinations],
             }),
@@ -105,7 +106,7 @@ export const safeSessionKeyActions: <
         return await client.sendTransaction({
             to: client.account?.address,
             data: encodeFunctionData({
-                abi: Safe4447SessionKeyAbi,
+                abi: safe4337SessionKeyModuleAbi,
                 functionName: "addWhitelistDestination",
                 args: [args.sessionKey, args.destination],
             }),
