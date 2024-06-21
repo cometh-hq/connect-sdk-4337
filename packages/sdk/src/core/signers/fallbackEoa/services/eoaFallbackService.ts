@@ -14,11 +14,11 @@ export type fallbackStorageValues = {
 export const defaultEncryptionSalt = "COMETH-CONNECT";
 export const Pbkdf2Iterations = 1000000;
 
-export const encryptSignerInStorage = async (
+const encryptSigner = async (
     smartAccountAddress: Address,
     privateKey: Hex,
     salt?: string
-): Promise<void> => {
+): Promise<string> => {
     const { encryptedPrivateKey, iv } = await encryptEoaFallback(
         smartAccountAddress,
         privateKey,
@@ -32,6 +32,32 @@ export const encryptSignerInStorage = async (
         iv,
         signer.address
     );
+
+    return storageValue;
+};
+
+export const encryptSessionKeyInStorage = async (
+    smartAccountAddress: Address,
+    privateKey: Hex,
+    salt?: string,
+): Promise<void> => {
+   
+    const storageValue = await encryptSigner(smartAccountAddress, privateKey, salt);
+
+    window.localStorage.setItem(
+        `cometh-connect-sessionKey-${smartAccountAddress}`,
+        storageValue
+    );
+};
+
+export const encryptSignerInStorage = async (
+    smartAccountAddress: Address,
+    privateKey: Hex,
+    salt?: string
+): Promise<void> => {
+
+    const storageValue = await encryptSigner(smartAccountAddress, privateKey, salt);
+
 
     window.localStorage.setItem(
         `cometh-connect-fallback-${smartAccountAddress}`,
