@@ -9,16 +9,25 @@ import { createComethPaymasterClient } from "@/core/clients/paymaster/createPaym
 import { API } from "@/core/services/API";
 import { ENTRYPOINT_ADDRESS_V07 } from "permissionless";
 import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
-import { http, type Chain, type Transport } from "viem";
-import { createConnector } from "wagmi";
+import { http, type Address, type Chain, type Transport } from "viem";
+import { ProviderNotFoundError, createConnector } from "wagmi";
 
 export type ConnectWagmiConfig<entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE> =
     createSafeSmartAccountParameters<entryPoint> & {
         bundlerUrl: string;
         sponsorTransactions?: boolean;
+    } & {
+        /**
+         *
+         * This flag simulates the disconnect behavior by keeping track of connection status in storage
+         * and only autoconnecting when previously connected by user action (e.g. explicitly choosing to connect).
+         *
+         * @default true
+         */
+        shimDisconnect?: boolean;
     };
 
-export async function smartAccountConnector<
+export function smartAccountConnector<
     entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
 >({
     apiKey,
@@ -30,100 +39,109 @@ export async function smartAccountConnector<
     comethSignerConfig,
     safeContractConfig,
     sponsorTransactions = true,
+    shimDisconnect = true,
 }: ConnectWagmiConfig<entryPoint>) {
-    const api = new API(apiKey, baseUrl);
-    const chain = await getNetwork(api);
-
-    const account = await createSafeSmartAccount({
-        apiKey,
-        rpcUrl,
-        baseUrl,
-        smartAccountAddress,
-        entryPoint,
-        comethSignerConfig,
-        safeContractConfig,
-    });
-
-    let middleware = undefined;
-
-    if (sponsorTransactions) {
-        const paymasterClient = await createComethPaymasterClient({
-            transport: http(bundlerUrl),
-            chain,
-            entryPoint: ENTRYPOINT_ADDRESS_V07,
-        });
-
-        middleware = {
-            sponsorUserOperation: paymasterClient.sponsorUserOperation,
-            gasPrice: paymasterClient.gasPrice,
-        };
-    }
-
-    const smartAccountClient = createSmartAccountClient({
-        account: account as unknown as SafeSmartAccount<
-            ENTRYPOINT_ADDRESS_V07_TYPE,
-            Transport,
-            Chain | undefined
-        >,
-        entryPoint: ENTRYPOINT_ADDRESS_V07,
-        chain,
-        bundlerTransport: http(bundlerUrl),
-        middleware,
-    });
-
-    return smartAccount({
-        smartAccountClient: smartAccountClient as any,
-    });
-}
-
-function smartAccount({
-    smartAccountClient,
-    id = smartAccountClient.uid,
-    name = smartAccountClient.name,
-    type = "smart-account",
-}: {
-    smartAccountClient: any & {
-        estimateGas?: () => undefined | bigint;
-    };
-    id?: string;
-    name?: string;
-    type?: string;
-}) {
-    // Don't remove this, it is needed because wagmi has an opinion on always estimating gas:
-    // https://github.com/wevm/wagmi/blob/main/packages/core/src/actions/sendTransaction.ts#L77
-    smartAccountClient.estimateGas = () => {
-        return undefined;
+    type Provider = any | undefined;
+    type Properties = {};
+    type StorageItem = {
+        [_ in "cometh-connect.connected" | `${string}.disconnected`]: true;
     };
 
-    const address = smartAccountClient?.account?.address;
+    let chain: Chain;
+    let client: any;
 
-    if (!address) throw new Error("No address found in smart account client");
+    return createConnector<Provider, Properties, StorageItem>((config) => ({
+        id: "cometh",
+        name: "Cometh Connect",
+        type: "cometh" as const,
+        async setup(): Promise<void> {
+            if (smartAccountAddress) {
+                this.connect();
+            }
+        },
+        async connect({ chainId } = {}): Promise<{
+            accounts: readonly Address[];
+            chainId: number;
+        }> {
+            const api = new API(apiKey, baseUrl);
+            chain = await getNetwork(api);
 
-    return createConnector((config) => ({
-        id,
-        name,
-        type,
-        // async setup() {},
-        async connect({ chainId } = {}) {
             if (chainId && chainId !== (await this.getChainId())) {
                 throw new Error(`Invalid chainId ${chainId} requested`);
             }
 
+            const account = await createSafeSmartAccount({
+                apiKey,
+                rpcUrl,
+                baseUrl,
+                smartAccountAddress,
+                entryPoint,
+                comethSignerConfig,
+                safeContractConfig,
+            });
+
+            let middleware = undefined;
+
+            if (sponsorTransactions) {
+                const paymasterClient = await createComethPaymasterClient({
+                    transport: http(bundlerUrl),
+                    chain,
+                    entryPoint: ENTRYPOINT_ADDRESS_V07,
+                });
+
+                middleware = {
+                    sponsorUserOperation: paymasterClient.sponsorUserOperation,
+                    gasPrice: paymasterClient.gasPrice,
+                };
+            }
+
+            client = createSmartAccountClient({
+                account: account as unknown as SafeSmartAccount<
+                    ENTRYPOINT_ADDRESS_V07_TYPE,
+                    Transport,
+                    Chain | undefined
+                >,
+                entryPoint: ENTRYPOINT_ADDRESS_V07,
+                chain,
+                bundlerTransport: http(bundlerUrl),
+                middleware,
+            });
+
+            await config.storage?.removeItem(`${this.id}.disconnected`);
+
             return {
-                accounts: [address],
+                accounts: [client.account.address],
                 chainId: await this.getChainId(),
             };
         },
-        async disconnect() {},
+        async disconnect() {
+            // Remove shim signalling wallet is disconnected
+            if (shimDisconnect)
+                config.storage?.setItem(`${this.id}.disconnected`, true);
+        },
         async getAccounts() {
-            return [address];
+            return [client.account.address];
         },
         getChainId() {
-            return smartAccountClient.chain.id;
+            return chain.id as any;
         },
-        async getProvider() {},
-        async isAuthorized() {
-            return !!address;
+        async getProvider() {
+            return client;
+        },
+        async isAuthorized(): Promise<boolean> {
+            try {
+                const isDisconnected =
+                    shimDisconnect &&
+                    // If shim exists in storage, connector is disconnected
+                    (await config.storage?.getItem(`${this.id}.disconnected`));
+
+                if (isDisconnected) return false;
+
+                if (!client) throw new ProviderNotFoundError();
+                return true;
+            } catch {
+                return false;
+            }
         },
         onAccountsChanged() {
             // Not relevant
@@ -139,7 +157,7 @@ function smartAccount({
             if (requestedChainId !== chainId) {
                 throw new Error(`Invalid chainId ${chainId} requested`);
             }
-            return smartAccountClient;
+            return client;
         },
     }));
 }

@@ -6,6 +6,7 @@ import { createSmartAccountClient } from "./core/clients/accounts/safe/createCli
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
 import { useAddDevice } from "./core/hooks/useAddDevice";
 import { createSigner } from "./core/signers/createSigner";
+import { smartAccountConnector } from "./wagmi/connector";
 
 export {
     createSigner,
@@ -14,6 +15,7 @@ export {
     useAddDevice,
     retrieveAccountAddressFromPasskey,
     createComethPaymasterClient,
+    smartAccountConnector,
     ENTRYPOINT_ADDRESS_V06,
     ENTRYPOINT_ADDRESS_V07,
 };
