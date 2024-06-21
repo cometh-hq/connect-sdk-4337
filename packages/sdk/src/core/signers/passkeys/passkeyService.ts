@@ -25,7 +25,6 @@ import type {
     Assertion,
     PasskeyCredential,
     PasskeyLocalStorageFormat,
-    WebAuthnSignature,
     WebAuthnSigner,
     webAuthnOptions,
 } from "./types";
@@ -35,13 +34,11 @@ const createPasskeySigner = async ({
     webAuthnOptions,
     passKeyName,
     safeWebAuthnSharedSignerAddress,
-    safeP256VerifierAddress,
 }: {
     api: API;
     webAuthnOptions: webAuthnOptions;
     passKeyName?: string;
     safeWebAuthnSharedSignerAddress?: Address;
-    safeP256VerifierAddress?: Hex;
 }): Promise<PasskeyLocalStorageFormat> => {
     try {
         const name = passKeyName || "Cometh Connect";
@@ -117,10 +114,7 @@ const createPasskeySigner = async ({
             (await api.predictWebAuthnSignerAddress({
                 publicKeyX: x,
                 publicKeyY: y,
-                verifier: safeP256VerifierAddress as Hex,
             }));
-
-        console.log({ signerAddress });
 
         // Create a PasskeyCredentialWithPubkeyCoordinates object
         const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
@@ -142,7 +136,7 @@ const createPasskeySigner = async ({
 const sign = async (
     challenge: string,
     publicKeyCredential?: PublicKeyCredentialDescriptor[]
-): Promise<any> => {
+): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     const assertion = (await navigator.credentials.get({
         publicKey: {
             challenge: toBytes(challenge),
@@ -167,7 +161,7 @@ const sign = async (
         ]
     );
 
-    const publicKeyId = hexArrayStr(assertion.rawId);
+    const publicKeyId = hexArrayStr(assertion.rawId) as Hex;
 
     return { signature, publicKeyId };
 };
@@ -175,7 +169,7 @@ const sign = async (
 const signWithPasskey = async (
     challenge: string,
     webAuthnSigners?: WebAuthnSigner[]
-): Promise<WebAuthnSignature> => {
+): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     let publicKeyCredentials: PublicKeyCredentialDescriptor[] | undefined;
 
     if (webAuthnSigners) {
@@ -234,7 +228,7 @@ const getPasskeySigner = async ({
 
     if (localStoragePasskey) {
         const passkey = JSON.parse(
-            localStoragePasskey!
+            localStoragePasskey
         ) as PasskeyLocalStorageFormat;
         /* Check if storage WebAuthn credentials exists in db */
         const registeredPasskeySigner = await api.getPasskeySignerByPublicKeyId(
@@ -252,7 +246,7 @@ const getPasskeySigner = async ({
     if (passkeySigners.length === 0) throw new NoPasskeySignerFoundInDBError();
 
     //If no local storage or no match in db, Call Webauthn API to get current signer
-    let webAuthnSignature: WebAuthnSignature;
+    let webAuthnSignature: { signature: Hex; publicKeyId: Hex };
     try {
         webAuthnSignature = await signWithPasskey(
             "SDK Connection",
@@ -263,7 +257,7 @@ const getPasskeySigner = async ({
     }
 
     const signingWebAuthnSigner = await api.getPasskeySignerByPublicKeyId(
-        webAuthnSignature.id as Hex
+        webAuthnSignature.publicKeyId as Hex
     );
 
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
@@ -292,7 +286,8 @@ const retrieveSmartAccountAddressFromPasskey = async (
     let publicKeyId: Hex;
 
     try {
-        publicKeyId = (await signWithPasskey("Retrieve user wallet")).id as Hex;
+        publicKeyId = (await signWithPasskey("Retrieve user wallet"))
+            .publicKeyId as Hex;
     } catch {
         throw new RetrieveWalletFromPasskeyError();
     }

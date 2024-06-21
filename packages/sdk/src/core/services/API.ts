@@ -104,16 +104,13 @@ export class API {
     async predictWebAuthnSignerAddress({
         publicKeyX,
         publicKeyY,
-        verifier,
     }: {
         publicKeyX: Hex;
         publicKeyY: Hex;
-        verifier: Hex;
     }): Promise<Hex> {
         const body = {
             publicKeyX,
             publicKeyY,
-            verifier,
         };
 
         const response = await this.api.post(

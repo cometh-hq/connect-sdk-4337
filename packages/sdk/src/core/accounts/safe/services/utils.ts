@@ -60,15 +60,11 @@ export function getSignatureBytes({
     const clientDataFieldsOffset =
         authenticatorDataOffset + byteSize(authenticatorData);
 
-    return (
-        "0x" +
-        encodeUint256(authenticatorDataOffset) +
-        encodeUint256(clientDataFieldsOffset) +
-        encodeUint256(r) +
-        encodeUint256(s) +
-        encodeBytes(authenticatorData) +
-        encodeBytes(new TextEncoder().encode(clientDataFields))
-    );
+    return `0x${encodeUint256(authenticatorDataOffset)}${encodeUint256(
+        clientDataFieldsOffset
+    )}${encodeUint256(r)}${encodeUint256(s)}${encodeBytes(
+        authenticatorData
+    )}${encodeBytes(new TextEncoder().encode(clientDataFields))}`;
 }
 
 export const buildSignatureBytes = (signatures: SafeSignature[]): string => {
@@ -127,7 +123,7 @@ export function packPaymasterData({
     paymasterVerificationGasLimit: bigint;
     paymasterPostOpGasLimit: bigint;
     paymasterData: Hex;
-}): any {
+}) {
     return concat([
         paymaster,
         pad(toHex(paymasterVerificationGasLimit), { size: 16 }),
@@ -143,7 +139,7 @@ export const packInitCode = ({
     factory?: Address;
     factoryData?: Hex;
 }) => {
-    if (!factoryData || !factory) return "0x";
+    if (!(factoryData && factory)) return "0x";
 
     const factoryBytes = toBytes(factory);
     const factoryDataBytes = toBytes(factoryData);

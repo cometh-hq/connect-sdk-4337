@@ -39,7 +39,7 @@ export type MultiSendTransaction = {
     // 0 for CALL, 1 for DELEGATECALL
     op: 0 | 1;
     to: Address;
-    value?: any;
+    value?: bigint;
     data: `0x${string}`;
 };
 

@@ -57,6 +57,8 @@ export function useSmartAccount() {
             window.localStorage.setItem("walletAddress", smartAccount.address);
           }
 
+          console.log({smartAccount})
+
       
           const paymasterClient = await createComethPaymasterClient(
             {
@@ -65,6 +67,9 @@ export function useSmartAccount() {
           entryPoint: ENTRYPOINT_ADDRESS_V07,
         }
         )
+
+
+        console.log({paymasterClient})
 
 
        
@@ -83,10 +88,9 @@ export function useSmartAccount() {
 
           const owners = await smartAccountClient.getOwners();
 
-          console.log([owners])
 
           
-          console.log({smartAccountClient})
+ 
 
           setSmartAccount(smartAccountClient);
       setIsConnected(true);

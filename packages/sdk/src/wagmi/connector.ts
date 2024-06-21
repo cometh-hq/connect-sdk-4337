@@ -35,19 +35,21 @@ export function smartAccountConnector<
     rpcUrl,
     baseUrl,
     smartAccountAddress,
-    entryPoint = ENTRYPOINT_ADDRESS_V07 as any,
     comethSignerConfig,
     safeContractConfig,
     sponsorTransactions = true,
     shimDisconnect = true,
 }: ConnectWagmiConfig<entryPoint>) {
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     type Provider = any | undefined;
+    // biome-ignore lint/complexity/noBannedTypes: TODO: remove an
     type Properties = {};
     type StorageItem = {
         [_ in "cometh-connect.connected" | `${string}.disconnected`]: true;
     };
 
     let chain: Chain;
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     let client: any;
 
     return createConnector<Provider, Properties, StorageItem>((config) => ({
@@ -75,7 +77,7 @@ export function smartAccountConnector<
                 rpcUrl,
                 baseUrl,
                 smartAccountAddress,
-                entryPoint,
+                entryPoint: ENTRYPOINT_ADDRESS_V07,
                 comethSignerConfig,
                 safeContractConfig,
             });
@@ -123,6 +125,7 @@ export function smartAccountConnector<
             return [client.account.address];
         },
         getChainId() {
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
             return chain.id as any;
         },
         async getProvider() {

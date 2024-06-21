@@ -22,7 +22,7 @@ export const encodeMultiSendTransactions = (
         transactions.map(({ op, to, value, data }) =>
             encodePacked(
                 ["uint8", "address", "uint256", "uint256", "bytes"],
-                [op, to, value ?? 0, BigInt(size(data)), data as `0x${string}`]
+                [op, to, value ?? 0n, BigInt(size(data)), data as `0x${string}`]
             )
         )
     );
@@ -117,20 +117,20 @@ export const getSafeInitializer = (
                 zeroAddress,
             ],
         });
-    } else {
-        return encodeFunctionData({
-            abi: SafeAbi,
-            functionName: "setup",
-            args: [
-                [safeWebAuthnSharedSignerContractAddress],
-                threshold,
-                multisendAddress,
-                setUpData,
-                fallbackHandler,
-                zeroAddress,
-                0,
-                zeroAddress,
-            ],
-        });
     }
+
+    return encodeFunctionData({
+        abi: SafeAbi,
+        functionName: "setup",
+        args: [
+            [safeWebAuthnSharedSignerContractAddress],
+            threshold,
+            multisendAddress,
+            setUpData,
+            fallbackHandler,
+            zeroAddress,
+            0,
+            zeroAddress,
+        ],
+    });
 };

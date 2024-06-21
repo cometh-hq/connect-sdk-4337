@@ -1,6 +1,9 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { SAFE_SENTINEL_OWNERS } from "@/core/accounts/safe/types";
-import type { SmartAccountClient } from "permissionless";
+import {
+    type SmartAccountClient,
+    isSmartAccountDeployed,
+} from "permissionless";
 import type { EntryPoint } from "permissionless/_types/types";
 import type { SmartAccount } from "permissionless/accounts";
 import {
@@ -96,6 +99,13 @@ export const safeOwnerPluginActions: <
                 multicall: { wait: 50 },
             },
         });
+
+        const isDeployed = await isSmartAccountDeployed(
+            publicClient,
+            client.account?.address
+        );
+
+        if (!isDeployed) throw new Error("Smart account is not deployed.");
 
         const safeContract = getContract({
             address: client.account?.address,

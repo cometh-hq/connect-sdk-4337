@@ -47,25 +47,27 @@ export const sponsorUserOperation = async <
         method: "pm_sponsorUserOperation",
         params: [deepHexlify(args.userOperation), args.entryPoint],
     })) as {
-        paymasterAndData: Hex;
+        paymasterAndData: never;
         preVerificationGas: Hex;
         verificationGasLimit: Hex;
         callGasLimit: Hex;
-        paymaster?: never;
-        paymasterVerificationGasLimit?: never;
-        paymasterPostOpGasLimit?: never;
-        paymasterData?: never;
+        paymaster?: Address;
+        paymasterVerificationGasLimit?: Hex;
+        paymasterPostOpGasLimit?: Hex;
+        paymasterData?: Hex;
     };
 
     return {
         callGasLimit: BigInt(response.callGasLimit),
         verificationGasLimit: BigInt(response.verificationGasLimit),
         preVerificationGas: BigInt(response.preVerificationGas),
-        paymaster: response.paymaster! as Address,
+        paymaster: response.paymaster as Address,
         paymasterVerificationGasLimit: hexToBigInt(
-            response.paymasterVerificationGasLimit!
+            response.paymasterVerificationGasLimit as Hex
         ),
-        paymasterPostOpGasLimit: hexToBigInt(response.paymasterPostOpGasLimit!),
-        paymasterData: response.paymasterData!,
+        paymasterPostOpGasLimit: hexToBigInt(
+            response.paymasterPostOpGasLimit as Hex
+        ),
+        paymasterData: response.paymasterData as Hex,
     };
 };

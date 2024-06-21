@@ -2,7 +2,6 @@ import { NoFallbackSignerError } from "@/errors";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
-import type { SafeContractConfig } from "../accounts/safe/types";
 import { API } from "../services/API";
 import { getDeviceData } from "../services/deviceService";
 import { isFallbackSigner } from "../signers/createSigner";
@@ -24,11 +23,9 @@ export const useAddDevice = (apiKey: string, baseUrl?: string) => {
     const _createNewSigner = async ({
         passKeyName,
         webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
-        safeP256VerifierAddress,
     }: {
         passKeyName?: string;
         webAuthnOptions?: webAuthnOptions;
-        safeP256VerifierAddress?: Address;
     }): Promise<{
         signer: Signer;
         localPrivateKey?: string;
@@ -40,7 +37,6 @@ export const useAddDevice = (apiKey: string, baseUrl?: string) => {
                 api,
                 webAuthnOptions,
                 passKeyName,
-                safeP256VerifierAddress,
             });
 
             if (passkeyWithCoordinates.publicKeyAlgorithm === -7) {
@@ -77,12 +73,8 @@ export const useAddDevice = (apiKey: string, baseUrl?: string) => {
         passKeyName?: string;
         encryptionSalt?: string;
     }): Promise<Signer> => {
-        const { safeP256VerifierAddress } =
-            (await api.getContractParams()) as SafeContractConfig;
-
         const { signer, localPrivateKey } = await _createNewSigner({
             passKeyName,
-            safeP256VerifierAddress,
         });
 
         if (signer.publicKeyId) {

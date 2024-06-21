@@ -213,7 +213,7 @@ export function extractSignature(
     check(view.getUint8(1) === view.byteLength - 2);
 
     // read r and s
-    const readInt = (offset: number): any => {
+    const readInt = (offset: number) => {
         check(view.getUint8(offset) === 0x02);
         const len = view.getUint8(offset + 1);
         const start = offset + 2;
