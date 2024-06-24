@@ -15,7 +15,7 @@ import {
 } from "viem/chains";
 import { muster, musterTestnet } from "./customChains";
 
-const API_URL = "https://api.connect.cometh.io";
+const API_URL = "https://api.4337.develop.core.cometh.tech";
 
 // 4337 Contracts
 const ENTRYPOINT_ADDRESS_V06 = "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789";

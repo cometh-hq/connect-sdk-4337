@@ -56,7 +56,7 @@ export async function validateAddDevice<
 
     if (signer.publicKeyX && signer.publicKeyY) {
         const { safeP256VerifierAddress, safeWebAuthnSignerFactoryAddress } =
-            (await api.getContractParams()) as SafeContractConfig;
+            (await api.getProjectParams()) as SafeContractConfig;
 
         const deployWebAuthnSignerCalldata = encodeFunctionData({
             abi: safeWebauthnSignerFactory,

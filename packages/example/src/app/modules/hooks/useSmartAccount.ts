@@ -37,13 +37,13 @@ export function useSmartAccount() {
     
           let smartAccount;
 
-          const baseUrl = "http://127.0.0.1:8000/connect"
+          //const baseUrl = "http://127.0.0.1:8000/connect"
     
           if (localStorageAddress) {
             smartAccount = await createSafeSmartAccount({
               apiKey,
               rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
-              baseUrl,
+              //baseUrl,
               smartAccountAddress: localStorageAddress,
               entryPoint: ENTRYPOINT_ADDRESS_V07,
             });
@@ -51,7 +51,7 @@ export function useSmartAccount() {
             smartAccount = await createSafeSmartAccount({
               apiKey,
               rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
-              baseUrl,
+              //baseUrl,
               entryPoint: ENTRYPOINT_ADDRESS_V07,
             });
             window.localStorage.setItem("walletAddress", smartAccount.address);
@@ -86,7 +86,9 @@ export function useSmartAccount() {
           }
           }) 
 
-          const owners = await smartAccountClient.getOwners();
+          console.log({smartAccountClient})
+
+    
 
 
           

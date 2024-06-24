@@ -190,7 +190,7 @@ export async function createSafeSmartAccount<
         multisendAddress,
     } =
         safeContractConfig ??
-        ((await api.getContractParams()) as SafeContractConfig);
+        ((await api.getProjectParams()) as SafeContractConfig);
 
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
@@ -205,6 +205,8 @@ export async function createSafeSmartAccount<
         safeWebAuthnSharedSignerAddress,
         ...comethSignerConfig,
     });
+
+    console.log("comethSigner", comethSigner);
 
     const initializer = getSafeInitializer(
         comethSigner,
