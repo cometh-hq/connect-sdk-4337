@@ -301,7 +301,18 @@ export async function createSafeSmartAccount<
                 },
             };
 
-            if (comethSigner.type === "localWallet") {
+            if (comethSigner.type === "passkey") {
+                const hash = hashTypedData(payload);
+
+                const publicKeyCredential: PublicKeyCredentialDescriptor = {
+                    id: parseHex(comethSigner.passkey.id),
+                    type: "public-key",
+                };
+
+                const passkeySignature = await sign(hash, [
+                    publicKeyCredential,
+                ]);
+
                 return encodePacked(
                     ["uint48", "uint48", "bytes"],
                     [
@@ -309,24 +320,14 @@ export async function createSafeSmartAccount<
                         0,
                         buildSignatureBytes([
                             {
-                                signer: comethSigner.eoaFallback.signer.address,
-                                data:
-                                    await comethSigner.eoaFallback.signer.signTypedData(
-                                        payload
-                                    ),
+                                signer: safeWebAuthnSharedSignerAddress,
+                                data: passkeySignature.signature,
+                                dynamic: true,
                             },
                         ]) as Hex,
                     ]
                 );
             }
-            const hash = hashTypedData(payload);
-
-            const publicKeyCredential: PublicKeyCredentialDescriptor = {
-                id: parseHex(comethSigner.passkey.id),
-                type: "public-key",
-            };
-
-            const passkeySignature = await sign(hash, [publicKeyCredential]);
 
             return encodePacked(
                 ["uint48", "uint48", "bytes"],
@@ -335,9 +336,11 @@ export async function createSafeSmartAccount<
                     0,
                     buildSignatureBytes([
                         {
-                            signer: safeWebAuthnSharedSignerAddress,
-                            data: passkeySignature.signature,
-                            dynamic: true,
+                            signer: comethSigner.eoaFallback.signer.address,
+                            data:
+                                await comethSigner.eoaFallback.signer.signTypedData(
+                                    payload
+                                ),
                         },
                     ]) as Hex,
                 ]
@@ -424,29 +427,29 @@ export async function createSafeSmartAccount<
         },
 
         async getDummySignature() {
-            if (comethSigner.type === "localWallet") {
-                return ECDSA_DUMMY_SIGNATURE;
+            if (comethSigner.type === "passkey") {
+                return encodePacked(
+                    ["uint48", "uint48", "bytes"],
+                    [
+                        0,
+                        0,
+                        buildSignatureBytes([
+                            {
+                                signer: safeWebAuthnSharedSignerAddress,
+                                data: getSignatureBytes({
+                                    authenticatorData: DUMMY_AUTHENTICATOR_DATA,
+                                    clientDataFields: DUMMY_CLIENT_DATA_FIELDS,
+                                    r: BigInt(`0x${"ec".repeat(32)}`),
+                                    s: BigInt(`0x${"d5a".repeat(21)}f`),
+                                }),
+                                dynamic: true,
+                            },
+                        ]) as Hex,
+                    ]
+                );
             }
 
-            return encodePacked(
-                ["uint48", "uint48", "bytes"],
-                [
-                    0,
-                    0,
-                    buildSignatureBytes([
-                        {
-                            signer: safeWebAuthnSharedSignerAddress,
-                            data: getSignatureBytes({
-                                authenticatorData: DUMMY_AUTHENTICATOR_DATA,
-                                clientDataFields: DUMMY_CLIENT_DATA_FIELDS,
-                                r: BigInt(`0x${"ec".repeat(32)}`),
-                                s: BigInt(`0x${"d5a".repeat(21)}f`),
-                            }),
-                            dynamic: true,
-                        },
-                    ]) as Hex,
-                ]
-            );
+            return ECDSA_DUMMY_SIGNATURE;
         },
     });
 }

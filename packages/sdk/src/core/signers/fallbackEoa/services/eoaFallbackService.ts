@@ -39,10 +39,13 @@ const encryptSigner = async (
 export const encryptSessionKeyInStorage = async (
     smartAccountAddress: Address,
     privateKey: Hex,
-    salt?: string,
+    salt?: string
 ): Promise<void> => {
-   
-    const storageValue = await encryptSigner(smartAccountAddress, privateKey, salt);
+    const storageValue = await encryptSigner(
+        smartAccountAddress,
+        privateKey,
+        salt
+    );
 
     window.localStorage.setItem(
         `cometh-connect-sessionKey-${smartAccountAddress}`,
@@ -55,9 +58,11 @@ export const encryptSignerInStorage = async (
     privateKey: Hex,
     salt?: string
 ): Promise<void> => {
-
-    const storageValue = await encryptSigner(smartAccountAddress, privateKey, salt);
-
+    const storageValue = await encryptSigner(
+        smartAccountAddress,
+        privateKey,
+        salt
+    );
 
     window.localStorage.setItem(
         `cometh-connect-fallback-${smartAccountAddress}`,

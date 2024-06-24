@@ -17,7 +17,7 @@ import { API } from "../services/API";
 import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
 
 import { getDeviceData } from "../services/deviceService";
-import type { PasskeyLocalStorageFormat } from "./passkeys/types";
+import type { webAuthnOptions,  PasskeyLocalStorageFormat } from "./passkeys/types";
 import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
@@ -70,6 +70,19 @@ export const isFallbackSigner = (): boolean => {
     return !!fallbackSigner;
 };
 
+export const isDeviceCompatibleWithPasskeys = async (options: {webAuthnOptions: webAuthnOptions}) => {
+
+    const webAuthnCompatible = await isWebAuthnCompatible(options.webAuthnOptions);
+
+    if (webAuthnCompatible && !isFallbackSigner()) {
+        return true;
+    }
+
+        return false;
+
+
+}
+
 /**
  * Helper to create the Cometh Signer
  * @param apiKey
@@ -91,9 +104,9 @@ export async function createSigner({
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
 
-    const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
+    const passkeyCompatible = await isDeviceCompatibleWithPasskeys({webAuthnOptions});
 
-    if (webAuthnCompatible && !isFallbackSigner()) {
+    if (passkeyCompatible) {
         let passkey: PasskeyLocalStorageFormat;
         if (!smartAccountAddress) {
             passkey = await createPasskeySigner({
