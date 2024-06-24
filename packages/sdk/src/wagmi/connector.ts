@@ -9,7 +9,14 @@ import { createComethPaymasterClient } from "@/core/clients/paymaster/createPaym
 import { API } from "@/core/services/API";
 import { ENTRYPOINT_ADDRESS_V07 } from "permissionless";
 import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
-import { http, type Address, type Chain, type Transport } from "viem";
+import {
+    http,
+    type Address,
+    type Chain,
+    type ProviderRpcError,
+    type Transport,
+    UserRejectedRequestError,
+} from "viem";
 import { ProviderNotFoundError, createConnector } from "wagmi";
 
 export type ConnectWagmiConfig<entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE> =
@@ -40,19 +47,11 @@ export function smartAccountConnector<
     sponsorTransactions = true,
     shimDisconnect = true,
 }: ConnectWagmiConfig<entryPoint>) {
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-    type Provider = any | undefined;
-    // biome-ignore lint/complexity/noBannedTypes: TODO: remove an
-    type Properties = {};
-    type StorageItem = {
-        [_ in "cometh-connect.connected" | `${string}.disconnected`]: true;
-    };
-
     let chain: Chain;
     // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     let client: any;
 
-    return createConnector<Provider, Properties, StorageItem>((config) => ({
+    return createConnector((config) => ({
         id: "cometh",
         name: "Cometh Connect",
         type: "cometh" as const,
@@ -65,56 +64,75 @@ export function smartAccountConnector<
             accounts: readonly Address[];
             chainId: number;
         }> {
-            const api = new API(apiKey, baseUrl);
-            chain = await getNetwork(api);
+            try {
+                const api = new API(apiKey, baseUrl);
+                chain = await getNetwork(api);
 
-            if (chainId && chainId !== (await this.getChainId())) {
-                throw new Error(`Invalid chainId ${chainId} requested`);
-            }
+                if (chainId && chainId !== (await this.getChainId())) {
+                    throw new Error(`Invalid chainId ${chainId} requested`);
+                }
 
-            const account = await createSafeSmartAccount({
-                apiKey,
-                rpcUrl,
-                baseUrl,
-                smartAccountAddress,
-                entryPoint: ENTRYPOINT_ADDRESS_V07,
-                comethSignerConfig,
-                safeContractConfig,
-            });
-
-            let middleware = undefined;
-
-            if (sponsorTransactions) {
-                const paymasterClient = await createComethPaymasterClient({
-                    transport: http(bundlerUrl),
-                    chain,
+                const account = await createSafeSmartAccount({
+                    apiKey,
+                    rpcUrl,
+                    baseUrl,
+                    smartAccountAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
+                    comethSignerConfig,
+                    safeContractConfig,
                 });
 
-                middleware = {
-                    sponsorUserOperation: paymasterClient.sponsorUserOperation,
-                    gasPrice: paymasterClient.gasPrice,
+                if (sponsorTransactions) {
+                    const paymasterClient = await createComethPaymasterClient({
+                        transport: http(bundlerUrl),
+                        chain,
+                        entryPoint: ENTRYPOINT_ADDRESS_V07,
+                    });
+
+                    client = createSmartAccountClient({
+                        account: account as unknown as SafeSmartAccount<
+                            ENTRYPOINT_ADDRESS_V07_TYPE,
+                            Transport,
+                            Chain | undefined
+                        >,
+                        entryPoint: ENTRYPOINT_ADDRESS_V07,
+                        chain,
+                        bundlerTransport: http(bundlerUrl),
+                        middleware: {
+                            sponsorUserOperation:
+                                paymasterClient.sponsorUserOperation,
+                            gasPrice: paymasterClient.gasPrice,
+                        },
+                    });
+                } else {
+                    client = createSmartAccountClient({
+                        account: account as unknown as SafeSmartAccount<
+                            ENTRYPOINT_ADDRESS_V07_TYPE,
+                            Transport,
+                            Chain | undefined
+                        >,
+                        entryPoint: ENTRYPOINT_ADDRESS_V07,
+                        chain,
+                        bundlerTransport: http(bundlerUrl),
+                    });
+                }
+
+                await config.storage?.removeItem(`${this.id}.disconnected`);
+
+                return {
+                    accounts: [client.account.address],
+                    chainId: await this.getChainId(),
                 };
+            } catch (error) {
+                if (
+                    /(user rejected|connection request reset)/i.test(
+                        (error as ProviderRpcError)?.message
+                    )
+                ) {
+                    throw new UserRejectedRequestError(error as Error);
+                }
+                throw error;
             }
-
-            client = createSmartAccountClient({
-                account: account as unknown as SafeSmartAccount<
-                    ENTRYPOINT_ADDRESS_V07_TYPE,
-                    Transport,
-                    Chain | undefined
-                >,
-                entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain,
-                bundlerTransport: http(bundlerUrl),
-                middleware,
-            });
-
-            await config.storage?.removeItem(`${this.id}.disconnected`);
-
-            return {
-                accounts: [client.account.address],
-                chainId: await this.getChainId(),
-            };
         },
         async disconnect() {
             // Remove shim signalling wallet is disconnected
@@ -122,11 +140,10 @@ export function smartAccountConnector<
                 config.storage?.setItem(`${this.id}.disconnected`, true);
         },
         async getAccounts() {
-            return [client.account.address];
+            return [client.account.address as Address];
         },
-        getChainId() {
-            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-            return chain.id as any;
+        async getChainId(): Promise<number> {
+            return chain.id;
         },
         async getProvider() {
             return client;

@@ -7,6 +7,7 @@ import "./lib/ui/globals.css";
 import { smartAccountConnector } from "@cometh/connect-sdk-4337";
 import { arbitrumSepolia } from "viem/chains";
 import { http, WagmiProvider, createConfig } from "wagmi";
+import type { Hex } from "viem";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -22,11 +23,15 @@ const rpcUrl = "https://arbitrum-sepolia.blockpi.network/v1/rpc/public";
 if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
+const localStorageAddress = window.localStorage.getItem(
+    "walletAddress"
+  ) as Hex;
+
 const connector = smartAccountConnector({
     apiKey,
     bundlerUrl,
     rpcUrl,
-    smartAccountAddress: "0x06A849c85d157293806147F2C28d2b350D8925D4",
+    smartAccountAddress: localStorageAddress,
     baseUrl,
 });
 
