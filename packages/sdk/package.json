@@ -7,7 +7,7 @@
       "url": "https://twitter.com/slovaye"
     }
   ],
-  "version": "0.1.0-dev.6",
+  "version": "0.1.0-dev.7",
   "description": "SDK Cometh Connect 4337",
   "repository": "https://github.com/cometh-game/connect-sdk-4337.git",
   "keywords": [
@@ -54,11 +54,9 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@alchemy/aa-core": "^3.6.1",
     "axios": "^1.6.8",
     "bowser": "^2.11.0",
-    "ethers": "^6.13.0",
-    "permissionless": "^0.1.10",
+    "permissionless": "^0.1.31",
     "psl": "^1.9.0",
     "viem": "^2",
     "wagmi": "^2"
