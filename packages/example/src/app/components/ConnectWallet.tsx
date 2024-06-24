@@ -1,6 +1,7 @@
 import { Icons } from "@/app/lib/ui/components";
 import { CheckIcon } from "@radix-ui/react-icons";
 
+
 interface ConnectWalletProps {
   connectionError: string | null;
   isConnecting: boolean;

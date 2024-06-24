@@ -1,6 +1,5 @@
 import type { ComethPaymasterRpcSchema } from "@/core/clients/types";
 import { deepHexlify } from "permissionless";
-import type { BundlerRpcSchema } from "permissionless/_types/types/bundler";
 import type {
     EntryPoint,
     GetEntryPointVersion,
@@ -8,25 +7,23 @@ import type {
 } from "permissionless/types";
 import type { UserOperation } from "permissionless/types/userOperation.js";
 import {
-    http,
     type Account,
     type Address,
     type Chain,
     type Client,
     type Hex,
     type Transport,
-    concat,
-    createClient,
-    encodeAbiParameters,
-    parseAbiParameters,
-    zeroAddress,
+    hexToBigInt,
 } from "viem";
 
 export type SponsorUserOperationReturnType = {
     callGasLimit: bigint;
     verificationGasLimit: bigint;
     preVerificationGas: bigint;
-    paymasterAndData: Hex;
+    paymaster: Address;
+    paymasterVerificationGasLimit: bigint;
+    paymasterPostOpGasLimit: bigint;
+    paymasterData: Hex;
 };
 
 export const sponsorUserOperation = async <
@@ -44,65 +41,33 @@ export const sponsorUserOperation = async <
     args: Prettify<{
         userOperation: UserOperation<GetEntryPointVersion<entryPoint>>;
         entryPoint: Address;
-        bundlerUrl: string;
     }>
 ): Promise<SponsorUserOperationReturnType> => {
-    const dummyPaymasterData = concat([
-        zeroAddress,
-        encodeAbiParameters(
-            parseAbiParameters("uint48, uint48"),
-            [+0x0000000000000000, +0x0000000000000000]
-        ),
-        `0x${"00".repeat(65)}` as `0x${string}`,
-    ]);
-
-    const bundlerClient = createClient({
-        transport: http(args.bundlerUrl),
-        type: "smartAccountClient",
-    }) as Client<TTransport, TChain, TAccount, BundlerRpcSchema<entryPoint>>;
-
-    const gasParameters = (await bundlerClient.request({
-        method: "eth_estimateUserOperationGas",
-        params: [
-            deepHexlify(args.userOperation),
-            args.entryPoint as entryPoint,
-        ],
-    })) as {
-        callGasLimit: Hex;
-        verificationGasLimit: Hex;
-        preVerificationGas: Hex;
-    };
-
-    const userOperation = {
-        ...args.userOperation,
-        callGasLimit: BigInt(gasParameters.callGasLimit),
-        // Add margin for verificationGasLimit as bundler won't estimate the entire validationUserOp and executeUserOp
-        verificationGasLimit:
-            BigInt(gasParameters.verificationGasLimit) + 500000n,
-        preVerificationGas: BigInt(gasParameters.preVerificationGas),
-        paymasterAndData: dummyPaymasterData,
-    };
-
-    const response = await client.request({
+    const response = (await client.request({
         method: "pm_sponsorUserOperation",
-        params: [deepHexlify(userOperation), args.entryPoint],
-    });
-
-    const responseV06 = response as {
-        paymasterAndData: Hex;
+        params: [deepHexlify(args.userOperation), args.entryPoint],
+    })) as {
+        paymasterAndData: never;
         preVerificationGas: Hex;
         verificationGasLimit: Hex;
         callGasLimit: Hex;
-        paymaster?: never;
-        paymasterVerificationGasLimit?: never;
-        paymasterPostOpGasLimit?: never;
-        paymasterData?: never;
+        paymaster?: Address;
+        paymasterVerificationGasLimit?: Hex;
+        paymasterPostOpGasLimit?: Hex;
+        paymasterData?: Hex;
     };
 
     return {
-        paymasterAndData: responseV06.paymasterAndData,
-        preVerificationGas: BigInt(responseV06.preVerificationGas),
-        verificationGasLimit: BigInt(responseV06.verificationGasLimit),
-        callGasLimit: BigInt(responseV06.callGasLimit),
+        callGasLimit: BigInt(response.callGasLimit),
+        verificationGasLimit: BigInt(response.verificationGasLimit),
+        preVerificationGas: BigInt(response.preVerificationGas),
+        paymaster: response.paymaster as Address,
+        paymasterVerificationGasLimit: hexToBigInt(
+            response.paymasterVerificationGasLimit as Hex
+        ),
+        paymasterPostOpGasLimit: hexToBigInt(
+            response.paymasterPostOpGasLimit as Hex
+        ),
+        paymasterData: response.paymasterData as Hex,
     };
 };

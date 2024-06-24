@@ -1,20 +1,21 @@
-import { ENTRYPOINT_ADDRESS_V06 } from "./constants";
+import { ENTRYPOINT_ADDRESS_V06, ENTRYPOINT_ADDRESS_V07 } from "./constants";
 
-import { signerToKernelSmartAccount } from "./core/accounts/kernel/createKernelAccount";
-import { createModularSmartAccount } from "./core/accounts/modular-account/createModularAccount";
-import { retrieveAccountAddressFromPasskey } from "./core/actions/retrieveAccountAddressFromPasskey";
-import { createSmartAccountClient } from "./core/clients/createModularClient";
+import { createSafeSmartAccount } from "./core/accounts/safe/createSafeSmartAccount";
+import { retrieveAccountAddressFromPasskey } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
+import { createSmartAccountClient } from "./core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
-import { useSignerRequests } from "./core/hooks/useSignerRequests";
+import { useAddDevice } from "./core/hooks/useAddDevice";
 import { createSigner } from "./core/signers/createSigner";
+import { smartAccountConnector } from "./wagmi/connector";
 
 export {
     createSigner,
-    signerToKernelSmartAccount,
-    createModularSmartAccount,
+    createSafeSmartAccount,
     createSmartAccountClient,
-    useSignerRequests,
+    useAddDevice,
     retrieveAccountAddressFromPasskey,
     createComethPaymasterClient,
+    smartAccountConnector,
     ENTRYPOINT_ADDRESS_V06,
+    ENTRYPOINT_ADDRESS_V07,
 };

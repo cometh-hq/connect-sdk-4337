@@ -3,6 +3,7 @@
     "files": {
         "ignore": [
             "example",
+            "example-wagmi",
             "_cjs",
             "_esm",
             "_types",

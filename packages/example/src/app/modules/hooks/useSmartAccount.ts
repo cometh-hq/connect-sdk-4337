@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { http, type Hex } from "viem";
-import { ENTRYPOINT_ADDRESS_V06, createComethPaymasterClient, createModularSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
+import { ENTRYPOINT_ADDRESS_V07, createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
 import { arbitrumSepolia } from "viem/chains";
 
 
@@ -12,6 +12,8 @@ export function useSmartAccount() {
   const [isConnected, setIsConnected] = useState(false);
 
   const [connectionError, setConnectionError] = useState<string | null>(null);
+
+  const [newSigner, setNewSigner] = useState<any | null>(null);
 
   const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
@@ -38,36 +40,57 @@ export function useSmartAccount() {
           const baseUrl = "http://127.0.0.1:8000/connect"
     
           if (localStorageAddress) {
-            smartAccount = await createModularSmartAccount({
+            smartAccount = await createSafeSmartAccount({
               apiKey,
-              rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
+              rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
               baseUrl,
               smartAccountAddress: localStorageAddress,
-              entryPoint: ENTRYPOINT_ADDRESS_V06,
+              entryPoint: ENTRYPOINT_ADDRESS_V07,
             });
           } else {
-            smartAccount = await createModularSmartAccount({
+            smartAccount = await createSafeSmartAccount({
               apiKey,
-              rpcUrl: "https://arb-sepolia.g.alchemy.com/v2/1I1l-3BakFdYZi3nguZrWu6etwg3KhVY",
+              rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
               baseUrl,
-              entryPoint: ENTRYPOINT_ADDRESS_V06,
+              entryPoint: ENTRYPOINT_ADDRESS_V07,
             });
             window.localStorage.setItem("walletAddress", smartAccount.address);
           }
+
+          console.log({smartAccount})
+
       
-          const paymasterClient = await createComethPaymasterClient({apiKey, bundlerUrl, baseUrl})
+          const paymasterClient = await createComethPaymasterClient(
+            {
+            transport: http(bundlerUrl),
+            chain: arbitrumSepolia,
+          entryPoint: ENTRYPOINT_ADDRESS_V07,
+        }
+        )
+
+
+        console.log({paymasterClient})
+
+
+       
     
     
         const smartAccountClient = createSmartAccountClient({
             account: smartAccount,
-            entryPoint: ENTRYPOINT_ADDRESS_V06,
+            entryPoint: ENTRYPOINT_ADDRESS_V07,
             chain: arbitrumSepolia,
             bundlerTransport: http(bundlerUrl),
             middleware: {
               sponsorUserOperation: paymasterClient.sponsorUserOperation,
               gasPrice: paymasterClient.gasPrice,
           }
-          })
+          }) 
+
+          const owners = await smartAccountClient.getOwners();
+
+
+          
+ 
 
           setSmartAccount(smartAccountClient);
       setIsConnected(true);
@@ -85,6 +108,8 @@ export function useSmartAccount() {
     isConnected,
     isConnecting,
     connectionError,
+    newSigner,
+    setNewSigner,
     setConnectionError,
   };
 }

@@ -1,4 +1,12 @@
-import { type Address, type Hex, hashMessage, keccak256, toBytes } from "viem";
+import {
+    type Address,
+    type Hex,
+    encodeAbiParameters,
+    hashMessage,
+    keccak256,
+    toBytes,
+    toHex,
+} from "viem";
 import {
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
@@ -7,7 +15,8 @@ import {
 } from "../../../errors";
 import type { API } from "../../services/API";
 import {
-    challengePrefix,
+    extractClientDataFields,
+    extractSignature,
     hexArrayStr,
     parseHex,
     rpId,
@@ -16,20 +25,20 @@ import type {
     Assertion,
     PasskeyCredential,
     PasskeyLocalStorageFormat,
-    WebAuthnSignature,
     WebAuthnSigner,
     webAuthnOptions,
 } from "./types";
-import * as utils from "./utils";
 
 const createPasskeySigner = async ({
-    webAuthnOptions,
     api,
+    webAuthnOptions,
     passKeyName,
+    safeWebAuthnSharedSignerAddress,
 }: {
-    webAuthnOptions: webAuthnOptions;
     api: API;
+    webAuthnOptions: webAuthnOptions;
     passKeyName?: string;
+    safeWebAuthnSharedSignerAddress?: Address;
 }): Promise<PasskeyLocalStorageFormat> => {
     try {
         const name = passKeyName || "Cometh Connect";
@@ -100,10 +109,12 @@ const createPasskeySigner = async ({
             "base64"
         ).toString("hex")}` as Hex;
 
-        const signerAddress = await api.predictWebAuthnSignerAddress({
-            publicKeyX: x,
-            publicKeyY: y,
-        });
+        const signerAddress =
+            safeWebAuthnSharedSignerAddress ??
+            (await api.predictWebAuthnSignerAddress({
+                publicKeyX: x,
+                publicKeyY: y,
+            }));
 
         // Create a PasskeyCredentialWithPubkeyCoordinates object
         const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
@@ -125,7 +136,7 @@ const createPasskeySigner = async ({
 const sign = async (
     challenge: string,
     publicKeyCredential?: PublicKeyCredentialDescriptor[]
-): Promise<WebAuthnSignature> => {
+): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     const assertion = (await navigator.credentials.get({
         publicKey: {
             challenge: toBytes(challenge),
@@ -137,31 +148,28 @@ const sign = async (
 
     if (!assertion) throw new Error("Passkey signature failed");
 
-    const rs = utils.derToRS(new Uint8Array(assertion.response.signature));
-
-    const challengeOffset = utils.getChallengeOffset(
-        assertion.response.clientDataJSON,
-        challengePrefix
+    const signature = encodeAbiParameters(
+        [
+            { type: "bytes", name: "authenticatorData" },
+            { type: "bytes", name: "clientDataFields" },
+            { type: "uint256[2]", name: "signature" },
+        ],
+        [
+            toHex(new Uint8Array(assertion.response.authenticatorData)),
+            extractClientDataFields(assertion.response) as Hex,
+            extractSignature(assertion.response),
+        ]
     );
 
-    return {
-        id: hexArrayStr(assertion.rawId),
-        authenticatorData: utils.hexArrayStr(
-            assertion.response.authenticatorData
-        ),
-        clientData: utils.hexArrayStr(assertion.response.clientDataJSON),
-        challengeOffset,
-        signature: {
-            r: utils.hexArrayStr(rs[0]) as Hex,
-            s: utils.hexArrayStr(rs[1]) as Hex,
-        },
-    };
+    const publicKeyId = hexArrayStr(assertion.rawId) as Hex;
+
+    return { signature, publicKeyId };
 };
 
 const signWithPasskey = async (
     challenge: string,
     webAuthnSigners?: WebAuthnSigner[]
-): Promise<WebAuthnSignature> => {
+): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     let publicKeyCredentials: PublicKeyCredentialDescriptor[] | undefined;
 
     if (webAuthnSigners) {
@@ -215,11 +223,6 @@ const getPasskeySigner = async ({
     api: API;
     smartAccountAddress: Address;
 }): Promise<PasskeyLocalStorageFormat> => {
-    const passkeySigners =
-        await api.getPasskeySignersByWalletAddress(smartAccountAddress);
-
-    if (passkeySigners.length === 0) throw new NoPasskeySignerFoundInDBError();
-
     /* Retrieve potentiel WebAuthn credentials in storage */
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
 
@@ -237,8 +240,13 @@ const getPasskeySigner = async ({
         return passkey;
     }
 
-    /* If no local storage or no match in db, Call Webauthn API to get current signer */
-    let webAuthnSignature: WebAuthnSignature;
+    const passkeySigners =
+        await api.getPasskeySignersByWalletAddress(smartAccountAddress);
+
+    if (passkeySigners.length === 0) throw new NoPasskeySignerFoundInDBError();
+
+    //If no local storage or no match in db, Call Webauthn API to get current signer
+    let webAuthnSignature: { signature: Hex; publicKeyId: Hex };
     try {
         webAuthnSignature = await signWithPasskey(
             "SDK Connection",
@@ -249,16 +257,16 @@ const getPasskeySigner = async ({
     }
 
     const signingWebAuthnSigner = await api.getPasskeySignerByPublicKeyId(
-        webAuthnSignature.id as Hex
+        webAuthnSignature.publicKeyId as Hex
     );
 
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
-        id: signingWebAuthnSigner.publicKeyId,
+        id: signingWebAuthnSigner.publicKeyId as Hex,
         pubkeyCoordinates: {
             x: signingWebAuthnSigner.publicKeyX as Hex,
             y: signingWebAuthnSigner.publicKeyY as Hex,
         },
-        signerAddress: signingWebAuthnSigner.signerAddress,
+        signerAddress: signingWebAuthnSigner.signerAddress as Address,
     };
 
     setPasskeyInStorage(
@@ -278,7 +286,8 @@ const retrieveSmartAccountAddressFromPasskey = async (
     let publicKeyId: Hex;
 
     try {
-        publicKeyId = (await signWithPasskey("Retrieve user wallet")).id as Hex;
+        publicKeyId = (await signWithPasskey("Retrieve user wallet"))
+            .publicKeyId as Hex;
     } catch {
         throw new RetrieveWalletFromPasskeyError();
     }
@@ -295,14 +304,14 @@ const retrieveSmartAccountAddressFromPasskey = async (
     } = signingPasskeySigner;
 
     setPasskeyInStorage(
-        smartAccountAddress,
+        smartAccountAddress as Address,
         publicKeyId,
-        publicKeyX,
-        publicKeyY,
-        signerAddress
+        publicKeyX as Hex,
+        publicKeyY as Hex,
+        signerAddress as Address
     );
 
-    return smartAccountAddress;
+    return smartAccountAddress as Address;
 };
 
 export {

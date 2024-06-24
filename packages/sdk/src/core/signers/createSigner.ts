@@ -16,6 +16,7 @@ import {
 import { API } from "../services/API";
 import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
 
+import { getDeviceData } from "../services/deviceService";
 import type { PasskeyLocalStorageFormat } from "./passkeys/types";
 import {
     DEFAULT_WEBAUTHN_OPTIONS,
@@ -23,7 +24,8 @@ import {
 } from "./passkeys/utils";
 import type { ComethSigner, CreateSignerParams } from "./types";
 
-export const saveSignerInStorage = async (
+export const saveSigner = async (
+    api: API,
     signer: ComethSigner,
     smartAccountAddress: Address
 ) => {
@@ -41,6 +43,16 @@ export const saveSignerInStorage = async (
             signer.passkey.pubkeyCoordinates.y,
             signer.passkey.signerAddress
         );
+
+        await api.createWebAuthnSigner({
+            walletAddress: smartAccountAddress,
+            publicKeyId: signer.passkey.id,
+            publicKeyX: signer.passkey.pubkeyCoordinates.x,
+            publicKeyY: signer.passkey.pubkeyCoordinates.y,
+            deviceData: getDeviceData(),
+            signerAddress: signer.passkey.signerAddress,
+            isSharedWebAuthnSigner: true,
+        });
     }
 };
 
@@ -75,17 +87,20 @@ export async function createSigner({
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
+    safeWebAuthnSharedSignerAddress,
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
+
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
     if (webAuthnCompatible && !isFallbackSigner()) {
         let passkey: PasskeyLocalStorageFormat;
         if (!smartAccountAddress) {
             passkey = await createPasskeySigner({
-                webAuthnOptions,
                 api,
+                webAuthnOptions,
                 passKeyName,
+                safeWebAuthnSharedSignerAddress,
             });
 
             if (passkey.publicKeyAlgorithm !== -7) {
@@ -98,7 +113,10 @@ export async function createSigner({
                 };
             }
         } else {
-            passkey = await getPasskeySigner({ api, smartAccountAddress });
+            passkey = await getPasskeySigner({
+                api,
+                smartAccountAddress,
+            });
         }
 
         return {

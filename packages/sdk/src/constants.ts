@@ -13,7 +13,7 @@ import {
     polygonAmoy,
     polygonMumbai,
 } from "viem/chains";
-import { muster, musterTestnet, redstoneHolesky } from "./customChains";
+import { muster, musterTestnet } from "./customChains";
 
 const API_URL = "https://api.connect.cometh.io";
 
@@ -28,11 +28,6 @@ const networks = {
     137: {
         rpcUrl: "https://polygon-rpc.com",
         networkName: "Polygon",
-        currency: "MATIC",
-    },
-    80001: {
-        rpcUrl: "https://rpc-mumbai.maticvigil.com",
-        networkName: "Mumbai",
         currency: "MATIC",
     },
     80002: {
@@ -68,16 +63,6 @@ const networks = {
     4078: {
         rpcUrl: "https://muster.alt.technology/",
         networkName: "Muster",
-        currency: "ETH",
-    },
-    2121337: {
-        rpcUrl: "https://muster-anytrust.alt.technology",
-        networkName: "Muster Testnet",
-        currency: "ETH",
-    },
-    17001: {
-        rpcUrl: "https://rpc.holesky.redstone.xyz",
-        networkName: "Redstone Holesky",
         currency: "ETH",
     },
     10: {
@@ -126,7 +111,6 @@ const supportedChains = [
     baseSepolia,
     muster,
     musterTestnet,
-    redstoneHolesky,
     optimism,
     optimismSepolia,
 ];
