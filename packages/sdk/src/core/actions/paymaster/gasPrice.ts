@@ -25,7 +25,7 @@ export const gasPrice = async <
     };
 
     return {
-        maxFeePerGas: maxFeePerGas * 2n,
+        maxFeePerGas: maxFeePerGas * 4n,
         maxPriorityFeePerGas: maxFeePerGas,
     };
 };

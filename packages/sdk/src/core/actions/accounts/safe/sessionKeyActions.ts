@@ -1,15 +1,21 @@
 import { safe4337SessionKeyModuleAbi } from "@/core/accounts/safe/abi/safe4337SessionKeyModuleAbi";
-import { createFallbackEoaSigner } from "@/core/signers/fallbackEoa/fallbackEoaSigner";
-import { encryptSessionKeyInStorage } from "@/core/signers/fallbackEoa/services/eoaFallbackService";
-import type { SmartAccountClient } from "permissionless";
+import { createFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
+import { encryptSessionKeyInStorage } from "@/core/signers/ecdsa/sessionKeyEoa/sessionKeyEoaService";
+import {
+    type SmartAccountClient,
+    isSmartAccountDeployed,
+} from "permissionless";
 import type { EntryPoint } from "permissionless/_types/types";
 import type { SmartAccount } from "permissionless/accounts";
 import {
+    http,
     type Address,
     type Chain,
     type Hash,
     type Transport,
+    createPublicClient,
     encodeFunctionData,
+    getContract,
 } from "viem";
 
 type Session = {
@@ -30,10 +36,47 @@ const defaultValidUntil = new Date(
     defaultValidAfter.getTime() + 1000 * 60 * 60 * 1
 );
 
+export const querySessionFrom4337ModuleAddress = async (args: {
+    chain: Chain;
+    smartAccountAddress: Address;
+    safe4337SessionKeysModule: Address;
+    sessionKey: Address;
+    rpcUrl?: string;
+}) => {
+    const publicClient = createPublicClient({
+        chain: args.chain,
+        transport: http(args?.rpcUrl),
+        cacheTime: 60_000,
+        batch: {
+            multicall: { wait: 50 },
+        },
+    });
+
+    const isDeployed = await isSmartAccountDeployed(
+        publicClient,
+        args.smartAccountAddress
+    );
+
+    if (!isDeployed) throw new Error("Smart account is not deployed.");
+
+    const safe4337SessionKeyModuleContract = getContract({
+        address: "0x6b6454B66964a466DfBeF991379AA4034ea64A2f" as Address,
+        abi: safe4337SessionKeyModuleAbi,
+        client: publicClient,
+    });
+
+    return (await safe4337SessionKeyModuleContract.read.sessionKeys([
+        args.sessionKey,
+    ])) as Session;
+};
+
 export type SafeSessionKeyActions = {
     addSessionKey: (args: AddSessionKeyParams) => Promise<Hash>;
     revokeSessionKey: (args: { sessionKey: Address }) => Promise<Hash>;
-    getSessionFromAddress: (args: { sessionKey: Address }) => Promise<Session>;
+    getSessionFromAddress: (args: {
+        sessionKey: Address;
+        rpcUrl?: string;
+    }) => Promise<Session>;
     addWhitelistDestination: (args: {
         sessionKey: Address;
         destinations: Address[];
@@ -64,6 +107,8 @@ export const safeSessionKeyActions: <
             throw new Error("destinations cannot be empty");
 
         const fallbackEoaSigner = await createFallbackEoaSigner();
+
+        console.log({ fallbackEoaSigner });
 
         await encryptSessionKeyInStorage(
             client.account?.address,
@@ -96,14 +141,17 @@ export const safeSessionKeyActions: <
         });
     },
 
-    async getSessionFromAddress(args: { sessionKey: Address }) {
-        return await client.sendTransaction({
-            to: client.account?.address,
-            data: encodeFunctionData({
-                abi: safe4337SessionKeyModuleAbi,
-                functionName: "sessionKeys",
-                args: [args.sessionKey],
-            }),
+    async getSessionFromAddress(args: {
+        sessionKey: Address;
+        rpcUrl?: string;
+    }) {
+        return await querySessionFrom4337ModuleAddress({
+            chain: client.chain,
+            smartAccountAddress: client.account?.address,
+            safe4337SessionKeysModule:
+                "0x6b6454B66964a466DfBeF991379AA4034ea64A2f" as Address,
+            sessionKey: args.sessionKey,
+            rpcUrl: args.rpcUrl,
         });
     },
 

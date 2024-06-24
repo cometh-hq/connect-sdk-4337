@@ -2,6 +2,10 @@ import {
     type SafeOwnerPluginActions,
     safeOwnerPluginActions,
 } from "@/core/actions/accounts/safe/safeOwnerActions";
+import {
+    type SafeSessionKeyActions,
+    safeSessionKeyActions,
+} from "@/core/actions/accounts/safe/sessionKeyActions";
 import type {
     SmartAccountClient,
     SmartAccountClientConfig,
@@ -23,7 +27,8 @@ export type ComethAccountClientActions<
         ? U
         : never,
 > = ComethClientActions<TEntryPoint, TChain, TSmartAccount> &
-    SafeOwnerPluginActions;
+    SafeOwnerPluginActions &
+    SafeSessionKeyActions;
 
 export type ComethSmartAccountClient<
     TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
@@ -74,7 +79,11 @@ export function createSmartAccountClient<
         })
     ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
 
-    return client.extend(safeOwnerPluginActions) as ComethSmartAccountClient<
+    const enshrinedClient = client.extend(safeSessionKeyActions);
+
+    return enshrinedClient.extend(
+        safeOwnerPluginActions
+    ) as ComethSmartAccountClient<
         TSmartAccount,
         TTransport,
         TChain,

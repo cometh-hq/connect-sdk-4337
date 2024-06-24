@@ -5,7 +5,7 @@ import {
 } from "viem/accounts";
 
 import type { Hex, PrivateKeyAccount } from "viem";
-import { getSignerLocalStorage } from "./services/eoaFallbackService";
+import { getSignerLocalStorage } from "../services/ecdsaService";
 
 export const getFallbackEoaSigner = async ({
     smartAccountAddress,

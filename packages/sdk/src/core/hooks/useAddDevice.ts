@@ -5,7 +5,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { API } from "../services/API";
 import { getDeviceData } from "../services/deviceService";
 import { isFallbackSigner } from "../signers/createSigner";
-import { encryptSignerInStorage } from "../signers/fallbackEoa/services/eoaFallbackService";
+import { encryptSignerInStorage } from "../signers/ecdsa/services/ecdsaService";
 import {
     createPasskeySigner,
     setPasskeyInStorage,

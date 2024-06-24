@@ -6,7 +6,7 @@ import type { SmartAccountSigner } from "permissionless/accounts";
 import {
     createFallbackEoaSigner,
     getFallbackEoaSigner,
-} from "./fallbackEoa/fallbackEoaSigner";
+} from "./ecdsa/fallbackEoa/fallbackEoaSigner";
 import {
     createPasskeySigner,
     getPasskeySigner,
@@ -14,10 +14,13 @@ import {
 } from "./passkeys/passkeyService";
 
 import { API } from "../services/API";
-import { encryptSignerInStorage } from "./fallbackEoa/services/eoaFallbackService";
+import { encryptSignerInStorage } from "./ecdsa/services/ecdsaService";
 
 import { getDeviceData } from "../services/deviceService";
-import type { webAuthnOptions,  PasskeyLocalStorageFormat } from "./passkeys/types";
+import type {
+    PasskeyLocalStorageFormat,
+    webAuthnOptions,
+} from "./passkeys/types";
 import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
@@ -70,18 +73,19 @@ export const isFallbackSigner = (): boolean => {
     return !!fallbackSigner;
 };
 
-export const isDeviceCompatibleWithPasskeys = async (options: {webAuthnOptions: webAuthnOptions}) => {
-
-    const webAuthnCompatible = await isWebAuthnCompatible(options.webAuthnOptions);
+export const isDeviceCompatibleWithPasskeys = async (options: {
+    webAuthnOptions: webAuthnOptions;
+}) => {
+    const webAuthnCompatible = await isWebAuthnCompatible(
+        options.webAuthnOptions
+    );
 
     if (webAuthnCompatible && !isFallbackSigner()) {
         return true;
     }
 
-        return false;
-
-
-}
+    return false;
+};
 
 /**
  * Helper to create the Cometh Signer
@@ -104,7 +108,9 @@ export async function createSigner({
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
 
-    const passkeyCompatible = await isDeviceCompatibleWithPasskeys({webAuthnOptions});
+    const passkeyCompatible = await isDeviceCompatibleWithPasskeys({
+        webAuthnOptions,
+    });
 
     if (passkeyCompatible) {
         let passkey: PasskeyLocalStorageFormat;

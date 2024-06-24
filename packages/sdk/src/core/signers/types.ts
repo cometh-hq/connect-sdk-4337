@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { eoaFallback } from "./fallbackEoa/types";
+import type { eoaFallback } from "./ecdsa/fallbackEoa/types";
 import type {
     PasskeyLocalStorageFormat,
     webAuthnOptions,
