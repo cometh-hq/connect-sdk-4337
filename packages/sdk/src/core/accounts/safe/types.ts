@@ -22,7 +22,7 @@ export const EIP712_SAFE_OPERATION_TYPE = {
 };
 
 export type SafeContractConfig = {
-    chainid: string;
+    chainId: string;
     safeWebAuthnSharedSignerAddress: Address;
     safe4337ModuleAddress: Address;
     safeModuleSetUpAddress: Address;
