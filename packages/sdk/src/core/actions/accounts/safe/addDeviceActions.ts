@@ -1,10 +1,9 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { safeWebauthnSignerFactory } from "@/core/accounts/safe/abi/safeWebauthnSignerFactory";
+import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type { SafeContractConfig } from "@/core/accounts/safe/types";
-import { API } from "@/core/services/API";
 import type { Signer } from "@/core/types";
 import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
-import type { SmartAccount } from "permissionless/accounts/types";
 import {
     type Middleware,
     sendTransactions,
@@ -16,25 +15,27 @@ import type { Chain, Client, Hash, Transport } from "viem";
 import { encodeFunctionData, getAction } from "viem/utils";
 
 export type ValidateAddDevice<entryPoint extends EntryPoint> = {
-    apiKey: string;
     signer: Signer;
-    baseUrl?: string;
 } & Middleware<entryPoint>;
 
 export async function validateAddDevice<
     entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends SmartAccount<entryPoint> | undefined =
-        | SmartAccount<entryPoint>
+    TAccount extends
+        | SafeSmartAccount<entryPoint, Transport, Chain>
+        | undefined =
+        | SafeSmartAccount<entryPoint, Transport, Chain>
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<ValidateAddDevice<entryPoint>>
 ): Promise<Hash> {
-    const { apiKey, baseUrl, signer, middleware } = args;
+    const { signer, middleware } = args;
 
-    const api = new API(apiKey, baseUrl);
+    const api = client?.account?.getConnectApi();
+
+    if (!api) throw new Error("No api found");
 
     const addOwnerCalldata = encodeFunctionData({
         abi: SafeAbi,

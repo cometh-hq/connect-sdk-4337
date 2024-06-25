@@ -81,14 +81,19 @@ export const getSessionKeySigner = async ({
         rpcUrl,
     });
 
-    if (session.revoked) throw new Error("Session key has been revoked");
+    try {
+        const now = new Date();
+        const validAfter = new Date(session.validAfter);
+        const validUntil = new Date(session.validUntil);
 
-    const now = new Date();
-    const validAfter = new Date(session.validAfter);
-    const validUntil = new Date(session.validUntil);
-
-    if (validAfter > now) throw new Error("Session key is not yet valid");
-    if (validUntil < now) throw new Error("Session key is expired");
+        if (session.revoked) throw new Error("Session key has been revoked");
+        if (validAfter > now) throw new Error("Session key is not yet valid");
+        if (validUntil < now) throw new Error("Session key is expired");
+    } catch (err) {
+        console.info(err);
+        deleteSessionKeyInStorage(smartAccountAddress);
+        return undefined;
+    }
 
     return {
         type: "localWallet",
@@ -98,4 +103,10 @@ export const getSessionKeySigner = async ({
             encryptionSalt: defaultEncryptionSalt,
         },
     };
+};
+
+const deleteSessionKeyInStorage = (smartAccountAddress: Address): void => {
+    window.localStorage.removeItem(
+        `cometh-connect-sessionKey-${smartAccountAddress}`
+    );
 };

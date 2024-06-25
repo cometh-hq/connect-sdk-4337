@@ -17,7 +17,11 @@ import {
     type Transport,
     UserRejectedRequestError,
 } from "viem";
-import { ProviderNotFoundError, createConnector } from "wagmi";
+import {
+    type CreateConnectorFn,
+    ProviderNotFoundError,
+    createConnector,
+} from "wagmi";
 
 export type ConnectWagmiConfig<entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE> =
     createSafeSmartAccountParameters<entryPoint> & {
@@ -46,7 +50,7 @@ export function smartAccountConnector<
     safeContractConfig,
     sponsorTransactions = true,
     shimDisconnect = true,
-}: ConnectWagmiConfig<entryPoint>) {
+}: ConnectWagmiConfig<entryPoint>): CreateConnectorFn {
     let chain: Chain;
     // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     let client: any;
@@ -90,10 +94,10 @@ export function smartAccountConnector<
                     });
 
                     client = createSmartAccountClient({
-                        account: account as unknown as SafeSmartAccount<
+                        account: account as SafeSmartAccount<
                             ENTRYPOINT_ADDRESS_V07_TYPE,
                             Transport,
-                            Chain | undefined
+                            Chain
                         >,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,
@@ -106,10 +110,10 @@ export function smartAccountConnector<
                     });
                 } else {
                     client = createSmartAccountClient({
-                        account: account as unknown as SafeSmartAccount<
+                        account: account as SafeSmartAccount<
                             ENTRYPOINT_ADDRESS_V07_TYPE,
                             Transport,
-                            Chain | undefined
+                            Chain
                         >,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,

@@ -27,10 +27,11 @@ import { getClient } from "../utils";
 import { createSigner, saveSigner } from "@/core/signers/createSigner";
 import type { SignerConfig } from "@/core/signers/types";
 
+import type { EntryPoint } from "permissionless/_types/types";
 import { MultiSendContractABI } from "./abi/Multisend";
 import { safe4337ModuleAbi } from "./abi/safe4337ModuleAbi";
 import { SafeProxyContractFactoryABI } from "./abi/safeProxyFactory";
-import { comethSignerToSafeSigner } from "./safeSigner/createSafeSigner";
+import { comethSignerToSafeSigner } from "./safeSigner/comethSignerToSafeSigner";
 import {
     encodeMultiSendTransactions,
     getSafeInitializer,
@@ -38,10 +39,13 @@ import {
 import { type SafeContractConfig, SafeProxyBytecode } from "./types";
 
 export type SafeSmartAccount<
-    entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
+    entryPoint extends EntryPoint,
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
-> = SmartAccount<entryPoint, "safeSmartAccount", transport, chain>;
+> = SmartAccount<entryPoint, "safeSmartAccount", transport, chain> & {
+    getConnectApi(): API;
+    safe4337SessionKeysModule: Address;
+};
 
 /**
  * Authenticate the wallet to the cometh api
@@ -149,7 +153,7 @@ export type createSafeSmartAccountParameters<
 export async function createSafeSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
     TTransport extends Transport = Transport,
-    TChain extends Chain | undefined = Chain | undefined,
+    TChain extends Chain  = Chain ,
 >({
     apiKey,
     rpcUrl,
@@ -235,7 +239,7 @@ export async function createSafeSmartAccount<
         }
     );
 
-    return toSmartAccount({
+    const smartAccount = toSmartAccount({
         address: smartAccountAddress,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
@@ -344,4 +348,12 @@ export async function createSafeSmartAccount<
             return safeSigner.getDummySignature(userOp);
         },
     });
+
+    return {
+        ...smartAccount,
+        safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
+        getConnectApi(): API {
+            return api;
+        },
+    };
 }

@@ -33,8 +33,6 @@ export async function comethSignerToSafeSigner<
         safe4337SessionKeysModule,
     });
 
-    console.log({ sessionKeySigner });
-
     if (sessionKeySigner) {
         return {
             ...(await safeSessionKeySigner(client, {

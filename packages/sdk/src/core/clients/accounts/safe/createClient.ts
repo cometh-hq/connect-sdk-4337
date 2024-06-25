@@ -1,3 +1,4 @@
+import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import {
     type SafeOwnerPluginActions,
     safeOwnerPluginActions,
@@ -21,7 +22,9 @@ import {
 } from "../../decorators/cometh";
 
 export type ComethAccountClientActions<
-    TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
+    TSmartAccount extends
+        | SafeSmartAccount<TEntryPoint, Transport, Chain>
+        | undefined,
     TChain extends Chain | undefined = undefined,
     TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<infer U>
         ? U
@@ -31,7 +34,9 @@ export type ComethAccountClientActions<
     SafeSessionKeyActions;
 
 export type ComethSmartAccountClient<
-    TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
+    TSmartAccount extends
+        | SafeSmartAccount<TEntryPoint, Transport, Chain>
+        | undefined,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = undefined,
     TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<infer U>
@@ -48,7 +53,9 @@ export type ComethSmartAccountClient<
 >;
 
 export function createSmartAccountClient<
-    TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
+    TSmartAccount extends
+        | SafeSmartAccount<TEntryPoint, Transport, Chain>
+        | undefined,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = undefined,
     TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<infer U>

@@ -60,7 +60,7 @@ export const querySessionFrom4337ModuleAddress = async (args: {
     if (!isDeployed) throw new Error("Smart account is not deployed.");
 
     const safe4337SessionKeyModuleContract = getContract({
-        address: "0x6b6454B66964a466DfBeF991379AA4034ea64A2f" as Address,
+        address: args.safe4337SessionKeysModule,
         abi: safe4337SessionKeyModuleAbi,
         client: publicClient,
     });
@@ -68,6 +68,42 @@ export const querySessionFrom4337ModuleAddress = async (args: {
     return (await safe4337SessionKeyModuleContract.read.sessionKeys([
         args.sessionKey,
     ])) as Session;
+};
+
+export const queryIsWhitelistFrom4337ModuleAddress = async (args: {
+    chain: Chain;
+    smartAccountAddress: Address;
+    safe4337SessionKeysModule: Address;
+    sessionKey: Address;
+    targetAddress: Address;
+    rpcUrl?: string;
+}) => {
+    const publicClient = createPublicClient({
+        chain: args.chain,
+        transport: http(args?.rpcUrl),
+        cacheTime: 60_000,
+        batch: {
+            multicall: { wait: 50 },
+        },
+    });
+
+    const isDeployed = await isSmartAccountDeployed(
+        publicClient,
+        args.smartAccountAddress
+    );
+
+    if (!isDeployed) throw new Error("Smart account is not deployed.");
+
+    const safe4337SessionKeyModuleContract = getContract({
+        address: args.safe4337SessionKeysModule,
+        abi: safe4337SessionKeyModuleAbi,
+        client: publicClient,
+    });
+
+    return (await safe4337SessionKeyModuleContract.read.whitelistDestinations([
+        args.sessionKey,
+        args.targetAddress,
+    ])) as boolean;
 };
 
 export type SafeSessionKeyActions = {
@@ -85,6 +121,11 @@ export type SafeSessionKeyActions = {
         sessionKey: Address;
         destination: Address;
     }) => Promise<Hash>;
+    isAddressWhitelistDestination: (args: {
+        sessionKey: Address;
+        targetAddress: Address;
+        rpcUrl?: string;
+    }) => Promise<boolean>;
 };
 
 export const safeSessionKeyActions: <
@@ -107,8 +148,6 @@ export const safeSessionKeyActions: <
             throw new Error("destinations cannot be empty");
 
         const fallbackEoaSigner = await createFallbackEoaSigner();
-
-        console.log({ fallbackEoaSigner });
 
         await encryptSessionKeyInStorage(
             client.account?.address,
@@ -148,8 +187,8 @@ export const safeSessionKeyActions: <
         return await querySessionFrom4337ModuleAddress({
             chain: client.chain,
             smartAccountAddress: client.account?.address,
-            safe4337SessionKeysModule:
-                "0x6b6454B66964a466DfBeF991379AA4034ea64A2f" as Address,
+            safe4337SessionKeysModule: client.account
+                .safe4337SessionKeysModule as Address,
             sessionKey: args.sessionKey,
             rpcUrl: args.rpcUrl,
         });
@@ -177,9 +216,25 @@ export const safeSessionKeyActions: <
             to: client.account?.address,
             data: encodeFunctionData({
                 abi: safe4337SessionKeyModuleAbi,
-                functionName: "addWhitelistDestination",
+                functionName: "removeWhitelistDestination",
                 args: [args.sessionKey, args.destination],
             }),
+        });
+    },
+
+    async isAddressWhitelistDestination(args: {
+        sessionKey: Address;
+        targetAddress: Address;
+        rpcUrl?: string;
+    }) {
+        return await queryIsWhitelistFrom4337ModuleAddress({
+            chain: client.chain,
+            smartAccountAddress: client.account?.address,
+            safe4337SessionKeysModule: client.account
+                .safe4337SessionKeysModule as Address,
+            sessionKey: args.sessionKey,
+            targetAddress: args.targetAddress,
+            rpcUrl: args.rpcUrl,
         });
     },
 });
