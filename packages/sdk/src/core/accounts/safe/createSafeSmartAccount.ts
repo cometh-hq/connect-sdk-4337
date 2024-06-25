@@ -153,7 +153,7 @@ export type createSafeSmartAccountParameters<
 export async function createSafeSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
     TTransport extends Transport = Transport,
-    TChain extends Chain  = Chain ,
+    TChain extends Chain = Chain,
 >({
     apiKey,
     rpcUrl,
@@ -234,6 +234,7 @@ export async function createSafeSmartAccount<
         {
             comethSigner,
             safe4337SessionKeysModule,
+            multisend: multisendAddress,
             smartAccountAddress,
             rpcUrl,
         }

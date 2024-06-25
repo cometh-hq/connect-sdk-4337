@@ -7,7 +7,7 @@ import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccou
 import {
     type ValidateAddDevice,
     validateAddDevice,
-} from "@/core/actions/accounts/safe/addDeviceActions.js";
+} from "@/core/actions/accounts/safe/owners/addDeviceActions.js";
 
 export type ComethClientActions<
     entryPoint extends EntryPoint,

@@ -10,6 +10,7 @@ import { safeWebAuthnSigner } from "./webauthn/webAuthn.js";
 type SafeSignerParams = {
     comethSigner: ComethSigner;
     safe4337SessionKeysModule: Address;
+    multisend: Address;
     smartAccountAddress: Address;
     rpcUrl?: string;
 };
@@ -22,6 +23,7 @@ export async function comethSignerToSafeSigner<
     {
         comethSigner,
         safe4337SessionKeysModule,
+        multisend,
         smartAccountAddress,
         rpcUrl,
     }: SafeSignerParams
@@ -38,6 +40,8 @@ export async function comethSignerToSafeSigner<
             ...(await safeSessionKeySigner(client, {
                 signer: sessionKeySigner.eoaFallback.signer,
                 safe4337SessionKeysModule,
+                smartAccountAddress,
+                multisend,
             })),
         };
     }

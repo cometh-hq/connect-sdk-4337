@@ -1,5 +1,6 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { SAFE_SENTINEL_OWNERS } from "@/core/accounts/safe/types";
+import type { DeviceData, WebAuthnSigner } from "@/core/types";
 import {
     type SmartAccountClient,
     isSmartAccountDeployed,
@@ -23,6 +24,18 @@ export type SafeOwnerPluginActions = {
     addOwner: (args: { ownerToAdd: Address }) => Promise<Hash>;
     removeOwner: (args: { ownerToRemove: Address }) => Promise<Hash>;
     getOwners: (args?: { rpcUrl: string }) => Promise<readonly Address[]>;
+    getEnrichedOwners: (args?: { rpcUrl: string }) => Promise<
+        | {
+              address: Address;
+              deviceData?: DeviceData;
+              creationDate?: Date;
+          }
+        | {
+              address: Address;
+              deviceData?: DeviceData;
+              creationDate?: Date;
+          }[]
+    >;
 };
 
 export const safeOwnerPluginActions: <
@@ -116,10 +129,8 @@ export const safeOwnerPluginActions: <
         return (await safeContract.read.getOwners([])) as Address[];
     },
 
-    /*  async getEnrichedOwners(args: {
-        apiKey: string;
-        baseUrl?: string;
-        rpcUrl?: string;
+    async getEnrichedOwners(args?: {
+        rpcUrl: string;
     }) {
         const publicClient = createPublicClient({
             chain: client.chain,
@@ -138,13 +149,11 @@ export const safeOwnerPluginActions: <
 
         const owners = (await safeContract.read.getOwners([])) as Address[];
 
-        const api = new API(args.apiKey, args.baseUrl);
+        const api = client.account.getConnectApi();
 
-        const webAuthnSigners = await api.getWebAuthnSignersByWalletAddress(
+        const webAuthnSigners = (await api.getWebAuthnSignersByWalletAddress(
             client.account.address
-        );
-
-        console.log({webAuthnSigners})
+        )) as WebAuthnSigner[];
 
         const enrichedOwners = owners.map((owner) => {
             const webauthSigner = webAuthnSigners.find(
@@ -157,13 +166,10 @@ export const safeOwnerPluginActions: <
                     deviceData: webauthSigner.deviceData,
                     creationDate: webauthSigner.creationDate,
                 };
-            } else {
-                return { address: owner };
             }
+            return { address: owner };
         });
 
-        console.log(enrichedOwners)
-
         return enrichedOwners;
-    }, */
+    },
 });

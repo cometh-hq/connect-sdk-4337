@@ -2,11 +2,11 @@ import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccou
 import {
     type SafeOwnerPluginActions,
     safeOwnerPluginActions,
-} from "@/core/actions/accounts/safe/safeOwnerActions";
+} from "@/core/actions/accounts/safe/owners/safeOwnerActions";
 import {
     type SafeSessionKeyActions,
     safeSessionKeyActions,
-} from "@/core/actions/accounts/safe/sessionKeyActions";
+} from "@/core/actions/accounts/safe/sessionKeys/sessionKeyActions";
 import type {
     SmartAccountClient,
     SmartAccountClientConfig,

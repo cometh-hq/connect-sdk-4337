@@ -1,110 +1,27 @@
 import { safe4337SessionKeyModuleAbi } from "@/core/accounts/safe/abi/safe4337SessionKeyModuleAbi";
 import { createFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
 import { encryptSessionKeyInStorage } from "@/core/signers/ecdsa/sessionKeyEoa/sessionKeyEoaService";
-import {
-    type SmartAccountClient,
-    isSmartAccountDeployed,
-} from "permissionless";
+import type { SmartAccountClient } from "permissionless";
 import type { EntryPoint } from "permissionless/_types/types";
 import type { SmartAccount } from "permissionless/accounts";
 import {
-    http,
     type Address,
     type Chain,
     type Hash,
     type Transport,
-    createPublicClient,
     encodeFunctionData,
-    getContract,
 } from "viem";
-
-type Session = {
-    account: Address;
-    validAfter: number;
-    validUntil: number;
-    revoked: boolean;
-};
-
-type AddSessionKeyParams = {
-    validAfter?: Date;
-    validUntil?: Date;
-    destinations: Address[];
-};
+import {
+    type AddSessionKeyParams,
+    type Session,
+    queryIsWhitelistFrom4337ModuleAddress,
+    querySessionFrom4337ModuleAddress,
+} from "./utils";
 
 const defaultValidAfter = new Date();
 const defaultValidUntil = new Date(
     defaultValidAfter.getTime() + 1000 * 60 * 60 * 1
 );
-
-export const querySessionFrom4337ModuleAddress = async (args: {
-    chain: Chain;
-    smartAccountAddress: Address;
-    safe4337SessionKeysModule: Address;
-    sessionKey: Address;
-    rpcUrl?: string;
-}) => {
-    const publicClient = createPublicClient({
-        chain: args.chain,
-        transport: http(args?.rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
-
-    const isDeployed = await isSmartAccountDeployed(
-        publicClient,
-        args.smartAccountAddress
-    );
-
-    if (!isDeployed) throw new Error("Smart account is not deployed.");
-
-    const safe4337SessionKeyModuleContract = getContract({
-        address: args.safe4337SessionKeysModule,
-        abi: safe4337SessionKeyModuleAbi,
-        client: publicClient,
-    });
-
-    return (await safe4337SessionKeyModuleContract.read.sessionKeys([
-        args.sessionKey,
-    ])) as Session;
-};
-
-export const queryIsWhitelistFrom4337ModuleAddress = async (args: {
-    chain: Chain;
-    smartAccountAddress: Address;
-    safe4337SessionKeysModule: Address;
-    sessionKey: Address;
-    targetAddress: Address;
-    rpcUrl?: string;
-}) => {
-    const publicClient = createPublicClient({
-        chain: args.chain,
-        transport: http(args?.rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
-
-    const isDeployed = await isSmartAccountDeployed(
-        publicClient,
-        args.smartAccountAddress
-    );
-
-    if (!isDeployed) throw new Error("Smart account is not deployed.");
-
-    const safe4337SessionKeyModuleContract = getContract({
-        address: args.safe4337SessionKeysModule,
-        abi: safe4337SessionKeyModuleAbi,
-        client: publicClient,
-    });
-
-    return (await safe4337SessionKeyModuleContract.read.whitelistDestinations([
-        args.sessionKey,
-        args.targetAddress,
-    ])) as boolean;
-};
 
 export type SafeSessionKeyActions = {
     addSessionKey: (args: AddSessionKeyParams) => Promise<Hash>;

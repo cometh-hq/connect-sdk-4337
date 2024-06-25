@@ -2,7 +2,7 @@ import { type Address, privateKeyToAccount } from "viem/accounts";
 
 import * as utils from "../../../services/utils";
 
-import { querySessionFrom4337ModuleAddress } from "@/core/actions/accounts/safe/sessionKeyActions";
+import { querySessionFrom4337ModuleAddress } from "@/core/actions/accounts/safe/sessionKeys/utils";
 import type { Chain, Hex } from "viem";
 import type { FallbackEoaSigner } from "../../types";
 import {

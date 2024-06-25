@@ -17,6 +17,7 @@ import { toAccount } from "viem/accounts";
 import { signMessage, signTypedData } from "viem/actions";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
+import { isUserOpWhitelisted } from "../../../../actions/accounts/safe/sessionKeys/utils";
 import {
     ECDSA_DUMMY_SIGNATURE,
     buildSignatureBytes,
@@ -36,9 +37,13 @@ export async function safeSessionKeySigner<
     {
         signer,
         safe4337SessionKeysModule,
+        smartAccountAddress,
+        multisend,
     }: {
         signer: SmartAccountSigner<TSource, TAddress>;
         safe4337SessionKeysModule: Address;
+        smartAccountAddress: Address;
+        multisend: Address;
     }
 ): Promise<SafeSigner<"safeSessionKeySigner">> {
     // Get the private key related account
@@ -79,6 +84,19 @@ export async function safeSessionKeySigner<
         source: "safeSessionKeySigner",
         // Sign a user operation
         async signUserOperation(userOperation) {
+            console.log(userOperation);
+            const isWhitelisted = await isUserOpWhitelisted({
+                chain: client?.chain as Chain,
+                safe4337SessionKeysModule,
+                sessionKey: signer.address,
+                userOperation,
+                multisend,
+                smartAccountAddress,
+            });
+
+            if (!isWhitelisted)
+                throw new Error("Transactions are not whitelisted");
+
             const payload = {
                 domain: {
                     chainId: client.chain?.id,
