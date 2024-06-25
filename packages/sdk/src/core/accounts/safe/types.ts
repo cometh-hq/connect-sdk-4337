@@ -21,6 +21,11 @@ export const EIP712_SAFE_OPERATION_TYPE = {
     ],
 };
 
+export const EIP712_SAFE_MESSAGE_TYPE = {
+    // "SafeMessage(bytes message)"
+    SafeMessage: [{ type: "bytes", name: "message" }],
+};
+
 export type SafeContractConfig = {
     chainId: string;
     safeWebAuthnSharedSignerAddress: Address;

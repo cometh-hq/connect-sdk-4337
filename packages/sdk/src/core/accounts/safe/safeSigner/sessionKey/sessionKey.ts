@@ -84,7 +84,6 @@ export async function safeSessionKeySigner<
         source: "safeSessionKeySigner",
         // Sign a user operation
         async signUserOperation(userOperation) {
-            console.log(userOperation);
             const isWhitelisted = await isUserOpWhitelisted({
                 chain: client?.chain as Chain,
                 safe4337SessionKeysModule,

@@ -22,7 +22,10 @@ import {
     packInitCode,
     packPaymasterData,
 } from "../../services/utils";
-import { EIP712_SAFE_OPERATION_TYPE } from "../../types";
+import {
+    EIP712_SAFE_MESSAGE_TYPE,
+    EIP712_SAFE_OPERATION_TYPE,
+} from "../../types";
 import type { SafeSigner } from "../types";
 
 export async function safeWebAuthnSigner<
@@ -47,8 +50,25 @@ export async function safeWebAuthnSigner<
 
     const account = toAccount({
         address: passkeySignerAddress,
-        async signMessage() {
-            return "0x";
+        async signMessage({ message }) {
+            const hash = hashTypedData({
+                domain: {
+                    chainId: client.chain?.id,
+                    verifyingContract: safe4337SessionKeysModule,
+                },
+                types: EIP712_SAFE_MESSAGE_TYPE,
+                primaryType: "SafeMessage" as const,
+                message: { message },
+            });
+            const passkeySignature = await sign(hash, [publicKeyCredential]);
+
+            return buildSignatureBytes([
+                {
+                    signer: passkeySignerAddress,
+                    data: passkeySignature.signature,
+                    dynamic: true,
+                },
+            ]) as Hex;
         },
         async signTransaction(_, __) {
             throw new SignTransactionNotSupportedBySmartAccount();
