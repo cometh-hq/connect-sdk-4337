@@ -1,10 +1,9 @@
-import { type Address, privateKeyToAccount } from "viem/accounts";
+import type { Address } from "viem/accounts";
 
 import * as utils from "../../../services/utils";
 
-import { querySessionFrom4337ModuleAddress } from "@/core/actions/accounts/safe/sessionKeys/utils";
-import type { Chain, Hex } from "viem";
-import type { FallbackEoaSigner } from "../../types";
+import type { Hex } from "viem";
+
 import {
     decryptEoaFallback,
     defaultEncryptionSalt,
@@ -53,59 +52,9 @@ export const getSessionKeySignerFromLocalStorage = async (
     return null;
 };
 
-export const getSessionKeySigner = async ({
-    chain,
-    safe4337SessionKeysModule,
-    rpcUrl,
-    smartAccountAddress,
-}: {
-    smartAccountAddress?: Address;
-    chain: Chain;
-    safe4337SessionKeysModule: Address;
-    rpcUrl?: string;
-}): Promise<FallbackEoaSigner | undefined> => {
-    if (!smartAccountAddress) return undefined;
-
-    const privateKey =
-        await getSessionKeySignerFromLocalStorage(smartAccountAddress);
-
-    if (!privateKey) return undefined;
-
-    const signer = privateKeyToAccount(privateKey);
-
-    const session = await querySessionFrom4337ModuleAddress({
-        chain,
-        smartAccountAddress,
-        safe4337SessionKeysModule,
-        sessionKey: signer.address,
-        rpcUrl,
-    });
-
-    try {
-        const now = new Date();
-        const validAfter = new Date(session.validAfter);
-        const validUntil = new Date(session.validUntil);
-
-        if (session.revoked) throw new Error("Session key has been revoked");
-        if (validAfter > now) throw new Error("Session key is not yet valid");
-        if (validUntil < now) throw new Error("Session key is expired");
-    } catch (err) {
-        console.info(err);
-        deleteSessionKeyInStorage(smartAccountAddress);
-        return undefined;
-    }
-
-    return {
-        type: "localWallet",
-        eoaFallback: {
-            privateKey,
-            signer: privateKeyToAccount(privateKey),
-            encryptionSalt: defaultEncryptionSalt,
-        },
-    };
-};
-
-const deleteSessionKeyInStorage = (smartAccountAddress: Address): void => {
+export const deleteSessionKeyInStorage = (
+    smartAccountAddress: Address
+): void => {
     window.localStorage.removeItem(
         `cometh-connect-sessionKey-${smartAccountAddress}`
     );

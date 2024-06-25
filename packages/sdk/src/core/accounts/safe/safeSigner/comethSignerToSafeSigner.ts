@@ -1,6 +1,6 @@
 import type { Address, Chain, Client, Transport } from "viem";
 
-import { getSessionKeySigner } from "@/core/signers/ecdsa/sessionKeyEoa/sessionKeyEoaService.js";
+import { getSessionKeySigner } from "@/core/actions/accounts/safe/sessionKeys/utils.js";
 import type { ComethSigner } from "../../../signers/types.js";
 import { safeECDSASigner } from "./ecdsa/ecdsa.js";
 import { safeSessionKeySigner } from "./sessionKey/sessionKey.js";

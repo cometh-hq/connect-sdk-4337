@@ -1,4 +1,10 @@
 import { safe4337SessionKeyModuleAbi } from "@/core/accounts/safe/abi/safe4337SessionKeyModuleAbi";
+import { defaultEncryptionSalt } from "@/core/signers/ecdsa/services/ecdsaService";
+import {
+    deleteSessionKeyInStorage,
+    getSessionKeySignerFromLocalStorage,
+} from "@/core/signers/ecdsa/sessionKeyEoa/sessionKeyEoaService";
+import type { FallbackEoaSigner } from "@/core/signers/types";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
@@ -7,6 +13,7 @@ import {
     createPublicClient,
     getContract,
 } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { decodeUserOp } from "../../../../accounts/safe/services/safe";
 
 export type Session = {
@@ -42,8 +49,6 @@ export const isUserOpWhitelisted = async ({
 }): Promise<boolean> => {
     const txs = await decodeUserOp({ userOperation, multisend });
 
-    console.log({ txs });
-
     for (const tx of txs) {
         const isWhitelisted = await queryIsWhitelistFrom4337ModuleAddress({
             chain,
@@ -53,8 +58,6 @@ export const isUserOpWhitelisted = async ({
             rpcUrl,
             targetAddress: tx.to,
         });
-
-        console.log({ isWhitelisted });
 
         if (!isWhitelisted) return false;
     }
@@ -113,14 +116,10 @@ export const queryIsWhitelistFrom4337ModuleAddress = async (args: {
         },
     });
 
-    console.log(args.smartAccountAddress);
-
     const isDeployed = await isSmartAccountDeployed(
         publicClient,
         args.smartAccountAddress
     );
-
-    console.log({ isDeployed });
 
     if (!isDeployed) throw new Error("Smart account is not deployed.");
 
@@ -130,13 +129,60 @@ export const queryIsWhitelistFrom4337ModuleAddress = async (args: {
         client: publicClient,
     });
 
-    const isWhi =
-        await safe4337SessionKeyModuleContract.read.whitelistDestinations([
-            args.sessionKey,
-            args.targetAddress,
-        ]);
+    return (await safe4337SessionKeyModuleContract.read.whitelistDestinations([
+        args.sessionKey,
+        args.targetAddress,
+    ])) as boolean;
+};
 
-    console.log({ isWhi });
+export const getSessionKeySigner = async ({
+    chain,
+    safe4337SessionKeysModule,
+    rpcUrl,
+    smartAccountAddress,
+}: {
+    smartAccountAddress?: Address;
+    chain: Chain;
+    safe4337SessionKeysModule: Address;
+    rpcUrl?: string;
+}): Promise<FallbackEoaSigner | undefined> => {
+    if (!smartAccountAddress) return undefined;
 
-    return isWhi as boolean;
+    const privateKey =
+        await getSessionKeySignerFromLocalStorage(smartAccountAddress);
+
+    if (!privateKey) return undefined;
+
+    const signer = privateKeyToAccount(privateKey);
+
+    const session = await querySessionFrom4337ModuleAddress({
+        chain,
+        smartAccountAddress,
+        safe4337SessionKeysModule,
+        sessionKey: signer.address,
+        rpcUrl,
+    });
+
+    try {
+        const now = new Date();
+        const validAfter = new Date(session.validAfter);
+        const validUntil = new Date(session.validUntil);
+
+        if (session.revoked) throw new Error("Session key has been revoked");
+        if (validAfter > now) throw new Error("Session key is not yet valid");
+        if (validUntil < now) throw new Error("Session key is expired");
+    } catch (err) {
+        console.info(err);
+        deleteSessionKeyInStorage(smartAccountAddress);
+        return undefined;
+    }
+
+    return {
+        type: "localWallet",
+        eoaFallback: {
+            privateKey,
+            signer: privateKeyToAccount(privateKey),
+            encryptionSalt: defaultEncryptionSalt,
+        },
+    };
 };
