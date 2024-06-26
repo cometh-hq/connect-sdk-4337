@@ -87,7 +87,11 @@ export function useSmartAccount() {
 
           const message = "test"
 
-          const signature = await smartAccount.signMessage({message})
+          console.log({smartAccount})
+
+          const signature = await smartAccountClient.account.signMessage({message})
+
+
 
           console.log({signature})
 
