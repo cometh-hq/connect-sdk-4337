@@ -24,7 +24,7 @@ Coupled with a web2 authentication system (or standalone to stay anonymous), use
 
 ## Folder Architecture Overview
 
-The project is built using a monorepo structure to further enhance modularity and scalability, incorporating Domain-Driven Design (DDD) principles and Infrastructure as Code (IaC) for efficient deployment and management. 
+The project is built using a monorepo structure to further enhance modularity and scalability. 
 
 This new structure allows for multiple projects, such as POCs and example applications, to coexist within the same repository while maintaining their individual architectures. Below is the revised directory structure:
 
