@@ -52,7 +52,7 @@ export async function safeWebAuthnSigner<
     };
 
     const account = toAccount({
-        address: passkeySignerAddress,
+        address: smartAccountAddress,
         async signMessage({ message }) {
             if (typeof message === "string") message = toHex(message);
 
@@ -86,7 +86,7 @@ export async function safeWebAuthnSigner<
 
     return {
         ...account,
-        address: passkeySignerAddress,
+        address: smartAccountAddress,
         source: "safeWebAuthnSigner",
         // Sign a user operation
         async signUserOperation(userOperation) {

@@ -108,7 +108,7 @@ export class API {
         };
 
         const response = await this.api.post(
-            `/webauthn-signer/is-valid-signature/${walletAddress}`,
+            `/wallet/is-valid-signature/${walletAddress}`,
             body
         );
         return response?.data?.result;

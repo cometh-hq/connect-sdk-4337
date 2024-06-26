@@ -1,9 +1,6 @@
 import { getAccountNonce, isSmartAccountDeployed } from "permissionless";
 import type { SmartAccount } from "permissionless/accounts";
-import {
-    SignTransactionNotSupportedBySmartAccount,
-    toSmartAccount,
-} from "permissionless/accounts";
+import { SignTransactionNotSupportedBySmartAccount } from "permissionless/accounts";
 
 import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
 import {
@@ -37,6 +34,7 @@ import {
     getSafeInitializer,
 } from "./services/safe";
 import { type SafeContractConfig, SafeProxyBytecode } from "./types";
+import { toSmartAccount } from "./utils";
 
 export type SafeSmartAccount<
     entryPoint extends EntryPoint,

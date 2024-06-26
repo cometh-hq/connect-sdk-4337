@@ -51,6 +51,7 @@ export async function comethSignerToSafeSigner<
             ...(await safeECDSASigner(client, {
                 signer: comethSigner.eoaFallback.signer,
                 safe4337SessionKeysModule,
+                smartAccountAddress,
             })),
         };
     }
