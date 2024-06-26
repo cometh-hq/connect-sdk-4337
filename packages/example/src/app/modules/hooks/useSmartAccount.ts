@@ -84,8 +84,11 @@ export function useSmartAccount() {
 
           console.log({smartAccountClient})
 
+          //await smartAccountClient.addSessionKey({destinations:[COUNTER_CONTRACT_ADDRESS]})
 
-          const message = "test"
+
+
+         /*  const message = "test"
 
           console.log({smartAccount})
 
@@ -97,7 +100,7 @@ export function useSmartAccount() {
 
           const isValidSignature = await smartAccountClient.verifySignature({message, signature})
 
-          console.log({isValidSignature})
+          console.log({isValidSignature}) */
 
       
 
