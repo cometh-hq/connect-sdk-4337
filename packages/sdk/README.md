@@ -1,4 +1,4 @@
-# Nexus Wallet SDK
+# Cometh Connect SDK
 
 This SDK help any dApps to get a smoother UX for your end-users (contro a wallet with biometrics, pay for his gas fees, social recovery...)
 
@@ -13,6 +13,7 @@ bun add viem @cometh/connect-sdk-4337
 ```ts
 import { ENTRYPOINT_ADDRESS_V07, createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
 import { arbitrumSepolia } from "viem/chains";
+import { http } from "viem";
 
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
 const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
@@ -43,8 +44,6 @@ const smartAccountClient = createSmartAccountClient({
 
 ## Send transaction
 
-Sample code to watch the current user wallet status:
-
 ```ts
 import { smartAccountClient } from "./client";
 import countContractAbi from "../contract/counterABI.json";
@@ -62,8 +61,6 @@ const txHash =  await smartAccount.sendTransaction({
 ```
 
 ## Send batch transactions
-
-Sample code to watch the current user wallet status:
 
 ```ts
 import { smartAccountClient } from "./client";
@@ -91,18 +88,21 @@ const txHash =  await smartAccount.sendTransactions({
 
 ## Handle owners
 
-Sample code to watch the current user wallet status:
-
 ```ts
 import { smartAccountClient } from "./client";
 
+// get owners
 const owners = await smartAccountClient.getOwners()
 
+// get enriched owners (with passkey credentials)
 const enrichedOwners = await smartAccountClient.getEnrichedOwners()
 
+// add a new owner
 await smartAccountClient.addOwner({ownerToAdd:OWNER_ADDRESS_TO_ADD})
 
+// remove an owner
 await smartAccountClient.removeOwner({ownerToRemove:OWNER_ADDRESS_TO_REMOVE})
 
 ```
+
 
