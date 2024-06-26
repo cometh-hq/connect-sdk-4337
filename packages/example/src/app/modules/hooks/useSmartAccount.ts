@@ -5,6 +5,7 @@ import { useState } from "react";
 import { http, type Hex } from "viem";
 import { ENTRYPOINT_ADDRESS_V07, createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
 import { arbitrumSepolia } from "viem/chains";
+import { COUNTER_CONTRACT_ADDRESS } from "@/app/components/Transaction";
 
 
 export function useSmartAccount() {
@@ -43,9 +44,9 @@ export function useSmartAccount() {
             smartAccount = await createSafeSmartAccount({
               apiKey,
               rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
-              //baseUrl,
               smartAccountAddress: localStorageAddress,
-              entryPoint: ENTRYPOINT_ADDRESS_V07,
+              entryPoint: ENTRYPOINT_ADDRESS_V07 ,
+
             });
           } else {
             smartAccount = await createSafeSmartAccount({
@@ -87,6 +88,20 @@ export function useSmartAccount() {
           }) 
 
           console.log({smartAccountClient})
+
+          const owners = await smartAccountClient.getOwners()
+
+          console.log({owners})
+
+         /*  const sessionKey = await smartAccountClient.getSessionFromAddress({sessionKey: "0x80F1883EBEfB8bCd0740a89905fC0cf2073B69e6"})
+
+          console.log({sessionKey}) */
+
+       /*    const hash = await smartAccountClient.addSessionKey({destinations: [COUNTER_CONTRACT_ADDRESS]})
+
+          console.log({hash}) */
+
+    
 
     
 

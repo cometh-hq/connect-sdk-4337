@@ -14,11 +14,11 @@ export type fallbackStorageValues = {
 export const defaultEncryptionSalt = "COMETH-CONNECT";
 export const Pbkdf2Iterations = 1000000;
 
-export const encryptSignerInStorage = async (
+export const encryptSigner = async (
     smartAccountAddress: Address,
     privateKey: Hex,
     salt?: string
-): Promise<void> => {
+): Promise<string> => {
     const { encryptedPrivateKey, iv } = await encryptEoaFallback(
         smartAccountAddress,
         privateKey,
@@ -31,6 +31,20 @@ export const encryptSignerInStorage = async (
         encryptedPrivateKey,
         iv,
         signer.address
+    );
+
+    return storageValue;
+};
+
+export const encryptSignerInStorage = async (
+    smartAccountAddress: Address,
+    privateKey: Hex,
+    salt?: string
+): Promise<void> => {
+    const storageValue = await encryptSigner(
+        smartAccountAddress,
+        privateKey,
+        salt
     );
 
     window.localStorage.setItem(
@@ -63,7 +77,7 @@ export const getSignerLocalStorage = async (
     return null;
 };
 
-const encryptEoaFallback = async (
+export const encryptEoaFallback = async (
     smartAccountAddress: Address,
     privateKey: Hex,
     salt: string
@@ -93,7 +107,7 @@ const encryptEoaFallback = async (
     };
 };
 
-const decryptEoaFallback = async (
+export const decryptEoaFallback = async (
     smartAccountAddress: Address,
     encryptedPrivateKey: ArrayBuffer,
     iv: ArrayBuffer,
@@ -117,7 +131,7 @@ const decryptEoaFallback = async (
     return utils.decodeUTF8(privateKey) as `0x${string}`;
 };
 
-const formatStorageValue = (
+export const formatStorageValue = (
     encryptedPrivateKey: string,
     iv: string,
     signerAddress: Address
@@ -129,15 +143,8 @@ const formatStorageValue = (
     });
 };
 
-const unFormatStorageValue = (storageValue: string): fallbackStorageValues => {
+export const unFormatStorageValue = (
+    storageValue: string
+): fallbackStorageValues => {
     return JSON.parse(storageValue);
-};
-
-export default {
-    encryptEoaFallback,
-    decryptEoaFallback,
-    formatStorageValue,
-    unFormatStorageValue,
-    getSignerLocalStorage,
-    encryptSignerInStorage,
 };

@@ -1,7 +1,12 @@
+import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import {
     type SafeOwnerPluginActions,
     safeOwnerPluginActions,
-} from "@/core/actions/accounts/safe/safeOwnerActions";
+} from "@/core/actions/accounts/safe/owners/safeOwnerActions";
+import {
+    type SafeSessionKeyActions,
+    safeSessionKeyActions,
+} from "@/core/actions/accounts/safe/sessionKeys/sessionKeyActions";
 import type {
     SmartAccountClient,
     SmartAccountClientConfig,
@@ -17,16 +22,21 @@ import {
 } from "../../decorators/cometh";
 
 export type ComethAccountClientActions<
-    TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
+    TSmartAccount extends
+        | SafeSmartAccount<TEntryPoint, Transport, Chain>
+        | undefined,
     TChain extends Chain | undefined = undefined,
     TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<infer U>
         ? U
         : never,
 > = ComethClientActions<TEntryPoint, TChain, TSmartAccount> &
-    SafeOwnerPluginActions;
+    SafeOwnerPluginActions &
+    SafeSessionKeyActions;
 
 export type ComethSmartAccountClient<
-    TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
+    TSmartAccount extends
+        | SafeSmartAccount<TEntryPoint, Transport, Chain>
+        | undefined,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = undefined,
     TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<infer U>
@@ -43,7 +53,9 @@ export type ComethSmartAccountClient<
 >;
 
 export function createSmartAccountClient<
-    TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
+    TSmartAccount extends
+        | SafeSmartAccount<TEntryPoint, Transport, Chain>
+        | undefined,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = undefined,
     TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<infer U>
@@ -74,7 +86,11 @@ export function createSmartAccountClient<
         })
     ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
 
-    return client.extend(safeOwnerPluginActions) as ComethSmartAccountClient<
+    const enshrinedClient = client.extend(safeSessionKeyActions);
+
+    return enshrinedClient.extend(
+        safeOwnerPluginActions
+    ) as ComethSmartAccountClient<
         TSmartAccount,
         TTransport,
         TChain,

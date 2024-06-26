@@ -8,7 +8,7 @@ import { createPublicClient, encodeFunctionData, getContract, http } from "viem"
 import countContractAbi from "../contract/counterABI.json";
 import { arbitrumSepolia } from "viem/chains";
 
-const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
+export  const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
   chain: arbitrumSepolia,

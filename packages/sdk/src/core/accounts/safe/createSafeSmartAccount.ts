@@ -15,7 +15,6 @@ import {
     encodeFunctionData,
     encodePacked,
     getContractAddress,
-    hashTypedData,
     hexToBigInt,
     keccak256,
     zeroHash,
@@ -28,37 +27,25 @@ import { getClient } from "../utils";
 import { createSigner, saveSigner } from "@/core/signers/createSigner";
 import type { SignerConfig } from "@/core/signers/types";
 
-import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
-
-import { sign } from "@/core/signers/passkeys/passkeyService";
-import { parseHex } from "@/core/signers/passkeys/utils";
+import type { EntryPoint } from "permissionless/_types/types";
 import { MultiSendContractABI } from "./abi/Multisend";
 import { safe4337ModuleAbi } from "./abi/safe4337ModuleAbi";
 import { SafeProxyContractFactoryABI } from "./abi/safeProxyFactory";
+import { comethSignerToSafeSigner } from "./safeSigner/comethSignerToSafeSigner";
 import {
     encodeMultiSendTransactions,
     getSafeInitializer,
 } from "./services/safe";
-import {
-    DUMMY_AUTHENTICATOR_DATA,
-    DUMMY_CLIENT_DATA_FIELDS,
-    ECDSA_DUMMY_SIGNATURE,
-    buildSignatureBytes,
-    getSignatureBytes,
-    packInitCode,
-    packPaymasterData,
-} from "./services/utils";
-import {
-    EIP712_SAFE_OPERATION_TYPE,
-    type SafeContractConfig,
-    SafeProxyBytecode,
-} from "./types";
+import { type SafeContractConfig, SafeProxyBytecode } from "./types";
 
 export type SafeSmartAccount<
-    entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
+    entryPoint extends EntryPoint,
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
-> = SmartAccount<entryPoint, "safeSmartAccount", transport, chain>;
+> = SmartAccount<entryPoint, "safeSmartAccount", transport, chain> & {
+    getConnectApi(): API;
+    safe4337SessionKeysModule: Address;
+};
 
 /**
  * Authenticate the wallet to the cometh api
@@ -166,7 +153,7 @@ export type createSafeSmartAccountParameters<
 export async function createSafeSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
     TTransport extends Transport = Transport,
-    TChain extends Chain | undefined = Chain | undefined,
+    TChain extends Chain = Chain,
 >({
     apiKey,
     rpcUrl,
@@ -182,12 +169,12 @@ export async function createSafeSmartAccount<
 
     const {
         safeWebAuthnSharedSignerAddress,
-        safe4337ModuleAddress,
         safeModuleSetUpAddress,
         safeP256VerifierAddress,
         safeProxyFactoryAddress,
         safeSingletonAddress,
         multisendAddress,
+        safe4337SessionKeysModule,
     } =
         safeContractConfig ??
         ((await api.getProjectParams()) as SafeContractConfig);
@@ -206,13 +193,11 @@ export async function createSafeSmartAccount<
         ...comethSignerConfig,
     });
 
-    console.log("comethSigner", comethSigner);
-
     const initializer = getSafeInitializer(
         comethSigner,
         1,
-        safe4337ModuleAddress,
-        [safe4337ModuleAddress],
+        safe4337SessionKeysModule,
+        [safe4337SessionKeysModule],
         safeModuleSetUpAddress,
         safeWebAuthnSharedSignerAddress,
         safeP256VerifierAddress,
@@ -244,10 +229,21 @@ export async function createSafeSmartAccount<
         smartAccountAddress
     );
 
-    return toSmartAccount({
+    const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
+        client,
+        {
+            comethSigner,
+            safe4337SessionKeysModule,
+            multisend: multisendAddress,
+            smartAccountAddress,
+            rpcUrl,
+        }
+    );
+
+    const smartAccount = toSmartAccount({
         address: smartAccountAddress,
-        async signMessage() {
-            return "0x";
+        async signMessage({ message }) {
+            return safeSigner.signMessage({ message });
         },
         async signTransaction(_, __) {
             throw new SignTransactionNotSupportedBySmartAccount();
@@ -267,81 +263,7 @@ export async function createSafeSmartAccount<
         },
 
         async signUserOperation(userOp) {
-            const payload = {
-                domain: {
-                    chainId: client.chain?.id,
-                    verifyingContract: safe4337ModuleAddress,
-                },
-                types: EIP712_SAFE_OPERATION_TYPE,
-                primaryType: "SafeOp" as const,
-                message: {
-                    callData: userOp.callData,
-                    nonce: userOp.nonce,
-                    initCode: packInitCode({
-                        factory: userOp.factory,
-                        factoryData: userOp.factoryData,
-                    }),
-                    paymasterAndData: packPaymasterData({
-                        paymaster: userOp.paymaster as Hex,
-                        paymasterVerificationGasLimit:
-                            userOp.paymasterVerificationGasLimit as bigint,
-                        paymasterPostOpGasLimit:
-                            userOp.paymasterPostOpGasLimit as bigint,
-                        paymasterData: userOp.paymasterData as Hex,
-                    }),
-                    preVerificationGas: userOp.preVerificationGas,
-                    entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    validAfter: 0,
-                    validUntil: 0,
-                    safe: userOp.sender,
-                    verificationGasLimit: userOp.verificationGasLimit,
-                    callGasLimit: userOp.callGasLimit,
-                    maxPriorityFeePerGas: userOp.maxPriorityFeePerGas,
-                    maxFeePerGas: userOp.maxFeePerGas,
-                },
-            };
-
-            if (comethSigner.type === "localWallet") {
-                return encodePacked(
-                    ["uint48", "uint48", "bytes"],
-                    [
-                        0,
-                        0,
-                        buildSignatureBytes([
-                            {
-                                signer: comethSigner.eoaFallback.signer.address,
-                                data:
-                                    await comethSigner.eoaFallback.signer.signTypedData(
-                                        payload
-                                    ),
-                            },
-                        ]) as Hex,
-                    ]
-                );
-            }
-            const hash = hashTypedData(payload);
-
-            const publicKeyCredential: PublicKeyCredentialDescriptor = {
-                id: parseHex(comethSigner.passkey.id),
-                type: "public-key",
-            };
-
-            const passkeySignature = await sign(hash, [publicKeyCredential]);
-
-            return encodePacked(
-                ["uint48", "uint48", "bytes"],
-                [
-                    0,
-                    0,
-                    buildSignatureBytes([
-                        {
-                            signer: safeWebAuthnSharedSignerAddress,
-                            data: passkeySignature.signature,
-                            dynamic: true,
-                        },
-                    ]) as Hex,
-                ]
-            );
+            return safeSigner.signUserOperation(userOp);
         },
 
         // Encode the init code
@@ -423,30 +345,16 @@ export async function createSafeSmartAccount<
             });
         },
 
-        async getDummySignature() {
-            if (comethSigner.type === "localWallet") {
-                return ECDSA_DUMMY_SIGNATURE;
-            }
-
-            return encodePacked(
-                ["uint48", "uint48", "bytes"],
-                [
-                    0,
-                    0,
-                    buildSignatureBytes([
-                        {
-                            signer: safeWebAuthnSharedSignerAddress,
-                            data: getSignatureBytes({
-                                authenticatorData: DUMMY_AUTHENTICATOR_DATA,
-                                clientDataFields: DUMMY_CLIENT_DATA_FIELDS,
-                                r: BigInt(`0x${"ec".repeat(32)}`),
-                                s: BigInt(`0x${"d5a".repeat(21)}f`),
-                            }),
-                            dynamic: true,
-                        },
-                    ]) as Hex,
-                ]
-            );
+        async getDummySignature(userOp) {
+            return safeSigner.getDummySignature(userOp);
         },
     });
+
+    return {
+        ...smartAccount,
+        safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
+        getConnectApi(): API {
+            return api;
+        },
+    };
 }

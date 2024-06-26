@@ -1,10 +1,13 @@
 import type { ComethSigner } from "@/core/signers/types";
+import type { UserOperation } from "@/core/types";
 import {
     type Address,
     type Hex,
     concat,
+    decodeFunctionData,
     encodeFunctionData,
     encodePacked,
+    getAddress,
     hexToBigInt,
     size,
     zeroAddress,
@@ -12,6 +15,7 @@ import {
 import { MultiSendContractABI } from "../abi/Multisend";
 import { EnableModuleAbi } from "../abi/enableModule";
 import { SafeAbi } from "../abi/safe";
+import { safe4337SessionKeyModuleAbi } from "../abi/safe4337SessionKeyModuleAbi";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
 import type { MultiSendTransaction } from "../types";
 
@@ -26,6 +30,77 @@ export const encodeMultiSendTransactions = (
             )
         )
     );
+};
+
+export const decodeUserOp = ({
+    userOperation,
+    multisend,
+}: {
+    userOperation: UserOperation;
+    multisend: Address;
+}): MultiSendTransaction[] => {
+    const { args } = decodeFunctionData({
+        abi: safe4337SessionKeyModuleAbi,
+        data: userOperation.callData as `0x${string}`,
+    });
+
+    if (!args) throw new Error("Invalid callData for Safe Account");
+
+    const txs: MultiSendTransaction[] = [];
+
+    console.log({ args });
+
+    if (args[0] === multisend) {
+        console.log("yqefvfe");
+        const decodedData = decodeFunctionData({
+            abi: MultiSendContractABI,
+            data: args[2] as `0x${string}`,
+        });
+
+        const multisendArgs = decodedData.args[0];
+
+        // Decode after 0x
+        let index = 2;
+
+        while (index < multisendArgs.length) {
+            // As we are decoding hex encoded bytes calldata, each byte is represented by 2 chars
+            // uint8 operation, address to, value uint256, dataLength uint256
+
+            const operation = `0x${multisendArgs.slice(index, index + 2)}`;
+            index += 2;
+            const to = `0x${multisendArgs.slice(index, index + 40)}`;
+            index += 40;
+            const value = `0x${multisendArgs.slice(index, index + 64)}`;
+            index += 64;
+            const dataLength =
+                parseInt(multisendArgs.slice(index, index + 64), 16) * 2;
+            index += 64;
+            const data = `0x${multisendArgs.slice(
+                index,
+                index + dataLength
+            )}` as Hex;
+            index += dataLength;
+
+            txs.push({
+                op: Number(operation) as 0 | 1,
+                to: getAddress(to),
+                value: BigInt(value),
+                data,
+            });
+        }
+    } else {
+        console.log("yo");
+        txs.push({
+            to: args[0] as Address,
+            value: args[1] as bigint,
+            data: args[2] as Hex,
+            op: args[3] as 0 | 1,
+        });
+    }
+
+    console.log({ txs });
+
+    return txs;
 };
 
 export const getSetUpData = ({

@@ -8,18 +8,15 @@ import { useSmartAccount } from "./modules/hooks/useSmartAccount";
 
 export default function App() {
 
-  const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
-  const baseUrl = "http://127.0.0.1:8000/connect"
-
   const { isConnecting, isConnected, connect, connectionError, smartAccount, newSigner } =
   useSmartAccount();
   const [transactionSuccess, setTransactionSuccess] = useState(false);
 
 
   const validate = async() => {
-    const signer = { signerAddress: "0xc24bdc3D083ccd21B1E77514b58BAB45ED413955", deviceData: { browser: "Firefox", os: "macOS", platform: "desktop" }}
+    const signer = { signerAddress: "0x5929d4e3d17318BaB73026644A904AdbC6fa7989", deviceData: { browser: "Firefox", os: "macOS", platform: "desktop" } } 
 
-    await smartAccount.validateAddDevice({apiKey, baseUrl, signer})
+    await smartAccount.validateAddDevice({signer})
   }
 
 

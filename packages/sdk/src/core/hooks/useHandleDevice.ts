@@ -5,9 +5,10 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { API } from "../services/API";
 import { getDeviceData } from "../services/deviceService";
 import { isFallbackSigner } from "../signers/createSigner";
-import { encryptSignerInStorage } from "../signers/fallbackEoa/services/eoaFallbackService";
+import { encryptSignerInStorage } from "../signers/ecdsa/services/ecdsaService";
 import {
     createPasskeySigner,
+    retrieveSmartAccountAddressFromPasskey,
     setPasskeyInStorage,
 } from "../signers/passkeys/passkeyService";
 import type { webAuthnOptions } from "../signers/passkeys/types";
@@ -17,7 +18,7 @@ import {
 } from "../signers/passkeys/utils";
 import type { Signer } from "../types";
 
-export const useAddDevice = (apiKey: string, baseUrl?: string) => {
+export const useHandleDevice = (apiKey: string, baseUrl?: string) => {
     const api = new API(apiKey, baseUrl);
 
     const _createNewSigner = async ({
@@ -103,5 +104,13 @@ export const useAddDevice = (apiKey: string, baseUrl?: string) => {
         return signer;
     };
 
-    return { createNewSigner };
+    /**
+     * Function used to retrieve an account address from a passkey
+     * @param apiKey
+     */
+    const retrieveAccountAddressFromPasskey = async (): Promise<Address> => {
+        return await retrieveSmartAccountAddressFromPasskey(api);
+    };
+
+    return { createNewSigner, retrieveAccountAddressFromPasskey };
 };
