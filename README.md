@@ -67,4 +67,4 @@ We welcome contributions! Don't hesitate to submit PR :)
 
 ## License
 
-This project is licensed - see the LICENSE file for details.
+Released under the [Apache License](https://github.com/cometh-hq/connect-sdk-4337/blob/main/LICENSE.txt).

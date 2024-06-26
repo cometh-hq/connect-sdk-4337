@@ -38,12 +38,13 @@ export function useSmartAccount() {
     
           let smartAccount;
 
-          //const baseUrl = "http://127.0.0.1:8000/connect"
+          const baseUrl = "http://127.0.0.1:8000/connect"
     
           if (localStorageAddress) {
             smartAccount = await createSafeSmartAccount({
               apiKey,
               rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+              baseUrl,
               smartAccountAddress: localStorageAddress,
               entryPoint: ENTRYPOINT_ADDRESS_V07 ,
 
@@ -52,13 +53,12 @@ export function useSmartAccount() {
             smartAccount = await createSafeSmartAccount({
               apiKey,
               rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
-              //baseUrl,
+              baseUrl,
               entryPoint: ENTRYPOINT_ADDRESS_V07,
             });
             window.localStorage.setItem("walletAddress", smartAccount.address);
           }
 
-          console.log({smartAccount})
 
       
           const paymasterClient = await createComethPaymasterClient(
@@ -70,12 +70,7 @@ export function useSmartAccount() {
         )
 
 
-        console.log({paymasterClient})
-
-
-       
-    
-    
+  
         const smartAccountClient = createSmartAccountClient({
             account: smartAccount,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -89,25 +84,22 @@ export function useSmartAccount() {
 
           console.log({smartAccountClient})
 
-          const owners = await smartAccountClient.getOwners()
 
-          console.log({owners})
+          const message = "test"
 
-         /*  const sessionKey = await smartAccountClient.getSessionFromAddress({sessionKey: "0x80F1883EBEfB8bCd0740a89905fC0cf2073B69e6"})
+          const signature = await smartAccount.signMessage({message})
 
-          console.log({sessionKey}) */
+          console.log({signature})
 
-       /*    const hash = await smartAccountClient.addSessionKey({destinations: [COUNTER_CONTRACT_ADDRESS]})
+          const isValidSignature = await smartAccountClient.verifySignature({message, signature})
 
-          console.log({hash}) */
+          console.log({isValidSignature})
 
-    
+      
 
-    
+       
 
 
-          
- 
 
           setSmartAccount(smartAccountClient);
       setIsConnected(true);
