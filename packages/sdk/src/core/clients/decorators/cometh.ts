@@ -8,6 +8,10 @@ import {
     type ValidateAddDevice,
     validateAddDevice,
 } from "@/core/actions/accounts/safe/owners/addDeviceActions.js";
+import {
+    type VerifySignatureParams,
+    verifySignature,
+} from "@/core/actions/accounts/safe/verifySignature";
 
 export type ComethClientActions<
     entryPoint extends EntryPoint,
@@ -23,6 +27,11 @@ export type ComethClientActions<
             typeof validateAddDevice<entryPoint, TTransport, TChain, TAccount>
         >[1]
     ) => Promise<Hash>;
+    verifySignature: <TTransport extends Transport>(
+        args: Parameters<
+            typeof verifySignature<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<boolean>;
 };
 
 export function comethAccountClientActions<entryPoint extends EntryPoint>({
@@ -48,5 +57,9 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                     middleware,
                 } as ValidateAddDevice<entryPoint>
             ),
+        verifySignature: (args) =>
+            verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {
+                ...args,
+            } as VerifySignatureParams),
     });
 }

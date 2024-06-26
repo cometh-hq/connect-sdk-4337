@@ -130,13 +130,13 @@ export const getAccountAddress = async ({
 };
 
 export type createSafeSmartAccountParameters<
-    entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
+    TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
 > = Prettify<{
     apiKey: string;
     rpcUrl?: string;
     baseUrl?: string;
     smartAccountAddress?: Address;
-    entryPoint: entryPoint;
+    entryPoint: TEntryPoint;
     comethSignerConfig?: SignerConfig;
     safeContractConfig?: SafeContractConfig;
 }>;

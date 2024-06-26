@@ -89,11 +89,28 @@ export class API {
     }
 
     async getWebAuthnSignersByWalletAddress(
-        walletAddress: string
+        walletAddress: Address
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
             `/webauthn-signer/${walletAddress}`
         );
         return response?.data?.webAuthnSigners;
+    }
+
+    async isValidSignature(
+        walletAddress: Address,
+        message: string,
+        signature: Hex
+    ): Promise<boolean> {
+        const body = {
+            message,
+            signature,
+        };
+
+        const response = await this.api.post(
+            `/webauthn-signer/is-valid-signature/${walletAddress}`,
+            body
+        );
+        return response?.data?.result;
     }
 }

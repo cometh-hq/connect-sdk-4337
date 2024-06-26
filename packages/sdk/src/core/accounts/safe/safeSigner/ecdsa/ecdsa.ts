@@ -12,9 +12,10 @@ import {
     type TypedData,
     type TypedDataDefinition,
     encodePacked,
+    toHex,
 } from "viem";
 import { toAccount } from "viem/accounts";
-import { signMessage, signTypedData } from "viem/actions";
+import { signTypedData } from "viem/actions";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
 import {
@@ -23,7 +24,10 @@ import {
     packInitCode,
     packPaymasterData,
 } from "../../services/utils";
-import { EIP712_SAFE_OPERATION_TYPE } from "../../types";
+import {
+    EIP712_SAFE_MESSAGE_TYPE,
+    EIP712_SAFE_OPERATION_TYPE,
+} from "../../types";
 import type { SafeSigner } from "../types";
 
 export async function safeECDSASigner<
@@ -36,9 +40,11 @@ export async function safeECDSASigner<
     {
         signer,
         safe4337SessionKeysModule,
+        smartAccountAddress,
     }: {
         signer: SmartAccountSigner<TSource, TAddress>;
         safe4337SessionKeysModule: Address;
+        smartAccountAddress: Address;
     }
 ): Promise<SafeSigner<"safeECDSASigner">> {
     // Get the private key related account
@@ -52,7 +58,18 @@ export async function safeECDSASigner<
     const account = toAccount({
         address: viemSigner.address,
         async signMessage({ message }) {
-            return signMessage(client, { account: viemSigner, message });
+            if (typeof message === "string") message = toHex(message);
+
+            return signTypedData(client, {
+                account: viemSigner,
+                domain: {
+                    chainId: client.chain?.id,
+                    verifyingContract: smartAccountAddress,
+                },
+                types: EIP712_SAFE_MESSAGE_TYPE,
+                primaryType: "SafeMessage" as const,
+                message: { message },
+            });
         },
         async signTransaction(_, __) {
             throw new SignTransactionNotSupportedBySmartAccount();

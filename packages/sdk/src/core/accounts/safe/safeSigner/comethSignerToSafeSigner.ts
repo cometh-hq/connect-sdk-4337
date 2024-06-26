@@ -60,6 +60,7 @@ export async function comethSignerToSafeSigner<
             passkey: comethSigner.passkey,
             passkeySignerAddress: comethSigner.passkey.signerAddress,
             safe4337SessionKeysModule,
+            smartAccountAddress,
         })),
     };
 }

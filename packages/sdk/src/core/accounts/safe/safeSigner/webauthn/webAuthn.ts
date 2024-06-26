@@ -7,6 +7,7 @@ import {
     type Transport,
     encodePacked,
     hashTypedData,
+    toHex,
 } from "viem";
 import { toAccount } from "viem/accounts";
 
@@ -37,10 +38,12 @@ export async function safeWebAuthnSigner<
         passkey,
         passkeySignerAddress,
         safe4337SessionKeysModule,
+        smartAccountAddress,
     }: {
         passkey: PasskeyLocalStorageFormat;
         passkeySignerAddress: Address;
         safe4337SessionKeysModule: Address;
+        smartAccountAddress: Address;
     }
 ): Promise<SafeSigner<"safeWebAuthnSigner">> {
     const publicKeyCredential: PublicKeyCredentialDescriptor = {
@@ -51,15 +54,18 @@ export async function safeWebAuthnSigner<
     const account = toAccount({
         address: passkeySignerAddress,
         async signMessage({ message }) {
+            if (typeof message === "string") message = toHex(message);
+
             const hash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,
-                    verifyingContract: safe4337SessionKeysModule,
+                    verifyingContract: smartAccountAddress,
                 },
                 types: EIP712_SAFE_MESSAGE_TYPE,
                 primaryType: "SafeMessage" as const,
                 message: { message },
             });
+
             const passkeySignature = await sign(hash, [publicKeyCredential]);
 
             return buildSignatureBytes([

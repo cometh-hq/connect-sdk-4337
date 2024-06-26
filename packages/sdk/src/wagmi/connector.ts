@@ -4,11 +4,17 @@ import {
     type createSafeSmartAccountParameters,
 } from "@/core/accounts/safe/createSafeSmartAccount";
 import { getNetwork } from "@/core/accounts/utils";
-import { createSmartAccountClient } from "@/core/clients/accounts/safe/createClient";
+import {
+    type ComethSmartAccountClient,
+    createSmartAccountClient,
+} from "@/core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "@/core/clients/paymaster/createPaymasterClient";
 import { API } from "@/core/services/API";
 import { ENTRYPOINT_ADDRESS_V07 } from "permissionless";
-import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
+import type {
+    ENTRYPOINT_ADDRESS_V07_TYPE,
+    EntryPoint,
+} from "permissionless/types/entrypoint";
 import {
     http,
     type Address,
@@ -23,23 +29,29 @@ import {
     createConnector,
 } from "wagmi";
 
-export type ConnectWagmiConfig<entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE> =
-    createSafeSmartAccountParameters<entryPoint> & {
-        bundlerUrl: string;
-        sponsorTransactions?: boolean;
-    } & {
-        /**
-         *
-         * This flag simulates the disconnect behavior by keeping track of connection status in storage
-         * and only autoconnecting when previously connected by user action (e.g. explicitly choosing to connect).
-         *
-         * @default true
-         */
-        shimDisconnect?: boolean;
-    };
+export type ConnectWagmiConfig<
+    TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
+> = createSafeSmartAccountParameters<TEntryPoint> & {
+    bundlerUrl: string;
+    sponsorTransactions?: boolean;
+} & {
+    /**
+     *
+     * This flag simulates the disconnect behavior by keeping track of connection status in storage
+     * and only autoconnecting when previously connected by user action (e.g. explicitly choosing to connect).
+     *
+     * @default true
+     */
+    shimDisconnect?: boolean;
+};
 
 export function smartAccountConnector<
-    entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
+    TSmartAccount extends
+        | SafeSmartAccount<TEntryPoint, Transport, Chain>
+        | undefined,
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = undefined,
+    TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
 >({
     apiKey,
     bundlerUrl,
@@ -50,10 +62,15 @@ export function smartAccountConnector<
     safeContractConfig,
     sponsorTransactions = true,
     shimDisconnect = true,
-}: ConnectWagmiConfig<entryPoint>): CreateConnectorFn {
+}: ConnectWagmiConfig<TEntryPoint>): CreateConnectorFn {
     let chain: Chain;
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-    let client: any;
+
+    let client: ComethSmartAccountClient<
+        TSmartAccount,
+        TTransport,
+        TChain,
+        TEntryPoint
+    >;
 
     return createConnector((config) => ({
         id: "cometh",
@@ -107,7 +124,12 @@ export function smartAccountConnector<
                                 paymasterClient.sponsorUserOperation,
                             gasPrice: paymasterClient.gasPrice,
                         },
-                    });
+                    }) as unknown as ComethSmartAccountClient<
+                        TSmartAccount,
+                        TTransport,
+                        TChain,
+                        TEntryPoint
+                    >;
                 } else {
                     client = createSmartAccountClient({
                         account: account as SafeSmartAccount<
@@ -118,13 +140,18 @@ export function smartAccountConnector<
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,
                         bundlerTransport: http(bundlerUrl),
-                    });
+                    }) as unknown as ComethSmartAccountClient<
+                        TSmartAccount,
+                        TTransport,
+                        TChain,
+                        TEntryPoint
+                    >;
                 }
 
                 await config.storage?.removeItem(`${this.id}.disconnected`);
 
                 return {
-                    accounts: [client.account.address],
+                    accounts: [client?.account?.address as Address],
                     chainId: await this.getChainId(),
                 };
             } catch (error) {
@@ -144,7 +171,7 @@ export function smartAccountConnector<
                 config.storage?.setItem(`${this.id}.disconnected`, true);
         },
         async getAccounts() {
-            return [client.account.address as Address];
+            return [client?.account?.address as Address];
         },
         async getChainId(): Promise<number> {
             return chain.id;
@@ -181,7 +208,12 @@ export function smartAccountConnector<
             if (requestedChainId !== chainId) {
                 throw new Error(`Invalid chainId ${chainId} requested`);
             }
-            return client;
+            return client as unknown as ComethSmartAccountClient<
+                TSmartAccount,
+                TTransport,
+                TChain,
+                TEntryPoint
+            >;
         },
     }));
 }
