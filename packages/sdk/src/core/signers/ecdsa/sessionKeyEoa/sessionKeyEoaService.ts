@@ -39,14 +39,12 @@ export const getSessionKeySignerFromLocalStorage = async (
     if (localStorage) {
         const { encryptedPrivateKey, iv } = unFormatStorageValue(localStorage);
 
-        const privateKey = await decryptEoaFallback(
+        return await decryptEoaFallback(
             smartAccountAddress,
             utils.base64ToArrayBuffer(encryptedPrivateKey),
             utils.base64toUint8Array(iv),
             salt || defaultEncryptionSalt
         );
-
-        return privateKey;
     }
 
     return null;
