@@ -39,8 +39,6 @@ Each project within the `packages/` directory follows the same internal architec
 
 ## Getting Started
 
-To get started with this POC, you need to have Bun installed on your machine, and have an AWS account setup using AWS CLI. The AWS account will be used to store the config and upload each websites.
-
 ### Installation
 
 1. Clone the repository and navigate to the project directory.
