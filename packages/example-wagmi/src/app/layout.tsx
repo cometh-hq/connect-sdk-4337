@@ -35,6 +35,7 @@ const connector = smartAccountConnector({
     baseUrl,
 });
 
+
 const config = createConfig({
     chains: [arbitrumSepolia],
     connectors: [connector],

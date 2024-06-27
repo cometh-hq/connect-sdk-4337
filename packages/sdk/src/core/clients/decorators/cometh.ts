@@ -1,5 +1,8 @@
 import { type SmartAccountActions, smartAccountActions } from "permissionless";
-import type { Middleware } from "permissionless/actions/smartAccount";
+import type {
+    Middleware,
+    SendTransactionWithPaymasterParameters,
+} from "permissionless/actions/smartAccount";
 import type { EntryPoint } from "permissionless/types";
 import type { Chain, Client, Hash, Transport } from "viem";
 
@@ -8,6 +11,15 @@ import {
     type ValidateAddDevice,
     validateAddDevice,
 } from "@/core/actions/accounts/safe/owners/addDeviceActions.js";
+import { sendTransactionWithSessionKey } from "@/core/actions/accounts/safe/sessionKeys/sendTransactionWithSessionKey";
+import {
+    type SendTransactionsWithPaymasterParameters,
+    sendTransactionsWithSessionKey,
+} from "@/core/actions/accounts/safe/sessionKeys/sendTransactionsWithSessionKey";
+import {
+    type VerifySignatureParams,
+    verifySignature,
+} from "@/core/actions/accounts/safe/verifySignature";
 
 export type ComethClientActions<
     entryPoint extends EntryPoint,
@@ -21,6 +33,31 @@ export type ComethClientActions<
     validateAddDevice: <TTransport extends Transport>(
         args: Parameters<
             typeof validateAddDevice<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<Hash>;
+    verifySignature: <TTransport extends Transport>(
+        args: Parameters<
+            typeof verifySignature<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<boolean>;
+    sendTransactionWithSessionKey: <TTransport extends Transport>(
+        args: Parameters<
+            typeof sendTransactionWithSessionKey<
+                entryPoint,
+                TTransport,
+                TChain,
+                TAccount
+            >
+        >[1]
+    ) => Promise<Hash>;
+    sendTransactionsWithSessionKey: <TTransport extends Transport>(
+        args: Parameters<
+            typeof sendTransactionsWithSessionKey<
+                entryPoint,
+                TTransport,
+                TChain,
+                TAccount
+            >
         >[1]
     ) => Promise<Hash>;
 };
@@ -48,5 +85,33 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                     middleware,
                 } as ValidateAddDevice<entryPoint>
             ),
+        verifySignature: (args) =>
+            verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {
+                ...args,
+            } as VerifySignatureParams),
+        sendTransactionWithSessionKey: (args) =>
+            sendTransactionWithSessionKey<
+                entryPoint,
+                TTransport,
+                TChain,
+                TAccount
+            >(client, {
+                ...args,
+                middleware,
+            } as SendTransactionWithPaymasterParameters<
+                entryPoint,
+                TChain,
+                TAccount
+            >),
+        sendTransactionsWithSessionKey: (args) =>
+            sendTransactionsWithSessionKey<
+                entryPoint,
+                TTransport,
+                TChain,
+                TAccount
+            >(client, {
+                ...args,
+                middleware,
+            } as SendTransactionsWithPaymasterParameters<entryPoint, TAccount>),
     });
 }

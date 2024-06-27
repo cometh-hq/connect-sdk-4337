@@ -48,10 +48,7 @@ export const decodeUserOp = ({
 
     const txs: MultiSendTransaction[] = [];
 
-    console.log({ args });
-
     if (args[0] === multisend) {
-        console.log("yqefvfe");
         const decodedData = decodeFunctionData({
             abi: MultiSendContractABI,
             data: args[2] as `0x${string}`,
@@ -89,7 +86,6 @@ export const decodeUserOp = ({
             });
         }
     } else {
-        console.log("yo");
         txs.push({
             to: args[0] as Address,
             value: args[1] as bigint,
@@ -97,8 +93,6 @@ export const decodeUserOp = ({
             op: args[3] as 0 | 1,
         });
     }
-
-    console.log({ txs });
 
     return txs;
 };

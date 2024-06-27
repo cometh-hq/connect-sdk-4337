@@ -1,9 +1,6 @@
 import { getAccountNonce, isSmartAccountDeployed } from "permissionless";
 import type { SmartAccount } from "permissionless/accounts";
-import {
-    SignTransactionNotSupportedBySmartAccount,
-    toSmartAccount,
-} from "permissionless/accounts";
+import { SignTransactionNotSupportedBySmartAccount } from "permissionless/accounts";
 
 import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
 import {
@@ -27,7 +24,16 @@ import { getClient } from "../utils";
 import { createSigner, saveSigner } from "@/core/signers/createSigner";
 import type { SignerConfig } from "@/core/signers/types";
 
-import type { EntryPoint } from "permissionless/_types/types";
+import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
+import {
+    getSessionKeySigner,
+    isUserOpWhitelisted,
+} from "@/core/actions/accounts/safe/sessionKeys/utils";
+import type {
+    EntryPoint,
+    GetEntryPointVersion,
+    UserOperation,
+} from "permissionless/_types/types";
 import { MultiSendContractABI } from "./abi/Multisend";
 import { safe4337ModuleAbi } from "./abi/safe4337ModuleAbi";
 import { SafeProxyContractFactoryABI } from "./abi/safeProxyFactory";
@@ -36,13 +42,26 @@ import {
     encodeMultiSendTransactions,
     getSafeInitializer,
 } from "./services/safe";
-import { type SafeContractConfig, SafeProxyBytecode } from "./types";
+import {
+    buildSignatureBytes,
+    packInitCode,
+    packPaymasterData,
+} from "./services/utils";
+import {
+    EIP712_SAFE_OPERATION_TYPE,
+    type SafeContractConfig,
+    SafeProxyBytecode,
+} from "./types";
+import { toSmartAccount } from "./utils";
 
 export type SafeSmartAccount<
     entryPoint extends EntryPoint,
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "safeSmartAccount", transport, chain> & {
+    signUserOperationWithSessionKey(
+        userOp: UserOperation<GetEntryPointVersion<entryPoint>>
+    ): Promise<Hex>;
     getConnectApi(): API;
     safe4337SessionKeysModule: Address;
 };
@@ -130,13 +149,13 @@ export const getAccountAddress = async ({
 };
 
 export type createSafeSmartAccountParameters<
-    entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
+    TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
 > = Prettify<{
     apiKey: string;
     rpcUrl?: string;
     baseUrl?: string;
     smartAccountAddress?: Address;
-    entryPoint: entryPoint;
+    entryPoint: TEntryPoint;
     comethSignerConfig?: SignerConfig;
     safeContractConfig?: SafeContractConfig;
 }>;
@@ -234,9 +253,7 @@ export async function createSafeSmartAccount<
         {
             comethSigner,
             safe4337SessionKeysModule,
-            multisend: multisendAddress,
             smartAccountAddress,
-            rpcUrl,
         }
     );
 
@@ -353,6 +370,81 @@ export async function createSafeSmartAccount<
     return {
         ...smartAccount,
         safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
+        async signUserOperationWithSessionKey(
+            userOp: UserOperation<GetEntryPointVersion<entryPoint>>
+        ) {
+            const sessionKeySigner = await getSessionKeySigner({
+                chain: client?.chain as Chain,
+                smartAccountAddress,
+                rpcUrl,
+                safe4337SessionKeysModule,
+            });
+
+            if (!sessionKeySigner) throw new Error("Session key not found");
+
+            const signer = sessionKeySigner?.eoaFallback.signer;
+
+            const isWhitelisted = await isUserOpWhitelisted({
+                chain: client?.chain as Chain,
+                safe4337SessionKeysModule,
+                sessionKey: signer?.address as Address,
+                userOperation: userOp,
+                multisend: multisendAddress,
+                smartAccountAddress,
+            });
+
+            if (!isWhitelisted)
+                throw new Error("Transactions are not whitelisted");
+
+            const payload = {
+                domain: {
+                    chainId: client.chain?.id,
+                    verifyingContract: safe4337SessionKeysModule,
+                },
+                types: EIP712_SAFE_OPERATION_TYPE,
+                primaryType: "SafeOp" as const,
+                message: {
+                    callData: userOp.callData,
+                    nonce: userOp.nonce,
+                    initCode: packInitCode({
+                        factory: userOp.factory,
+                        factoryData: userOp.factoryData,
+                    }),
+                    paymasterAndData: packPaymasterData({
+                        paymaster: userOp.paymaster as Hex,
+                        paymasterVerificationGasLimit:
+                            userOp.paymasterVerificationGasLimit as bigint,
+                        paymasterPostOpGasLimit:
+                            userOp.paymasterPostOpGasLimit as bigint,
+                        paymasterData: userOp.paymasterData as Hex,
+                    }),
+                    preVerificationGas: userOp.preVerificationGas,
+                    entryPoint: ENTRYPOINT_ADDRESS_V07,
+                    validAfter: 0,
+                    validUntil: 0,
+                    safe: userOp.sender,
+                    verificationGasLimit: userOp.verificationGasLimit,
+                    callGasLimit: userOp.callGasLimit,
+                    maxPriorityFeePerGas: userOp.maxPriorityFeePerGas,
+                    maxFeePerGas: userOp.maxFeePerGas,
+                },
+            };
+
+            return encodePacked(
+                ["uint48", "uint48", "bytes"],
+                [
+                    0,
+                    0,
+                    buildSignatureBytes([
+                        {
+                            signer: sessionKeySigner?.eoaFallback.signer
+                                .address as Address,
+                            data: (await signer?.signTypedData(payload)) as Hex,
+                        },
+                    ]) as Hex,
+                ]
+            );
+        },
         getConnectApi(): API {
             return api;
         },

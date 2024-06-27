@@ -95,6 +95,23 @@ interface TransactionProps {
       });
 
       console.log({calldata})
+
+     /*  const txHash = await smartAccount.sendTransactionsWithSessionKey(
+        {
+          transactions: [
+            {
+              to: COUNTER_CONTRACT_ADDRESS,
+              data: calldata,
+            },
+            {
+              to: COUNTER_CONTRACT_ADDRESS,
+              data: calldata,
+            },
+          ],
+        }
+      ) */
+
+
   
       const txHash =  await smartAccount.sendTransaction(
   

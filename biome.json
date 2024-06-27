@@ -4,6 +4,7 @@
         "ignore": [
             "example",
             "example-wagmi",
+            "sdk/src/wagmi/connectors",
             "_cjs",
             "_esm",
             "_types",
