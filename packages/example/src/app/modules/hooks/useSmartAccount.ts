@@ -88,7 +88,7 @@ export function useSmartAccount() {
 
 
 
-         /*  const message = "test"
+          const message = "test"
 
           console.log({smartAccount})
 
@@ -100,7 +100,7 @@ export function useSmartAccount() {
 
           const isValidSignature = await smartAccountClient.verifySignature({message, signature})
 
-          console.log({isValidSignature}) */
+          console.log({isValidSignature})
 
       
 

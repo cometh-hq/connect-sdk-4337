@@ -8,13 +8,11 @@ import {
     type Client,
     type Hex,
     type LocalAccount,
-    type SignableMessage,
     type Transport,
     type TypedData,
     type TypedDataDefinition,
     encodePacked,
-    hashMessage,
-    hashTypedData,
+    toHex,
 } from "viem";
 import { toAccount } from "viem/accounts";
 import { signTypedData } from "viem/actions";
@@ -31,23 +29,6 @@ import {
     EIP712_SAFE_OPERATION_TYPE,
 } from "../../types";
 import type { SafeSigner } from "../types";
-
-const generateSafeMessageMessage = <
-    const TTypedData extends TypedData | { [key: string]: unknown },
-    TPrimaryType extends keyof TTypedData | "EIP712Domain" = keyof TTypedData,
->(
-    message: SignableMessage | TypedDataDefinition<TTypedData, TPrimaryType>
-): Hex => {
-    const signableMessage = message as SignableMessage;
-
-    if (typeof signableMessage === "string" || signableMessage.raw) {
-        return hashMessage(signableMessage);
-    }
-
-    return hashTypedData(
-        message as TypedDataDefinition<TTypedData, TPrimaryType>
-    );
-};
 
 export async function safeECDSASigner<
     TTransport extends Transport = Transport,
@@ -77,6 +58,8 @@ export async function safeECDSASigner<
     const account = toAccount({
         address: smartAccountAddress,
         async signMessage({ message }) {
+            if (typeof message === "string") message = toHex(message);
+
             return signTypedData(client, {
                 account: viemSigner,
                 domain: {
@@ -85,7 +68,7 @@ export async function safeECDSASigner<
                 },
                 types: EIP712_SAFE_MESSAGE_TYPE,
                 primaryType: "SafeMessage" as const,
-                message: { message: generateSafeMessageMessage(message) },
+                message: { message },
             });
         },
         async signTransaction(_, __) {
