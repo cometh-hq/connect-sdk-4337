@@ -45,7 +45,6 @@ import {
 import {
     buildSignatureBytes,
     packInitCode,
-    packPaymasterData,
 } from "./services/utils";
 import {
     EIP712_SAFE_OPERATION_TYPE,
@@ -411,14 +410,15 @@ export async function createSafeSmartAccount<
                         factory: userOp.factory,
                         factoryData: userOp.factoryData,
                     }),
-                    paymasterAndData: packPaymasterData({
-                        paymaster: userOp.paymaster as Hex,
-                        paymasterVerificationGasLimit:
+                    paymasterAndData: encodePacked(
+                        ["address", "uint128", "uint128", "bytes"],
+                        [
+                            userOp.paymaster as Address,
                             userOp.paymasterVerificationGasLimit as bigint,
-                        paymasterPostOpGasLimit:
                             userOp.paymasterPostOpGasLimit as bigint,
-                        paymasterData: userOp.paymasterData as Hex,
-                    }),
+                            userOp.paymasterData as Hex,
+                        ]
+                    ) as Hex,
                     preVerificationGas: userOp.preVerificationGas,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     validAfter: 0,
