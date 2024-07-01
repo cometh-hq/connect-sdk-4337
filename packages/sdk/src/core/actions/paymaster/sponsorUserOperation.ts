@@ -13,7 +13,8 @@ import {
     type Client,
     type Hex,
     type Transport,
-    hexToBigInt,
+    //hexToBigInt,
+    encodePacked,
 } from "viem";
 
 export type SponsorUserOperationReturnType = {
@@ -60,14 +61,22 @@ export const sponsorUserOperation = async <
     return {
         callGasLimit: BigInt(response.callGasLimit),
         verificationGasLimit: BigInt(response.verificationGasLimit),
-        preVerificationGas: BigInt(response.preVerificationGas),
+        preVerificationGas: BigInt(response.preVerificationGas) ,
         paymaster: response.paymaster as Address,
-        paymasterVerificationGasLimit: hexToBigInt(
+        paymasterVerificationGasLimit: BigInt(
             response.paymasterVerificationGasLimit as Hex
         ),
-        paymasterPostOpGasLimit: hexToBigInt(
+        paymasterPostOpGasLimit: BigInt(
             response.paymasterPostOpGasLimit as Hex
         ),
-        paymasterData: response.paymasterData as Hex,
+        paymasterData: encodePacked(
+            ["address", "uint128", "uint128", "bytes"],
+            [
+                response.paymaster as Address,
+                BigInt(response.paymasterVerificationGasLimit as Hex),
+                BigInt(response.paymasterPostOpGasLimit as Hex),
+                response.paymasterData as Hex,
+            ]
+        ) as Hex,
     };
 };

@@ -280,6 +280,7 @@ export async function createSafeSmartAccount<
         },
 
         async signUserOperation(userOp) {
+            console.log({userOp})
             return safeSigner.signUserOperation(userOp);
         },
 
