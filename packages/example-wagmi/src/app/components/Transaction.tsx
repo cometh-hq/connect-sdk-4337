@@ -3,14 +3,15 @@
 import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { http, type Address, createPublicClient, getContract } from "viem";
+import { http, type Address, createPublicClient, getContract, encodeFunctionData } from "viem";
 import { arbitrumSepolia } from "viem/chains";
-import { useConnect } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
 
 const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
+
 
 const publicClient = createPublicClient({
     chain: arbitrumSepolia,
@@ -42,6 +43,7 @@ function Transaction({
     transactionSuccess,
     setTransactionSuccess,
 }: TransactionProps) {
+    const { connector } = useAccount();
     const [isTransactionLoading, setIsTransactionLoading] =
         useState<boolean>(false);
     const [transactionSended, setTransactionSended] = useState<any | null>(
@@ -92,13 +94,37 @@ function Transaction({
         try {
             if (!address) throw new Error("No wallet instance");
 
-            writeContract({
+            console.log({connector})
+
+
+            const client = await connector?.getProvider() as any;
+
+            await client.addSessionKey({
+                // ONE YEAR
+                validUntil: Date.now() + 1000 * 60 * 60 * 24 * 365,
+                destinations: [COUNTER_CONTRACT_ADDRESS],
+              });
+
+              const calldata = encodeFunctionData({
+                abi: countContractAbi,
+                functionName: "count",
+            });
+
+
+              const hash = await client.sendTransactionWithSessionKey({
+                to: COUNTER_CONTRACT_ADDRESS,
+                data: calldata,
+              });
+
+              console.log({hash})
+
+          /*   writeContract({
                 abi: countContractAbi,
                 address: COUNTER_CONTRACT_ADDRESS,
                 functionName: "count",
                 args: [],
             });
-
+ */
             const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));
 

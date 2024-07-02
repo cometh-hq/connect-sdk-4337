@@ -63,6 +63,7 @@ export async function sendTransactionsWithSessionKey<
         TTransport,
         TChain
     >;
+    console.log({nonce})
     const smartAccountAddress = client.account?.address;
 
     if (!smartAccountAddress) throw new Error("No smart account address found");
@@ -99,6 +100,8 @@ export async function sendTransactionsWithSessionKey<
         account: account,
         middleware,
     } as SendUserOperationParameters<entryPoint, TAccount>);
+
+    userOperation.nonce = await account.getNonce();
 
     userOperation.signature = await account.signUserOperationWithSessionKey(
         userOperation as UserOperation<GetEntryPointVersion<entryPoint>>

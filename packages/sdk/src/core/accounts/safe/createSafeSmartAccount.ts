@@ -269,6 +269,7 @@ export async function createSafeSmartAccount<
         source: "safeSmartAccount",
 
         async getNonce() {
+            
             return getAccountNonce(client, {
                 sender: smartAccountAddress,
                 entryPoint: entryPointAddress,

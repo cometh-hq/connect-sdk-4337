@@ -23,7 +23,7 @@ export function useSmartAccount() {
 
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
-    const paymasterUrl = "http://localhost:3000/paymaster";
+    const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
     function displayError(message: string) {
         setConnectionError(message);
@@ -83,9 +83,9 @@ export function useSmartAccount() {
 
             console.log({ smartAccountClient });
 
-            //await smartAccountClient.addSessionKey({destinations:[COUNTER_CONTRACT_ADDRESS]})
+        
 
-            const message = "test";
+          /*   const message = "test";
 
             console.log({ smartAccount });
 
@@ -100,7 +100,7 @@ export function useSmartAccount() {
                 signature,
             });
 
-            console.log({ isValidSignature });
+            console.log({ isValidSignature }); */
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);
