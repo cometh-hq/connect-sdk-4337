@@ -17,6 +17,7 @@ const queryClient = new QueryClient();
 
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
 const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
+const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 const baseUrl = "http://127.0.0.1:8000/connect";
 const rpcUrl = "https://arbitrum-sepolia.blockpi.network/v1/rpc/public";
 
@@ -31,6 +32,7 @@ const connector = smartAccountConnector({
     rpcUrl,
     smartAccountAddress: localStorageAddress,
     baseUrl,
+    paymasterUrl
 });
 
 const config = createConfig({
