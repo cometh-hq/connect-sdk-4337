@@ -16,7 +16,6 @@ export type ComethPaymasterRpcSchema<entryPoint extends EntryPoint> = [
                 GetEntryPointVersion<entryPoint>
             >,
             EntryPoint: Address,
-            chainId: number,
         ];
         ReturnType: {
             callGasLimit: Hex;

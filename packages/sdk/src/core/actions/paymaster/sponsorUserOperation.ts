@@ -37,11 +37,7 @@ export const sponsorUserOperation = async <
 ): Promise<SponsorUserOperationReturnType> => {
     const response = (await client.request({
         method: "pm_sponsorUserOperation",
-        params: [
-            deepHexlify(args.userOperation),
-            args.entryPoint,
-            client.chain?.id!,
-        ],
+        params: [deepHexlify(args.userOperation), args.entryPoint],
     })) as {
         paymasterAndData: never;
         preVerificationGas: Hex;
