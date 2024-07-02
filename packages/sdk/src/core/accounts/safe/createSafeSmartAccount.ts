@@ -42,10 +42,7 @@ import {
     encodeMultiSendTransactions,
     getSafeInitializer,
 } from "./services/safe";
-import {
-    buildSignatureBytes,
-    packInitCode,
-} from "./services/utils";
+import { buildSignatureBytes, packInitCode } from "./services/utils";
 import {
     EIP712_SAFE_OPERATION_TYPE,
     type SafeContractConfig,
@@ -279,7 +276,7 @@ export async function createSafeSmartAccount<
         },
 
         async signUserOperation(userOp) {
-            console.log({userOp})
+            console.log({ userOp });
             return safeSigner.signUserOperation(userOp);
         },
 

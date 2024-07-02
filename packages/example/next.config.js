@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-  experimental: {
-    esmExternals: "loose",
-  },
+    output: "standalone",
+    experimental: {
+        esmExternals: "loose",
+    },
 };
 
 module.exports = nextConfig;

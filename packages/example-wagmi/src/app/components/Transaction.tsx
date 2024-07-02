@@ -5,10 +5,10 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { http, type Address, createPublicClient, getContract } from "viem";
 import { arbitrumSepolia } from "viem/chains";
+import { useConnect } from "wagmi";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
-import { useConnect} from "wagmi";
 
 const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
@@ -49,9 +49,6 @@ function Transaction({
     );
     const [transactionFailure, setTransactionFailure] = useState(false);
     const [nftBalance, setNftBalance] = useState<number>(0);
-    
-
- 
 
     function TransactionButton({
         sendTestTransaction,

@@ -33,7 +33,7 @@ export type ConnectWagmiConfig<
     TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
 > = createSafeSmartAccountParameters<TEntryPoint> & {
     bundlerUrl: string;
-    sponsorTransactions?: boolean;
+    paymasterUrl?: string;
 } & {
     /**
      *
@@ -60,7 +60,7 @@ export function smartAccountConnector<
     smartAccountAddress,
     comethSignerConfig,
     safeContractConfig,
-    sponsorTransactions = true,
+    paymasterUrl,
     shimDisconnect = true,
 }: ConnectWagmiConfig<TEntryPoint>): CreateConnectorFn {
     let chain: Chain;
@@ -103,9 +103,9 @@ export function smartAccountConnector<
                     safeContractConfig,
                 });
 
-                if (sponsorTransactions) {
+                if (paymasterUrl) {
                     const paymasterClient = await createComethPaymasterClient({
-                        transport: http(bundlerUrl),
+                        transport: http(paymasterUrl),
                         chain,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                     });

@@ -6,14 +6,7 @@ import type {
     Prettify,
 } from "permissionless/types";
 import type { UserOperation } from "permissionless/types/userOperation.js";
-import {
-    type Account,
-    type Address,
-    type Chain,
-    type Client,
-    type Hex,
-    type Transport,
-} from "viem";
+import type { Account, Address, Chain, Client, Hex, Transport } from "viem";
 
 export type SponsorUserOperationReturnType = {
     callGasLimit: bigint;
@@ -44,7 +37,11 @@ export const sponsorUserOperation = async <
 ): Promise<SponsorUserOperationReturnType> => {
     const response = (await client.request({
         method: "pm_sponsorUserOperation",
-        params: [deepHexlify(args.userOperation), args.entryPoint],
+        params: [
+            deepHexlify(args.userOperation),
+            args.entryPoint,
+            client.chain?.id!,
+        ],
     })) as {
         paymasterAndData: never;
         preVerificationGas: Hex;
@@ -59,7 +56,7 @@ export const sponsorUserOperation = async <
     return {
         callGasLimit: BigInt(response.callGasLimit),
         verificationGasLimit: BigInt(response.verificationGasLimit),
-        preVerificationGas: BigInt(response.preVerificationGas) ,
+        preVerificationGas: BigInt(response.preVerificationGas),
         paymaster: response.paymaster as Address,
         paymasterVerificationGasLimit: BigInt(
             response.paymasterVerificationGasLimit as Hex
@@ -68,6 +65,5 @@ export const sponsorUserOperation = async <
             response.paymasterPostOpGasLimit as Hex
         ),
         paymasterData: response.paymasterData as Hex,
-         
     };
 };
