@@ -43,7 +43,10 @@ export type ComethPaymasterClientActions = {
 };
 
 const comethPaymasterActions =
-    <entryPoint extends EntryPoint>(entryPointAddress: entryPoint) =>
+    <entryPoint extends EntryPoint>(
+        entryPointAddress: entryPoint,
+        rpcUrl?: string
+    ) =>
     (client: Client): ComethPaymasterClientActions => ({
         sponsorUserOperation: async <entryPoint extends EntryPoint>(args: {
             userOperation: UserOperation<GetEntryPointVersion<entryPoint>>;
@@ -53,7 +56,7 @@ const comethPaymasterActions =
                 entryPoint: entryPointAddress,
             }),
         gasPrice: async () =>
-            gasPrice(client as ComethPaymasterClient<entryPoint>),
+            gasPrice(client as ComethPaymasterClient<entryPoint>, rpcUrl),
     });
 
 export const createComethPaymasterClient = <
@@ -63,6 +66,7 @@ export const createComethPaymasterClient = <
 >(
     parameters: PublicClientConfig<transport, chain> & {
         entryPoint: entryPoint;
+        rpcUrl?: string;
     }
 ): ComethPaymasterClient<entryPoint> => {
     const { key = "public", name = "Cometh Paymaster Client" } = parameters;
@@ -72,5 +76,7 @@ export const createComethPaymasterClient = <
         name,
         type: "comethPaymasterClient",
     });
-    return client.extend(comethPaymasterActions(parameters.entryPoint));
+    return client.extend(
+        comethPaymasterActions(parameters.entryPoint, parameters.rpcUrl)
+    );
 };

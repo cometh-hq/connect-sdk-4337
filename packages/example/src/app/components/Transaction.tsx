@@ -95,7 +95,7 @@ function Transaction({
         try {
             if (!smartAccount) throw new Error("No wallet instance");
 
-            await smartAccount.addSessionKey({destinations:[COUNTER_CONTRACT_ADDRESS]})
+            //await smartAccount.addSessionKey({destinations:[COUNTER_CONTRACT_ADDRESS]})
 
             const calldata = encodeFunctionData({
                 abi: countContractAbi,
@@ -104,7 +104,7 @@ function Transaction({
 
             console.log({ calldata });
 
-             const txHash = await smartAccount.sendTransactionsWithSessionKey(
+        /*      const txHash = await smartAccount.sendTransactionsWithSessionKey(
         {
           transactions: [
             {
@@ -117,14 +117,14 @@ function Transaction({
             },
           ],
         }
-      )
+      ) */
 
-          /*   const txHash = await smartAccount.sendTransaction(
+            const txHash = await smartAccount.sendTransaction(
                 {
                     to: COUNTER_CONTRACT_ADDRESS,
                     data: calldata,
                 }
-            ); */
+            );
 
             /*  const txHash =  await smartAccount.sendTransactions(
       {

@@ -30,10 +30,10 @@ import type {
 } from "./types";
 
 const _formatCreatingRpId = (): { name: string; id?: string } => {
-    return psl.parse(window.location.host).domain
+    return (psl.parse(window.location.host) as any).domain
         ? {
-              name: psl.parse(window.location.host).domain,
-              id: psl.parse(window.location.host).domain,
+              name: (psl.parse(window.location.host) as any).domain,
+              id: (psl.parse(window.location.host) as any).domain,
           }
         : { name: "localhost" };
 };

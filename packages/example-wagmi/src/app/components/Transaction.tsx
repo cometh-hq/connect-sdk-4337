@@ -117,12 +117,12 @@ function Transaction({
 
               console.log({hash}) */
 
-          /*   writeContract({
+             writeContract({
                 abi: countContractAbi,
                 address: COUNTER_CONTRACT_ADDRESS,
                 functionName: "count",
                 args: [],
-            }); */
+            }); 
 
             const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));

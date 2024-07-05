@@ -103,11 +103,14 @@ export function smartAccountConnector<
                     safeContractConfig,
                 });
 
+                console.log({account})
+
                 if (paymasterUrl) {
                     const paymasterClient = await createComethPaymasterClient({
                         transport: http(paymasterUrl),
                         chain,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
+                        rpcUrl
                     });
 
                     client = createSmartAccountClient({
@@ -147,6 +150,8 @@ export function smartAccountConnector<
                         TEntryPoint
                     >;
                 }
+
+                console.log({client})
 
                 await config.storage?.removeItem(`${this.id}.disconnected`);
 
