@@ -63,7 +63,7 @@ export async function sendTransactionsWithSessionKey<
         TTransport,
         TChain
     >;
-    console.log({nonce})
+
     const smartAccountAddress = client.account?.address;
 
     if (!smartAccountAddress) throw new Error("No smart account address found");

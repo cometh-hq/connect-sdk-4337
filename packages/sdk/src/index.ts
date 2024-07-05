@@ -1,8 +1,14 @@
 import { ENTRYPOINT_ADDRESS_V06, ENTRYPOINT_ADDRESS_V07 } from "./constants";
 
-import { createSafeSmartAccount } from "./core/accounts/safe/createSafeSmartAccount";
+import {
+    type SafeSmartAccount,
+    createSafeSmartAccount,
+} from "./core/accounts/safe/createSafeSmartAccount";
 import { retrieveAccountAddressFromPasskey } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
-import { createSmartAccountClient } from "./core/clients/accounts/safe/createClient";
+import {
+    type ComethSmartAccountClient,
+    createSmartAccountClient,
+} from "./core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
 import { useHandleDevice } from "./core/hooks/useHandleDevice";
 import { createSigner } from "./core/signers/createSigner";
@@ -19,3 +25,5 @@ export {
     ENTRYPOINT_ADDRESS_V06,
     ENTRYPOINT_ADDRESS_V07,
 };
+
+export type { SafeSmartAccount, ComethSmartAccountClient };

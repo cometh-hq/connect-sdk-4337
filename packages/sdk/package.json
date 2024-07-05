@@ -58,6 +58,7 @@
     "bowser": "^2.11.0",
     "permissionless": "^0.1.31",
     "psl": "^1.9.0",
+    "qrcode": "^1.5.3",
     "viem": "^2",
     "wagmi": "^2"
   }

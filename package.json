@@ -25,5 +25,8 @@
     "@changesets/changelog-git": "^0.2.0",
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "^2.27.1"
+  },
+  "dependencies": {
+    "uuid": "^10.0.0"
   }
 }

@@ -5,10 +5,11 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { http, type Address, createPublicClient, getContract, encodeFunctionData } from "viem";
 import { arbitrumSepolia } from "viem/chains";
-import { useAccount, useConnect } from "wagmi";
+import { useAccount, useConnect, useWalletClient } from "wagmi";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
+import type { ComethSmartAccountClient } from "@cometh/connect-sdk-4337";
 
 const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
@@ -44,6 +45,7 @@ function Transaction({
     setTransactionSuccess,
 }: TransactionProps) {
     const { connector } = useAccount();
+    const {data:client} = useWalletClient()
     const [isTransactionLoading, setIsTransactionLoading] =
         useState<boolean>(false);
     const [transactionSended, setTransactionSended] = useState<any | null>(
@@ -94,12 +96,9 @@ function Transaction({
         try {
             if (!address) throw new Error("No wallet instance");
 
-            console.log({connector})
+         
 
-
-            const client = await connector?.getProvider() as any;
-
-            await client.addSessionKey({
+         /*    await client2.addSessionKey({
                 // ONE YEAR
                 validUntil: Date.now() + 1000 * 60 * 60 * 24 * 365,
                 destinations: [COUNTER_CONTRACT_ADDRESS],
@@ -116,15 +115,15 @@ function Transaction({
                 data: calldata,
               });
 
-              console.log({hash})
+              console.log({hash}) */
 
           /*   writeContract({
                 abi: countContractAbi,
                 address: COUNTER_CONTRACT_ADDRESS,
                 functionName: "count",
                 args: [],
-            });
- */
+            }); */
+
             const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));
 

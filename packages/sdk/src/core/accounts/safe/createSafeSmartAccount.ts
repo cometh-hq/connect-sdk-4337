@@ -269,7 +269,6 @@ export async function createSafeSmartAccount<
         source: "safeSmartAccount",
 
         async getNonce() {
-            
             return getAccountNonce(client, {
                 sender: smartAccountAddress,
                 entryPoint: entryPointAddress,
@@ -277,7 +276,6 @@ export async function createSafeSmartAccount<
         },
 
         async signUserOperation(userOp) {
-            console.log({ userOp });
             return safeSigner.signUserOperation(userOp);
         },
 

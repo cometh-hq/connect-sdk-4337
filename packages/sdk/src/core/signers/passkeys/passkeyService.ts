@@ -1,3 +1,4 @@
+import * as psl from "psl";
 import {
     type Address,
     type Hex,
@@ -19,7 +20,6 @@ import {
     extractSignature,
     hexArrayStr,
     parseHex,
-    rpId,
 } from "../passkeys/utils";
 import type {
     Assertion,
@@ -28,6 +28,19 @@ import type {
     WebAuthnSigner,
     webAuthnOptions,
 } from "./types";
+
+const _formatCreatingRpId = (): { name: string; id?: string } => {
+    return psl.parse(window.location.host).domain
+        ? {
+              name: psl.parse(window.location.host).domain,
+              id: psl.parse(window.location.host).domain,
+          }
+        : { name: "localhost" };
+};
+
+const _formatSigningRpId = (): string | undefined => {
+    return (psl.parse(window.location.host) as any).domain || undefined;
+};
 
 const createPasskeySigner = async ({
     api,
@@ -47,7 +60,7 @@ const createPasskeySigner = async ({
 
         const passkeyCredential = (await navigator.credentials.create({
             publicKey: {
-                rp: rpId,
+                rp: _formatCreatingRpId(),
                 user: {
                     id: crypto.getRandomValues(new Uint8Array(32)),
                     name,
@@ -140,9 +153,10 @@ const sign = async (
     const assertion = (await navigator.credentials.get({
         publicKey: {
             challenge: toBytes(challenge),
+            rpId: _formatSigningRpId(),
             allowCredentials: publicKeyCredential || [],
             userVerification: "required",
-            timeout: 60000,
+            timeout: 30000,
         },
     })) as Assertion | null;
 
