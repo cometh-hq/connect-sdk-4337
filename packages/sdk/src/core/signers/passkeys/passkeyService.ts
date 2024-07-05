@@ -311,7 +311,7 @@ const retrieveSmartAccountAddressFromPasskey = async (
     if (!signingPasskeySigner) throw new NoPasskeySignerFoundInDBError();
 
     const {
-        walletAddress: smartAccountAddress,
+        smartAccountAddress,
         publicKeyX,
         publicKeyY,
         signerAddress,

@@ -9,9 +9,10 @@ import { useAccount, useConnect, useWalletClient } from "wagmi";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
-import type { ComethSmartAccountClient } from "@cometh/connect-sdk-4337";
+import { retrieveAccountAddressFromPasskey, type ComethSmartAccountClient } from "@cometh/connect-sdk-4337";
 
 const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
+const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
 
 
 const publicClient = createPublicClient({
@@ -117,12 +118,15 @@ function Transaction({
 
               console.log({hash}) */
 
-             writeContract({
+           /*   writeContract({
                 abi: countContractAbi,
                 address: COUNTER_CONTRACT_ADDRESS,
                 functionName: "count",
                 args: [],
             }); 
+ */
+        const wallet = await retrieveAccountAddressFromPasskey(apiKey!)
+        console.log({wallet})
 
             const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));
