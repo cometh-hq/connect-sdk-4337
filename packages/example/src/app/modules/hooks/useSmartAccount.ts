@@ -10,6 +10,7 @@ import {
 import { useState } from "react";
 import { http, type Hex } from "viem";
 import { arbitrumSepolia } from "viem/chains";
+import { rpc } from "viem/utils";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -68,6 +69,7 @@ export function useSmartAccount() {
                 transport: http(paymasterUrl),
                 chain: arbitrumSepolia,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
+                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
 
             const smartAccountClient = createSmartAccountClient({
