@@ -31,7 +31,7 @@ export type WebAuthnSigner = {
     projectId: string;
     userId: string;
     chainId: string;
-    walletAddress: string;
+    smartAccountAddress: string;
     publicKeyId: string;
     publicKeyX: string;
     publicKeyY: string;

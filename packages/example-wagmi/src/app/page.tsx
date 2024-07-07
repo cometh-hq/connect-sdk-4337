@@ -2,17 +2,21 @@
 
 import React, { useState } from "react";
 
+import { retrieveAccountAddressFromPasskey } from "@cometh/connect-sdk-4337";
 import { useAccount, useConnect, useWriteContract } from "wagmi";
 import Transaction from "./components/Transaction";
 
 export default function App() {
     const { connectors, connect } = useConnect();
     const { address, isConnected } = useAccount();
+    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
 
     const { data: hash, writeContract } = useWriteContract();
 
-    const connectWagmi = () => {
+    const connectWagmi = async () => {
         connect({ connector: connectors[0] });
+        /* const wallet = await retrieveAccountAddressFromPasskey(apiKey!)
+    console.log({wallet}) */
     };
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);

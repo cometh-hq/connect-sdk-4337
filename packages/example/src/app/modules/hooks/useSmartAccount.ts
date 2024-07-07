@@ -1,6 +1,5 @@
 "use client";
 
-import { COUNTER_CONTRACT_ADDRESS } from "@/app/components/Transaction";
 import {
     ENTRYPOINT_ADDRESS_V07,
     createComethPaymasterClient,
@@ -23,7 +22,7 @@ export function useSmartAccount() {
 
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
-    const paymasterUrl = "http://localhost:3000/paymaster";
+    const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
     function displayError(message: string) {
         setConnectionError(message);
@@ -68,6 +67,7 @@ export function useSmartAccount() {
                 transport: http(paymasterUrl),
                 chain: arbitrumSepolia,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
+                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
 
             const smartAccountClient = createSmartAccountClient({
@@ -80,27 +80,6 @@ export function useSmartAccount() {
                     gasPrice: paymasterClient.gasPrice,
                 },
             });
-
-            console.log({ smartAccountClient });
-
-            //await smartAccountClient.addSessionKey({destinations:[COUNTER_CONTRACT_ADDRESS]})
-
-            const message = "test";
-
-            console.log({ smartAccount });
-
-            const signature = await smartAccountClient.account.signMessage({
-                message,
-            });
-
-            console.log({ signature });
-
-            const isValidSignature = await smartAccountClient.verifySignature({
-                message,
-                signature,
-            });
-
-            console.log({ isValidSignature });
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);

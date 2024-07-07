@@ -1,3 +1,5 @@
+import * as psl from "psl";
+import type { ParsedDomain } from "psl";
 import {
     type Address,
     type Hex,
@@ -19,7 +21,6 @@ import {
     extractSignature,
     hexArrayStr,
     parseHex,
-    rpId,
 } from "../passkeys/utils";
 import type {
     Assertion,
@@ -28,6 +29,22 @@ import type {
     WebAuthnSigner,
     webAuthnOptions,
 } from "./types";
+
+const _formatCreatingRpId = (): { name: string; id?: string } => {
+    const domain = (psl.parse(window.location.host) as ParsedDomain).domain;
+    return domain
+        ? {
+              name: domain,
+              id: domain,
+          }
+        : { name: "localhost" };
+};
+
+const _formatSigningRpId = (): string | undefined => {
+    return (
+        (psl.parse(window.location.host) as ParsedDomain).domain || undefined
+    );
+};
 
 const createPasskeySigner = async ({
     api,
@@ -47,7 +64,7 @@ const createPasskeySigner = async ({
 
         const passkeyCredential = (await navigator.credentials.create({
             publicKey: {
-                rp: rpId,
+                rp: _formatCreatingRpId(),
                 user: {
                     id: crypto.getRandomValues(new Uint8Array(32)),
                     name,
@@ -140,6 +157,7 @@ const sign = async (
     const assertion = (await navigator.credentials.get({
         publicKey: {
             challenge: toBytes(challenge),
+            rpId: _formatSigningRpId(),
             allowCredentials: publicKeyCredential || [],
             userVerification: "required",
             timeout: 60000,
@@ -296,12 +314,8 @@ const retrieveSmartAccountAddressFromPasskey = async (
         await API.getPasskeySignerByPublicKeyId(publicKeyId);
     if (!signingPasskeySigner) throw new NoPasskeySignerFoundInDBError();
 
-    const {
-        walletAddress: smartAccountAddress,
-        publicKeyX,
-        publicKeyY,
-        signerAddress,
-    } = signingPasskeySigner;
+    const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
+        signingPasskeySigner;
 
     setPasskeyInStorage(
         smartAccountAddress as Address,

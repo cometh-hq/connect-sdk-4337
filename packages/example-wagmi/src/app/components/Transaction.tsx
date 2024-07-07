@@ -5,7 +5,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { http, type Address, createPublicClient, getContract } from "viem";
 import { arbitrumSepolia } from "viem/chains";
-import { useConnect } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
@@ -42,6 +42,8 @@ function Transaction({
     transactionSuccess,
     setTransactionSuccess,
 }: TransactionProps) {
+    const { connector } = useAccount();
+    const { data: client } = useWalletClient();
     const [isTransactionLoading, setIsTransactionLoading] =
         useState<boolean>(false);
     const [transactionSended, setTransactionSended] = useState<any | null>(

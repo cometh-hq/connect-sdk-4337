@@ -1,7 +1,7 @@
 {
-  "name": "@cometh/connect-sdk",
+  "name": "@cometh/connect-4337",
   "version": "0.0.1",
-  "description": "SDK Cometh Connect",
+  "description": "SDK Cometh Connect 4337",
   "private": true,
   "type": "module",
   "license": "ISC",

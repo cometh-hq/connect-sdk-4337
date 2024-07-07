@@ -108,14 +108,11 @@ export function smartAccountConnector<
                         transport: http(paymasterUrl),
                         chain,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
+                        rpcUrl,
                     });
 
                     client = createSmartAccountClient({
-                        account: account as SafeSmartAccount<
-                            ENTRYPOINT_ADDRESS_V07_TYPE,
-                            Transport,
-                            Chain
-                        >,
+                        account: account,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,
                         bundlerTransport: http(bundlerUrl),
@@ -132,11 +129,7 @@ export function smartAccountConnector<
                     >;
                 } else {
                     client = createSmartAccountClient({
-                        account: account as SafeSmartAccount<
-                            ENTRYPOINT_ADDRESS_V07_TYPE,
-                            Transport,
-                            Chain
-                        >,
+                        account: account,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,
                         bundlerTransport: http(bundlerUrl),

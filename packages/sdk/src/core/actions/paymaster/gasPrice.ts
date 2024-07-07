@@ -12,11 +12,12 @@ export const gasPrice = async <
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends Account | undefined = Account | undefined,
 >(
-    client: Client<TTransport, TChain, TAccount, undefined>
+    client: Client<TTransport, TChain, TAccount, undefined>,
+    rpcUrl?: string
 ) => {
     const publicClient = createPublicClient({
         chain: client.chain as Chain,
-        transport: http(),
+        transport: http(rpcUrl),
     });
 
     const { maxFeePerGas } = (await publicClient.estimateFeesPerGas()) as {
@@ -25,7 +26,7 @@ export const gasPrice = async <
     };
 
     return {
-        maxFeePerGas: maxFeePerGas * 4n,
+        maxFeePerGas: maxFeePerGas * 2n,
         maxPriorityFeePerGas: maxFeePerGas,
     };
 };
