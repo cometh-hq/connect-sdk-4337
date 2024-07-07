@@ -103,22 +103,16 @@ export function smartAccountConnector<
                     safeContractConfig,
                 });
 
-                console.log({account})
-
                 if (paymasterUrl) {
                     const paymasterClient = await createComethPaymasterClient({
                         transport: http(paymasterUrl),
                         chain,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
-                        rpcUrl
+                        rpcUrl,
                     });
 
                     client = createSmartAccountClient({
-                        account: account as SafeSmartAccount<
-                            ENTRYPOINT_ADDRESS_V07_TYPE,
-                            Transport,
-                            Chain
-                        >,
+                        account: account,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,
                         bundlerTransport: http(bundlerUrl),
@@ -135,11 +129,7 @@ export function smartAccountConnector<
                     >;
                 } else {
                     client = createSmartAccountClient({
-                        account: account as SafeSmartAccount<
-                            ENTRYPOINT_ADDRESS_V07_TYPE,
-                            Transport,
-                            Chain
-                        >,
+                        account: account,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,
                         bundlerTransport: http(bundlerUrl),
@@ -150,8 +140,6 @@ export function smartAccountConnector<
                         TEntryPoint
                     >;
                 }
-
-                console.log({client})
 
                 await config.storage?.removeItem(`${this.id}.disconnected`);
 

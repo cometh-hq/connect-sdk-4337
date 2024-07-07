@@ -4,8 +4,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Inter } from "next/font/google";
 import "./lib/ui/globals.css";
 
-import { retrieveAccountAddressFromPasskey, smartAccountConnector } from "@cometh/connect-sdk-4337";
-import type { Hex } from "viem";
+import {
+    retrieveAccountAddressFromPasskey,
+    smartAccountConnector,
+} from "@cometh/connect-sdk-4337";
 import { arbitrumSepolia } from "viem/chains";
 import { http, WagmiProvider, createConfig } from "wagmi";
 
@@ -24,20 +26,15 @@ const rpcUrl = "https://arbitrum-sepolia.blockpi.network/v1/rpc/public";
 if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
-const localStorageAddress = await retrieveAccountAddressFromPasskey(apiKey)
-
-console.log({localStorageAddress})
-
-const comethSignerConfig = {passkeyName:"George"}
+const storedAddress = await retrieveAccountAddressFromPasskey(apiKey);
 
 const connector = smartAccountConnector({
     apiKey,
     bundlerUrl,
     rpcUrl,
-    smartAccountAddress: localStorageAddress,
+    smartAccountAddress: storedAddress,
     baseUrl,
     paymasterUrl,
-    comethSignerConfig: {passkeyName:"George"}
 });
 
 const config = createConfig({

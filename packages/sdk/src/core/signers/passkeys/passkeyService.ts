@@ -1,4 +1,5 @@
 import * as psl from "psl";
+import type { ParsedDomain } from "psl";
 import {
     type Address,
     type Hex,
@@ -30,16 +31,19 @@ import type {
 } from "./types";
 
 const _formatCreatingRpId = (): { name: string; id?: string } => {
-    return (psl.parse(window.location.host) as any).domain
+    const domain = (psl.parse(window.location.host) as ParsedDomain).domain;
+    return domain
         ? {
-              name: (psl.parse(window.location.host) as any).domain,
-              id: (psl.parse(window.location.host) as any).domain,
+              name: domain,
+              id: domain,
           }
         : { name: "localhost" };
 };
 
 const _formatSigningRpId = (): string | undefined => {
-    return (psl.parse(window.location.host) as any).domain || undefined;
+    return (
+        (psl.parse(window.location.host) as ParsedDomain).domain || undefined
+    );
 };
 
 const createPasskeySigner = async ({
@@ -310,12 +314,8 @@ const retrieveSmartAccountAddressFromPasskey = async (
         await API.getPasskeySignerByPublicKeyId(publicKeyId);
     if (!signingPasskeySigner) throw new NoPasskeySignerFoundInDBError();
 
-    const {
-        smartAccountAddress,
-        publicKeyX,
-        publicKeyY,
-        signerAddress,
-    } = signingPasskeySigner;
+    const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
+        signingPasskeySigner;
 
     setPasskeyInStorage(
         smartAccountAddress as Address,

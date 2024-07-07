@@ -1,6 +1,5 @@
 "use client";
 
-import { COUNTER_CONTRACT_ADDRESS } from "@/app/components/Transaction";
 import {
     ENTRYPOINT_ADDRESS_V07,
     createComethPaymasterClient,
@@ -10,7 +9,6 @@ import {
 import { useState } from "react";
 import { http, type Hex } from "viem";
 import { arbitrumSepolia } from "viem/chains";
-import { rpc } from "viem/utils";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -82,27 +80,6 @@ export function useSmartAccount() {
                     gasPrice: paymasterClient.gasPrice,
                 },
             });
-
-            console.log({ smartAccountClient });
-
-        
-
-          /*   const message = "test";
-
-            console.log({ smartAccount });
-
-            const signature = await smartAccountClient.account.signMessage({
-                message,
-            });
-
-            console.log({ signature });
-
-            const isValidSignature = await smartAccountClient.verifySignature({
-                message,
-                signature,
-            });
-
-            console.log({ isValidSignature }); */
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);

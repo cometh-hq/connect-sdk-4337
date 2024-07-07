@@ -3,17 +3,14 @@
 import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { http, type Address, createPublicClient, getContract, encodeFunctionData } from "viem";
+import { http, type Address, createPublicClient, getContract } from "viem";
 import { arbitrumSepolia } from "viem/chains";
-import { useAccount, useConnect, useWalletClient } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
-import { retrieveAccountAddressFromPasskey, type ComethSmartAccountClient } from "@cometh/connect-sdk-4337";
 
 const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
-const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
-
 
 const publicClient = createPublicClient({
     chain: arbitrumSepolia,
@@ -46,7 +43,7 @@ function Transaction({
     setTransactionSuccess,
 }: TransactionProps) {
     const { connector } = useAccount();
-    const {data:client} = useWalletClient()
+    const { data: client } = useWalletClient();
     const [isTransactionLoading, setIsTransactionLoading] =
         useState<boolean>(false);
     const [transactionSended, setTransactionSended] = useState<any | null>(
@@ -97,36 +94,12 @@ function Transaction({
         try {
             if (!address) throw new Error("No wallet instance");
 
-         
-
-         /*    await client2.addSessionKey({
-                // ONE YEAR
-                validUntil: Date.now() + 1000 * 60 * 60 * 24 * 365,
-                destinations: [COUNTER_CONTRACT_ADDRESS],
-              });
-
-              const calldata = encodeFunctionData({
-                abi: countContractAbi,
-                functionName: "count",
-            });
-
-
-              const hash = await client.sendTransactionWithSessionKey({
-                to: COUNTER_CONTRACT_ADDRESS,
-                data: calldata,
-              });
-
-              console.log({hash}) */
-
-           /*   writeContract({
+            writeContract({
                 abi: countContractAbi,
                 address: COUNTER_CONTRACT_ADDRESS,
                 functionName: "count",
                 args: [],
-            }); 
- */
-        const wallet = await retrieveAccountAddressFromPasskey(apiKey!)
-        console.log({wallet})
+            });
 
             const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));
