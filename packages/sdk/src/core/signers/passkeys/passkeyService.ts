@@ -160,7 +160,7 @@ const sign = async (
             rpId: _formatSigningRpId(),
             allowCredentials: publicKeyCredential || [],
             userVerification: "required",
-            timeout: 30000,
+            timeout: 60000,
         },
     })) as Assertion | null;
 

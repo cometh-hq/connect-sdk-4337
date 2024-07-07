@@ -93,8 +93,6 @@ export async function sendTransactionWithSessionKey<
         middleware,
     } as SendUserOperationParameters<entryPoint, TAccount>);
 
-    userOperation.nonce = await account.getNonce();
-
     userOperation.signature = await account.signUserOperationWithSessionKey(
         userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
     );
