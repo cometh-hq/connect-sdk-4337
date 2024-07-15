@@ -67,13 +67,14 @@ export function createSmartAccountClient<
         TTransport,
         TChain,
         TSmartAccount
-    >
+    > & { rpcUrl?: string }
 ): ComethSmartAccountClient<TSmartAccount, TTransport, TChain, TEntryPoint> {
     const {
         key = "Account",
         name = "Cometh Smart Account Client",
         bundlerTransport,
     } = parameters;
+
     const client = createClient({
         ...parameters,
         key,
@@ -86,10 +87,12 @@ export function createSmartAccountClient<
         })
     ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
 
-    const enshrinedClient = client.extend(safeSessionKeyActions);
+    const enshrinedClient = client.extend(
+        safeSessionKeyActions(parameters.rpcUrl)
+    );
 
     return enshrinedClient.extend(
-        safeOwnerPluginActions
+        safeOwnerPluginActions(parameters.rpcUrl)
     ) as ComethSmartAccountClient<
         TSmartAccount,
         TTransport,

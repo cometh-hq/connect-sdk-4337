@@ -79,7 +79,13 @@ export function useSmartAccount() {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
                 },
+                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
+
+            await smartAccountClient.addOwner({ownerToAdd:"0x53011E110CAd8685F4911508B4E2413f526Df73E"})
+
+            const owners = await smartAccountClient.getOwners();
+            console.log({owners})
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);

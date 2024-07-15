@@ -1,9 +1,10 @@
+import { networks } from "@/constants";
 import { safe4337SessionKeyModuleAbi } from "@/core/accounts/safe/abi/safe4337SessionKeyModuleAbi";
+import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { createFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
 import { encryptSessionKeyInStorage } from "@/core/signers/ecdsa/sessionKeyEoa/sessionKeyEoaService";
 import type { SmartAccountClient } from "permissionless";
 import type { EntryPoint } from "permissionless/_types/types";
-import type { SmartAccount } from "permissionless/accounts";
 import {
     type Address,
     type Chain,
@@ -28,7 +29,6 @@ export type SafeSessionKeyActions = {
     revokeSessionKey: (args: { sessionKey: Address }) => Promise<Hash>;
     getSessionFromAddress: (args: {
         sessionKey: Address;
-        rpcUrl?: string;
     }) => Promise<Session>;
     addWhitelistDestination: (args: {
         sessionKey: Address;
@@ -41,117 +41,123 @@ export type SafeSessionKeyActions = {
     isAddressWhitelistDestination: (args: {
         sessionKey: Address;
         targetAddress: Address;
-        rpcUrl?: string;
     }) => Promise<boolean>;
 };
 
-export const safeSessionKeyActions: <
-    TSmartAccount extends SmartAccount<TEntryPoint> | undefined,
-    TTransport extends Transport = Transport,
-    TChain extends Chain | undefined = undefined,
-    TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<infer U>
-        ? U
-        : never,
->(
-    client: SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-) => SafeSessionKeyActions = (client: any) => ({
-    async addSessionKey({
-        validAfter = defaultValidAfter,
-        validUntil = defaultValidUntil,
-        destinations,
-    }: AddSessionKeyParams) {
-        if (destinations.length === 0)
-            throw new Error("destinations cannot be empty");
+export const safeSessionKeyActions =
+    (rpcUrl?: string) =>
+    <
+        TEntryPoint extends EntryPoint,
+        TTransport extends Transport = Transport,
+        TChain extends Chain | undefined = Chain | undefined,
+        TAccount extends SafeSmartAccount<TEntryPoint> | undefined =
+            | SafeSmartAccount<TEntryPoint>
+            | undefined,
+    >(
+        client: SmartAccountClient<TEntryPoint, TTransport, TChain, TAccount>
+    ): SafeSessionKeyActions => ({
+        async addSessionKey({
+            validAfter = defaultValidAfter,
+            validUntil = defaultValidUntil,
+            destinations,
+        }: AddSessionKeyParams) {
+            if (destinations.length === 0)
+                throw new Error("destinations cannot be empty");
 
-        const fallbackEoaSigner = await createFallbackEoaSigner();
+            const fallbackEoaSigner = await createFallbackEoaSigner();
 
-        await encryptSessionKeyInStorage(
-            client.account?.address,
-            fallbackEoaSigner.privateKey
-        );
+            await encryptSessionKeyInStorage(
+                client.account?.address as Address,
+                fallbackEoaSigner.privateKey
+            );
 
-        return await client.sendTransaction({
-            to: client.account?.address,
-            data: encodeFunctionData({
-                abi: safe4337SessionKeyModuleAbi,
-                functionName: "addSessionKey",
-                args: [
-                    fallbackEoaSigner.signer.address,
-                    validAfter,
-                    validUntil,
-                    destinations,
-                ],
-            }),
-        });
-    },
+            return await client.sendTransaction({
+                to: client.account?.address as Address,
+                data: encodeFunctionData({
+                    abi: safe4337SessionKeyModuleAbi,
+                    functionName: "addSessionKey",
+                    args: [
+                        fallbackEoaSigner.signer.address,
+                        validAfter,
+                        validUntil,
+                        destinations,
+                    ],
+                }),
+                maxFeePerBlobGas: 0n,
+                blobs: [],
+            });
+        },
 
-    async revokeSessionKey(args: { sessionKey: Address }) {
-        return await client.sendTransaction({
-            to: client.account?.address,
-            data: encodeFunctionData({
-                abi: safe4337SessionKeyModuleAbi,
-                functionName: "revokeSessionKey",
-                args: [args.sessionKey],
-            }),
-        });
-    },
+        async revokeSessionKey(args: { sessionKey: Address }) {
+            return await client.sendTransaction({
+                to: client.account?.address as Address,
+                data: encodeFunctionData({
+                    abi: safe4337SessionKeyModuleAbi,
+                    functionName: "revokeSessionKey",
+                    args: [args.sessionKey],
+                }),
+                maxFeePerBlobGas: 0n,
+                blobs: [],
+            });
+        },
 
-    async getSessionFromAddress(args: {
-        sessionKey: Address;
-        rpcUrl?: string;
-    }) {
-        return await querySessionFrom4337ModuleAddress({
-            chain: client.chain,
-            smartAccountAddress: client.account?.address,
-            safe4337SessionKeysModule: client.account
-                .safe4337SessionKeysModule as Address,
-            sessionKey: args.sessionKey,
-            rpcUrl: args.rpcUrl,
-        });
-    },
+        async getSessionFromAddress(args: {
+            sessionKey: Address;
+        }) {
+            return await querySessionFrom4337ModuleAddress({
+                chain: client.chain as Chain,
+                smartAccountAddress: client.account?.address as Address,
+                safe4337SessionKeysModule: client?.account
+                    ?.safe4337SessionKeysModule as Address,
+                sessionKey: args.sessionKey,
+                rpcUrl: rpcUrl ?? networks[client.chain?.id as number].rpcUrl,
+            });
+        },
 
-    async addWhitelistDestination(args: {
-        sessionKey: Address;
-        destinations: Address[];
-    }) {
-        return await client.sendTransaction({
-            to: client.account?.address,
-            data: encodeFunctionData({
-                abi: safe4337SessionKeyModuleAbi,
-                functionName: "addWhitelistDestination",
-                args: [args.sessionKey, args.destinations],
-            }),
-        });
-    },
+        async addWhitelistDestination(args: {
+            sessionKey: Address;
+            destinations: Address[];
+        }) {
+            return await client.sendTransaction({
+                to: client.account?.address as Address,
+                data: encodeFunctionData({
+                    abi: safe4337SessionKeyModuleAbi,
+                    functionName: "addWhitelistDestination",
+                    args: [args.sessionKey, args.destinations],
+                }),
+                maxFeePerBlobGas: 0n,
+                blobs: [],
+            });
+        },
 
-    async removeWhitelistDestination(args: {
-        sessionKey: Address;
-        destination: Address;
-    }) {
-        return await client.sendTransaction({
-            to: client.account?.address,
-            data: encodeFunctionData({
-                abi: safe4337SessionKeyModuleAbi,
-                functionName: "removeWhitelistDestination",
-                args: [args.sessionKey, args.destination],
-            }),
-        });
-    },
+        async removeWhitelistDestination(args: {
+            sessionKey: Address;
+            destination: Address;
+        }) {
+            return await client.sendTransaction({
+                to: client.account?.address as Address,
+                data: encodeFunctionData({
+                    abi: safe4337SessionKeyModuleAbi,
+                    functionName: "removeWhitelistDestination",
+                    args: [args.sessionKey, args.destination],
+                }),
+                maxFeePerBlobGas: 0n,
+                blobs: [],
+            });
+        },
 
-    async isAddressWhitelistDestination(args: {
-        sessionKey: Address;
-        targetAddress: Address;
-        rpcUrl?: string;
-    }) {
-        return await queryIsWhitelistFrom4337ModuleAddress({
-            chain: client.chain,
-            smartAccountAddress: client.account?.address,
-            safe4337SessionKeysModule: client.account
-                .safe4337SessionKeysModule as Address,
-            sessionKey: args.sessionKey,
-            targetAddress: args.targetAddress,
-            rpcUrl: args.rpcUrl,
-        });
-    },
-});
+        async isAddressWhitelistDestination(args: {
+            sessionKey: Address;
+            targetAddress: Address;
+        }) {
+            return await queryIsWhitelistFrom4337ModuleAddress({
+                chain: client.chain as Chain,
+                smartAccountAddress: client.account?.address as Address,
+                safe4337SessionKeysModule: client?.account
+                    ?.safe4337SessionKeysModule as Address,
+                sessionKey: args.sessionKey,
+                targetAddress: args.targetAddress,
+                rpcUrl: rpcUrl ?? networks[client.chain?.id as number].rpcUrl,
+            });
+        },
+    });

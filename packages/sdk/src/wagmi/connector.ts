@@ -121,6 +121,7 @@ export function smartAccountConnector<
                                 paymasterClient.sponsorUserOperation,
                             gasPrice: paymasterClient.gasPrice,
                         },
+                        rpcUrl,
                     }) as unknown as ComethSmartAccountClient<
                         TSmartAccount,
                         TTransport,
@@ -133,6 +134,7 @@ export function smartAccountConnector<
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,
                         bundlerTransport: http(bundlerUrl),
+                        rpcUrl,
                     }) as unknown as ComethSmartAccountClient<
                         TSmartAccount,
                         TTransport,
