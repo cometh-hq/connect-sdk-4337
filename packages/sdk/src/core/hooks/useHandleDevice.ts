@@ -2,6 +2,7 @@ import { NoFallbackSignerError } from "@/errors";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
+import * as QRCode from "qrcode";
 import { API } from "../services/API";
 import { getDeviceData } from "../services/deviceService";
 import { isFallbackSigner } from "../signers/createSigner";
@@ -17,6 +18,15 @@ import {
     isWebAuthnCompatible,
 } from "../signers/passkeys/utils";
 import type { Signer } from "../types";
+
+interface QRCodeOptions {
+    width?: number;
+    margin?: number;
+    color?: {
+        dark?: string;
+        light?: string;
+    };
+}
 
 export const useHandleDevice = (apiKey: string, baseUrl?: string) => {
     const api = new API(apiKey, baseUrl);
@@ -112,5 +122,58 @@ export const useHandleDevice = (apiKey: string, baseUrl?: string) => {
         return await retrieveSmartAccountAddressFromPasskey(api);
     };
 
-    return { createNewSigner, retrieveAccountAddressFromPasskey };
+    const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
+        const flattened: Record<string, string> = {};
+
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        function flattenObject(obj: any, parentKey = "") {
+            for (const [key, value] of Object.entries(obj)) {
+                const fullKey = parentKey ? `${parentKey}_${key}` : key;
+                if (
+                    value &&
+                    typeof value === "object" &&
+                    !Array.isArray(value)
+                ) {
+                    flattenObject(value, fullKey);
+                } else {
+                    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+                    flattened[fullKey] = (value as any).toString();
+                }
+            }
+        }
+
+        flattenObject(signerPayload);
+        return flattened;
+    };
+
+    const generateValidateQrCode = async (
+        validationPageUrl: string,
+        signerPayload: Signer,
+        options?: QRCodeOptions
+    ) => {
+        try {
+            const url = new URL(validationPageUrl);
+            const params = _flattenPayload(signerPayload);
+            for (const [key, value] of Object.entries(params)) {
+                url.searchParams.set(key, value);
+            }
+            const qrCodeImageUrl = await QRCode.toDataURL(url.toString(), {
+                width: options?.width || 200,
+                margin: options?.margin || 4,
+                color: {
+                    dark: options?.color?.dark || "#000000ff",
+                    light: options?.color?.light || "#ffffffff",
+                },
+            });
+            return qrCodeImageUrl;
+        } catch (error) {
+            throw new Error(`Failed to generate QR Code: ${error}`);
+        }
+    };
+
+    return {
+        createNewSigner,
+        retrieveAccountAddressFromPasskey,
+        generateValidateQrCode,
+    };
 };
