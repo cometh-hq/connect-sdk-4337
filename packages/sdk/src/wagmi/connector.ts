@@ -23,11 +23,7 @@ import {
     type Transport,
     UserRejectedRequestError,
 } from "viem";
-import {
-    type CreateConnectorFn,
-    ProviderNotFoundError,
-    createConnector,
-} from "wagmi";
+import { type CreateConnectorFn, createConnector } from "wagmi";
 
 export type ConnectWagmiConfig<
     TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
@@ -174,20 +170,8 @@ export function smartAccountConnector<
         async getProvider() {
             return client;
         },
-        async isAuthorized(): Promise<boolean> {
-            try {
-                const isDisconnected =
-                    shimDisconnect &&
-                    // If shim exists in storage, connector is disconnected
-                    (await config.storage?.getItem(`${this.id}.disconnected`));
-
-                if (isDisconnected) return false;
-
-                if (!client) throw new ProviderNotFoundError();
-                return true;
-            } catch {
-                return false;
-            }
+        async isAuthorized() {
+            return true;
         },
         onAccountsChanged() {
             // Not relevant

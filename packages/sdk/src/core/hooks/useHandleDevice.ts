@@ -146,10 +146,9 @@ export const useHandleDevice = (apiKey: string, baseUrl?: string) => {
         return flattened;
     };
 
-    const generateValidateQrCode = async (
+    const serializeUrlWithSignerPayload = async (
         validationPageUrl: string,
-        signerPayload: Signer,
-        options?: QRCodeOptions
+        signerPayload: Signer
     ) => {
         try {
             const url = new URL(validationPageUrl);
@@ -157,14 +156,34 @@ export const useHandleDevice = (apiKey: string, baseUrl?: string) => {
             for (const [key, value] of Object.entries(params)) {
                 url.searchParams.set(key, value);
             }
-            const qrCodeImageUrl = await QRCode.toDataURL(url.toString(), {
-                width: options?.width || 200,
-                margin: options?.margin || 4,
-                color: {
-                    dark: options?.color?.dark || "#000000ff",
-                    light: options?.color?.light || "#ffffffff",
-                },
-            });
+
+            return url;
+        } catch (error) {
+            throw new Error(`Failed to serialize url: ${error}`);
+        }
+    };
+
+    const generateQRCodeUrl = async (
+        validationPageUrl: string,
+        signerPayload: Signer,
+        options?: QRCodeOptions
+    ) => {
+        try {
+            const serializedUrl = serializeUrlWithSignerPayload(
+                validationPageUrl,
+                signerPayload
+            );
+            const qrCodeImageUrl = await QRCode.toDataURL(
+                serializedUrl.toString(),
+                {
+                    width: options?.width || 200,
+                    margin: options?.margin || 4,
+                    color: {
+                        dark: options?.color?.dark || "#000000ff",
+                        light: options?.color?.light || "#ffffffff",
+                    },
+                }
+            );
             return qrCodeImageUrl;
         } catch (error) {
             throw new Error(`Failed to generate QR Code: ${error}`);
@@ -174,6 +193,7 @@ export const useHandleDevice = (apiKey: string, baseUrl?: string) => {
     return {
         createNewSigner,
         retrieveAccountAddressFromPasskey,
-        generateValidateQrCode,
+        serializeUrlWithSignerPayload,
+        generateQRCodeUrl,
     };
 };

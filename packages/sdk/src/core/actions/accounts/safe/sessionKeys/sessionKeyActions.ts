@@ -1,4 +1,3 @@
-import { networks } from "@/constants";
 import { safe4337SessionKeyModuleAbi } from "@/core/accounts/safe/abi/safe4337SessionKeyModuleAbi";
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { createFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
@@ -110,7 +109,7 @@ export const safeSessionKeyActions =
                 safe4337SessionKeysModule: client?.account
                     ?.safe4337SessionKeysModule as Address,
                 sessionKey: args.sessionKey,
-                rpcUrl: rpcUrl ?? networks[client.chain?.id as number].rpcUrl,
+                rpcUrl,
             });
         },
 
@@ -157,7 +156,7 @@ export const safeSessionKeyActions =
                     ?.safe4337SessionKeysModule as Address,
                 sessionKey: args.sessionKey,
                 targetAddress: args.targetAddress,
-                rpcUrl: rpcUrl ?? networks[client.chain?.id as number].rpcUrl,
+                rpcUrl,
             });
         },
     });

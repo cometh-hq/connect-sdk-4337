@@ -1,16 +1,26 @@
-import { http, type Chain, createClient } from "viem";
-import { networks, supportedChains } from "../../constants";
+import { customChains } from "@/constants";
+import { http, type Chain, createClient, extractChain } from "viem";
+import * as chains from "viem/chains";
 import type { API } from "../services/API";
 
 export const getNetwork = async (api: API): Promise<Chain> => {
-    const chainId = await api
-        .getProjectParams()
-        .then((params) => params.chainId);
+    const params = await api.getProjectParams();
+    const chainId = Number(params.chainId);
 
-    return supportedChains.find((chain) => chain.id === +chainId) as Chain;
+    const network = extractChain({
+        chains: [...Object.values(chains), ...customChains],
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        id: chainId as any,
+    });
+
+    if (!network) {
+        throw new Error(`Network not found for chainId: ${chainId}`);
+    }
+
+    return network;
 };
 
-export const getViemClient = (chain: Chain, rpcUrl: string) => {
+export const getViemClient = (chain: Chain, rpcUrl?: string) => {
     const rpcTransport = http(rpcUrl, {
         batch: { wait: 50 },
         retryCount: 5,
@@ -30,5 +40,5 @@ export const getViemClient = (chain: Chain, rpcUrl: string) => {
 
 export const getClient = async (api: API, rpcUrl?: string) => {
     const chain = await getNetwork(api);
-    return getViemClient(chain, rpcUrl || networks[chain.id].rpcUrl);
+    return getViemClient(chain, rpcUrl);
 };

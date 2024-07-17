@@ -1,4 +1,8 @@
-import { ENTRYPOINT_ADDRESS_V06, ENTRYPOINT_ADDRESS_V07 } from "./constants";
+import {
+    ENTRYPOINT_ADDRESS_V06,
+    ENTRYPOINT_ADDRESS_V07,
+    customChains,
+} from "./constants";
 
 import {
     type SafeSmartAccount,
@@ -24,6 +28,7 @@ export {
     smartAccountConnector,
     ENTRYPOINT_ADDRESS_V06,
     ENTRYPOINT_ADDRESS_V07,
+    customChains,
 };
 
 export type { SafeSmartAccount, ComethSmartAccountClient };
