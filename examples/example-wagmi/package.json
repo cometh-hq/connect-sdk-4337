@@ -1,5 +1,5 @@
 {
-  "name": "connect-demo-wagmi",
+  "name": "connect-example-wagmi",
   "version": "0.1.0",
   "private": true,
   "scripts": {

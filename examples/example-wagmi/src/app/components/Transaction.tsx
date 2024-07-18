@@ -3,19 +3,14 @@
 import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useEffect, useState } from "react";
-import {
-    http,
-    createPublicClient,
-    encodeFunctionData,
-    getContract,
-} from "viem";
+import { http, type Address, createPublicClient, getContract } from "viem";
 import { arbitrumSepolia } from "viem/chains";
+import { useAccount, useWalletClient } from "wagmi";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
 
-export const COUNTER_CONTRACT_ADDRESS =
-    "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
+const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
     chain: arbitrumSepolia,
@@ -33,16 +28,22 @@ const counterContract = getContract({
 });
 
 interface TransactionProps {
-    smartAccount: any;
+    hash: string | null;
+    writeContract: any;
+    address: Address;
     transactionSuccess: boolean;
     setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function Transaction({
-    smartAccount,
+    hash,
+    writeContract,
+    address,
     transactionSuccess,
     setTransactionSuccess,
 }: TransactionProps) {
+    const { connector } = useAccount();
+    const { data: client } = useWalletClient();
     const [isTransactionLoading, setIsTransactionLoading] =
         useState<boolean>(false);
     const [transactionSended, setTransactionSended] = useState<any | null>(
@@ -76,11 +77,9 @@ function Transaction({
     }
 
     useEffect(() => {
-        if (smartAccount) {
+        if (address) {
             (async () => {
-                const balance = await counterContract.read.counters([
-                    smartAccount.account.address,
-                ]);
+                const balance = await counterContract.read.counters([address]);
                 setNftBalance(Number(balance));
             })();
         }
@@ -93,27 +92,16 @@ function Transaction({
 
         setIsTransactionLoading(true);
         try {
-            if (!smartAccount) throw new Error("No wallet instance");
+            if (!address) throw new Error("No wallet instance");
 
-            const calldata = encodeFunctionData({
+            writeContract({
                 abi: countContractAbi,
+                address: COUNTER_CONTRACT_ADDRESS,
                 functionName: "count",
+                args: [],
             });
 
-
-  
-
-
-
-            const txHash = await smartAccount.sendTransaction({
-                to: COUNTER_CONTRACT_ADDRESS,
-                data: calldata,
-            });
-
-            setTransactionSended(txHash);
-            const balance = await counterContract.read.counters([
-                smartAccount.account.address,
-            ]);
+            const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));
 
             setTransactionSuccess(true);
@@ -137,13 +125,13 @@ function Transaction({
                 </div>
             </div>
 
-            {transactionSuccess && (
+            {hash && (
                 <Alert
                     state="success"
                     content="Transaction confirmed !"
                     link={{
                         content: "Go see your transaction",
-                        url: `https://jiffyscan.xyz/bundle/${transactionSended}?network=arbitrum-sepolia&pageNo=0&pageSize=10`,
+                        url: `https://jiffyscan.xyz/bundle/${hash}?network=arbitrum-sepolia&pageNo=0&pageSize=10`,
                     }}
                 />
             )}

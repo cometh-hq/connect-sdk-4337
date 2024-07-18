@@ -217,3 +217,9 @@ export class TypedDataNotSupportedError extends Error {
         super("Types data not supported");
     }
 }
+
+export class ClientNotFound extends Error {
+    constructor() {
+        super("Client not found");
+    }
+}

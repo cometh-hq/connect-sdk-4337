@@ -1,5 +1,5 @@
 {
-  "name": "@cometh/connect-sdk-4337",
+  "name": "@cometh/connect-react-hooks",
   "author": "Cometh",
   "maintainers": [
     {
@@ -7,10 +7,12 @@
       "url": "https://twitter.com/slovaye"
     }
   ],
-  "version": "0.1.0-rc.1",
-  "description": "SDK Cometh Connect 4337",
+  "version": "0.0.1",
+  "description": "React hooks Connect 4337",
   "repository": "https://github.com/cometh-game/connect-sdk-4337.git",
   "keywords": [
+    "react",
+    "hooks",
     "cometh",
     "passkeys",
     "erc-4337",
@@ -46,7 +48,8 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2.0.0"
+    "viem": "^2.0.0",
+    "react": ">=18"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -54,12 +57,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@types/qrcode": "^1.5.5",
-    "axios": "^1.6.8",
-    "bowser": "^2.11.0",
+    "@cometh/connect-sdk-4337": "workspace:*",
     "permissionless": "^0.1.31",
-    "psl": "^1.9.0",
-    "qrcode": "^1.5.3",
     "viem": "^2",
     "wagmi": "^2"
   }

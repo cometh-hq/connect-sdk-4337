@@ -7,6 +7,7 @@ import {
 import {
     type SafeSmartAccount,
     createSafeSmartAccount,
+    type createSafeSmartAccountParameters,
 } from "./core/accounts/safe/createSafeSmartAccount";
 import { retrieveAccountAddressFromPasskey } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import {
@@ -31,4 +32,8 @@ export {
     customChains,
 };
 
-export type { SafeSmartAccount, ComethSmartAccountClient };
+export type {
+    SafeSmartAccount,
+    ComethSmartAccountClient,
+    createSafeSmartAccountParameters,
+};
