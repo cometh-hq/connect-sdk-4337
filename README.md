@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://github.com/cometh-hq/connect-sdk-4337/blob/feat/sessionKeys/cometh-logo.png" alt="Cometh"/>
-</p>
+![Cometh logo](cometh-logo.png)
 
 # Cometh Connect ERC-4337 version
 

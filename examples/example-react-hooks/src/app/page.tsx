@@ -13,7 +13,7 @@ export default function App() {
     const {
         smartAccountClient,
         smartAccountAddress,
-        updateSmartAccountClient,
+        connect,
     } = useConnect();
 
     const calldata = encodeFunctionData({
@@ -24,11 +24,10 @@ export default function App() {
     const { mutate, data, error, status, isPending } = useSendTransaction();
 
     const test = () => {
-        updateSmartAccountClient();
+        connect();
     };
 
     const sendTx = () => {
-        console.log("yo");
         try {
             const transactions = {
                 to: COUNTER_CONTRACT_ADDRESS,
