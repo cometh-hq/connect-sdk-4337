@@ -10,6 +10,8 @@ import {
     type createSafeSmartAccountParameters,
 } from "./core/accounts/safe/createSafeSmartAccount";
 import { retrieveAccountAddressFromPasskey } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
+import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
+import type { AddSessionKeyParams, Session } from "./core/actions/accounts/safe/sessionKeys/utils";
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
@@ -17,6 +19,7 @@ import {
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
 import { useHandleDevice } from "./core/hooks/useHandleDevice";
 import { createSigner } from "./core/signers/createSigner";
+import type { Signer } from "./core/types";
 import { smartAccountConnector } from "./wagmi/connector";
 
 export {
@@ -36,4 +39,9 @@ export type {
     SafeSmartAccount,
     ComethSmartAccountClient,
     createSafeSmartAccountParameters,
+    Signer,
+    EnrichedOwner,
+    AddSessionKeyParams,
+    Session
+
 };
