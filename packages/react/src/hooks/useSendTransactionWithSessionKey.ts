@@ -9,29 +9,33 @@ type Transaction = {
     data: Hex;
 };
 
-export type UseSendTransactionProps = {
+export type UseuseSendTransactionWithSessionKeyProps = {
     transactions: Transaction;
 };
 
-export const useSendTransaction = (
+export const useSendTransactionWithSessionKey = (
     mutationProps?: MutationOptionsWithoutMutationFn
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const useSendTransactionMutation = useMutation(
+    const useSendTransactionWithSessionKeyMutation = useMutation(
         {
-            mutationFn: (variables: UseSendTransactionProps): Promise<Hash> => {
+            mutationFn: (
+                variables: UseuseSendTransactionWithSessionKeyProps
+            ): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
                 const { transactions } = variables;
 
-                return smartAccountClient.sendTransaction(transactions);
+                return smartAccountClient.sendTransactionWithSessionKey(
+                    transactions
+                );
             },
             ...mutationProps,
         },
         queryClient
     );
 
-    return useSendTransactionMutation;
+    return useSendTransactionWithSessionKeyMutation;
 };

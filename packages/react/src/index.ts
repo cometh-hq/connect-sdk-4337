@@ -1,10 +1,25 @@
+import {
+    useConnect,
+    useGetGasPrice,
+    useOwners,
+    useSendTransaction,
+    useSendTransactionWithSessionKey,
+    useSessionKeys,
+    useSmartAccount,
+    useValidateAddDevice,
+    useVerifyMessage,
+} from "./hooks";
 import { ConnectProvider } from "./providers/ConnectProvider";
-import { useSendTransaction, useSmartAccount } from "./hooks";
-
 
 export {
     ConnectProvider,
     useSendTransaction,
-    useSmartAccount
+    useSmartAccount,
+    useConnect,
+    useGetGasPrice,
+    useOwners,
+    useSessionKeys,
+    useVerifyMessage,
+    useValidateAddDevice,
+    useSendTransactionWithSessionKey,
 };
-
