@@ -47,7 +47,7 @@ export default function RootLayout({
                             baseUrl,
                             apiKey,
                             rpcUrl,
-                            autoconnect: false
+                            autoconnect: false,
                         }}
                         queryClient={queryClient}
                     >

@@ -24,16 +24,13 @@ export type EnrichedOwner = {
     address: Address;
     deviceData?: DeviceData;
     creationDate?: Date;
-}
+};
 
 export type SafeOwnerPluginActions = {
     addOwner: (args: { ownerToAdd: Address }) => Promise<Hash>;
     removeOwner: (args: { ownerToRemove: Address }) => Promise<Hash>;
     getOwners: () => Promise<readonly Address[]>;
-    getEnrichedOwners: () => Promise<
-        | EnrichedOwner
-        | EnrichedOwner[]
-    >;
+    getEnrichedOwners: () => Promise<EnrichedOwner | EnrichedOwner[]>;
 };
 
 export const safeOwnerPluginActions =

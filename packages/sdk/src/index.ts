@@ -11,7 +11,10 @@ import {
 } from "./core/accounts/safe/createSafeSmartAccount";
 import { retrieveAccountAddressFromPasskey } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
-import type { AddSessionKeyParams, Session } from "./core/actions/accounts/safe/sessionKeys/utils";
+import type {
+    AddSessionKeyParams,
+    Session,
+} from "./core/actions/accounts/safe/sessionKeys/utils";
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
@@ -42,6 +45,5 @@ export type {
     Signer,
     EnrichedOwner,
     AddSessionKeyParams,
-    Session
-
+    Session,
 };
