@@ -10,7 +10,7 @@ type Transaction = {
 };
 
 export type UseSendTransactionProps = {
-    transactions: Transaction;
+    transactions: Transaction | Transaction[];
 };
 
 export const useSendTransaction = (
@@ -26,7 +26,12 @@ export const useSendTransaction = (
                 }
                 const { transactions } = variables;
 
-                return smartAccountClient.sendTransaction(transactions);
+                if (!Array.isArray(transactions)) {
+                    return smartAccountClient.sendTransaction(transactions);
+                }
+                return smartAccountClient.sendTransactions({
+                    transactions: transactions,
+                });
             },
             ...mutationProps,
         },

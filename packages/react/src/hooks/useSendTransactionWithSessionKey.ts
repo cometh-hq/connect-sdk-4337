@@ -28,9 +28,14 @@ export const useSendTransactionWithSessionKey = (
                 }
                 const { transactions } = variables;
 
-                return smartAccountClient.sendTransactionWithSessionKey(
-                    transactions
-                );
+                if (!Array.isArray(transactions)) {
+                    return smartAccountClient.sendTransactionWithSessionKey(
+                        transactions
+                    );
+                }
+                return smartAccountClient.sendTransactionsWithSessionKey({
+                    transactions: transactions,
+                });
             },
             ...mutationProps,
         },
