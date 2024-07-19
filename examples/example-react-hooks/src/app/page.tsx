@@ -10,11 +10,7 @@ export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 export default function App() {
-    const {
-        smartAccountClient,
-        smartAccountAddress,
-        connect,
-    } = useConnect();
+    const { smartAccountClient, smartAccountAddress, connect } = useConnect();
 
     const calldata = encodeFunctionData({
         abi: countContractAbi,
