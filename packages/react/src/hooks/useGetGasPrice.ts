@@ -16,13 +16,21 @@ import type { UseQueryParameters } from "wagmi/query";
  * ```tsx
  * import { useGetGasPrice } from "@/hooks/useGetGasPrice";
  * import { formatEther } from "viem";
+ * import { useEffect } from "react";
  *
  * export const GasPriceDisplay = () => {
  *   const {
+ *     getGasPrice,
  *     data: gasPrice,
  *     isLoading,
- *     error
+ *     error,
+ *     refetch
  *   } = useGetGasPrice();
+ *
+ *   useEffect(() => {
+ *     // Manually trigger gas price fetch
+ *     getGasPrice();
+ *   }, [getGasPrice]);
  *
  *   if (isLoading) return <p>Loading gas prices...</p>;
  *   if (error) return <p>Error fetching gas prices: {error.message}</p>;
@@ -32,16 +40,15 @@ import type { UseQueryParameters } from "wagmi/query";
  *       <h2>Current Gas Prices</h2>
  *       <p>Max Fee Per Gas: {formatEther(gasPrice.maxFeePerGas)} ETH</p>
  *       <p>Max Priority Fee Per Gas: {formatEther(gasPrice.maxPriorityFeePerGas)} ETH</p>
+ *       <button onClick={() => refetch()}>Refresh Gas Prices</button>
  *     </div>
  *   );
  * };
  * ```
  *
- * @returns A query result object from `@tanstack/react-query` that includes the following properties:
- * - `data`: An object containing `maxFeePerGas` and `maxPriorityFeePerGas` (both as bigint)
- * - `isLoading`: A boolean indicating if the query is still loading
- * - `error`: Any error that occurred during the query
- * - Other properties provided by react-query's useQuery hook
+ * @returns An object containing:
+ * - `getGasPrice`: A function to manually trigger the gas price fetch.
+ * - All properties from the query object (`data`, `isLoading`, `error`, `refetch`, etc.)
  */
 
 export const useGetGasPrice = (
@@ -50,7 +57,7 @@ export const useGetGasPrice = (
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    return useQuery(
+    const query = useQuery(
         {
             queryKey: ["gasPrice"],
             queryFn: async () => {
@@ -75,4 +82,13 @@ export const useGetGasPrice = (
         },
         queryClient
     );
+
+    const getGasPrice = async () => {
+        return query.refetch();
+    };
+
+    return {
+        getGasPrice,
+        ...query,
+    };
 };

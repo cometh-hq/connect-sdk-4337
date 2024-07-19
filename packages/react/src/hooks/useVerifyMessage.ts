@@ -15,7 +15,7 @@ export type UseVerifySignatureProps = {
  * if a given signature is valid for a specific message. It's typically used to authenticate
  * user actions or verify the integrity of signed messages.
  *
- * Mutation function args: {@link UseVerifySignatureProps}
+ * @param mutationProps Optional mutation properties from @tanstack/react-query
  *
  * @example
  * ```tsx
@@ -26,14 +26,20 @@ export type UseVerifySignatureProps = {
  *   const [message, setMessage] = useState("");
  *   const [signature, setSignature] = useState("");
  *   const {
- *     mutate: verifyMessage,
+ *     verifyMessage,
  *     isLoading,
  *     error,
- *     data: isValid
+ *     data: isValid,
+ *     isSuccess
  *   } = useVerifyMessage();
  *
- *   const handleVerify = () => {
- *     verifyMessage({ message, signature: signature as Hex });
+ *   const handleVerify = async () => {
+ *     try {
+ *       const result = await verifyMessage({ message, signature: signature as Hex });
+ *       console.log("Signature verification result:", result);
+ *     } catch (error) {
+ *       console.error("Error verifying signature:", error);
+ *     }
  *   };
  *
  *   return (
@@ -52,7 +58,7 @@ export type UseVerifySignatureProps = {
  *         Verify Signature
  *       </button>
  *       {error && <p>Error: {error.message}</p>}
- *       {isValid !== undefined && (
+ *       {isSuccess && (
  *         <p>Signature is {isValid ? "valid" : "invalid"}</p>
  *       )}
  *     </div>
@@ -60,9 +66,10 @@ export type UseVerifySignatureProps = {
  * };
  * ```
  *
- * @param mutationProps Optional mutation properties from @tanstack/react-query
- * @returns A mutation object from `@tanstack/react-query` that includes the mutate function,
- * loading state, error state, and the resulting boolean indicating if the signature is valid.
+ * @returns An object containing:
+ * - All properties from the mutation object (`isLoading`, `isError`, `error`, `isSuccess`, `data`, etc.)
+ * - `verifyMessage`: A function to trigger the signature verification, which returns a promise
+ *   that resolves to a boolean indicating if the signature is valid.
  */
 
 export const useVerifyMessage = (
@@ -70,7 +77,7 @@ export const useVerifyMessage = (
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const useVerifySignatureMutation = useMutation(
+    const mutation = useMutation(
         {
             mutationFn: async (
                 variables: UseVerifySignatureProps
@@ -90,5 +97,12 @@ export const useVerifyMessage = (
         queryClient
     );
 
-    return useVerifySignatureMutation;
+    const verifyMessage = async (variables: UseVerifySignatureProps): Promise<boolean> => {
+        return mutation.mutateAsync(variables);
+    };
+
+    return {
+        ...mutation,
+        verifyMessage,
+    };
 };

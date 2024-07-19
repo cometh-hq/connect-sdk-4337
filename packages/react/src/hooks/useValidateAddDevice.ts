@@ -9,39 +9,38 @@ export type UseValidateAddDeviceProps = {
 };
 
 /**
- * @description A hook that validates the adding of a new device ass passkey owner of the smart account.
+ * @description A hook that validates the adding of a new device as passkey owner of the smart account.
  *
  * This hook uses the `validateAddDevice` method from the smart account client to add a new signer
  * to the user's account. It's typically used in the process of adding a new device or recovery method
  * to a user's account.
  *
- * Mutation function args: {@link UseValidateAddDeviceProps}
+ * @param mutationProps Optional mutation properties from @tanstack/react-query
  *
  * @example
  * ```tsx
  * import { useValidateAddDevice } from "@/hooks/useValidateAddDevice";
  *
  * export const AddNewDevice = () => {
- *   const signer = signerPayload
- *
+ *   const signer = signerPayload;
  *   const {
- *     mutate: validateAddDevice,
+ *     validateAddDevice,
  *     isLoading,
  *     error,
- *     data: transactionHash
+ *     data: transactionHash,
+ *     isSuccess
  *   } = useValidateAddDevice();
  *
- *   const handleAddDevice = () => {
+ *   const handleAddDevice = async () => {
  *     if (signer) {
- *       validateAddDevice({ signer });
+ *       try {
+ *         const hash = await validateAddDevice({ signer });
+ *         console.log("New device added. Transaction hash:", hash);
+ *       } catch (error) {
+ *         console.error("Error adding device:", error);
+ *       }
  *     }
  *   };
- *
- *   useEffect(() => {
- *     if (transactionHash) {
- *       console.log("New device added. Transaction hash:", transactionHash);
- *     }
- *   }, [transactionHash]);
  *
  *   return (
  *     <div>
@@ -49,14 +48,16 @@ export type UseValidateAddDeviceProps = {
  *         Add New Device
  *       </button>
  *       {error && <p>Error: {error.message}</p>}
- *       {transactionHash && <p>Device added successfully!</p>}
+ *       {isSuccess && <p>Device added successfully! Hash: {transactionHash}</p>}
  *     </div>
  *   );
  * };
  * ```
  *
- * @returns A mutation object from `@tanstack/react-query` that includes the mutate function,
- * loading state, error state, and the resulting transaction hash.
+ * @returns An object containing:
+ * - All properties from the mutation object (`isLoading`, `isError`, `error`, `isSuccess`, `data`, etc.)
+ * - `validateAddDevice`: A function to trigger the device validation, which returns a promise
+ *   that resolves to the transaction hash.
  */
 
 export const useValidateAddDevice = (
@@ -64,7 +65,7 @@ export const useValidateAddDevice = (
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const useValidateAddDeviceMutation = useMutation(
+    const mutation = useMutation(
         {
             mutationFn: (
                 variables: UseValidateAddDeviceProps
@@ -81,5 +82,12 @@ export const useValidateAddDevice = (
         queryClient
     );
 
-    return useValidateAddDeviceMutation;
+    const validateAddDevice = async (variables: UseValidateAddDeviceProps): Promise<Hash> => {
+        return mutation.mutateAsync(variables);
+    };
+
+    return {
+        ...mutation,
+        validateAddDevice,
+    };
 };

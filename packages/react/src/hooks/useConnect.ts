@@ -16,7 +16,7 @@ import type { Address } from "viem";
  * import { useState } from "react";
  *
  * export const SmartAccountConnection = () => {
- *   const { smartAccountClient, smartAccountAddress, connect } = useConnect();
+ *   const { connect, smartAccountClient, smartAccountAddress, isLoading } = useConnect();
  *   const [customAddress, setCustomAddress] = useState<string>("");
  *
  *   const handleConnect = async () => {
@@ -35,7 +35,7 @@ import type { Address } from "viem";
  *         onChange={(e) => setCustomAddress(e.target.value)}
  *         placeholder="Custom address (optional)"
  *       />
- *       <button onClick={handleConnect}>
+ *       <button onClick={handleConnect} disabled={isLoading}>
  *         {smartAccountClient ? "Reconnect" : "Connect"} to Smart Account
  *       </button>
  *       {smartAccountAddress && (
@@ -47,9 +47,9 @@ import type { Address } from "viem";
  * ```
  *
  * @returns An object containing:
+ * - `connect`: A function to connect or reconnect to a smart account. It optionally accepts an address.
  * - `smartAccountClient`: The current smart account client instance, if connected.
  * - `smartAccountAddress`: The address of the connected smart account.
- * - `connect`: A function to connect or reconnect to a smart account. It optionally accepts an address.
  * - Additional properties from the ConnectContext.
  */
 
@@ -57,7 +57,7 @@ export const useConnect = () => {
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
-        throw new Error("useConnectHook must be used within a ConnectProvider");
+        throw new Error("useConnect must be used within a ConnectProvider");
     }
 
     const {
@@ -75,9 +75,9 @@ export const useConnect = () => {
     );
 
     return {
+        connect,
         smartAccountClient,
         smartAccountAddress,
-        connect,
         ...rest,
     };
 };

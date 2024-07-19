@@ -6,82 +6,65 @@ import type { UseQueryParameters } from "wagmi/query";
 import type { MutationOptionsWithoutMutationFn } from "./types";
 
 /**
- * @description A custom hook for managing session keys and their associated operations.
- *
- * This hook provides a set of mutation and query functions to interact with session keys
- * in a smart account context. It includes operations for adding and revoking session keys,
- * managing whitelist destinations, and querying session information.
+ * @description A custom hook for adding a session key to a smart account.
+ * 
+ * This hook provides functionality to add a new session key to the user's smart account.
+ * It returns both the mutation object and a dedicated function for adding the session key.
  *
  * @param mutationProps Optional mutation properties from @tanstack/react-query
- * @param queryProps Optional query properties from @tanstack/react-query
  *
  * @example
  * ```tsx
- * import { useSessionKeys } from "@/hooks/useSessionKeys";
- * import { useState } from "react";
+ * import { useAddSessionKey } from "@/hooks/sessionKeys";
  * import { Address } from "viem";
  *
- * export const SessionKeyManager = () => {
- *   const {
- *     addSessionKeyMutation,
- *     revokeSessionKeyMutation,
- *     addWhitelistDestinationMutation,
- *     removeWhitelistDestinationMutation,
- *     useGetSessionFromAddress,
- *     useIsAddressWhitelistDestination
- *   } = useSessionKeys();
+ * export const AddSessionKeyComponent = () => {
+ *   const { addSessionKey, isLoading, error, data } = useAddSessionKey();
  *
- *   const [sessionKey, setSessionKey] = useState<Address>();
- *   const [destination, setDestination] = useState<Address>();
- *
- *   const { data: sessionData } = useGetSessionFromAddress(sessionKey);
- *   const { data: isWhitelisted } = useIsAddressWhitelistDestination(sessionKey, destination);
- *
- *   const handleAddSessionKey = () => {
- *     addSessionKeyMutation.mutate({
- *       validAfter: new Date(),
- *       validUntil: new Date(Date.now() + 86400000), // 24 hours from now
- *       destinations: []
- *     });
- *   };
- *
- *   const handleRevokeSessionKey = () => {
- *     if (sessionKey) {
- *       revokeSessionKeyMutation.mutate({ sessionKey });
+ *   const handleAddSessionKey = async () => {
+ *     try {
+ *       const hash = await addSessionKey({
+ *         validAfter: new Date(),
+ *         validUntil: new Date(Date.now() + 86400000), // 24 hours from now
+ *         destinations: [] as Address[]
+ *       });
+ *       console.log("Session key added, transaction hash:", hash);
+ *     } catch (error) {
+ *       console.error("Error adding session key:", error);
  *     }
  *   };
  *
  *   return (
  *     <div>
- *       <button onClick={handleAddSessionKey}>Add Session Key</button>
- *       <button onClick={handleRevokeSessionKey}>Revoke Session Key</button>
- *       {sessionData && <p>Session Key: {sessionData.sessionKey}</p>}
- *       {isWhitelisted !== undefined && (
- *         <p>Is Destination Whitelisted: {isWhitelisted ? "Yes" : "No"}</p>
- *       )}
+ *       <button onClick={handleAddSessionKey} disabled={isLoading}>
+ *         Add Session Key
+ *       </button>
+ *       {isLoading && <p>Adding session key...</p>}
+ *       {error && <p>Error: {error.message}</p>}
+ *       {data && <p>Session key added! Hash: {data}</p>}
  *     </div>
  *   );
  * };
  * ```
  *
  * @returns An object containing:
- * - `addSessionKeyMutation`: Mutation for adding a new session key.
- * - `revokeSessionKeyMutation`: Mutation for revoking an existing session key.
- * - `addWhitelistDestinationMutation`: Mutation for adding a whitelist destination to a session key.
- * - `removeWhitelistDestinationMutation`: Mutation for removing a whitelist destination from a session key.
- * - `useGetSessionFromAddress`: Query hook for getting session information from a session key address.
- * - `useIsAddressWhitelistDestination`: Query hook for checking if an address is a whitelisted destination for a session key.
- *
- * Each mutation and query function adheres to the react-query API, providing properties like `mutate`, `isLoading`, `error`, and `data`.
+ * - `addSessionKey`: Function for adding a new session key.
+ * - `isLoading`: Boolean indicating if the mutation is in progress.
+ * - `error`: Any error that occurred during the mutation.
+ * - `data`: The result of the mutation (transaction hash).
+ * - Other properties from the useMutation hook.
  */
 
-export const useSessionKeys = (
-    mutationProps?: MutationOptionsWithoutMutationFn,
-    queryProps?: UseQueryParameters
+
+/**
+ * @description A custom hook for adding a session key to a smart account.
+ */
+export const useAddSessionKey = (
+    mutationProps?: MutationOptionsWithoutMutationFn
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const addSessionKeyMutation = useMutation(
+    const mutation = useMutation(
         {
             mutationFn: async (params: AddSessionKeyParams): Promise<Hash> => {
                 if (!smartAccountClient) {
@@ -94,11 +77,23 @@ export const useSessionKeys = (
         queryClient
     );
 
-    const revokeSessionKeyMutation = useMutation(
+    return {
+        ...mutation,
+        addSessionKey: mutation.mutateAsync,
+    };
+};
+
+/**
+ * @description A custom hook for revoking a session key from a smart account.
+ */
+export const useRevokeSessionKey = (
+    mutationProps?: MutationOptionsWithoutMutationFn
+) => {
+    const { smartAccountClient, queryClient } = useSmartAccount();
+
+    const mutation = useMutation(
         {
-            mutationFn: async (params: {
-                sessionKey: Address;
-            }): Promise<Hash> => {
+            mutationFn: async (params: { sessionKey: Address }): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
@@ -109,12 +104,23 @@ export const useSessionKeys = (
         queryClient
     );
 
-    const addWhitelistDestinationMutation = useMutation(
+    return {
+        ...mutation,
+        revokeSessionKey: mutation.mutateAsync,
+    };
+};
+
+/**
+ * @description A custom hook for adding a whitelist destination to a session key.
+ */
+export const useAddWhitelistDestination = (
+    mutationProps?: MutationOptionsWithoutMutationFn
+) => {
+    const { smartAccountClient, queryClient } = useSmartAccount();
+
+    const mutation = useMutation(
         {
-            mutationFn: async (params: {
-                sessionKey: Address;
-                destinations: Address[];
-            }): Promise<Hash> => {
+            mutationFn: async (params: { sessionKey: Address; destinations: Address[] }): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
@@ -125,73 +131,94 @@ export const useSessionKeys = (
         queryClient
     );
 
-    const removeWhitelistDestinationMutation = useMutation(
+    return {
+        ...mutation,
+        addWhitelistDestination: mutation.mutateAsync,
+    };
+};
+
+/**
+ * @description A custom hook for removing a whitelist destination from a session key.
+ */
+export const useRemoveWhitelistDestination = (
+    mutationProps?: MutationOptionsWithoutMutationFn
+) => {
+    const { smartAccountClient, queryClient } = useSmartAccount();
+
+    const mutation = useMutation(
         {
-            mutationFn: async (params: {
-                sessionKey: Address;
-                destination: Address;
-            }): Promise<Hash> => {
+            mutationFn: async (params: { sessionKey: Address; destination: Address }): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.removeWhitelistDestination(
-                    params
-                );
+                return await smartAccountClient.removeWhitelistDestination(params);
             },
             ...mutationProps,
         },
         queryClient
     );
 
-    const useGetSessionFromAddress = (sessionKey: Address) => {
-        return useQuery(
-            {
-                queryKey: ["getSessionFromAddress", sessionKey],
-                queryFn: async (): Promise<Session> => {
-                    if (!smartAccountClient) {
-                        throw new Error("No smart account found");
-                    }
-                    return await smartAccountClient.getSessionFromAddress({
-                        sessionKey,
-                    });
-                },
-                ...queryProps,
-            },
-            queryClient
-        );
+    return {
+        ...mutation,
+        removeWhitelistDestination: mutation.mutateAsync,
     };
+};
 
-    const useIsAddressWhitelistDestination = (
-        sessionKey: Address,
-        targetAddress: Address
-    ) => {
-        return useQuery(
-            {
-                queryKey: [
-                    "isAddressWhitelistDestination",
-                    sessionKey,
-                    targetAddress,
-                ],
-                queryFn: async (): Promise<boolean> => {
-                    if (!smartAccountClient) {
-                        throw new Error("No smart account found");
-                    }
-                    return await smartAccountClient.isAddressWhitelistDestination(
-                        { sessionKey, targetAddress }
-                    );
-                },
-                ...queryProps,
+/**
+ * @description A custom hook for getting session information from a session key address.
+ */
+export const useGetSessionFromAddress = (
+    sessionKey: Address,
+    queryProps?: UseQueryParameters
+) => {
+    const { smartAccountClient, queryClient } = useSmartAccount();
+
+    const query = useQuery(
+        {
+            queryKey: ["getSessionFromAddress", sessionKey],
+            queryFn: async (): Promise<Session> => {
+                if (!smartAccountClient) {
+                    throw new Error("No smart account found");
+                }
+                return await smartAccountClient.getSessionFromAddress({ sessionKey });
             },
-            queryClient
-        );
-    };
+            ...queryProps,
+        },
+        queryClient
+    );
 
     return {
-        addSessionKeyMutation,
-        revokeSessionKeyMutation,
-        addWhitelistDestinationMutation,
-        removeWhitelistDestinationMutation,
-        useGetSessionFromAddress,
-        useIsAddressWhitelistDestination,
+        ...query,
+        getSessionFromAddress: query.refetch,
+    };
+};
+
+/**
+ * @description A custom hook for checking if an address is a whitelisted destination for a session key.
+ */
+export const useIsAddressWhitelistDestination = (
+    sessionKey: Address,
+    targetAddress: Address,
+    queryProps?: UseQueryParameters
+) => {
+    const { smartAccountClient, queryClient } = useSmartAccount();
+
+    const query = useQuery(
+        {
+            queryKey: ["isAddressWhitelistDestination", sessionKey, targetAddress],
+            queryFn: async (): Promise<boolean> => {
+                if (!smartAccountClient) {
+                    throw new Error("No smart account found");
+                }
+                return await smartAccountClient.isAddressWhitelistDestination({ sessionKey, targetAddress });
+            },
+            ...queryProps,
+        },
+        queryClient
+    );
+
+    return {
+        ...query,
+        isAddressWhitelistDestination: query.refetch,
     };
 };

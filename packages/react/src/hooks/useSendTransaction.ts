@@ -18,38 +18,48 @@ import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
  * import { parseEther, Address } from "viem";
  *
  * export const TransactionSender = () => {
- *   const sendTransaction = useSendTransaction();
+ *   const { sendTransaction, isLoading, isError, error, isSuccess, data } = useSendTransaction();
  *   const [recipient, setRecipient] = useState<Address>();
  *   const [amount, setAmount] = useState<string>("0");
  *
- *   const handleSendTransaction = () => {
+ *   const handleSendTransaction = async () => {
  *     if (recipient) {
- *       sendTransaction.mutate({
- *         transactions: {
- *           to: recipient,
- *           value: parseEther(amount),
- *           data: "0x",
- *         }
- *       });
- *     }
- *   };
- *
- *   const handleSendBatchTransactions = () => {
- *     if (recipient) {
- *       sendTransaction.mutate({
- *         transactions: [
- *           {
+ *       try {
+ *         const hash = await sendTransaction({
+ *           transactions: {
  *             to: recipient,
  *             value: parseEther(amount),
  *             data: "0x",
- *           },
- *           {
- *             to: recipient,
- *             value: parseEther((Number(amount) * 2).toString()),
- *             data: "0x",
  *           }
- *         ]
- *       });
+ *         });
+ *         console.log("Transaction sent! Hash:", hash);
+ *       } catch (error) {
+ *         console.error("Error sending transaction:", error);
+ *       }
+ *     }
+ *   };
+ *
+ *   const handleSendBatchTransactions = async () => {
+ *     if (recipient) {
+ *       try {
+ *         const hash = await sendTransaction({
+ *           transactions: [
+ *             {
+ *               to: recipient,
+ *               value: parseEther(amount),
+ *               data: "0x",
+ *             },
+ *             {
+ *               to: recipient,
+ *               value: parseEther((Number(amount) * 2).toString()),
+ *               data: "0x",
+ *             }
+ *           ]
+ *         });
+ *         console.log("Batch transactions sent! Hash:", hash);
+ *       } catch (error) {
+ *         console.error("Error sending batch transactions:", error);
+ *       }
  *     }
  *   };
  *
@@ -64,26 +74,23 @@ import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
  *         placeholder="Amount in ETH"
  *         onChange={(e) => setAmount(e.target.value)}
  *       />
- *       <button onClick={handleSendTransaction} disabled={sendTransaction.isLoading}>
+ *       <button onClick={handleSendTransaction} disabled={isLoading}>
  *         Send Transaction
  *       </button>
- *       <button onClick={handleSendBatchTransactions} disabled={sendTransaction.isLoading}>
+ *       <button onClick={handleSendBatchTransactions} disabled={isLoading}>
  *         Send Batch Transactions
  *       </button>
- *       {sendTransaction.isError && <p>Error: {sendTransaction.error.message}</p>}
- *       {sendTransaction.isSuccess && <p>Transaction sent! Hash: {sendTransaction.data}</p>}
+ *       {isError && <p>Error: {error.message}</p>}
+ *       {isSuccess && <p>Transaction sent! Hash: {data}</p>}
  *     </div>
  *   );
  * };
  * ```
  *
- * @returns A mutation object from `@tanstack/react-query` that includes:
- * - `mutate`: Function to trigger the transaction sending.
- * - `isLoading`: Boolean indicating if the transaction is being processed.
- * - `isError`: Boolean indicating if an error occurred.
- * - `error`: Error object if an error occurred.
- * - `isSuccess`: Boolean indicating if the transaction was sent successfully.
- * - `data`: The transaction hash if the transaction was successful.
+ * @returns An object containing:
+ * - All properties from the mutation object (`isLoading`, `isError`, `error`, `isSuccess`, `data`, etc.)
+ * - `sendTransaction`: A function to trigger the transaction sending, which returns a promise
+ *   that resolves to the transaction hash.
  */
 
 export type UseSendTransactionProps = {
@@ -95,7 +102,7 @@ export const useSendTransaction = (
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const useSendTransactionMutation = useMutation(
+    const mutation = useMutation(
         {
             mutationFn: (variables: UseSendTransactionProps): Promise<Hash> => {
                 if (!smartAccountClient) {
@@ -115,5 +122,12 @@ export const useSendTransaction = (
         queryClient
     );
 
-    return useSendTransactionMutation;
+    const sendTransaction = async (variables: UseSendTransactionProps): Promise<Hash> => {
+        return mutation.mutateAsync(variables);
+    };
+
+    return {
+        ...mutation,
+        sendTransaction,
+    };
 };

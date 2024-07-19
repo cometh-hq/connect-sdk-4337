@@ -3,8 +3,8 @@ import { useMutation } from "@tanstack/react-query";
 import type { Hash } from "viem";
 import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
 
-export type UseuseSendTransactionWithSessionKeyProps = {
-    transactions: Transaction;
+export type UseSendTransactionWithSessionKeyProps = {
+    transactions: Transaction | Transaction[];
 };
 
 /**
@@ -22,19 +22,24 @@ export type UseuseSendTransactionWithSessionKeyProps = {
  * import { parseEther, Address } from "viem";
  *
  * export const SessionKeyTransactionSender = () => {
- *   const sendTransactionWithSessionKey = useSendTransactionWithSessionKey();
+ *   const { sendTransaction, isLoading, isError, error, isSuccess, data } = useSendTransactionWithSessionKey();
  *   const [recipient, setRecipient] = useState<Address>();
  *   const [amount, setAmount] = useState<string>("0");
  *
- *   const handleSendTransaction = () => {
+ *   const handleSendTransaction = async () => {
  *     if (recipient) {
- *       sendTransactionWithSessionKey.mutate({
- *         transactions: {
- *           to: recipient,
- *           value: parseEther(amount),
- *           data: "0x",
- *         }
- *       });
+ *       try {
+ *         const hash = await sendTransaction({
+ *           transactions: {
+ *             to: recipient,
+ *             value: parseEther(amount),
+ *             data: "0x",
+ *           }
+ *         });
+ *         console.log("Transaction sent with session key! Hash:", hash);
+ *       } catch (error) {
+ *         console.error("Error sending transaction with session key:", error);
+ *       }
  *     }
  *   };
  *
@@ -49,27 +54,20 @@ export type UseuseSendTransactionWithSessionKeyProps = {
  *         placeholder="Amount in ETH"
  *         onChange={(e) => setAmount(e.target.value)}
  *       />
- *       <button onClick={handleSendTransaction} disabled={sendTransactionWithSessionKey.isLoading}>
+ *       <button onClick={handleSendTransaction} disabled={isLoading}>
  *         Send Transaction with Session Key
  *       </button>
- *       {sendTransactionWithSessionKey.isError && (
- *         <p>Error: {sendTransactionWithSessionKey.error.message}</p>
- *       )}
- *       {sendTransactionWithSessionKey.isSuccess && (
- *         <p>Transaction sent! Hash: {sendTransactionWithSessionKey.data}</p>
- *       )}
+ *       {isError && <p>Error: {error.message}</p>}
+ *       {isSuccess && <p>Transaction sent! Hash: {data}</p>}
  *     </div>
  *   );
  * };
  * ```
  *
- * @returns A mutation object from `@tanstack/react-query` that includes:
- * - `mutate`: Function to trigger the transaction sending with session key.
- * - `isLoading`: Boolean indicating if the transaction is being processed.
- * - `isError`: Boolean indicating if an error occurred.
- * - `error`: Error object if an error occurred.
- * - `isSuccess`: Boolean indicating if the transaction was sent successfully.
- * - `data`: The transaction hash if the transaction was successful.
+ * @returns An object containing:
+ * - All properties from the mutation object (`isLoading`, `isError`, `error`, `isSuccess`, `data`, etc.)
+ * - `sendTransaction`: A function to trigger the transaction sending with session key, which returns a promise
+ *   that resolves to the transaction hash.
  *
  * @throws {Error} If no smart account is found when trying to send a transaction.
  */
@@ -79,10 +77,10 @@ export const useSendTransactionWithSessionKey = (
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const useSendTransactionWithSessionKeyMutation = useMutation(
+    const mutation = useMutation(
         {
             mutationFn: (
-                variables: UseuseSendTransactionWithSessionKeyProps
+                variables: UseSendTransactionWithSessionKeyProps
             ): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
@@ -103,5 +101,12 @@ export const useSendTransactionWithSessionKey = (
         queryClient
     );
 
-    return useSendTransactionWithSessionKeyMutation;
+    const sendTransaction = async (variables: UseSendTransactionWithSessionKeyProps): Promise<Hash> => {
+        return mutation.mutateAsync(variables);
+    };
+
+    return {
+        ...mutation,
+        sendTransaction,
+    };
 };
