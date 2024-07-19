@@ -14,7 +14,7 @@ import React, {
     useEffect,
     useCallback,
 } from "react";
-import type { Address, Chain, Hex, Transport } from "viem";
+import type { Address, Chain, Transport } from "viem";
 
 export type ConnectProviderProps = {
     children: ReactNode;
@@ -35,7 +35,7 @@ type ContextComethSmartAccountClient = ComethSmartAccountClient<
 export type ConnectContextPayload = {
     queryClient: QueryClient | undefined;
     smartAccountClient: ContextComethSmartAccountClient | null;
-    smartAccountAddress: Hex;
+    smartAccountAddress: Address | undefined;
     updateSmartAccountClient: (address?: Address) => Promise<void>;
 };
 
@@ -47,9 +47,9 @@ export const ConnectProvider = (props: ConnectProviderProps) => {
     const { children, config, queryClient } = props;
     const [smartAccountClient, setSmartAccountClient] =
         useState<ContextComethSmartAccountClient | null>(null);
-    const [smartAccountAddress, setSmartAccountAddress] = useState<Hex>(
-        "0x" as Hex
-    );
+    const [smartAccountAddress, setSmartAccountAddress] = useState<
+        Address | undefined
+    >(undefined);
 
     const updateSmartAccountClient = useCallback(
         async (address?: Address) => {

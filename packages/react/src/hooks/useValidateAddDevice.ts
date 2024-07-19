@@ -82,7 +82,9 @@ export const useValidateAddDevice = (
         queryClient
     );
 
-    const validateAddDevice = async (variables: UseValidateAddDeviceProps): Promise<Hash> => {
+    const validateAddDevice = async (
+        variables: UseValidateAddDeviceProps
+    ): Promise<Hash> => {
         return mutation.mutateAsync(variables);
     };
 

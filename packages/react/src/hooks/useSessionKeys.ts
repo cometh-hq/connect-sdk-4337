@@ -7,7 +7,7 @@ import type { MutationOptionsWithoutMutationFn } from "./types";
 
 /**
  * @description A custom hook for adding a session key to a smart account.
- * 
+ *
  * This hook provides functionality to add a new session key to the user's smart account.
  * It returns both the mutation object and a dedicated function for adding the session key.
  *
@@ -55,7 +55,6 @@ import type { MutationOptionsWithoutMutationFn } from "./types";
  * - Other properties from the useMutation hook.
  */
 
-
 /**
  * @description A custom hook for adding a session key to a smart account.
  */
@@ -93,7 +92,9 @@ export const useRevokeSessionKey = (
 
     const mutation = useMutation(
         {
-            mutationFn: async (params: { sessionKey: Address }): Promise<Hash> => {
+            mutationFn: async (params: {
+                sessionKey: Address;
+            }): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
@@ -120,7 +121,10 @@ export const useAddWhitelistDestination = (
 
     const mutation = useMutation(
         {
-            mutationFn: async (params: { sessionKey: Address; destinations: Address[] }): Promise<Hash> => {
+            mutationFn: async (params: {
+                sessionKey: Address;
+                destinations: Address[];
+            }): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
@@ -147,11 +151,16 @@ export const useRemoveWhitelistDestination = (
 
     const mutation = useMutation(
         {
-            mutationFn: async (params: { sessionKey: Address; destination: Address }): Promise<Hash> => {
+            mutationFn: async (params: {
+                sessionKey: Address;
+                destination: Address;
+            }): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.removeWhitelistDestination(params);
+                return await smartAccountClient.removeWhitelistDestination(
+                    params
+                );
             },
             ...mutationProps,
         },
@@ -180,7 +189,9 @@ export const useGetSessionFromAddress = (
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.getSessionFromAddress({ sessionKey });
+                return await smartAccountClient.getSessionFromAddress({
+                    sessionKey,
+                });
             },
             ...queryProps,
         },
@@ -205,12 +216,19 @@ export const useIsAddressWhitelistDestination = (
 
     const query = useQuery(
         {
-            queryKey: ["isAddressWhitelistDestination", sessionKey, targetAddress],
+            queryKey: [
+                "isAddressWhitelistDestination",
+                sessionKey,
+                targetAddress,
+            ],
             queryFn: async (): Promise<boolean> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.isAddressWhitelistDestination({ sessionKey, targetAddress });
+                return await smartAccountClient.isAddressWhitelistDestination({
+                    sessionKey,
+                    targetAddress,
+                });
             },
             ...queryProps,
         },

@@ -101,7 +101,9 @@ export const useSendTransactionWithSessionKey = (
         queryClient
     );
 
-    const sendTransaction = async (variables: UseSendTransactionWithSessionKeyProps): Promise<Hash> => {
+    const sendTransaction = async (
+        variables: UseSendTransactionWithSessionKeyProps
+    ): Promise<Hash> => {
         return mutation.mutateAsync(variables);
     };
 

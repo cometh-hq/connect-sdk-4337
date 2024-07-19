@@ -97,7 +97,9 @@ export const useVerifyMessage = (
         queryClient
     );
 
-    const verifyMessage = async (variables: UseVerifySignatureProps): Promise<boolean> => {
+    const verifyMessage = async (
+        variables: UseVerifySignatureProps
+    ): Promise<boolean> => {
         return mutation.mutateAsync(variables);
     };
 

@@ -122,7 +122,9 @@ export const useSendTransaction = (
         queryClient
     );
 
-    const sendTransaction = async (variables: UseSendTransactionProps): Promise<Hash> => {
+    const sendTransaction = async (
+        variables: UseSendTransactionProps
+    ): Promise<Hash> => {
         return mutation.mutateAsync(variables);
     };
 
