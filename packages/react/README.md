@@ -1,108 +1,14 @@
-# Cometh Connect SDK
+![Cometh logo](cometh-logo.png)
 
-This SDK help any dApps to get a smoother UX for your end-users (contro a wallet with biometrics, pay for his gas fees, social recovery...)
+# React Hooks for Account Abstraction with Passkeys
+
+
+### React Hooks for Account Abstraction with Passkeys
 
 ## Installation
 
 ```bash
-bun add viem @cometh/connect-sdk-4337
-```
-
-## Setup
-
-```ts
-import { ENTRYPOINT_ADDRESS_V07, createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
-import { arbitrumSepolia } from "viem/chains";
-import { http } from "viem";
-
-const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
-const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
-
-const smartAccount = await createSafeSmartAccount({
-    apiKey,
-    entryPoint: ENTRYPOINT_ADDRESS_V07 ,
-})
-
-const paymasterClient = await createComethPaymasterClient({
-    transport: http(bundlerUrl),
-    chain: arbitrumSepolia,
-    entryPoint: ENTRYPOINT_ADDRESS_V07,
-})
-
-const smartAccountClient = createSmartAccountClient({
-    account: smartAccount,
-    entryPoint: ENTRYPOINT_ADDRESS_V07,
-    chain: arbitrumSepolia,
-    bundlerTransport: http(bundlerUrl),
-    middleware: {
-        sponsorUserOperation: paymasterClient.sponsorUserOperation,
-        gasPrice: paymasterClient.gasPrice,
-    }
-}) 
-
-```
-
-## Send transaction
-
-```ts
-import { smartAccountClient } from "./client";
-import countContractAbi from "../contract/counterABI.json";
-
-const calldata = encodeFunctionData({
-    abi: countContractAbi,
-    functionName: "count",
-});
-  
-const txHash =  await smartAccount.sendTransaction({
-    to: COUNTER_CONTRACT_ADDRESS,
-    data: calldata,
-});
-
-```
-
-## Send batch transactions
-
-```ts
-import { smartAccountClient } from "./client";
-import countContractAbi from "../contract/counterABI.json";
-
-const calldata = encodeFunctionData({
-    abi: countContractAbi,
-    functionName: "count",
-});
-  
-const txHash =  await smartAccount.sendTransactions({
-    transactions: [
-        {
-        to: COUNTER_CONTRACT_ADDRESS,
-        data: calldata,
-        },
-        {
-        to: COUNTER_CONTRACT_ADDRESS,
-        data: calldata,
-        },
-    ],
-});
-
-```
-
-## Handle owners
-
-```ts
-import { smartAccountClient } from "./client";
-
-// get owners
-const owners = await smartAccountClient.getOwners()
-
-// get enriched owners (with passkey credentials)
-const enrichedOwners = await smartAccountClient.getEnrichedOwners()
-
-// add a new owner
-await smartAccountClient.addOwner({ownerToAdd:OWNER_ADDRESS_TO_ADD})
-
-// remove an owner
-await smartAccountClient.removeOwner({ownerToRemove:OWNER_ADDRESS_TO_REMOVE})
-
+bun add viem wagmi @tanstack/react-query @cometh/connect-sdk-4337 @cometh/connect-react-hooks
 ```
 
 
