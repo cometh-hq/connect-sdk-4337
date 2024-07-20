@@ -9,16 +9,17 @@ export default function App() {
 
     const { createNewSigner, generateQrCode } = useHandleDevice(apiKey);
 
-    const {  setNewSigner } = useSmartAccount();
+    const { setNewSigner } = useSmartAccount();
 
     const createRequest = async () => {
-
         const signer = await createNewSigner({
             smartAccountAddress: "0xa0A1A2AFdFb029287ee33e31F7654a37744179B8",
-        });   
-        const qrcode = await generateQrCode("http://localhost:3002/createSigner", signer)
+        });
+        const qrcode = await generateQrCode(
+            "http://localhost:3002/createSigner",
+            signer
+        );
         setNewSigner(signer);
-       
     };
 
     return (

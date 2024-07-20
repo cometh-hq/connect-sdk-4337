@@ -3,7 +3,13 @@
 import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { http, type Address, createPublicClient, getContract, encodeFunctionData } from "viem";
+import {
+    http,
+    type Address,
+    createPublicClient,
+    encodeFunctionData,
+    getContract,
+} from "viem";
 import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
@@ -96,13 +102,12 @@ function Transaction({
                 functionName: "count",
             });
 
-
             sendTransaction({
-                transactions:{
+                transactions: {
                     to: COUNTER_CONTRACT_ADDRESS,
                     value: 0,
                     data: calldata,
-                }
+                },
             });
 
             const balance = await counterContract.read.counters([address]);

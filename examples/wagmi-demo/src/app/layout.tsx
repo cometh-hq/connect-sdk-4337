@@ -26,7 +26,6 @@ const rpcUrl = "https://arbitrum-sepolia.blockpi.network/v1/rpc/public";
 if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
-
 const connector = smartAccountConnector({
     apiKey,
     bundlerUrl,

@@ -100,11 +100,6 @@ function Transaction({
                 functionName: "count",
             });
 
-
-  
-
-
-
             const txHash = await smartAccount.sendTransaction({
                 to: COUNTER_CONTRACT_ADDRESS,
                 data: calldata,

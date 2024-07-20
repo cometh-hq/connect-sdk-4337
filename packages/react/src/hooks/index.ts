@@ -2,7 +2,11 @@ export * from "@/hooks/useSmartAccount";
 
 export * from "@/hooks/useSendTransaction";
 
+export * from "@/hooks/useWriteContract";
+
 export * from "@/hooks/useSendTransactionWithSessionKey";
+
+export * from "@/hooks/useWriteContractWithSessionKey";
 
 export * from "@/hooks/useConnect";
 

@@ -16,6 +16,8 @@ import {
     useSmartAccount,
     useValidateAddDevice,
     useVerifyMessage,
+    useWriteContract,
+    useWriteContractWithSessionKey,
 } from "./hooks";
 import { ConnectProvider } from "./providers/ConnectProvider";
 
@@ -29,6 +31,8 @@ export {
     useGetEnrichedOwners,
     useSendTransaction,
     useSendTransactionWithSessionKey,
+    useWriteContract,
+    useWriteContractWithSessionKey,
     useAddSessionKey,
     useAddWhitelistDestination,
     useGetSessionFromAddress,
