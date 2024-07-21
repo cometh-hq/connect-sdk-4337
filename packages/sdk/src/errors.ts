@@ -20,12 +20,6 @@ export class WalletNotDeployedError extends Error {
     }
 }
 
-export class NetworkNotSupportedError extends Error {
-    constructor() {
-        super("This network is not supported");
-    }
-}
-
 export class ProjectParamsError extends Error {
     constructor() {
         super("Project params are null");

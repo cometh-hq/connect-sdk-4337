@@ -63,21 +63,12 @@ export type SafeSmartAccount<
 };
 
 /**
- * Authenticate the wallet to the cometh api
- * @param initializer
- * @param smartAccountAddress
- * @param signer
- * @param api
- * @param singletonAddress
- * @param safeProxyFactoryAddress
- */
-
-/**
- * Get the account initialization code for a modular smart account
- * @param initializer
- * @param singletonAddress
- * @param safeFactoryAddress
- * @param saltNonce
+ * Get the account initialization code for a Safe smart account
+ * @param initializer - The initializer data for the Safe
+ * @param singletonAddress - The address of the Safe singleton contract
+ * @param safeFactoryAddress - The address of the Safe proxy factory
+ * @param saltNonce - Optional salt nonce for CREATE2 deployment (defaults to zeroHash)
+ * @returns The packed initialization code
  */
 const getAccountInitCode = async ({
     initializer,
@@ -104,11 +95,12 @@ const getAccountInitCode = async ({
 };
 
 /**
- * Predict Account address from the entrypoint
- * @param singletonAddress
- * @param safeProxyFactoryAddress
- * @param saltNonce
- * @param initializer
+ * Predict the account address for a Safe smart account
+ * @param singletonAddress - The address of the Safe singleton contract
+ * @param safeProxyFactoryAddress - The address of the Safe proxy factory
+ * @param saltNonce - Optional salt nonce for CREATE2 deployment (defaults to zeroHash)
+ * @param initializer - The initializer data for the Safe
+ * @returns The predicted account address
  */
 export const getAccountAddress = async ({
     singletonAddress,
@@ -155,15 +147,17 @@ export type createSafeSmartAccountParameters<
     comethSignerConfig?: SignerConfig;
     safeContractConfig?: SafeContractConfig;
 }>;
+
 /**
- * Build a safe smart account from a cometh signer
- * @param apiKey
- * @param comethSigner
- * @param rpcUrl
- * @param smartAccountAddress
- * @param entryPoint
- * @param factoryAddress
- * @param comethSignerConfig
+ * Create a Safe smart account
+ * @param apiKey - The API key for authentication
+ * @param rpcUrl - Optional RPC URL for the blockchain network
+ * @param baseUrl - Optional base URL for the API
+ * @param smartAccountAddress - Optional address of an existing smart account
+ * @param entryPoint - The entry point contract address
+ * @param comethSignerConfig - Optional configuration for the Cometh signer
+ * @param safeContractConfig - Optional configuration for the Safe contract
+ * @returns A SafeSmartAccount instance
  */
 export async function createSafeSmartAccount<
     entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,

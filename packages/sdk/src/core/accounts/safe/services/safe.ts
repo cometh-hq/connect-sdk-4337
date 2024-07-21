@@ -19,6 +19,11 @@ import { safe4337SessionKeyModuleAbi } from "../abi/safe4337SessionKeyModuleAbi"
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
 import type { MultiSendTransaction } from "../types";
 
+/**
+ * Encodes multiple transactions into a single byte string for multi-send functionality
+ * @param transactions - Array of MultiSendTransaction objects
+ * @returns Concatenated and encoded transactions as a Hex string
+ */
 export const encodeMultiSendTransactions = (
     transactions: MultiSendTransaction[]
 ) => {
@@ -32,6 +37,12 @@ export const encodeMultiSendTransactions = (
     );
 };
 
+/**
+ * Decodes a user operation into an array of MultiSendTransactions
+ * @param userOperation - The user operation to decode
+ * @param multisend - The address of the multisend contract
+ * @returns An array of decoded MultiSendTransaction objects
+ */
 export const decodeUserOp = ({
     userOperation,
     multisend,
@@ -97,6 +108,15 @@ export const decodeUserOp = ({
     return txs;
 };
 
+/**
+ * Generates setup data for enabling modules and configuring the signer
+ * @param modules - Array of module addresses to enable
+ * @param comethSigner - The Cometh signer instance
+ * @param setUpContractAddress - Address of the setup contract
+ * @param safeWebAuthnSharedSignerContractAddress - Address of the WebAuthn shared signer contract
+ * @param safeP256VerifierAddress - Address of the P256 verifier contract
+ * @returns Encoded setup data as a Hex string
+ */
 export const getSetUpData = ({
     modules,
     comethSigner,
@@ -152,6 +172,18 @@ export const getSetUpData = ({
     return enableModuleCallData;
 };
 
+/**
+ * Generates the initializer data for a Safe smart contract
+ * @param comethSigner - The Cometh signer instance
+ * @param threshold - The threshold for the multi-signature wallet
+ * @param fallbackHandler - Address of the fallback handler
+ * @param modules - Array of module addresses to enable
+ * @param setUpContractAddress - Address of the setup contract
+ * @param safeWebAuthnSharedSignerContractAddress - Address of the WebAuthn shared signer contract
+ * @param p256Verifier - Address of the P256 verifier contract
+ * @param multisendAddress - Address of the multisend contract
+ * @returns Encoded initializer data as a Hex string
+ */
 export const getSafeInitializer = (
     comethSigner: ComethSigner,
     threshold: number,

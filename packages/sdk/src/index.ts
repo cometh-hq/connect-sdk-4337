@@ -9,6 +9,12 @@ import {
     createSafeSmartAccount,
     type createSafeSmartAccountParameters,
 } from "./core/accounts/safe/createSafeSmartAccount";
+import {
+    type QRCodeOptions,
+    createNewSigner,
+    generateQRCodeUrl,
+    serializeUrlWithSignerPayload,
+} from "./core/actions/accounts/addNewDevice";
 import { retrieveAccountAddressFromPasskey } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type {
@@ -20,7 +26,6 @@ import {
     createSmartAccountClient,
 } from "./core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
-import { useHandleDevice } from "./core/hooks/useHandleDevice";
 import { createSigner } from "./core/signers/createSigner";
 import type { Signer } from "./core/types";
 import { smartAccountConnector } from "./wagmi/connector";
@@ -29,8 +34,10 @@ export {
     createSigner,
     createSafeSmartAccount,
     createSmartAccountClient,
-    useHandleDevice,
     retrieveAccountAddressFromPasskey,
+    createNewSigner,
+    serializeUrlWithSignerPayload,
+    generateQRCodeUrl,
     createComethPaymasterClient,
     smartAccountConnector,
     ENTRYPOINT_ADDRESS_V06,
@@ -46,4 +53,5 @@ export type {
     EnrichedOwner,
     AddSessionKeyParams,
     Session,
+    QRCodeOptions,
 };

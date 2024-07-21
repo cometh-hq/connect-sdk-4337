@@ -29,6 +29,17 @@ import {
 } from "../../types";
 import type { SafeSigner } from "../types";
 
+/**
+ * Creates a SafeSigner using ECDSA for signing
+ *
+ * @param client - The viem Client instance
+ * @param params - Object containing:
+ *   @param signer - The SmartAccountSigner instance
+ *   @param safe4337SessionKeysModule - The address of the Safe 4337 session keys module
+ *   @param smartAccountAddress - The address of the smart account
+ *
+ * @returns A Promise that resolves to a SafeSigner instance with ECDSA capabilities
+ */
 export async function safeECDSASigner<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
