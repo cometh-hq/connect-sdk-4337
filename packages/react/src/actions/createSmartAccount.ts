@@ -23,7 +23,6 @@ export async function createSmartAccount(
     config: createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE> & {
         bundlerUrl: string;
         paymasterUrl?: string;
-        autoconnect?: boolean;
     }
 ): Promise<{ client: ContextComethSmartAccountClient; address: Hex }> {
     const {
@@ -34,6 +33,7 @@ export async function createSmartAccount(
         baseUrl,
         comethSignerConfig,
         safeContractConfig,
+        smartAccountAddress,
     } = config;
     const chain = arbitrumSepolia;
 
@@ -41,6 +41,7 @@ export async function createSmartAccount(
         apiKey,
         rpcUrl,
         baseUrl,
+        smartAccountAddress,
         entryPoint: ENTRYPOINT_ADDRESS_V07,
         comethSignerConfig,
         safeContractConfig,

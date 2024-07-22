@@ -3,13 +3,32 @@ import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import type { MutationOptionsWithoutMutationFn } from "./types";
 
+/**
+ * Props for the useVerifyMessage hook.
+ * @property {string} message - The message to verify.
+ * @property {Hex} signature - The signature to verify.
+ */
 export type UseVerifySignatureProps = {
     message: string;
     signature: Hex;
 };
 
 /**
- * @description A hook that verifies a message signature for the current smart account.
+ * Type for the verifyMessage function.
+ * This function doesn't return a promise, suitable for fire-and-forget usage.
+ */
+export type VerifyMessageMutate = (variables: UseVerifySignatureProps) => void;
+
+/**
+ * Type for the verifyMessageAsync function.
+ * This function returns a promise that resolves to a boolean indicating if the signature is valid.
+ */
+export type VerifyMessageMutateAsync = (
+    variables: UseVerifySignatureProps
+) => Promise<boolean>;
+
+/**
+ * A hook that verifies a message signature for the current smart account.
  *
  * This hook uses the `verifySignature` method from the smart account client to verify
  * if a given signature is valid for a specific message. It's typically used to authenticate
@@ -27,15 +46,20 @@ export type UseVerifySignatureProps = {
  *   const [signature, setSignature] = useState("");
  *   const {
  *     verifyMessage,
+ *     verifyMessageAsync,
  *     isLoading,
  *     error,
  *     data: isValid,
  *     isSuccess
  *   } = useVerifyMessage();
  *
- *   const handleVerify = async () => {
+ *   const handleVerify = () => {
+ *     verifyMessage({ message, signature: signature as Hex });
+ *   };
+ *
+ *   const handleVerifyAsync = async () => {
  *     try {
- *       const result = await verifyMessage({ message, signature: signature as Hex });
+ *       const result = await verifyMessageAsync({ message, signature: signature as Hex });
  *       console.log("Signature verification result:", result);
  *     } catch (error) {
  *       console.error("Error verifying signature:", error);
@@ -57,6 +81,9 @@ export type UseVerifySignatureProps = {
  *       <button onClick={handleVerify} disabled={isLoading}>
  *         Verify Signature
  *       </button>
+ *       <button onClick={handleVerifyAsync} disabled={isLoading}>
+ *         Verify Signature (Async)
+ *       </button>
  *       {error && <p>Error: {error.message}</p>}
  *       {isSuccess && (
  *         <p>Signature is {isValid ? "valid" : "invalid"}</p>
@@ -68,20 +95,23 @@ export type UseVerifySignatureProps = {
  *
  * @returns An object containing:
  * - All properties from the mutation object (`isLoading`, `isError`, `error`, `isSuccess`, `data`, etc.)
- * - `verifyMessage`: A function to trigger the signature verification, which returns a promise
- *   that resolves to a boolean indicating if the signature is valid.
+ * - `verifyMessage`: A function to trigger the signature verification without waiting for the result.
+ * - `verifyMessageAsync`: A function to trigger the signature verification and wait for the result.
  */
-
 export const useVerifyMessage = (
     mutationProps?: MutationOptionsWithoutMutationFn
 ) => {
+    // Get the smart account client and query client from the useSmartAccount hook
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    // Create a mutation using @tanstack/react-query
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
+            // Define the mutation function
             mutationFn: async (
                 variables: UseVerifySignatureProps
             ): Promise<boolean> => {
+                // Check if the smart account client exists
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
@@ -92,19 +122,16 @@ export const useVerifyMessage = (
                     signature,
                 });
             },
+            // Spread any additional mutation options provided
             ...mutationProps,
         },
         queryClient
     );
 
-    const verifyMessage = async (
-        variables: UseVerifySignatureProps
-    ): Promise<boolean> => {
-        return mutation.mutateAsync(variables);
-    };
-
+    // Return the mutation object along with the verifyMessage and verifyMessageAsync functions
     return {
-        ...mutation,
-        verifyMessage,
+        ...result,
+        verifyMessage: mutate,
+        verifyMessageAsync: mutateAsync,
     };
 };

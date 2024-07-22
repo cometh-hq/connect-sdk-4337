@@ -4,7 +4,31 @@ import type { Hash } from "viem";
 import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
 
 /**
- * @description A custom hook for sending transactions through a smart account.
+ * Props for the useSendTransaction hook.
+ * @property {Transaction | Transaction[]} transactions - A single transaction or an array of transactions to send.
+ */
+export type UseSendTransactionProps = {
+    transactions: Transaction | Transaction[];
+};
+
+/**
+ * Type for the sendTransaction function.
+ * This function doesn't return a promise, suitable for fire-and-forget usage.
+ */
+export type SendTransactionMutate = (
+    variables: UseSendTransactionProps
+) => void;
+
+/**
+ * Type for the sendTransactionAsync function.
+ * This function returns a promise that resolves to the transaction hash.
+ */
+export type SendTransactionMutateAsync = (
+    variables: UseSendTransactionProps
+) => Promise<Hash>;
+
+/**
+ * A custom hook for sending transactions through a smart account.
  *
  * This hook provides functionality to send either a single transaction or multiple transactions
  * in batch. It uses the smart account client to process and send these transactions.
@@ -18,31 +42,26 @@ import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
  * import { parseEther, Address } from "viem";
  *
  * export const TransactionSender = () => {
- *   const { sendTransaction, isLoading, isError, error, isSuccess, data } = useSendTransaction();
+ *   const { sendTransaction, sendTransactionAsync, isLoading, isError, error, isSuccess, data } = useSendTransaction();
  *   const [recipient, setRecipient] = useState<Address>();
  *   const [amount, setAmount] = useState<string>("0");
  *
- *   const handleSendTransaction = async () => {
+ *   const handleSendTransaction = () => {
  *     if (recipient) {
- *       try {
- *         const hash = await sendTransaction({
- *           transactions: {
- *             to: recipient,
- *             value: parseEther(amount),
- *             data: "0x",
- *           }
- *         });
- *         console.log("Transaction sent! Hash:", hash);
- *       } catch (error) {
- *         console.error("Error sending transaction:", error);
- *       }
+ *       sendTransaction({
+ *         transactions: {
+ *           to: recipient,
+ *           value: parseEther(amount),
+ *           data: "0x",
+ *         }
+ *       });
  *     }
  *   };
  *
  *   const handleSendBatchTransactions = async () => {
  *     if (recipient) {
  *       try {
- *         const hash = await sendTransaction({
+ *         const hash = await sendTransactionAsync({
  *           transactions: [
  *             {
  *               to: recipient,
@@ -89,47 +108,45 @@ import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
  *
  * @returns An object containing:
  * - All properties from the mutation object (`isLoading`, `isError`, `error`, `isSuccess`, `data`, etc.)
- * - `sendTransaction`: A function to trigger the transaction sending, which returns a promise
- *   that resolves to the transaction hash.
+ * - `sendTransaction`: A function to trigger the transaction sending without waiting for the result.
+ * - `sendTransactionAsync`: A function to trigger the transaction sending and wait for the result.
  */
-
-export type UseSendTransactionProps = {
-    transactions: Transaction | Transaction[];
-};
-
 export const useSendTransaction = (
     mutationProps?: MutationOptionsWithoutMutationFn
 ) => {
+    // Get the smart account client and query client from the useSmartAccount hook
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    // Create a mutation using @tanstack/react-query
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
+            // Define the mutation function
             mutationFn: (variables: UseSendTransactionProps): Promise<Hash> => {
+                // Check if the smart account client exists
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
                 const { transactions } = variables;
 
+                // If transactions is not an array, it's a single transaction
                 if (!Array.isArray(transactions)) {
                     return smartAccountClient.sendTransaction(transactions);
                 }
+                // If it's an array, send multiple transactions
                 return smartAccountClient.sendTransactions({
                     transactions: transactions,
                 });
             },
+            // Spread any additional mutation options provided
             ...mutationProps,
         },
         queryClient
     );
 
-    const sendTransaction = async (
-        variables: UseSendTransactionProps
-    ): Promise<Hash> => {
-        return mutation.mutateAsync(variables);
-    };
-
+    // Return the mutation object along with the sendTransaction and sendTransactionAsync functions
     return {
-        ...mutation,
-        sendTransaction,
+        ...result,
+        sendTransaction: mutate,
+        sendTransactionAsync: mutateAsync,
     };
 };

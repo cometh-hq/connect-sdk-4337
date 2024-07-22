@@ -128,7 +128,7 @@ export const useWriteContract = (
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
             mutationFn: async (
                 variables: WriteContractParameters
@@ -158,14 +158,9 @@ export const useWriteContract = (
         queryClient
     );
 
-    const writeContract = async (
-        variables: WriteContractParameters
-    ): Promise<Hash> => {
-        return mutation.mutateAsync(variables);
-    };
-
     return {
-        ...mutation,
-        writeContract,
+        ...result,
+        writeContract: mutate,
+        writeContractAsync: mutateAsync,
     };
 };

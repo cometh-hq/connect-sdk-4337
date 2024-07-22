@@ -128,7 +128,7 @@ export const useWriteContractWithSessionKey = (
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
             mutationFn: async (
                 variables: WriteContractWithSessionKeyParameters
@@ -159,14 +159,9 @@ export const useWriteContractWithSessionKey = (
         queryClient
     );
 
-    const writeContractWithSessionKey = async (
-        variables: WriteContractWithSessionKeyParameters
-    ): Promise<Hash> => {
-        return mutation.mutateAsync(variables);
-    };
-
     return {
-        ...mutation,
-        writeContractWithSessionKey,
+        ...result,
+        writeContract: mutate,
+        writeContractAsync: mutateAsync,
     };
 };

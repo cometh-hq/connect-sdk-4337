@@ -8,11 +8,11 @@ import { ConnectProvider } from "@cometh/connect-react-hooks";
 import { arbitrumSepolia } from "viem/chains";
 import { http, WagmiProvider, createConfig } from "wagmi";
 
+const queryClient = new QueryClient();
+
 const inter = Inter({
     subsets: ["latin"],
 });
-
-const queryClient = new QueryClient();
 
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
 const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
@@ -47,7 +47,6 @@ export default function RootLayout({
                             baseUrl,
                             apiKey,
                             rpcUrl,
-                            autoconnect: false,
                         }}
                         queryClient={queryClient}
                     >

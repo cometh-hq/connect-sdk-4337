@@ -1,5 +1,3 @@
-import { useMutation } from "@tanstack/react-query";
-
 import {
     type QRCodeOptions,
     type Signer,
@@ -7,13 +5,25 @@ import {
     generateQRCodeUrl,
     serializeUrlWithSignerPayload,
 } from "@cometh/connect-sdk-4337";
+import { useMutation } from "@tanstack/react-query";
+import type { UseMutationOptions } from "@tanstack/react-query";
 import type { Address } from "viem";
-import type { MutationOptionsWithoutMutationFn } from "./types";
 
-export type UseCreateNewSignerProps = {
+type CreateNewSignerParameters = {
     smartAccountAddress: Address;
     passKeyName?: string;
     encryptionSalt?: string;
+};
+
+type SerializeUrlParameters = {
+    validationPageUrl: string;
+    signerPayload: Signer;
+};
+
+type GenerateQRCodeUrlParameters = {
+    validationPageUrl: string;
+    signerPayload: Signer;
+    options?: QRCodeOptions;
 };
 
 /**
@@ -22,8 +32,6 @@ export type UseCreateNewSignerProps = {
  * @param apiKey - The API key for authentication
  * @param baseUrl - Optional base URL for the API
  * @param mutationProps - Optional mutation properties from @tanstack/react-query
- *
- * @returns An object containing the mutation result and a createSigner function
  *
  * @example
  * ```tsx
@@ -56,89 +64,85 @@ export type UseCreateNewSignerProps = {
  *   );
  * };
  * ```
+ *
+ * @returns An object containing the mutation function and related properties.
  */
-
 export const useCreateNewSigner = (
     apiKey: string,
     baseUrl?: string,
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<Signer, Error, CreateNewSignerParameters>,
+        "mutationFn"
+    >
 ) => {
-    const mutation = useMutation({
-        mutationFn: (variables: UseCreateNewSignerProps): Promise<Signer> =>
+    const { mutate, mutateAsync, ...result } = useMutation({
+        mutationFn: (variables: CreateNewSignerParameters): Promise<Signer> =>
             createNewSigner(apiKey, baseUrl, variables),
         ...mutationProps,
     });
 
-    const createSigner = async (
-        variables: UseCreateNewSignerProps
-    ): Promise<Signer> => {
-        return mutation.mutateAsync(variables);
-    };
-
     return {
-        ...mutation,
-        createSigner,
+        ...result,
+        createSigner: mutate,
+        createSignerAsync: mutateAsync,
     };
 };
 
-// Hook for serializeUrlWithSignerPayload
-export type UseSerializeUrlProps = {
-    validationPageUrl: string;
-    signerPayload: Signer;
-};
-
+/**
+ * Hook for serializing URL with signer payload
+ *
+ * @param mutationProps - Optional mutation properties from @tanstack/react-query
+ *
+ * @returns An object containing the mutation function and related properties.
+ */
 export const useSerializeUrlWithSignerPayload = (
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<URL, Error, SerializeUrlParameters>,
+        "mutationFn"
+    >
 ) => {
-    const mutation = useMutation({
-        mutationFn: (variables: UseSerializeUrlProps): Promise<URL> =>
-            serializeUrlWithSignerPayload(
-                variables.validationPageUrl,
-                variables.signerPayload
-            ),
+    const { mutate, mutateAsync, ...result } = useMutation({
+        mutationFn: ({
+            validationPageUrl,
+            signerPayload,
+        }: SerializeUrlParameters): Promise<URL> =>
+            serializeUrlWithSignerPayload(validationPageUrl, signerPayload),
         ...mutationProps,
     });
 
-    const serializeUrl = async (
-        variables: UseSerializeUrlProps
-    ): Promise<URL> => {
-        return mutation.mutateAsync(variables);
-    };
-
     return {
-        ...mutation,
-        serializeUrl,
+        ...result,
+        serializeUrl: mutate,
+        serializeUrlAsync: mutateAsync,
     };
 };
 
-// Hook for generateQRCodeUrl
-export type UseGenerateQRCodeUrlProps = {
-    validationPageUrl: string;
-    signerPayload: Signer;
-    options?: QRCodeOptions;
-};
-
+/**
+ * Hook for generating QR code URL
+ *
+ * @param mutationProps - Optional mutation properties from @tanstack/react-query
+ *
+ * @returns An object containing the mutation function and related properties.
+ */
 export const useGenerateQRCodeUrl = (
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<string, Error, GenerateQRCodeUrlParameters>,
+        "mutationFn"
+    >
 ) => {
-    const mutation = useMutation({
-        mutationFn: (variables: UseGenerateQRCodeUrlProps): Promise<string> =>
-            generateQRCodeUrl(
-                variables.validationPageUrl,
-                variables.signerPayload,
-                variables.options
-            ),
+    const { mutate, mutateAsync, ...result } = useMutation({
+        mutationFn: ({
+            validationPageUrl,
+            signerPayload,
+            options,
+        }: GenerateQRCodeUrlParameters): Promise<string> =>
+            generateQRCodeUrl(validationPageUrl, signerPayload, options),
         ...mutationProps,
     });
 
-    const generateQRCode = async (
-        variables: UseGenerateQRCodeUrlProps
-    ): Promise<string> => {
-        return mutation.mutateAsync(variables);
-    };
-
     return {
-        ...mutation,
-        generateQRCode,
+        ...result,
+        generateQRCode: mutate,
+        generateQRCodeAsync: mutateAsync,
     };
 };

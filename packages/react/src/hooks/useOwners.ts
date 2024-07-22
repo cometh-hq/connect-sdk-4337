@@ -1,9 +1,19 @@
 import { useSmartAccount } from "@/hooks";
 import type { EnrichedOwner } from "@cometh/connect-sdk-4337";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type {
+    UseMutationOptions,
+    UseQueryOptions,
+} from "@tanstack/react-query";
 import type { Address, Hash } from "viem";
-import type { UseQueryParameters } from "wagmi/query";
-import type { MutationOptionsWithoutMutationFn } from "./types";
+
+type AddOwnerParameters = {
+    ownerToAdd: Address;
+};
+
+type RemoveOwnerParameters = {
+    ownerToRemove: Address;
+};
 
 /**
  * @description A custom hook for adding a new owner to a smart account.
@@ -37,19 +47,22 @@ import type { MutationOptionsWithoutMutationFn } from "./types";
  * @returns An object containing the mutation function and related properties.
  */
 export const useAddOwner = (
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<Hash, Error, AddOwnerParameters>,
+        "mutationFn"
+    >
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (args: {
-                ownerToAdd: Address;
-            }): Promise<Hash> => {
+            mutationFn: async ({
+                ownerToAdd,
+            }: AddOwnerParameters): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.addOwner(args);
+                return await smartAccountClient.addOwner({ ownerToAdd });
             },
             ...mutationProps,
         },
@@ -57,8 +70,9 @@ export const useAddOwner = (
     );
 
     return {
-        ...mutation,
-        addOwner: mutation.mutateAsync,
+        ...result,
+        addOwner: mutate,
+        addOwnerAsync: mutateAsync,
     };
 };
 
@@ -94,19 +108,22 @@ export const useAddOwner = (
  * @returns An object containing the mutation function and related properties.
  */
 export const useRemoveOwner = (
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<Hash, Error, RemoveOwnerParameters>,
+        "mutationFn"
+    >
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (args: {
-                ownerToRemove: Address;
-            }): Promise<Hash> => {
+            mutationFn: async ({
+                ownerToRemove,
+            }: RemoveOwnerParameters): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.removeOwner(args);
+                return await smartAccountClient.removeOwner({ ownerToRemove });
             },
             ...mutationProps,
         },
@@ -114,8 +131,9 @@ export const useRemoveOwner = (
     );
 
     return {
-        ...mutation,
-        removeOwner: mutation.mutateAsync,
+        ...result,
+        removeOwner: mutate,
+        removeOwnerAsync: mutateAsync,
     };
 };
 
@@ -146,7 +164,12 @@ export const useRemoveOwner = (
  *
  * @returns An object containing the query result and related properties.
  */
-export const useGetOwners = (queryProps?: UseQueryParameters) => {
+export const useGetOwners = (
+    queryProps?: Omit<
+        UseQueryOptions<readonly Address[], Error>,
+        "queryKey" | "queryFn"
+    >
+) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
     return useQuery(
@@ -193,7 +216,12 @@ export const useGetOwners = (queryProps?: UseQueryParameters) => {
  *
  * @returns An object containing the query result and related properties.
  */
-export const useGetEnrichedOwners = (queryProps?: UseQueryParameters) => {
+export const useGetEnrichedOwners = (
+    queryProps?: Omit<
+        UseQueryOptions<EnrichedOwner | EnrichedOwner[], Error>,
+        "queryKey" | "queryFn"
+    >
+) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
     return useQuery(

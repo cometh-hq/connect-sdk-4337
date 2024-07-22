@@ -16,14 +16,11 @@ import React, {
 } from "react";
 import type { Address, Chain, Transport } from "viem";
 
-export type ConnectProviderProps = {
-    children: ReactNode;
-    config: createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE> & {
+type ConnectConfig =
+    createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE> & {
         bundlerUrl: string;
         paymasterUrl?: string;
     };
-    queryClient: QueryClient | undefined;
-};
 
 type ContextComethSmartAccountClient = ComethSmartAccountClient<
     SafeSmartAccount<ENTRYPOINT_ADDRESS_V07_TYPE, Transport, Chain>,
@@ -39,12 +36,25 @@ export type ConnectContextPayload = {
     updateSmartAccountClient: (address?: Address) => Promise<void>;
 };
 
-export const ConnectContext = createContext<ConnectContextPayload | undefined>(
-    undefined
-);
+export const ConnectContext = createContext<ConnectContextPayload>({
+    queryClient: undefined,
+    smartAccountClient: null,
+    smartAccountAddress: undefined,
+    updateSmartAccountClient: async () => {},
+});
 
-export const ConnectProvider = (props: ConnectProviderProps) => {
-    const { children, config, queryClient } = props;
+export const ConnectProvider = <
+    TConfig extends ConnectConfig,
+    TQueryClient extends QueryClient | undefined,
+>({
+    children,
+    config,
+    queryClient,
+}: {
+    children: ReactNode;
+    config: TConfig;
+    queryClient: TQueryClient;
+}) => {
     const [smartAccountClient, setSmartAccountClient] =
         useState<ContextComethSmartAccountClient | null>(null);
     const [smartAccountAddress, setSmartAccountAddress] = useState<

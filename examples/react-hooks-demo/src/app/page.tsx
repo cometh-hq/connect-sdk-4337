@@ -7,15 +7,13 @@ import { type Hex, isAddress } from "viem";
 import Transaction from "./components/Transaction";
 
 export default function App() {
-    const { connect, smartAccountAddress } = useConnect();
-
     const {
-        sendTransaction,
-        data: hash,
-        error,
-        status,
-        isPending,
-    } = useSendTransaction();
+        connectAsync,
+        smartAccountClient,
+        smartAccountAddress,
+        error: connectError,
+    } = useConnect();
+    const { sendTransactionAsync, data: hash, error } = useSendTransaction();
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
@@ -24,17 +22,8 @@ export default function App() {
     ) as Hex;
 
     const connectWallet = async () => {
-        connect(localStorageAddress);
-
-        if (!localStorageAddress)
-            window.localStorage.setItem("walletAddress", smartAccountAddress);
+        connectAsync(localStorageAddress);
     };
-
-    useEffect(() => {
-        if (smartAccountAddress) {
-            window.localStorage.setItem("walletAddress", smartAccountAddress);
-        }
-    }, [smartAccountAddress]);
 
     return (
         <div
@@ -56,10 +45,10 @@ export default function App() {
                             connect
                         </div>
 
-                        {isAddress(smartAccountAddress) && (
+                        {smartAccountAddress && (
                             <Transaction
                                 hash={hash!}
-                                sendTransaction={sendTransaction}
+                                sendTransaction={sendTransactionAsync}
                                 address={smartAccountAddress}
                                 transactionSuccess={transactionSuccess}
                                 setTransactionSuccess={setTransactionSuccess}

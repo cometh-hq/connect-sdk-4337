@@ -1,15 +1,30 @@
 import { useSmartAccount } from "@/hooks";
 import type { AddSessionKeyParams, Session } from "@cometh/connect-sdk-4337";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type {
+    UseMutationOptions,
+    UseQueryOptions,
+} from "@tanstack/react-query";
 import type { Address, Hash } from "viem";
-import type { UseQueryParameters } from "wagmi/query";
-import type { MutationOptionsWithoutMutationFn } from "./types";
+
+type AddSessionKeyParameters = AddSessionKeyParams;
+
+type RevokeSessionKeyParameters = {
+    sessionKey: Address;
+};
+
+type AddWhitelistDestinationParameters = {
+    sessionKey: Address;
+    destinations: Address[];
+};
+
+type RemoveWhitelistDestinationParameters = {
+    sessionKey: Address;
+    destination: Address;
+};
 
 /**
  * @description A custom hook for adding a session key to a smart account.
- *
- * This hook provides functionality to add a new session key to the user's smart account.
- * It returns both the mutation object and a dedicated function for adding the session key.
  *
  * @param mutationProps Optional mutation properties from @tanstack/react-query
  *
@@ -47,25 +62,21 @@ import type { MutationOptionsWithoutMutationFn } from "./types";
  * };
  * ```
  *
- * @returns An object containing:
- * - `addSessionKey`: Function for adding a new session key.
- * - `isLoading`: Boolean indicating if the mutation is in progress.
- * - `error`: Any error that occurred during the mutation.
- * - `data`: The result of the mutation (transaction hash).
- * - Other properties from the useMutation hook.
- */
-
-/**
- * @description A custom hook for adding a session key to a smart account.
+ * @returns An object containing the mutation function and related properties.
  */
 export const useAddSessionKey = (
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<Hash, Error, AddSessionKeyParameters>,
+        "mutationFn"
+    >
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (params: AddSessionKeyParams): Promise<Hash> => {
+            mutationFn: async (
+                params: AddSessionKeyParameters
+            ): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
@@ -77,28 +88,38 @@ export const useAddSessionKey = (
     );
 
     return {
-        ...mutation,
-        addSessionKey: mutation.mutateAsync,
+        ...result,
+        addSessionKey: mutate,
+        addSessionKeyAsync: mutateAsync,
     };
 };
 
 /**
  * @description A custom hook for revoking a session key from a smart account.
+ *
+ * @param mutationProps Optional mutation properties from @tanstack/react-query
+ *
+ * @returns An object containing the mutation function and related properties.
  */
 export const useRevokeSessionKey = (
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<Hash, Error, RevokeSessionKeyParameters>,
+        "mutationFn"
+    >
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (params: {
-                sessionKey: Address;
-            }): Promise<Hash> => {
+            mutationFn: async ({
+                sessionKey,
+            }: RevokeSessionKeyParameters): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.revokeSessionKey(params);
+                return await smartAccountClient.revokeSessionKey({
+                    sessionKey,
+                });
             },
             ...mutationProps,
         },
@@ -106,29 +127,40 @@ export const useRevokeSessionKey = (
     );
 
     return {
-        ...mutation,
-        revokeSessionKey: mutation.mutateAsync,
+        ...result,
+        revokeSessionKey: mutate,
+        revokeSessionKeyAsync: mutateAsync,
     };
 };
 
 /**
  * @description A custom hook for adding a whitelist destination to a session key.
+ *
+ * @param mutationProps Optional mutation properties from @tanstack/react-query
+ *
+ * @returns An object containing the mutation function and related properties.
  */
 export const useAddWhitelistDestination = (
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<Hash, Error, AddWhitelistDestinationParameters>,
+        "mutationFn"
+    >
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (params: {
-                sessionKey: Address;
-                destinations: Address[];
-            }): Promise<Hash> => {
+            mutationFn: async ({
+                sessionKey,
+                destinations,
+            }: AddWhitelistDestinationParameters): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.addWhitelistDestination(params);
+                return await smartAccountClient.addWhitelistDestination({
+                    sessionKey,
+                    destinations,
+                });
             },
             ...mutationProps,
         },
@@ -136,31 +168,40 @@ export const useAddWhitelistDestination = (
     );
 
     return {
-        ...mutation,
-        addWhitelistDestination: mutation.mutateAsync,
+        ...result,
+        addWhitelistDestination: mutate,
+        addWhitelistDestinationAsync: mutateAsync,
     };
 };
 
 /**
  * @description A custom hook for removing a whitelist destination from a session key.
+ *
+ * @param mutationProps Optional mutation properties from @tanstack/react-query
+ *
+ * @returns An object containing the mutation function and related properties.
  */
 export const useRemoveWhitelistDestination = (
-    mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: Omit<
+        UseMutationOptions<Hash, Error, RemoveWhitelistDestinationParameters>,
+        "mutationFn"
+    >
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const mutation = useMutation(
+    const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (params: {
-                sessionKey: Address;
-                destination: Address;
-            }): Promise<Hash> => {
+            mutationFn: async ({
+                sessionKey,
+                destination,
+            }: RemoveWhitelistDestinationParameters): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                return await smartAccountClient.removeWhitelistDestination(
-                    params
-                );
+                return await smartAccountClient.removeWhitelistDestination({
+                    sessionKey,
+                    destination,
+                });
             },
             ...mutationProps,
         },
@@ -168,21 +209,27 @@ export const useRemoveWhitelistDestination = (
     );
 
     return {
-        ...mutation,
-        removeWhitelistDestination: mutation.mutateAsync,
+        ...result,
+        removeWhitelistDestination: mutate,
+        removeWhitelistDestinationAsync: mutateAsync,
     };
 };
 
 /**
  * @description A custom hook for getting session information from a session key address.
+ *
+ * @param sessionKey The session key address
+ * @param queryProps Optional query properties from @tanstack/react-query
+ *
+ * @returns An object containing the query result and related properties.
  */
 export const useGetSessionFromAddress = (
     sessionKey: Address,
-    queryProps?: UseQueryParameters
+    queryProps?: Omit<UseQueryOptions<Session, Error>, "queryKey" | "queryFn">
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const query = useQuery(
+    return useQuery(
         {
             queryKey: ["getSessionFromAddress", sessionKey],
             queryFn: async (): Promise<Session> => {
@@ -197,24 +244,25 @@ export const useGetSessionFromAddress = (
         },
         queryClient
     );
-
-    return {
-        ...query,
-        getSessionFromAddress: query.refetch,
-    };
 };
 
 /**
  * @description A custom hook for checking if an address is a whitelisted destination for a session key.
+ *
+ * @param sessionKey The session key address
+ * @param targetAddress The address to check
+ * @param queryProps Optional query properties from @tanstack/react-query
+ *
+ * @returns An object containing the query result and related properties.
  */
 export const useIsAddressWhitelistDestination = (
     sessionKey: Address,
     targetAddress: Address,
-    queryProps?: UseQueryParameters
+    queryProps?: Omit<UseQueryOptions<boolean, Error>, "queryKey" | "queryFn">
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const query = useQuery(
+    return useQuery(
         {
             queryKey: [
                 "isAddressWhitelistDestination",
@@ -234,9 +282,4 @@ export const useIsAddressWhitelistDestination = (
         },
         queryClient
     );
-
-    return {
-        ...query,
-        isAddressWhitelistDestination: query.refetch,
-    };
 };

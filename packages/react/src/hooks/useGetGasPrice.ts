@@ -1,7 +1,12 @@
 import { useSmartAccount } from "@/hooks";
 import { useQuery } from "@tanstack/react-query";
+import type { UseQueryOptions } from "@tanstack/react-query";
 import { http, type Chain, createPublicClient } from "viem";
-import type { UseQueryParameters } from "wagmi/query";
+
+type GasPriceResult = {
+    maxFeePerGas: bigint;
+    maxPriorityFeePerGas: bigint;
+};
 
 /**
  * @description A hook that fetches the current gas price for transactions on the connected blockchain.
@@ -16,21 +21,9 @@ import type { UseQueryParameters } from "wagmi/query";
  * ```tsx
  * import { useGetGasPrice } from "@/hooks/useGetGasPrice";
  * import { formatEther } from "viem";
- * import { useEffect } from "react";
  *
  * export const GasPriceDisplay = () => {
- *   const {
- *     getGasPrice,
- *     data: gasPrice,
- *     isLoading,
- *     error,
- *     refetch
- *   } = useGetGasPrice();
- *
- *   useEffect(() => {
- *     // Manually trigger gas price fetch
- *     getGasPrice();
- *   }, [getGasPrice]);
+ *   const { data: gasPrice, isLoading, error } = useGetGasPrice();
  *
  *   if (isLoading) return <p>Loading gas prices...</p>;
  *   if (error) return <p>Error fetching gas prices: {error.message}</p>;
@@ -40,27 +33,26 @@ import type { UseQueryParameters } from "wagmi/query";
  *       <h2>Current Gas Prices</h2>
  *       <p>Max Fee Per Gas: {formatEther(gasPrice.maxFeePerGas)} ETH</p>
  *       <p>Max Priority Fee Per Gas: {formatEther(gasPrice.maxPriorityFeePerGas)} ETH</p>
- *       <button onClick={() => refetch()}>Refresh Gas Prices</button>
  *     </div>
  *   );
  * };
  * ```
  *
- * @returns An object containing:
- * - `getGasPrice`: A function to manually trigger the gas price fetch.
- * - All properties from the query object (`data`, `isLoading`, `error`, `refetch`, etc.)
+ * @returns An object containing the query result and related properties.
  */
-
 export const useGetGasPrice = (
     rpcUrl?: string,
-    queryProps?: UseQueryParameters
+    queryProps?: Omit<
+        UseQueryOptions<GasPriceResult, Error>,
+        "queryKey" | "queryFn"
+    >
 ) => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const query = useQuery(
+    return useQuery(
         {
-            queryKey: ["gasPrice"],
-            queryFn: async () => {
+            queryKey: ["gasPrice", rpcUrl],
+            queryFn: async (): Promise<GasPriceResult> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
@@ -75,20 +67,11 @@ export const useGetGasPrice = (
 
                 return {
                     maxFeePerGas: (maxFeePerGas as bigint) * 2n,
-                    maxPriorityFeePerGas: maxFeePerGas,
+                    maxPriorityFeePerGas: maxFeePerGas as bigint,
                 };
             },
             ...queryProps,
         },
         queryClient
     );
-
-    const getGasPrice = async () => {
-        return query.refetch();
-    };
-
-    return {
-        getGasPrice,
-        ...query,
-    };
 };
