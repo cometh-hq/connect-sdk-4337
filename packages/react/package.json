@@ -7,7 +7,7 @@
       "url": "https://twitter.com/slovaye"
     }
   ],
-  "version": "0.0.1-dev.3",
+  "version": "0.0.1-dev.4",
   "description": "React hooks Connect 4337",
   "repository": "https://github.com/cometh-game/connect-sdk-4337.git",
   "keywords": [
@@ -58,8 +58,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@cometh/connect-sdk-4337": "^0.1.0-rc.2",
+    "@cometh/connect-sdk-4337": "^0.1.0-rc.3",
     "permissionless": "^0.1.31"
- 
   }
 }

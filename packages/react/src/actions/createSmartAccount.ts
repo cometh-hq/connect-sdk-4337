@@ -6,10 +6,10 @@ import {
     createSafeSmartAccount,
     type createSafeSmartAccountParameters,
     createSmartAccountClient,
+    getNetwork,
 } from "@cometh/connect-sdk-4337";
 import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
 import type { Chain, Hex, Transport } from "viem";
-import { arbitrumSepolia } from "viem/chains";
 import { http } from "wagmi";
 
 type ContextComethSmartAccountClient = ComethSmartAccountClient<
@@ -35,7 +35,6 @@ export async function createSmartAccount(
         safeContractConfig,
         smartAccountAddress,
     } = config;
-    const chain = arbitrumSepolia;
 
     const account = await createSafeSmartAccount({
         apiKey,
@@ -46,6 +45,8 @@ export async function createSmartAccount(
         comethSignerConfig,
         safeContractConfig,
     });
+
+    const chain = await getNetwork(account.getConnectApi());
 
     let client: ContextComethSmartAccountClient;
 
