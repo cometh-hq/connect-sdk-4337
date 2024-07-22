@@ -6,7 +6,8 @@
   "type": "module",
   "license": "ISC",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "build": "sh builder.sh",

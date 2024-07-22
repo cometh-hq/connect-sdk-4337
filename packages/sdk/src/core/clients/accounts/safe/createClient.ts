@@ -87,13 +87,11 @@ export function createSmartAccountClient<
         })
     ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
 
-    const enshrinedClient = client.extend(
-        safeSessionKeyActions(parameters.rpcUrl)
-    );
-
-    return enshrinedClient.extend(
-        safeOwnerPluginActions(parameters.rpcUrl)
-    ) as ComethSmartAccountClient<
+    return client
+        .extend(safeSessionKeyActions(parameters.rpcUrl))
+        .extend(
+            safeOwnerPluginActions(parameters.rpcUrl)
+        ) as ComethSmartAccountClient<
         TSmartAccount,
         TTransport,
         TChain,

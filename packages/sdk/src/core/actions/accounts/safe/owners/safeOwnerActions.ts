@@ -20,22 +20,17 @@ import {
     pad,
 } from "viem";
 
+export type EnrichedOwner = {
+    address: Address;
+    deviceData?: DeviceData;
+    creationDate?: Date;
+};
+
 export type SafeOwnerPluginActions = {
     addOwner: (args: { ownerToAdd: Address }) => Promise<Hash>;
     removeOwner: (args: { ownerToRemove: Address }) => Promise<Hash>;
     getOwners: () => Promise<readonly Address[]>;
-    getEnrichedOwners: () => Promise<
-        | {
-              address: Address;
-              deviceData?: DeviceData;
-              creationDate?: Date;
-          }
-        | {
-              address: Address;
-              deviceData?: DeviceData;
-              creationDate?: Date;
-          }[]
-    >;
+    getEnrichedOwners: () => Promise<EnrichedOwner | EnrichedOwner[]>;
 };
 
 export const safeOwnerPluginActions =

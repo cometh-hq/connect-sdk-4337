@@ -20,12 +20,6 @@ export class WalletNotDeployedError extends Error {
     }
 }
 
-export class NetworkNotSupportedError extends Error {
-    constructor() {
-        super("This network is not supported");
-    }
-}
-
 export class ProjectParamsError extends Error {
     constructor() {
         super("Project params are null");
@@ -215,5 +209,11 @@ export class InvalidAddressFormatError extends Error {
 export class TypedDataNotSupportedError extends Error {
     constructor() {
         super("Types data not supported");
+    }
+}
+
+export class ClientNotFound extends Error {
+    constructor() {
+        super("Client not found");
     }
 }

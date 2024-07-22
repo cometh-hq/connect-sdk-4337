@@ -28,6 +28,18 @@ import {
 } from "../../types";
 import type { SafeSigner } from "../types";
 
+/**
+ * Creates a SafeSigner using WebAuthn for authentication
+ *
+ * @param client - The viem Client instance
+ * @param params - Object containing:
+ *   @param passkey - The passkey in local storage format
+ *   @param passkeySignerAddress - The address of the passkey signer
+ *   @param safe4337SessionKeysModule - The address of the Safe 4337 session keys module
+ *   @param smartAccountAddress - The address of the smart account
+ *
+ * @returns A Promise that resolves to a SafeSigner instance with WebAuthn capabilities
+ */
 export async function safeWebAuthnSigner<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
