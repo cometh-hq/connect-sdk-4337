@@ -24,16 +24,15 @@ Coupled with a web2 authentication system (or standalone to stay anonymous), use
 
 The project is built using a monorepo structure to further enhance modularity and scalability. 
 
-This new structure allows for multiple projects, such as POCs and example applications, to coexist within the same repository while maintaining their individual architectures. Below is the revised directory structure:
-
 ### Monorepo Structure
 
-- `packages/`: Root directory for all projects within the monorepo, each project contained within its own subdirectory.
+- `packages/`: Directory for all subdirectories of the core sdk.
   - `sdk/`: The core functionnalitities of the sdk.
-  - `example/`: An example application interacting with the wallet.
-  - `example-wagmi/`: An example application interacting with the wallet using wagmi.
-
-Each project within the `packages/` directory follows the same internal architecture, as detailed below:
+  - `react/`: React providers and hooks to use connect.
+- `examples/`: Directory for all demo examples of the sdk.
+  - `demo/`: Basic demo using the core sdk.
+  - `react-hooks-demo/`: Basic demo using the react sdk.
+  - `wagmi-demo/`: Basic demo using the wagmi integration sdk.
 
 ## Getting Started
 
