@@ -20,21 +20,9 @@ export class WalletNotDeployedError extends Error {
     }
 }
 
-export class ProjectParamsError extends Error {
-    constructor() {
-        super("Project params are null");
-    }
-}
-
 export class NoSignerFoundError extends Error {
     constructor() {
         super("No signer instance found");
-    }
-}
-
-export class NoAdapterFoundError extends Error {
-    constructor() {
-        super("No EOA adapter found");
     }
 }
 
@@ -89,131 +77,5 @@ export class RetrieveWalletFromPasskeyError extends Error {
 export class UnauthorizedMethodError extends Error {
     constructor(methodName: string) {
         super(`Not authorized method: ${methodName}`);
-    }
-}
-
-/**
- * Provider Errors
- **/
-
-export class NoProviderFoundError extends Error {
-    constructor() {
-        super("Missing provider");
-    }
-}
-
-/**
- * Transaction Errors
- **/
-
-export class TransactionDeniedError extends Error {
-    constructor() {
-        super("Transaction denied");
-    }
-}
-
-export class EmptyBatchTransactionError extends Error {
-    constructor() {
-        super("Empty array provided, no transaction to send");
-    }
-}
-
-export class EstimateGasError extends Error {
-    constructor() {
-        super("Impossible to determine gas...");
-    }
-}
-
-export class BalanceError extends Error {
-    constructor() {
-        super("Not enough balance to send this value and pay for gas");
-    }
-}
-
-export class RelayedTransactionError extends Error {
-    constructor() {
-        super("Error during the relay of the transaction");
-    }
-}
-
-/**
- * Recovery Errors
- **/
-
-export class NewRecoveryNotSupportedError extends Error {
-    constructor() {
-        super(
-            "This Recovery Request type is not supported with this method, please reach out"
-        );
-    }
-}
-
-export class NoRecoveryRequestFoundError extends Error {
-    constructor() {
-        super("No recovery request found");
-    }
-}
-
-export class CancelRecoveryError extends Error {
-    constructor() {
-        super("Failed to cancel recovery request");
-    }
-}
-
-export class GetRecoveryError extends Error {
-    constructor() {
-        super("Failed to get recovery request");
-    }
-}
-
-/**
- * Safe specific Errors
- **/
-
-export class SafeVersionError extends Error {
-    constructor() {
-        super("Safe version should be 1.3.0");
-    }
-}
-
-export class AddressAlreadyOwnerError extends Error {
-    constructor() {
-        super("Address is already owner of the smart wallet");
-    }
-}
-
-export class AddressNotOwnerError extends Error {
-    constructor() {
-        super("Address is not an owner of the wallet");
-    }
-}
-
-/**
- * Utils Errors
- **/
-
-export class WrongSignedMessageError extends Error {
-    constructor() {
-        super(
-            "Wrong message signed. Please use the standard message for safe import"
-        );
-    }
-}
-
-export class InvalidAddressFormatError extends Error {
-    constructor() {
-        super("Invalid address format");
-    }
-}
-
-export class TypedDataNotSupportedError extends Error {
-    constructor() {
-        super("Types data not supported");
-    }
-}
-
-export class ClientNotFound extends Error {
-    constructor() {
-        super("Client not found");
     }
 }

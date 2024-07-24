@@ -18,7 +18,7 @@ import {
 } from "viem";
 import type { Prettify } from "viem/types/utils";
 
-import { API } from "../../services/API";
+import { API } from "@/core/services/API";
 import { getClient } from "../utils";
 
 import { createSigner, saveSigner } from "@/core/signers/createSigner";

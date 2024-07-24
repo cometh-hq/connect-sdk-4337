@@ -1,6 +1,6 @@
+import * as utils from "@/core/services/utils";
 import { privateKeyToAccount } from "viem/accounts";
 import type { Address } from "viem/accounts";
-import * as utils from "../../../services/utils";
 
 import type { Hex } from "viem";
 import * as cryptolib from "./cryptoService";

@@ -1,6 +1,6 @@
 import * as Bowser from "bowser";
 
-import type { DeviceData } from "../types";
+import type { DeviceData } from "@/core/types";
 
 export const getDeviceData = (): DeviceData => {
     const parser = Bowser.getParser(window.navigator.userAgent);

@@ -1,3 +1,8 @@
+import { gasPrice } from "@/core/actions/paymaster/gasPrice";
+import {
+    type SponsorUserOperationReturnType,
+    sponsorUserOperation,
+} from "@/core/actions/paymaster/sponsorUserOperation";
 import type { UserOperation } from "permissionless";
 import type {
     EntryPoint,
@@ -11,11 +16,6 @@ import {
     type Transport,
     createClient,
 } from "viem";
-import { gasPrice } from "../../actions/paymaster/gasPrice";
-import {
-    type SponsorUserOperationReturnType,
-    sponsorUserOperation,
-} from "../../actions/paymaster/sponsorUserOperation";
 import type { ComethPaymasterRpcSchema } from "../types";
 
 export type ComethPaymasterClient<entryPoint extends EntryPoint> = Client<

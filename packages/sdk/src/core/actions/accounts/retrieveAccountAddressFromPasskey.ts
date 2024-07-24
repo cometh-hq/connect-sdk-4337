@@ -1,6 +1,6 @@
+import { API } from "@/core/services/API";
+import { retrieveSmartAccountAddressFromPasskey } from "@/core/signers/passkeys/passkeyService";
 import type { Address } from "viem";
-import { API } from "../../services/API";
-import { retrieveSmartAccountAddressFromPasskey } from "../../signers/passkeys/passkeyService";
 
 /**
  * Function used to retrieve an account address from a passkey

@@ -12,16 +12,16 @@ import {
 import { toAccount } from "viem/accounts";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
-import { sign } from "@/core/signers/passkeys/passkeyService";
-import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
-import { parseHex } from "@/core/signers/passkeys/utils";
 import {
     DUMMY_AUTHENTICATOR_DATA,
     DUMMY_CLIENT_DATA_FIELDS,
     buildSignatureBytes,
     getSignatureBytes,
     packInitCode,
-} from "../../services/utils";
+} from "@/core/accounts/safe/services/utils";
+import { sign } from "@/core/signers/passkeys/passkeyService";
+import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
+import { parseHex } from "@/core/signers/passkeys/utils";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,

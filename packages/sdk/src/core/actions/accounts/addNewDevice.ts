@@ -1,21 +1,21 @@
+import { API } from "@/core/services/API";
+import { getDeviceData } from "@/core/services/deviceService";
+import { isFallbackSigner } from "@/core/signers/createSigner";
+import { encryptSignerInStorage } from "@/core/signers/ecdsa/services/ecdsaService";
+import {
+    createPasskeySigner,
+    setPasskeyInStorage,
+} from "@/core/signers/passkeys/passkeyService";
+import type { webAuthnOptions } from "@/core/signers/passkeys/types";
+import {
+    DEFAULT_WEBAUTHN_OPTIONS,
+    isWebAuthnCompatible,
+} from "@/core/signers/passkeys/utils";
+import type { Signer } from "@/core/types";
 import { NoFallbackSignerError } from "@/errors";
 import * as QRCode from "qrcode";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { API } from "../../services/API";
-import { getDeviceData } from "../../services/deviceService";
-import { isFallbackSigner } from "../../signers/createSigner";
-import { encryptSignerInStorage } from "../../signers/ecdsa/services/ecdsaService";
-import {
-    createPasskeySigner,
-    setPasskeyInStorage,
-} from "../../signers/passkeys/passkeyService";
-import type { webAuthnOptions } from "../../signers/passkeys/types";
-import {
-    DEFAULT_WEBAUTHN_OPTIONS,
-    isWebAuthnCompatible,
-} from "../../signers/passkeys/utils";
-import type { Signer } from "../../types";
 
 export interface QRCodeOptions {
     width?: number;
@@ -27,6 +27,14 @@ export interface QRCodeOptions {
 }
 
 const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
+    const optimizedPayload = {
+        os: signerPayload.deviceData.os,
+        browser: signerPayload.deviceData.browser,
+        platform: signerPayload.deviceData.platform,
+        x: signerPayload.publicKeyX,
+        y: signerPayload.publicKeyY,
+        id: signerPayload.publicKeyId,
+    };
     const flattened: Record<string, string> = {};
 
     // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
@@ -42,7 +50,7 @@ const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
         }
     }
 
-    flattenObject(signerPayload);
+    flattenObject(optimizedPayload);
     return flattened;
 };
 

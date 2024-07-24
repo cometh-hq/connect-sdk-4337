@@ -1,8 +1,4 @@
-import {
-    ENTRYPOINT_ADDRESS_V06,
-    ENTRYPOINT_ADDRESS_V07,
-    customChains,
-} from "./constants";
+import { ENTRYPOINT_ADDRESS_V07, customChains } from "./constants";
 
 import {
     type SafeSmartAccount,
@@ -42,7 +38,6 @@ export {
     createComethPaymasterClient,
     smartAccountConnector,
     getNetwork,
-    ENTRYPOINT_ADDRESS_V06,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
 };

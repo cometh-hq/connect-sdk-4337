@@ -1,7 +1,7 @@
 import { customChains } from "@/constants";
+import type { API } from "@/core/services/API";
 import { http, type Chain, createClient, extractChain } from "viem";
 import * as chains from "viem/chains";
-import type { API } from "../services/API";
 
 export const getNetwork = async (api: API): Promise<Chain> => {
     const params = await api.getProjectParams();

@@ -1,9 +1,9 @@
+import type { SafeContractConfig } from "@/core/accounts/safe/types";
+import type { DeviceData, WebAuthnSigner } from "@/core/types";
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
 import { API_URL } from "../../constants";
-import type { SafeContractConfig } from "../accounts/safe/types";
-import type { DeviceData, WebAuthnSigner } from "../types";
 
 export class API {
     private readonly api: AxiosInstance;

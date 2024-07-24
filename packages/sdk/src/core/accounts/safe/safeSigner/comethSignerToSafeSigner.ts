@@ -1,6 +1,6 @@
 import type { Address, Chain, Client, Transport } from "viem";
 
-import type { ComethSigner } from "../../../signers/types.js";
+import type { ComethSigner } from "@/core/signers/types.js";
 import { safeECDSASigner } from "./ecdsa/ecdsa.js";
 import type { SafeSigner } from "./types.js";
 import { safeWebAuthnSigner } from "./webauthn/webAuthn.js";

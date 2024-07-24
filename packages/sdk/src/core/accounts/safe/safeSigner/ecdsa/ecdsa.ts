@@ -22,7 +22,7 @@ import {
     ECDSA_DUMMY_SIGNATURE,
     buildSignatureBytes,
     packInitCode,
-} from "../../services/utils";
+} from "@/core/accounts/safe/services/utils";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,

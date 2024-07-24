@@ -1,3 +1,4 @@
+import type { API } from "@/core/services/API";
 import * as psl from "psl";
 import type { ParsedDomain } from "psl";
 import {
@@ -15,7 +16,6 @@ import {
     RetrieveWalletFromPasskeyError,
     SignerNotOwnerError,
 } from "../../../errors";
-import type { API } from "../../services/API";
 import {
     extractClientDataFields,
     extractSignature,

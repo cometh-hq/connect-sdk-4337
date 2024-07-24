@@ -13,10 +13,10 @@ import {
     setPasskeyInStorage,
 } from "./passkeys/passkeyService";
 
-import { API } from "../services/API";
+import { API } from "@/core/services/API";
 import { encryptSignerInStorage } from "./ecdsa/services/ecdsaService";
 
-import { getDeviceData } from "../services/deviceService";
+import { getDeviceData } from "@/core/services/deviceService";
 import type {
     PasskeyLocalStorageFormat,
     webAuthnOptions,

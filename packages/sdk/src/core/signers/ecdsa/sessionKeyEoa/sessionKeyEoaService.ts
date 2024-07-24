@@ -1,6 +1,6 @@
 import type { Address } from "viem/accounts";
 
-import * as utils from "../../../services/utils";
+import * as utils from "@/core/services/utils";
 
 import type { Hex } from "viem";
 
