@@ -1,5 +1,5 @@
 import type { API } from "@/core/services/API";
-import * as psl from "psl";
+import psl from "psl";
 import type { ParsedDomain } from "psl";
 import {
     type Address,
@@ -328,6 +328,48 @@ const retrieveSmartAccountAddressFromPasskey = async (
     return smartAccountAddress as Address;
 };
 
+const retrieveSmartAccountAddressFromPasskeyId = async ({
+    API,
+    id,
+}: { API: API; id: string }): Promise<Address> => {
+    const publicKeyCredentials = [
+        {
+            id: parseHex(id),
+            type: "public-key",
+        },
+    ] as PublicKeyCredentialDescriptor[];
+
+    let publicKeyId: Hex;
+
+    try {
+        publicKeyId = (
+            await sign(
+                keccak256(hashMessage("Retrieve user wallet")),
+                publicKeyCredentials
+            )
+        ).publicKeyId as Hex;
+    } catch {
+        throw new RetrieveWalletFromPasskeyError();
+    }
+
+    const signingPasskeySigner =
+        await API.getPasskeySignerByPublicKeyId(publicKeyId);
+    if (!signingPasskeySigner) throw new NoPasskeySignerFoundInDBError();
+
+    const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
+        signingPasskeySigner;
+
+    setPasskeyInStorage(
+        smartAccountAddress as Address,
+        publicKeyId,
+        publicKeyX as Hex,
+        publicKeyY as Hex,
+        signerAddress as Address
+    );
+
+    return smartAccountAddress as Address;
+};
+
 export {
     createPasskeySigner,
     getPasskeyInStorage,
@@ -335,4 +377,5 @@ export {
     setPasskeyInStorage,
     sign,
     retrieveSmartAccountAddressFromPasskey,
+    retrieveSmartAccountAddressFromPasskeyId,
 };

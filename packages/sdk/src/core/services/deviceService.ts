@@ -1,4 +1,4 @@
-import * as Bowser from "bowser";
+import Bowser from "bowser";
 
 import type { DeviceData } from "@/core/types";
 

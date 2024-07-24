@@ -12,7 +12,10 @@ import {
     generateQRCodeUrl,
     serializeUrlWithSignerPayload,
 } from "./core/actions/accounts/addNewDevice";
-import { retrieveAccountAddressFromPasskey } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
+import {
+    retrieveAccountAddressFromPasskey,
+    retrieveAccountAddressFromPasskeyId,
+} from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type {
     AddSessionKeyParams,
@@ -32,6 +35,7 @@ export {
     createSafeSmartAccount,
     createSmartAccountClient,
     retrieveAccountAddressFromPasskey,
+    retrieveAccountAddressFromPasskeyId,
     createNewSigner,
     serializeUrlWithSignerPayload,
     generateQRCodeUrl,
