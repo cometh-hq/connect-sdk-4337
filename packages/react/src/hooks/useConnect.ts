@@ -19,6 +19,28 @@ export const useConnect = () => {
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
+    const connect = useCallback(
+        (address?: Address) => {
+            setIsPending(true);
+            setError(null);
+            updateSmartAccountClient(address)
+                .then(() => {
+                    queryClient?.invalidateQueries({
+                        queryKey: ["smartAccount"],
+                    });
+                })
+                .catch((e) => {
+                    const err =
+                        e instanceof Error ? e : new Error("An error occurred");
+                    setError(err);
+                })
+                .finally(() => {
+                    setIsPending(false);
+                });
+        },
+        [updateSmartAccountClient, queryClient]
+    );
+
     const connectAsync = useCallback(
         async (address?: Address) => {
             setIsPending(true);
@@ -39,6 +61,7 @@ export const useConnect = () => {
     );
 
     return {
+        connect,
         connectAsync,
         smartAccountClient,
         smartAccountAddress,

@@ -12,6 +12,8 @@ import {
     useIsAddressWhitelistDestination,
     useRemoveOwner,
     useRemoveWhitelistDestination,
+    useRetrieveAccountAddressFromPasskeyId,
+    useRetrieveAccountAddressFromPasskeys,
     useRevokeSessionKey,
     useSendTransaction,
     useSendTransactionWithSessionKey,
@@ -48,4 +50,6 @@ export {
     useSmartAccount,
     useValidateAddDevice,
     useVerifyMessage,
+    useRetrieveAccountAddressFromPasskeyId,
+    useRetrieveAccountAddressFromPasskeys,
 };

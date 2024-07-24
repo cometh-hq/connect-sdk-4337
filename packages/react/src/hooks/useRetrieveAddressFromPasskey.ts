@@ -1,10 +1,20 @@
-import { retrieveAccountAddressFromPasskey } from "@cometh/connect-sdk-4337";
+import {
+    retrieveAccountAddressFromPasskeyId,
+    retrieveAccountAddressFromPasskeys,
+} from "@cometh/connect-sdk-4337";
 import { useQuery } from "@tanstack/react-query";
 import type { Address } from "viem";
 import type { UseQueryParameters } from "wagmi/query";
 
 export type UseRetrieveAccountAddressFromPasskeyOptions = {
     apiKey: string;
+    baseUrl?: string;
+    queryProps?: UseQueryParameters;
+};
+
+export type UseRetrieveAccountAddressFromPasskeyIdOptions = {
+    apiKey: string;
+    id: string;
     baseUrl?: string;
     queryProps?: UseQueryParameters;
 };
@@ -41,14 +51,39 @@ export type UseRetrieveAccountAddressFromPasskeyOptions = {
  * };
  * ```
  */
-export const useRetrieveAccountAddressFromPasskey = ({
+export const useRetrieveAccountAddressFromPasskeys = ({
     apiKey,
     baseUrl,
     queryProps,
 }: UseRetrieveAccountAddressFromPasskeyOptions) => {
     const query = useQuery({
         queryKey: ["accountAddress", apiKey, baseUrl],
-        queryFn: () => retrieveAccountAddressFromPasskey(apiKey, baseUrl),
+        queryFn: () => retrieveAccountAddressFromPasskeys(apiKey, baseUrl),
+        ...queryProps,
+    });
+
+    const retrieveAddress = async (): Promise<Address> => {
+        const result = await query.refetch();
+        if (result.error) throw result.error;
+        return result.data as Address;
+    };
+
+    return {
+        ...query,
+        retrieveAddress,
+    };
+};
+
+export const useRetrieveAccountAddressFromPasskeyId = ({
+    apiKey,
+    id,
+    baseUrl,
+    queryProps,
+}: UseRetrieveAccountAddressFromPasskeyIdOptions) => {
+    const query = useQuery({
+        queryKey: ["accountAddress", apiKey, baseUrl],
+        queryFn: () =>
+            retrieveAccountAddressFromPasskeyId({ apiKey, id, baseUrl }),
         ...queryProps,
     });
 
