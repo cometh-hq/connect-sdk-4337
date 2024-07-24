@@ -20,13 +20,16 @@ export const useConnect = () => {
     const [error, setError] = useState<Error | null>(null);
 
     const connect = useCallback(
-        (address?: Address) => {
+        ({
+            address,
+            passKeyName,
+        }: { address?: Address; passKeyName?: string }) => {
             setIsPending(true);
             setError(null);
-            updateSmartAccountClient(address)
+            updateSmartAccountClient({ address, passKeyName })
                 .then(() => {
                     queryClient?.invalidateQueries({
-                        queryKey: ["smartAccount"],
+                        queryKey: ["connect"],
                     });
                 })
                 .catch((e) => {
@@ -42,12 +45,15 @@ export const useConnect = () => {
     );
 
     const connectAsync = useCallback(
-        async (address?: Address) => {
+        async ({
+            address,
+            passKeyName,
+        }: { address?: Address; passKeyName?: string }) => {
             setIsPending(true);
             setError(null);
             try {
-                await updateSmartAccountClient(address);
-                queryClient?.invalidateQueries({ queryKey: ["smartAccount"] });
+                await updateSmartAccountClient({ address, passKeyName });
+                queryClient?.invalidateQueries({ queryKey: ["connect"] });
             } catch (e) {
                 const err =
                     e instanceof Error ? e : new Error("An error occurred");

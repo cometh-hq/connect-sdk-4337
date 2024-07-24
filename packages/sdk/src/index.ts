@@ -13,8 +13,8 @@ import {
     serializeUrlWithSignerPayload,
 } from "./core/actions/accounts/addNewDevice";
 import {
-    retrieveAccountAddressFromPasskeys,
     retrieveAccountAddressFromPasskeyId,
+    retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type {

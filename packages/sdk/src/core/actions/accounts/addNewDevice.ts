@@ -29,8 +29,8 @@ export interface QRCodeOptions {
 const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
     const optimizedPayload = {
         os: signerPayload.deviceData.os,
-        browser: signerPayload.deviceData.browser,
-        platform: signerPayload.deviceData.platform,
+        b: signerPayload.deviceData.browser,
+        p: signerPayload.deviceData.platform,
         x: signerPayload.publicKeyX,
         y: signerPayload.publicKeyY,
         id: signerPayload.publicKeyId,

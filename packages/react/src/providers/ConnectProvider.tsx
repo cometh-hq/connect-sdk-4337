@@ -30,10 +30,13 @@ type ContextComethSmartAccountClient = ComethSmartAccountClient<
 >;
 
 export type ConnectContextPayload = {
-    queryClient: QueryClient | undefined;
+    queryClient?: QueryClient;
     smartAccountClient: ContextComethSmartAccountClient | null;
     smartAccountAddress: Address | undefined;
-    updateSmartAccountClient: (address?: Address) => Promise<void>;
+    updateSmartAccountClient: ({
+        address,
+        passKeyName,
+    }: { address?: Address; passKeyName?: string }) => Promise<void>;
 };
 
 export const ConnectContext = createContext<ConnectContextPayload>({
@@ -62,11 +65,19 @@ export const ConnectProvider = <
     >(undefined);
 
     const updateSmartAccountClient = useCallback(
-        async (address?: Address) => {
+        async ({
+            address,
+            passKeyName,
+        }: { address?: Address; passKeyName?: string }) => {
             const { client, address: newAddress } = await createSmartAccount({
                 ...config,
                 smartAccountAddress: address,
+                comethSignerConfig: {
+                    ...config.comethSignerConfig,
+                    passKeyName,
+                },
             });
+
             setSmartAccountClient(client);
             setSmartAccountAddress(newAddress);
         },
@@ -75,7 +86,7 @@ export const ConnectProvider = <
 
     useEffect(() => {
         if (config.smartAccountAddress) {
-            updateSmartAccountClient(config.smartAccountAddress);
+            updateSmartAccountClient({ address: config.smartAccountAddress });
         }
     }, [config.smartAccountAddress, updateSmartAccountClient]);
 
