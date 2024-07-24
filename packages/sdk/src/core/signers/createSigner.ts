@@ -1,84 +1,166 @@
-import { type Address } from "viem/accounts";
+import type { Address } from "viem/accounts";
 
-import type { Chain, Client, PrivateKeyAccount, Transport } from "viem";
-import { encryptSignerInStorage } from "./fallback/services/eoaFallbackService";
-import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "permissionless/types/entrypoint";
-import { KERNEL_ADDRESSES } from "../../config";
+import type { Hex } from "viem";
+
+import type { SmartAccountSigner } from "permissionless/accounts";
 import {
-  getAccountAddress,
-  getAccountInitCode,
-} from "../accounts/kernel/createKernelAccount";
-import type { API } from "../services/API";
-import { createNewSigner, getExistingSigner } from "./fallback/fallbackSigner";
+    createFallbackEoaSigner,
+    getFallbackEoaSigner,
+} from "./ecdsa/fallbackEoa/fallbackEoaSigner";
+import {
+    createPasskeySigner,
+    getPasskeySigner,
+    setPasskeyInStorage,
+} from "./passkeys/passkeyService";
+
+import { API } from "@/core/services/API";
+import { encryptSignerInStorage } from "./ecdsa/services/ecdsaService";
+
+import { getDeviceData } from "@/core/services/deviceService";
+import type {
+    PasskeyLocalStorageFormat,
+    webAuthnOptions,
+} from "./passkeys/types";
+import {
+    DEFAULT_WEBAUTHN_OPTIONS,
+    isWebAuthnCompatible,
+} from "./passkeys/utils";
+import type { ComethSigner, CreateSignerParams } from "./types";
+
+export const saveSigner = async (
+    api: API,
+    signer: ComethSigner,
+    smartAccountAddress: Address
+) => {
+    if (signer.type === "localWallet") {
+        await encryptSignerInStorage(
+            smartAccountAddress,
+            signer.eoaFallback.privateKey,
+            signer.eoaFallback.encryptionSalt
+        );
+    } else {
+        setPasskeyInStorage(
+            smartAccountAddress,
+            signer.passkey.id,
+            signer.passkey.pubkeyCoordinates.x,
+            signer.passkey.pubkeyCoordinates.y,
+            signer.passkey.signerAddress
+        );
+
+        await api.createWebAuthnSigner({
+            walletAddress: smartAccountAddress,
+            publicKeyId: signer.passkey.id,
+            publicKeyX: signer.passkey.pubkeyCoordinates.x,
+            publicKeyY: signer.passkey.pubkeyCoordinates.y,
+            deviceData: getDeviceData(),
+            signerAddress: signer.passkey.signerAddress,
+            isSharedWebAuthnSigner: true,
+        });
+    }
+};
+
+const throwErrorWhenEoaFallbackDisabled = (
+    disableEoaFallback: boolean
+): void => {
+    if (disableEoaFallback)
+        throw new Error("Passkeys are not compatible with your device");
+};
+
+export const isFallbackSigner = (): boolean => {
+    const fallbackSigner = Object.keys(localStorage).find((key) =>
+        key.startsWith("cometh-connect-fallback-")
+    );
+    return !!fallbackSigner;
+};
+
+export const isDeviceCompatibleWithPasskeys = async (options: {
+    webAuthnOptions: webAuthnOptions;
+}) => {
+    const webAuthnCompatible = await isWebAuthnCompatible(
+        options.webAuthnOptions
+    );
+
+    if (webAuthnCompatible && !isFallbackSigner()) {
+        return true;
+    }
+
+    return false;
+};
 
 /**
- * Helper to ease the build of an account
- * @param walletAddress
+ * Helper to create the Cometh Signer
+ * @param apiKey
+ * @param smartAccountAddress
  * @param disableEoaFallback
  * @param encryptionSalt
+ * @param webAuthnOptions
+ * @param passKeyName
  */
-export async function createSigner<
-  entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE,
-  TTransport extends Transport = Transport,
-  TChain extends Chain | undefined = Chain | undefined
->({
-  client,
-  api,
-  walletAddress,
-  disableEoaFallback,
-  encryptionSalt,
-  entryPoint: entryPointAddress,
-  factoryAddress = KERNEL_ADDRESSES.FACTORY_ADDRESS,
-  accountLogicAddress = KERNEL_ADDRESSES.ACCOUNT_LOGIC,
-  validatorAddress = KERNEL_ADDRESSES.ECDSA_VALIDATOR,
-  deployedAccountAddress,
-}: {
-  client: Client<TTransport, TChain>;
-  api: API;
-  walletAddress?: Address;
-  disableEoaFallback: boolean;
-  encryptionSalt?: string;
-  entryPoint: entryPoint;
-  factoryAddress?: Address;
-  accountLogicAddress?: Address;
-  validatorAddress?: Address;
-  deployedAccountAddress?: Address;
-}): Promise<PrivateKeyAccount> {
-  let privateKey: `0x${string}`;
-  let signer: PrivateKeyAccount;
+export async function createSigner({
+    apiKey,
+    smartAccountAddress,
+    baseUrl,
+    disableEoaFallback = false,
+    encryptionSalt,
+    webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+    passKeyName,
+    safeWebAuthnSharedSignerAddress,
+}: CreateSignerParams): Promise<ComethSigner> {
+    const api = new API(apiKey, baseUrl);
 
-  if (!walletAddress) {
-    ({ privateKey, signer } = await createNewSigner({
-      api,
-      disableEoaFallback,
-    }));
-
-    const generateInitCode = () =>
-      getAccountInitCode({
-        owner: signer.address,
-        index: 0n,
-        accountLogicAddress,
-        validatorAddress,
-      });
-
-    walletAddress = await getAccountAddress<entryPoint, TTransport, TChain>({
-      client,
-      entryPoint: entryPointAddress,
-      owner: signer.address,
-      validatorAddress,
-      initCodeProvider: generateInitCode,
-      deployedAccountAddress,
-      factoryAddress,
+    const passkeyCompatible = await isDeviceCompatibleWithPasskeys({
+        webAuthnOptions,
     });
-  } else {
-    ({ privateKey, signer } = await getExistingSigner({
-      walletAddress,
-      disableEoaFallback,
-      encryptionSalt,
-    }));
-  }
 
-  await encryptSignerInStorage(walletAddress, privateKey, encryptionSalt);
+    if (passkeyCompatible) {
+        let passkey: PasskeyLocalStorageFormat;
+        if (!smartAccountAddress) {
+            passkey = await createPasskeySigner({
+                api,
+                webAuthnOptions,
+                passKeyName,
+                safeWebAuthnSharedSignerAddress,
+            });
 
-  return signer;
+            if (passkey.publicKeyAlgorithm !== -7) {
+                console.warn("ECC passkey are not supported by your device");
+                throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
+
+                return {
+                    type: "localWallet",
+                    eoaFallback: await createFallbackEoaSigner(),
+                };
+            }
+        } else {
+            passkey = await getPasskeySigner({
+                api,
+                smartAccountAddress,
+            });
+        }
+
+        return {
+            type: "passkey",
+            passkey,
+        };
+    }
+
+    console.warn("ECC passkey are not supported by your device");
+    throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
+
+    let privateKey: Hex;
+    let signer: SmartAccountSigner;
+
+    if (!smartAccountAddress) {
+        ({ privateKey, signer } = await createFallbackEoaSigner());
+    } else {
+        ({ privateKey, signer } = await getFallbackEoaSigner({
+            smartAccountAddress,
+            encryptionSalt,
+        }));
+    }
+
+    return {
+        type: "localWallet",
+        eoaFallback: { privateKey, signer, encryptionSalt },
+    };
 }
