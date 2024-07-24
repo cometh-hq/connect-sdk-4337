@@ -1,4 +1,4 @@
-import { useSmartAccount } from "@/hooks";
+import { useSmartAccount } from "@/hooks/useSmartAccount";
 import type { Signer } from "@cometh/connect-sdk-4337";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash } from "viem";

@@ -2,17 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 
-import { useConnect, useSendTransaction } from "@cometh/connect-react-hooks";
-import { type Hex, isAddress } from "viem";
+import { useConnect, useSendTransaction, useAccount } from "@cometh/connect-react-hooks";
+import { type Hex } from "viem";
 import Transaction from "./components/Transaction";
+import { useDisconnect } from "wagmi";
 
 export default function App() {
     const {
         connectAsync,
-        smartAccountClient,
-        smartAccountAddress,
         error: connectError,
     } = useConnect();
+
+    const {address} = useAccount();
+    const {disconnectAsync} = useDisconnect();
     const { sendTransactionAsync, data: hash, error } = useSendTransaction();
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
@@ -22,8 +24,21 @@ export default function App() {
     ) as Hex;
 
     const connectWallet = async () => {
-        connectAsync(localStorageAddress);
+        console.log({localStorageAddress})
+        connectAsync({address: localStorageAddress});
     };
+
+    useEffect(() => {
+
+        if(!localStorageAddress && address){
+            window.localStorage.setItem(
+                "walletAddress", address
+            )
+        }
+
+
+    }, [address])
+
 
     return (
         <div
@@ -45,15 +60,18 @@ export default function App() {
                             connect
                         </div>
 
-                        {smartAccountAddress && (
+                        {address && (
                             <Transaction
                                 hash={hash!}
                                 sendTransaction={sendTransactionAsync}
-                                address={smartAccountAddress}
+                                address={address}
                                 transactionSuccess={transactionSuccess}
                                 setTransactionSuccess={setTransactionSuccess}
                             />
                         )}
+
+                        <button onClick={async()=> await disconnectAsync}>disconnect</button>
+
                     </div>
                 </div>
             </div>

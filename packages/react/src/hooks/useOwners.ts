@@ -1,4 +1,4 @@
-import { useSmartAccount } from "@/hooks";
+import { useSmartAccount } from "@/hooks/useSmartAccount";
 import type { EnrichedOwner } from "@cometh/connect-sdk-4337";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {

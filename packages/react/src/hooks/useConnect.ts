@@ -2,6 +2,11 @@ import { ConnectContext } from "@/providers/ConnectProvider";
 import { useCallback, useContext, useState } from "react";
 import type { Address } from "viem";
 
+export type ConnectParameters = {
+    address?: Address;
+    passKeyName?: string;
+};
+
 export const useConnect = () => {
     const context = useContext(ConnectContext);
 
@@ -9,24 +14,16 @@ export const useConnect = () => {
         throw new Error("useConnect must be used within a ConnectProvider");
     }
 
-    const {
-        queryClient,
-        smartAccountClient,
-        smartAccountAddress,
-        updateSmartAccountClient,
-    } = context;
+    const { queryClient, updateSmartAccountClient } = context;
 
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
     const connect = useCallback(
-        ({
-            address,
-            passKeyName,
-        }: { address?: Address; passKeyName?: string }) => {
+        (params: ConnectParameters = {}) => {
             setIsPending(true);
             setError(null);
-            updateSmartAccountClient({ address, passKeyName })
+            updateSmartAccountClient(params)
                 .then(() => {
                     queryClient?.invalidateQueries({
                         queryKey: ["connect"],
@@ -45,14 +42,11 @@ export const useConnect = () => {
     );
 
     const connectAsync = useCallback(
-        async ({
-            address,
-            passKeyName,
-        }: { address?: Address; passKeyName?: string }) => {
+        async (params: ConnectParameters = {}) => {
             setIsPending(true);
             setError(null);
             try {
-                await updateSmartAccountClient({ address, passKeyName });
+                await updateSmartAccountClient(params);
                 queryClient?.invalidateQueries({ queryKey: ["connect"] });
             } catch (e) {
                 const err =
@@ -69,8 +63,6 @@ export const useConnect = () => {
     return {
         connect,
         connectAsync,
-        smartAccountClient,
-        smartAccountAddress,
         isPending,
         error,
     };

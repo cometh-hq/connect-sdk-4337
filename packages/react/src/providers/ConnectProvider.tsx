@@ -1,4 +1,5 @@
 import { createSmartAccount } from "@/actions/createSmartAccount";
+import type { ConnectParameters } from "@/hooks/useConnect";
 import type {
     ComethSmartAccountClient,
     SafeSmartAccount,
@@ -33,10 +34,8 @@ export type ConnectContextPayload = {
     queryClient?: QueryClient;
     smartAccountClient: ContextComethSmartAccountClient | null;
     smartAccountAddress: Address | undefined;
-    updateSmartAccountClient: ({
-        address,
-        passKeyName,
-    }: { address?: Address; passKeyName?: string }) => Promise<void>;
+    updateSmartAccountClient: (params?: ConnectParameters) => Promise<void>;
+    disconnectSmartAccount: () => Promise<void>;
 };
 
 export const ConnectContext = createContext<ConnectContextPayload>({
@@ -44,6 +43,7 @@ export const ConnectContext = createContext<ConnectContextPayload>({
     smartAccountClient: null,
     smartAccountAddress: undefined,
     updateSmartAccountClient: async () => {},
+    disconnectSmartAccount: async () => {},
 });
 
 export const ConnectProvider = <
@@ -65,16 +65,13 @@ export const ConnectProvider = <
     >(undefined);
 
     const updateSmartAccountClient = useCallback(
-        async ({
-            address,
-            passKeyName,
-        }: { address?: Address; passKeyName?: string }) => {
+        async (params: ConnectParameters = {}) => {
             const { client, address: newAddress } = await createSmartAccount({
                 ...config,
-                smartAccountAddress: address,
+                smartAccountAddress: params.address,
                 comethSignerConfig: {
                     ...config.comethSignerConfig,
-                    passKeyName,
+                    passKeyName: params.passKeyName,
                 },
             });
 
@@ -83,6 +80,11 @@ export const ConnectProvider = <
         },
         [config]
     );
+
+    const disconnectSmartAccount = useCallback(async () => {
+        setSmartAccountClient(null);
+        setSmartAccountAddress(undefined);
+    }, []);
 
     useEffect(() => {
         if (config.smartAccountAddress) {
@@ -96,12 +98,14 @@ export const ConnectProvider = <
             smartAccountClient,
             smartAccountAddress,
             updateSmartAccountClient,
+            disconnectSmartAccount,
         }),
         [
             queryClient,
             smartAccountClient,
             smartAccountAddress,
             updateSmartAccountClient,
+            disconnectSmartAccount,
         ]
     );
 

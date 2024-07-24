@@ -1,4 +1,4 @@
-import { useSmartAccount } from "@/hooks";
+import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash } from "viem";
 import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";

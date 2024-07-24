@@ -1,4 +1,4 @@
-import { useSmartAccount } from "@/hooks";
+import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type {
     Account,
