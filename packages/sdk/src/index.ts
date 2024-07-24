@@ -13,7 +13,7 @@ import {
     serializeUrlWithSignerPayload,
 } from "./core/actions/accounts/addNewDevice";
 import {
-    retrieveAccountAddressFromPasskey,
+    retrieveAccountAddressFromPasskeys,
     retrieveAccountAddressFromPasskeyId,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
@@ -34,7 +34,7 @@ export {
     createSigner,
     createSafeSmartAccount,
     createSmartAccountClient,
-    retrieveAccountAddressFromPasskey,
+    retrieveAccountAddressFromPasskeys,
     retrieveAccountAddressFromPasskeyId,
     createNewSigner,
     serializeUrlWithSignerPayload,

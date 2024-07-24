@@ -6,10 +6,10 @@ import {
 import type { Address } from "viem";
 
 /**
- * Function used to retrieve an account address from a passkey
+ * Function used to retrieve an account address from passkeys
  * @param apiKey
  */
-export const retrieveAccountAddressFromPasskey = async (
+export const retrieveAccountAddressFromPasskeys = async (
     apiKey: string,
     baseUrl?: string
 ): Promise<Address> => {
@@ -19,7 +19,7 @@ export const retrieveAccountAddressFromPasskey = async (
 };
 
 /**
- * Function used to retrieve an account address from a passkey
+ * Function used to retrieve an account address from a passkey id
  * @param apiKey
  * @param id
  */
