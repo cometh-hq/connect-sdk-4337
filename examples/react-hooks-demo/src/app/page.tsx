@@ -2,20 +2,35 @@
 
 import React, { useEffect, useState } from "react";
 
-import { useConnect, useSendTransaction, useAccount } from "@cometh/connect-react-hooks";
-import { type Hex } from "viem";
+import {
+    useAccount,
+    useConnect,
+    useDisconnect,
+    useGetGasPrice,
+    useRetrieveAccountAddressFromPasskeyId,
+    useSendTransaction,
+    useSignMessage,
+    useValidateAddDevice,
+    useVerifyMessage,
+} from "@cometh/connect-react-hooks";
+import type { Hex } from "viem";
 import Transaction from "./components/Transaction";
-import { useDisconnect } from "wagmi";
 
 export default function App() {
-    const {
-        connectAsync,
-        error: connectError,
-    } = useConnect();
+    const { connect, connectAsync, error: connectError } = useConnect();
 
-    const {address} = useAccount();
-    const {disconnectAsync} = useDisconnect();
-    const { sendTransactionAsync, data: hash, error } = useSendTransaction();
+    const { address } = useAccount();
+    const { disconnectAsync, disconnect } = useDisconnect();
+    const {
+        sendTransactionAsync,
+        sendTransaction,
+        data: hash,
+    } = useSendTransaction();
+    const { validateAddDevice, validateAddDeviceAsync, isError, isSuccess } =
+        useValidateAddDevice();
+    const { signMessage, signMessageAsync, data } = useSignMessage();
+
+    const { verifyMessageAsync, data: verify } = useVerifyMessage();
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
@@ -24,21 +39,25 @@ export default function App() {
     ) as Hex;
 
     const connectWallet = async () => {
-        console.log({localStorageAddress})
-        connectAsync({address: localStorageAddress});
+        console.log({ localStorageAddress });
+        connectAsync({ address: localStorageAddress });
     };
 
     useEffect(() => {
-
-        if(!localStorageAddress && address){
-            window.localStorage.setItem(
-                "walletAddress", address
-            )
+        if (!localStorageAddress && address) {
+            window.localStorage.setItem("walletAddress", address);
         }
+    }, [address]);
 
+    console.log({ address });
 
-    }, [address])
+    const test = async () => {
+        const message = "hello world";
 
+        const sig = await signMessageAsync({ message });
+
+        const verif = await verifyMessageAsync({ message, signature: sig });
+    };
 
     return (
         <div
@@ -70,8 +89,7 @@ export default function App() {
                             />
                         )}
 
-                        <button onClick={async()=> await disconnectAsync}>disconnect</button>
-
+                        <button onClick={disconnectAsync}>disconnect</button>
                     </div>
                 </div>
             </div>

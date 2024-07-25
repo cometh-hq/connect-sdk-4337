@@ -25,3 +25,5 @@ export * from "@/hooks/useGetGasPrice";
 export * from "@/hooks/useRetrieveAddressFromPasskey";
 
 export * from "@/hooks/useCreatePasskeySigner";
+
+export * from "@/hooks/useSignMessage";

@@ -4,15 +4,14 @@ import {
     createNewSigner,
     generateQRCodeUrl,
     serializeUrlWithSignerPayload,
+    type webAuthnOptions,
 } from "@cometh/connect-sdk-4337";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import type { Address } from "viem";
 
 type CreateNewSignerParameters = {
-    smartAccountAddress: Address;
     passKeyName?: string;
-    encryptionSalt?: string;
+    webAuthnOptions?: webAuthnOptions;
 };
 
 type SerializeUrlParameters = {

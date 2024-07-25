@@ -9,6 +9,7 @@ import { getNetwork } from "./core/accounts/utils";
 import {
     type QRCodeOptions,
     createNewSigner,
+    createNewSignerWithAccountAddress,
     generateQRCodeUrl,
     serializeUrlWithSignerPayload,
 } from "./core/actions/accounts/addNewDevice";
@@ -27,6 +28,7 @@ import {
 } from "./core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
 import { createSigner } from "./core/signers/createSigner";
+import type { webAuthnOptions } from "./core/signers/passkeys/types";
 import type { Signer } from "./core/types";
 import { smartAccountConnector } from "./wagmi/connector";
 
@@ -37,6 +39,7 @@ export {
     retrieveAccountAddressFromPasskeys,
     retrieveAccountAddressFromPasskeyId,
     createNewSigner,
+    createNewSignerWithAccountAddress,
     serializeUrlWithSignerPayload,
     generateQRCodeUrl,
     createComethPaymasterClient,
@@ -55,4 +58,5 @@ export type {
     AddSessionKeyParams,
     Session,
     QRCodeOptions,
+    webAuthnOptions,
 };

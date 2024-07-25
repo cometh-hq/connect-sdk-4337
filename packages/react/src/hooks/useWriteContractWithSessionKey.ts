@@ -18,7 +18,10 @@ import { type Abi, encodeFunctionData } from "viem";
 import type { GetAccountParameter } from "viem/_types/types/account";
 import type { Prettify } from "viem/chains";
 import type { UnionEvaluate } from "viem/types/utils";
-import type { MutationOptionsWithoutMutationFn } from "./types";
+import type {
+    MutationOptionsWithoutMutationFn,
+    QueryResultType,
+} from "./types";
 
 /**
  * @description A custom hook for writing to smart contracts through a smart account using a session key.
@@ -83,6 +86,28 @@ import type { MutationOptionsWithoutMutationFn } from "./types";
  *   that resolves to the transaction hash.
  */
 
+/**
+ * Type for the writeContractWithSessionKey function.
+ * This function doesn't return a promise, suitable for fire-and-forget usage.
+ */
+export type WriteContractWithSessionKeyMutate = (
+    variables: WriteContractWithSessionKeyParameters
+) => void;
+
+/**
+ * Type for the writeContractWithSessionKeyAsync function.
+ * This function returns a promise that resolves to the transaction hash.
+ */
+export type WriteContractWithSessionKeyMutateAsync = (
+    variables: WriteContractWithSessionKeyParameters
+) => Promise<Hash>;
+
+// Return type of the hook
+export type UseWriteContractWithSessionKeyReturn = QueryResultType & {
+    writeContractWithSessionKey: WriteContractWithSessionKeyMutate;
+    writeContractWithSessionKeyAsync: WriteContractWithSessionKeyMutateAsync;
+};
+
 export type WriteContractWithSessionKeyParameters<
     abi extends Abi | readonly unknown[] = Abi,
     functionName extends ContractFunctionName<
@@ -125,7 +150,7 @@ export type WriteContractWithSessionKeyParameters<
 
 export const useWriteContractWithSessionKey = (
     mutationProps?: MutationOptionsWithoutMutationFn
-) => {
+): UseWriteContractWithSessionKeyReturn => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
     const { mutate, mutateAsync, ...result } = useMutation(
@@ -160,8 +185,12 @@ export const useWriteContractWithSessionKey = (
     );
 
     return {
-        ...result,
-        writeContract: mutate,
-        writeContractAsync: mutateAsync,
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
+        writeContractWithSessionKey: mutate,
+        writeContractWithSessionKeyAsync: mutateAsync,
     };
 };

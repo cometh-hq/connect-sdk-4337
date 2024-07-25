@@ -1,24 +1,22 @@
 "use client";
 
-import { useHandleDevice } from "@cometh/connect-sdk-4337";
+import { createNewSigner } from "@cometh/connect-sdk-4337";
 import React from "react";
+import { base } from "viem/chains";
 import { useSmartAccount } from "../modules/hooks/useSmartAccount";
 
 export default function App() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
 
-    const { createNewSigner, generateQrCode } = useHandleDevice(apiKey);
-
     const { setNewSigner } = useSmartAccount();
 
     const createRequest = async () => {
-        const signer = await createNewSigner({
-            smartAccountAddress: "0xa0A1A2AFdFb029287ee33e31F7654a37744179B8",
-        });
-        const qrcode = await generateQrCode(
-            "http://localhost:3002/createSigner",
-            signer
+        const signer = await createNewSigner(
+            apiKey,
+            "http://127.0.0.1:8000/connect",
+            { passKeyName: "test" }
         );
+
         setNewSigner(signer);
     };
 

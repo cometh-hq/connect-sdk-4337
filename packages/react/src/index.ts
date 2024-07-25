@@ -1,11 +1,11 @@
 import {
+    useAccount,
     useAddOwner,
     useAddSessionKey,
     useAddWhitelistDestination,
     useConnect,
-    useDisconnect,
-    useAccount,
     useCreateNewSigner,
+    useDisconnect,
     useGenerateQRCodeUrl,
     useGetEnrichedOwners,
     useGetGasPrice,
@@ -20,11 +20,33 @@ import {
     useSendTransaction,
     useSendTransactionWithSessionKey,
     useSerializeUrlWithSignerPayload,
+    useSignMessage,
     useValidateAddDevice,
     useVerifyMessage,
     useWriteContract,
     useWriteContractWithSessionKey,
 } from "./hooks";
+
+import type {
+    SendTransactionMutate,
+    SendTransactionMutateAsync,
+    SendTransactionWithSessionKeyMutate,
+    SendTransactionWithSessionKeyMutateAsync,
+    UseAddOwnerReturn,
+    UseAddSessionKeyReturn,
+    UseAddWhitelistDestinationReturn,
+    UseRemoveOwnerReturn,
+    UseRemoveWhitelistDestinationReturn,
+    UseRetrieveAccountAddressFromPasskeyOptions,
+    UseRevokeSessionKeyReturn,
+    VerifyMessageMutate,
+    VerifyMessageMutateAsync,
+    WriteContractMutate,
+    WriteContractMutateAsync,
+    WriteContractWithSessionKeyMutate,
+    WriteContractWithSessionKeyMutateAsync,
+} from "./hooks";
+
 import { ConnectProvider } from "./providers/ConnectProvider";
 
 export {
@@ -54,4 +76,25 @@ export {
     useVerifyMessage,
     useRetrieveAccountAddressFromPasskeyId,
     useRetrieveAccountAddressFromPasskeys,
+    useSignMessage,
+};
+
+export type {
+    SendTransactionMutate,
+    SendTransactionMutateAsync,
+    SendTransactionWithSessionKeyMutate,
+    SendTransactionWithSessionKeyMutateAsync,
+    VerifyMessageMutate,
+    VerifyMessageMutateAsync,
+    UseAddOwnerReturn,
+    UseRemoveOwnerReturn,
+    UseAddSessionKeyReturn,
+    UseRevokeSessionKeyReturn,
+    UseAddWhitelistDestinationReturn,
+    UseRemoveWhitelistDestinationReturn,
+    UseRetrieveAccountAddressFromPasskeyOptions,
+    WriteContractMutate,
+    WriteContractMutateAsync,
+    WriteContractWithSessionKeyMutate,
+    WriteContractWithSessionKeyMutateAsync,
 };

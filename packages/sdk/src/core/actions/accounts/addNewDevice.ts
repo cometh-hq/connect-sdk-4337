@@ -26,6 +26,11 @@ export interface QRCodeOptions {
     };
 }
 
+type CreateNewSignerParams = {
+    webAuthnOptions?: webAuthnOptions;
+    passKeyName?: string;
+};
+
 const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
     const optimizedPayload = {
         os: signerPayload.deviceData.os,
@@ -62,15 +67,16 @@ const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
  * @param passKeyName - Optional name for the passkey
  * @param encryptionSalt - Optional encryption salt
  */
-export const createNewSigner = async (
+export const createNewSignerWithAccountAddress = async (
     apiKey: string,
     baseUrl: string | undefined,
+    smartAccountAddress: Address,
     {
-        smartAccountAddress,
+        webAuthnOptions,
         passKeyName,
         encryptionSalt,
     }: {
-        smartAccountAddress: Address;
+        webAuthnOptions: webAuthnOptions;
         passKeyName?: string;
         encryptionSalt?: string;
     }
@@ -78,6 +84,7 @@ export const createNewSigner = async (
     const api = new API(apiKey, baseUrl);
     const { signer, localPrivateKey } = await _createNewSigner(api, {
         passKeyName,
+        webAuthnOptions,
     });
 
     if (signer.publicKeyId) {
@@ -102,6 +109,27 @@ export const createNewSigner = async (
             encryptionSalt
         );
     }
+    return signer;
+};
+
+/**
+ * Creates a new signer for a smart account
+ * @param apiKey - The API key for authentication
+ * @param baseUrl - Optional base URL for the API
+ * @param passKeyName - Optional name for the passkey
+ * @param encryptionSalt - Optional encryption salt
+ */
+export const createNewSigner = async (
+    apiKey: string,
+    baseUrl: string | undefined,
+    params: CreateNewSignerParams = {}
+): Promise<Signer> => {
+    const api = new API(apiKey, baseUrl);
+    const { signer } = await _createNewPasskeySigner(api, {
+        webAuthnOptions: params.webAuthnOptions,
+        passKeyName: params.passKeyName,
+    });
+
     return signer;
 };
 
@@ -147,6 +175,44 @@ export const generateQRCodeUrl = async (
     } catch (error) {
         throw new Error(`Failed to generate QR Code: ${error}`);
     }
+};
+
+const _createNewPasskeySigner = async (
+    api: API,
+    {
+        passKeyName,
+        webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+    }: {
+        passKeyName?: string;
+        webAuthnOptions?: webAuthnOptions;
+    }
+): Promise<{
+    signer: Signer;
+    localPrivateKey?: string;
+}> => {
+    const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
+
+    if (!webAuthnCompatible || isFallbackSigner())
+        throw new Error("Device not compatible with passkeys");
+
+    const passkeyWithCoordinates = await createPasskeySigner({
+        api,
+        webAuthnOptions,
+        passKeyName,
+    });
+
+    if (passkeyWithCoordinates.publicKeyAlgorithm !== -7)
+        throw new Error("Device not compatible with SECKP256r1 passkeys");
+
+    return {
+        signer: {
+            signerAddress: passkeyWithCoordinates.signerAddress,
+            deviceData: getDeviceData(),
+            publicKeyId: passkeyWithCoordinates.id,
+            publicKeyX: passkeyWithCoordinates.pubkeyCoordinates.x,
+            publicKeyY: passkeyWithCoordinates.pubkeyCoordinates.y,
+        },
+    };
 };
 
 const _createNewSigner = async (

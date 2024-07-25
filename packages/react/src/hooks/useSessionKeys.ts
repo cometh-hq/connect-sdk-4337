@@ -6,6 +6,7 @@ import type {
     UseQueryOptions,
 } from "@tanstack/react-query";
 import type { Address, Hash } from "viem";
+import type { QueryResultType } from "./types";
 
 type AddSessionKeyParameters = AddSessionKeyParams;
 
@@ -23,53 +24,43 @@ type RemoveWhitelistDestinationParameters = {
     destination: Address;
 };
 
-/**
- * @description A custom hook for adding a session key to a smart account.
- *
- * @param mutationProps Optional mutation properties from @tanstack/react-query
- *
- * @example
- * ```tsx
- * import { useAddSessionKey } from "@/hooks/sessionKeys";
- * import { Address } from "viem";
- *
- * export const AddSessionKeyComponent = () => {
- *   const { addSessionKey, isLoading, error, data } = useAddSessionKey();
- *
- *   const handleAddSessionKey = async () => {
- *     try {
- *       const hash = await addSessionKey({
- *         validAfter: new Date(),
- *         validUntil: new Date(Date.now() + 86400000), // 24 hours from now
- *         destinations: [] as Address[]
- *       });
- *       console.log("Session key added, transaction hash:", hash);
- *     } catch (error) {
- *       console.error("Error adding session key:", error);
- *     }
- *   };
- *
- *   return (
- *     <div>
- *       <button onClick={handleAddSessionKey} disabled={isLoading}>
- *         Add Session Key
- *       </button>
- *       {isLoading && <p>Adding session key...</p>}
- *       {error && <p>Error: {error.message}</p>}
- *       {data && <p>Session key added! Hash: {data}</p>}
- *     </div>
- *   );
- * };
- * ```
- *
- * @returns An object containing the mutation function and related properties.
- */
+// Return types for each mutation hook
+export type UseAddSessionKeyReturn = QueryResultType & {
+    addSessionKey: (params: AddSessionKeyParameters) => void;
+    addSessionKeyAsync: (params: AddSessionKeyParameters) => Promise<Hash>;
+};
+
+export type UseRevokeSessionKeyReturn = QueryResultType & {
+    revokeSessionKey: (params: RevokeSessionKeyParameters) => void;
+    revokeSessionKeyAsync: (
+        params: RevokeSessionKeyParameters
+    ) => Promise<Hash>;
+};
+
+export type UseAddWhitelistDestinationReturn = QueryResultType & {
+    addWhitelistDestination: (
+        params: AddWhitelistDestinationParameters
+    ) => void;
+    addWhitelistDestinationAsync: (
+        params: AddWhitelistDestinationParameters
+    ) => Promise<Hash>;
+};
+
+export type UseRemoveWhitelistDestinationReturn = QueryResultType & {
+    removeWhitelistDestination: (
+        params: RemoveWhitelistDestinationParameters
+    ) => void;
+    removeWhitelistDestinationAsync: (
+        params: RemoveWhitelistDestinationParameters
+    ) => Promise<Hash>;
+};
+
 export const useAddSessionKey = (
     mutationProps?: Omit<
         UseMutationOptions<Hash, Error, AddSessionKeyParameters>,
         "mutationFn"
     >
-) => {
+): UseAddSessionKeyReturn => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
     const { mutate, mutateAsync, ...result } = useMutation(
@@ -88,25 +79,22 @@ export const useAddSessionKey = (
     );
 
     return {
-        ...result,
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
         addSessionKey: mutate,
         addSessionKeyAsync: mutateAsync,
     };
 };
 
-/**
- * @description A custom hook for revoking a session key from a smart account.
- *
- * @param mutationProps Optional mutation properties from @tanstack/react-query
- *
- * @returns An object containing the mutation function and related properties.
- */
 export const useRevokeSessionKey = (
     mutationProps?: Omit<
         UseMutationOptions<Hash, Error, RevokeSessionKeyParameters>,
         "mutationFn"
     >
-) => {
+): UseRevokeSessionKeyReturn => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
     const { mutate, mutateAsync, ...result } = useMutation(
@@ -127,25 +115,22 @@ export const useRevokeSessionKey = (
     );
 
     return {
-        ...result,
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
         revokeSessionKey: mutate,
         revokeSessionKeyAsync: mutateAsync,
     };
 };
 
-/**
- * @description A custom hook for adding a whitelist destination to a session key.
- *
- * @param mutationProps Optional mutation properties from @tanstack/react-query
- *
- * @returns An object containing the mutation function and related properties.
- */
 export const useAddWhitelistDestination = (
     mutationProps?: Omit<
         UseMutationOptions<Hash, Error, AddWhitelistDestinationParameters>,
         "mutationFn"
     >
-) => {
+): UseAddWhitelistDestinationReturn => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
     const { mutate, mutateAsync, ...result } = useMutation(
@@ -168,25 +153,22 @@ export const useAddWhitelistDestination = (
     );
 
     return {
-        ...result,
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
         addWhitelistDestination: mutate,
         addWhitelistDestinationAsync: mutateAsync,
     };
 };
 
-/**
- * @description A custom hook for removing a whitelist destination from a session key.
- *
- * @param mutationProps Optional mutation properties from @tanstack/react-query
- *
- * @returns An object containing the mutation function and related properties.
- */
 export const useRemoveWhitelistDestination = (
     mutationProps?: Omit<
         UseMutationOptions<Hash, Error, RemoveWhitelistDestinationParameters>,
         "mutationFn"
     >
-) => {
+): UseRemoveWhitelistDestinationReturn => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
     const { mutate, mutateAsync, ...result } = useMutation(
@@ -209,20 +191,16 @@ export const useRemoveWhitelistDestination = (
     );
 
     return {
-        ...result,
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
         removeWhitelistDestination: mutate,
         removeWhitelistDestinationAsync: mutateAsync,
     };
 };
 
-/**
- * @description A custom hook for getting session information from a session key address.
- *
- * @param sessionKey The session key address
- * @param queryProps Optional query properties from @tanstack/react-query
- *
- * @returns An object containing the query result and related properties.
- */
 export const useGetSessionFromAddress = (
     sessionKey: Address,
     queryProps?: Omit<UseQueryOptions<Session, Error>, "queryKey" | "queryFn">
@@ -246,15 +224,6 @@ export const useGetSessionFromAddress = (
     );
 };
 
-/**
- * @description A custom hook for checking if an address is a whitelisted destination for a session key.
- *
- * @param sessionKey The session key address
- * @param targetAddress The address to check
- * @param queryProps Optional query properties from @tanstack/react-query
- *
- * @returns An object containing the query result and related properties.
- */
 export const useIsAddressWhitelistDestination = (
     sessionKey: Address,
     targetAddress: Address,

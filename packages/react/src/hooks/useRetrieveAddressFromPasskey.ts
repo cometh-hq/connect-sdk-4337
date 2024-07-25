@@ -36,7 +36,7 @@ export const useRetrieveAccountAddressFromPasskeys = ({
         } finally {
             setIsPending(false);
         }
-    }, []);
+    }, [apiKey, baseUrl]);
 
     return {
         retrieveAddress,
