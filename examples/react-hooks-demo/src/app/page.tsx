@@ -48,6 +48,10 @@ export default function App() {
         if (!localStorageAddress && address) {
             window.localStorage.setItem("walletAddress", address);
         }
+
+        if (!address) {
+            setTransactionSuccess(false)
+        }
     }, [address]);
 
     console.log({ address });
