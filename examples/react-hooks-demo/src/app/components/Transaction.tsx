@@ -52,32 +52,37 @@ function Transaction({
     const [transactionSended, setTransactionSended] = useState<any | null>(
         null
     );
+    const [transactionResponse, setTransactionResponse] = useState<any | null>(
+        null
+    );
     const [transactionFailure, setTransactionFailure] = useState(false);
     const [nftBalance, setNftBalance] = useState<number>(0);
 
     function TransactionButton({
         sendTestTransaction,
         isTransactionLoading,
-    }: {
+        label,
+      }: {
         sendTestTransaction: () => Promise<void>;
         isTransactionLoading: boolean;
-    }) {
+        label: string;
+      }) {
         return (
-            <button
-                className="mt-1 flex h-11 py-2 px-4 gap-2 flex-none items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200"
-                onClick={sendTestTransaction}
-            >
-                {isTransactionLoading ? (
-                    <Icons.spinner className="h-4 w-4 animate-spin" />
-                ) : (
-                    <>
-                        <PlusIcon width={16} height={16} />
-                    </>
-                )}{" "}
-                Increment counter
-            </button>
+          <button
+            className="mt-1 flex h-11 py-2 px-4 gap-2 flex-none items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200"
+            onClick={sendTestTransaction}
+          >
+            {isTransactionLoading ? (
+              <Icons.spinner className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <PlusIcon width={16} height={16} />
+              </>
+            )}
+            {label}
+          </button>
         );
-    }
+      }
 
     useEffect(() => {
         if (address) {
@@ -90,6 +95,7 @@ function Transaction({
 
     const sendTestTransaction = async () => {
         setTransactionSended(null);
+        setTransactionResponse(null);
         setTransactionFailure(false);
         setTransactionSuccess(false);
 
@@ -102,13 +108,22 @@ function Transaction({
                 functionName: "count",
             });
 
-            sendTransaction({
+            const txHash = await sendTransaction({
                 transactions: {
                     to: COUNTER_CONTRACT_ADDRESS,
                     value: 0,
                     data: calldata,
                 },
             });
+
+            setTransactionSended(txHash);
+
+            const txResponse = await publicClient.waitForTransactionReceipt({
+                hash: txHash,
+            });
+
+            setTransactionResponse(txResponse);
+
 
             const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));
@@ -127,28 +142,36 @@ function Transaction({
             <div className="p-4">
                 <div className="relative flex items-center gap-x-6 rounded-lg p-4">
                     <TransactionButton
-                        sendTestTransaction={sendTestTransaction}
+                        sendTestTransaction={() =>
+                        sendTestTransaction()
+                        }
                         isTransactionLoading={isTransactionLoading}
+                        label="Increment Counter"
                     />
                     <p className=" text-gray-600">{nftBalance}</p>
+                    </div>
                 </div>
-            </div>
-
-            {hash && (
-                <Alert
+                {transactionSended && !transactionResponse && (
+                    <Alert
+                    state="information"
+                    content="Transaction in progress.. (est. time 10 sec)"
+                    />
+                )}
+                {transactionSuccess && (
+                    <Alert
                     state="success"
                     content="Transaction confirmed !"
                     link={{
                         content: "Go see your transaction",
-                        url: `https://jiffyscan.xyz/bundle/${hash}?network=arbitrum-sepolia&pageNo=0&pageSize=10`,
+                        url: `${process.env.NEXT_PUBLIC_SCAN_URL}tx/${transactionResponse?.transactionHash}`,
                     }}
-                />
-            )}
-            {transactionFailure && (
-                <Alert state="error" content="Transaction Failed !" />
-            )}
-        </main>
-    );
+                    />
+                )}
+                {transactionFailure && (
+                    <Alert state="error" content="Transaction Failed !" />
+                )}
+                </main>
+            );
 }
 
 export default Transaction;
