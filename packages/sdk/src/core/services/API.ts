@@ -1,4 +1,4 @@
-import type { SafeContractConfig } from "@/core/accounts/safe/types";
+import type { SafeContractConfig, Wallet } from "@/core/accounts/safe/types";
 import type { DeviceData, WebAuthnSigner } from "@/core/types";
 import axios from "axios";
 import type { AxiosInstance } from "axios";
@@ -16,6 +16,26 @@ export class API {
     async getProjectParams(): Promise<SafeContractConfig> {
         const response = await this.api.get("/project/params");
         return response.data.projectParams;
+    }
+
+    async getWallet(walletAddress: Address): Promise<Wallet> {
+        const response = await this.api.get(`/wallet/${walletAddress}`);
+        return response.data.wallet;
+    }
+
+    async createWallet({
+        smartAccountAddress,
+        initiatorAddress,
+    }: {
+        smartAccountAddress: Address;
+        initiatorAddress: Address;
+    }): Promise<void> {
+        const body = {
+            walletAddress: smartAccountAddress,
+            initiatorAddress,
+        };
+
+        await this.api.post("/wallet", body);
     }
 
     /**

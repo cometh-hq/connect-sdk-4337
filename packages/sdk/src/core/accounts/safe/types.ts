@@ -68,3 +68,12 @@ export interface SafeSignature {
     // a flag to indicate if the signature is a contract signature and the data has to be appended to the dynamic part of signature bytes
     dynamic?: true;
 }
+
+export type Wallet = {
+    projectId: string;
+    chainId: string;
+    address: string;
+    creationDate: Date;
+    connectionDate: Date;
+    initiatorAddress: string;
+};

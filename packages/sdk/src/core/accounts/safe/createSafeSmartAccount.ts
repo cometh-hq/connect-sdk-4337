@@ -22,13 +22,17 @@ import { API } from "@/core/services/API";
 import { getClient } from "../utils";
 
 import { createSigner, saveSigner } from "@/core/signers/createSigner";
-import type { SignerConfig } from "@/core/signers/types";
+import type { ComethSigner, SignerConfig } from "@/core/signers/types";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
 import {
     getSessionKeySigner,
     isUserOpWhitelisted,
 } from "@/core/actions/accounts/safe/sessionKeys/utils";
+import {
+    connectToExistingWallet,
+    createNewWalletInDb,
+} from "@/core/services/comethService";
 import type {
     EntryPoint,
     GetEntryPointVersion,
@@ -93,6 +97,46 @@ const getAccountInitCode = async ({
             }),
         ]
     );
+};
+
+/**
+ * Authenticate the wallet to the cometh api
+ * @param singletonAddress - The address of the Safe singleton contract
+ * @param safeProxyFactoryAddress - The address of the Safe proxy factory
+ * @param saltNonce - Optional salt nonce for CREATE2 deployment (defaults to zeroHash)
+ * @param initializer - The initializer data for the Safe
+ * @param signer
+ * @param api
+ */
+const authenticateToComethApi = async ({
+    singletonAddress,
+    safeProxyFactoryAddress,
+    saltNonce,
+    initializer,
+    signer,
+    api,
+}: {
+    singletonAddress: Address;
+    safeProxyFactoryAddress: Address;
+    saltNonce: Hex;
+    initializer: Hex;
+    signer: ComethSigner;
+    api: API;
+}): Promise<Address> => {
+    const smartAccountAddress = await getAccountAddress({
+        singletonAddress,
+        safeProxyFactoryAddress,
+        saltNonce,
+        initializer,
+    });
+
+    await createNewWalletInDb({
+        api,
+        smartAccountAddress,
+        signer,
+    });
+
+    return smartAccountAddress;
 };
 
 /**
@@ -177,6 +221,13 @@ export async function createSafeSmartAccount<
 > {
     const api = new API(apiKey, baseUrl);
 
+    if (smartAccountAddress) {
+        await connectToExistingWallet({
+            api,
+            smartAccountAddress,
+        });
+    }
+
     const {
         safeWebAuthnSharedSignerAddress,
         safeModuleSetUpAddress,
@@ -227,11 +278,13 @@ export async function createSafeSmartAccount<
         });
 
     if (!smartAccountAddress) {
-        smartAccountAddress = await getAccountAddress({
+        smartAccountAddress = await authenticateToComethApi({
             singletonAddress: safeSingletonAddress,
             safeProxyFactoryAddress,
             saltNonce: zeroHash,
             initializer,
+            signer: comethSigner,
+            api,
         });
 
         await saveSigner(api, comethSigner, smartAccountAddress);
