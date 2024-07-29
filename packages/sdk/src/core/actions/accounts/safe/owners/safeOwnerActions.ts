@@ -75,6 +75,14 @@ export const safeOwnerPluginActions =
                 },
             });
 
+            const isDeployed = await isSmartAccountDeployed(
+                publicClient,
+                client.account?.address as Address
+            );
+
+            if (!isDeployed)
+                throw new Error("Can't remove owner on an undeployed safe");
+
             const owners = (await publicClient.readContract({
                 address: client.account?.address as Address,
                 abi: SafeAbi,
@@ -123,7 +131,8 @@ export const safeOwnerPluginActions =
                 client.account?.address as Address
             );
 
-            if (!isDeployed) throw new Error("Smart account is not deployed.");
+            if (!isDeployed)
+                return [client.account?.signerAddress] as Address[];
 
             return (await publicClient.readContract({
                 address: client.account?.address as Address,
@@ -142,11 +151,10 @@ export const safeOwnerPluginActions =
                 },
             });
 
-            const owners = (await publicClient.readContract({
-                address: client.account?.address as Address,
-                abi: SafeAbi,
-                functionName: "getOwners",
-            })) as Address[];
+            const isDeployed = await isSmartAccountDeployed(
+                publicClient,
+                client.account?.address as Address
+            );
 
             const api = client?.account?.getConnectApi();
 
@@ -154,6 +162,19 @@ export const safeOwnerPluginActions =
                 (await api?.getWebAuthnSignersByWalletAddress(
                     client.account?.address as Address
                 )) as WebAuthnSigner[];
+
+            if (!isDeployed)
+                return {
+                    address: webAuthnSigners[0].signerAddress as Address,
+                    deviceData: webAuthnSigners[0].deviceData,
+                    creationDate: webAuthnSigners[0].creationDate,
+                };
+
+            const owners = (await publicClient.readContract({
+                address: client.account?.address as Address,
+                abi: SafeAbi,
+                functionName: "getOwners",
+            })) as Address[];
 
             const enrichedOwners = owners.map((owner) => {
                 const webauthSigner = webAuthnSigners.find(
