@@ -75,6 +75,14 @@ export const safeOwnerPluginActions =
                 },
             });
 
+            const isDeployed = await isSmartAccountDeployed(
+                publicClient,
+                client.account?.address as Address
+            );
+
+            if (!isDeployed)
+                throw new Error("Can't remove owner on an undeployed safe");
+
             const owners = (await publicClient.readContract({
                 address: client.account?.address as Address,
                 abi: SafeAbi,
