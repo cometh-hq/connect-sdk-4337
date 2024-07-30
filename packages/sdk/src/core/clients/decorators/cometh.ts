@@ -11,6 +11,10 @@ import {
     type ValidateAddDevice,
     validateAddDevice,
 } from "@/core/actions/accounts/safe/owners/addDeviceActions.js";
+import {
+    type SetUpRecoveryModuleParams,
+    setUpRecoveryModule,
+} from "@/core/actions/accounts/safe/recovery/setUpRecoveryModule";
 import { sendTransactionWithSessionKey } from "@/core/actions/accounts/safe/sessionKeys/sendTransactionWithSessionKey";
 import {
     type SendTransactionsWithPaymasterParameters,
@@ -33,6 +37,11 @@ export type ComethClientActions<
     validateAddDevice: <TTransport extends Transport>(
         args: Parameters<
             typeof validateAddDevice<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<Hash>;
+    setUpRecoveryModule: <TTransport extends Transport>(
+        args: Parameters<
+            typeof setUpRecoveryModule<entryPoint, TTransport, TChain, TAccount>
         >[1]
     ) => Promise<Hash>;
     verifySignature: <TTransport extends Transport>(
@@ -84,6 +93,14 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                     ...args,
                     middleware,
                 } as ValidateAddDevice<entryPoint>
+            ),
+        setUpRecoveryModule: (args) =>
+            setUpRecoveryModule<entryPoint, TTransport, TChain, TAccount>(
+                client,
+                {
+                    ...args,
+                    middleware,
+                } as SetUpRecoveryModuleParams<entryPoint>
             ),
         verifySignature: (args) =>
             verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {

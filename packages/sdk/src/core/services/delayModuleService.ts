@@ -1,8 +1,12 @@
 import {
+    http,
     type Address,
+    type Chain,
+    type Client,
     type Hex,
     type PublicClient,
     concat,
+    createPublicClient,
     encodeAbiParameters,
     encodeFunctionData,
     getContractAddress,
@@ -10,7 +14,10 @@ import {
     pad,
     parseAbiParameters,
 } from "viem";
+import { getCode } from "viem/actions";
 import { delayModuleABI } from "../accounts/safe/abi/delayModule";
+import { delayModuleFactoryABI } from "../accounts/safe/abi/delayModuleFactory";
+import type { MultiSendTransaction } from "../types";
 
 export type RecoveryParamsResponse = {
     txCreatedAt: bigint;
@@ -29,12 +36,17 @@ const isDeployed = async ({
     client,
 }: {
     delayAddress: Address;
-    client: PublicClient;
+    client: Client;
 }): Promise<boolean> => {
     try {
-        await client.getBytecode({ address: delayAddress });
+        const bytecode = await getCode(client, {
+            address: delayAddress,
+        });
+
+        if (!bytecode) return false;
+
         return true;
-    } catch (error) {
+    } catch {
         return false;
     }
 };
@@ -81,7 +93,7 @@ const getDelayAddress = (safe: Address, context: DelayContext): Address => {
 const createSetTxNonceFunction = async (
     proxyDelayAddress: Address,
     client: PublicClient
-): Promise<any> => {
+): Promise<MultiSendTransaction> => {
     const txNonce = await client.readContract({
         address: proxyDelayAddress,
         abi: delayModuleABI,
@@ -132,15 +144,25 @@ const getCurrentRecoveryParams = async (
 
 const isQueueEmpty = async (
     moduleAddress: Address,
-    client: PublicClient
+    chain: Chain,
+    rpcUrl?: string
 ): Promise<boolean> => {
+    const publicClient = createPublicClient({
+        chain,
+        transport: http(rpcUrl),
+        cacheTime: 60_000,
+        batch: {
+            multicall: { wait: 50 },
+        },
+    });
+
     const [txNonce, queueNonce] = await Promise.all([
-        client.readContract({
+        publicClient.readContract({
             address: moduleAddress,
             abi: delayModuleABI,
             functionName: "txNonce",
         }),
-        client.readContract({
+        publicClient.readContract({
             address: moduleAddress,
             abi: delayModuleABI,
             functionName: "queueNonce",
@@ -150,10 +172,55 @@ const isQueueEmpty = async (
     return txNonce === queueNonce;
 };
 
+const setUpDelayModule = async ({
+    safe,
+    cooldown,
+    expiration,
+}: {
+    safe: Address;
+    cooldown: number;
+    expiration: number;
+}): Promise<string> => {
+    const setUpArgs = encodeAbiParameters(
+        parseAbiParameters([
+            "address",
+            "address",
+            "address",
+            "uint256",
+            "uint256",
+        ]),
+        [safe, safe, safe, BigInt(cooldown), BigInt(expiration)]
+    );
+
+    return encodeFunctionData({
+        abi: delayModuleABI,
+        functionName: "setUp",
+        args: [setUpArgs],
+    });
+};
+
+const encodeDeployDelayModule = ({
+    singletonDelayModule,
+    initializer,
+    safe,
+}: {
+    singletonDelayModule: Address;
+    initializer: Hex;
+    safe: Address;
+}): string => {
+    return encodeFunctionData({
+        abi: delayModuleFactoryABI,
+        functionName: "deployModule",
+        args: [singletonDelayModule, initializer, BigInt(safe)],
+    });
+};
+
 export default {
     getDelayAddress,
     isDeployed,
     createSetTxNonceFunction,
     getCurrentRecoveryParams,
     isQueueEmpty,
+    setUpDelayModule,
+    encodeDeployDelayModule,
 };

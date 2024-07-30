@@ -26,17 +26,41 @@ export const EIP712_SAFE_MESSAGE_TYPE = {
     SafeMessage: [{ type: "bytes", name: "message" }],
 };
 
-export type SafeContractConfig = {
-    chainId: string;
-    safeWebAuthnSharedSignerAddress: Address;
-    safe4337ModuleAddress: Address;
-    safeModuleSetUpAddress: Address;
-    safeP256VerifierAddress: Address;
+export enum WalletVersion {
+    V1 = "v1.0",
+    V2 = "v2.0",
+}
+
+export type SafeContractParams = {
     safeProxyFactoryAddress: Address;
     safeSingletonAddress: Address;
     multisendAddress: Address;
-    safeWebAuthnSignerFactoryAddress: Address;
+    fallbackHandler: Address;
+    setUpContractAddress: Address;
+    safeWebAuthnSharedSignerContractAddress: Address;
+    p256Verifier: Address;
     safe4337SessionKeysModule: Address;
+};
+
+export type RecoveryParams = {
+    socialRecoveryModuleAddress: Address;
+    moduleFactoryAddress: Address;
+    delayModuleAddress: Address;
+    recoveryCooldown: number;
+    recoveryExpiration: number;
+    guardianAddress: Address;
+};
+
+export type DeploymentParams = {
+    version: WalletVersion;
+    safeContractParams: SafeContractParams;
+    recoveryParams: RecoveryParams;
+};
+
+export type ProjectParams = {
+    chainId: string;
+    safeContractParams: SafeContractParams;
+    recoveryParams: RecoveryParams;
 };
 
 export const SAFE_SENTINEL_OWNERS = "0x1";
@@ -76,4 +100,5 @@ export type Wallet = {
     creationDate: Date;
     connectionDate: Date;
     initiatorAddress: string;
+    deploymentParams: DeploymentParams;
 };

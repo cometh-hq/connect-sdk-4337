@@ -2,9 +2,15 @@
 
 import React, { useState } from "react";
 
+import { api } from "../../api";
 import ConnectWallet from "./components/ConnectWallet";
 import Transaction from "./components/Transaction";
 import { useSmartAccount } from "./modules/hooks/useSmartAccount";
+import { createNewSigner, createNewSignerWithAccountAddress } from "@cometh/connect-sdk-4337";
+
+const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY
+const apiKeySecret = process.env.NEXT_PUBLIC_COMETH_API_SECRET
+const baseUrl = process.env.NEXT_PUBLIC_COMETH_BASE_URL
 
 export default function App() {
     const {
@@ -28,6 +34,31 @@ export default function App() {
         };
 
         await smartAccount.validateAddDevice({ signer });
+    };
+
+    const setUpRecovery = async () => {
+        try {
+            const hash = await smartAccount.setUpRecoveryModule();
+            console.log({ hash });
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    const startRecovery = async () => {
+        try {
+            const signer = await createNewSignerWithAccountAddress(apiKey!, baseUrl!, "0xE5a5D7618e3081e0FC06D9c353187058589eb45B", {});
+            console.log({ signer });
+
+            const body = {
+                walletAddress: smartAccount.account?.address,
+                newOwner: signer.signerAddress,
+            };
+
+            await api.post("/recovery/start", body);
+        } catch (e) {
+            console.log(e);
+        }
     };
 
     return (
@@ -63,8 +94,8 @@ export default function App() {
                                     }
                                 />
 
-                                <button onClick={validate}>
-                                    Validate Add Device
+                                <button onClick={startRecovery}>
+                                    Start recovery
                                 </button>
                             </>
                         )}

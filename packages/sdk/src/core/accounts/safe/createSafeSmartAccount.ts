@@ -49,7 +49,8 @@ import {
 import { buildSignatureBytes, packInitCode } from "./services/utils";
 import {
     EIP712_SAFE_OPERATION_TYPE,
-    type SafeContractConfig,
+    type ProjectParams,
+    type SafeContractParams,
     SafeProxyBytecode,
 } from "./types";
 import { toSmartAccount } from "./utils";
@@ -190,7 +191,7 @@ export type createSafeSmartAccountParameters<
     smartAccountAddress?: Address;
     entryPoint: TEntryPoint;
     comethSignerConfig?: SignerConfig;
-    safeContractConfig?: SafeContractConfig;
+    safeContractConfig?: SafeContractParams;
 }>;
 
 /**
@@ -229,16 +230,16 @@ export async function createSafeSmartAccount<
     }
 
     const {
-        safeWebAuthnSharedSignerAddress,
-        safeModuleSetUpAddress,
-        safeP256VerifierAddress,
+        safeWebAuthnSharedSignerContractAddress,
+        setUpContractAddress,
+        p256Verifier,
         safeProxyFactoryAddress,
         safeSingletonAddress,
         multisendAddress,
         safe4337SessionKeysModule,
     } =
         safeContractConfig ??
-        ((await api.getProjectParams()) as SafeContractConfig);
+        ((await api.getProjectParams()) as ProjectParams).safeContractParams;
 
     const client = (await getClient(api, rpcUrl)) as Client<
         TTransport,
@@ -250,7 +251,8 @@ export async function createSafeSmartAccount<
         apiKey,
         baseUrl,
         smartAccountAddress,
-        safeWebAuthnSharedSignerAddress,
+        safeWebAuthnSharedSignerAddress:
+            safeWebAuthnSharedSignerContractAddress,
         ...comethSignerConfig,
     });
 
@@ -264,9 +266,9 @@ export async function createSafeSmartAccount<
         1,
         safe4337SessionKeysModule,
         [safe4337SessionKeysModule],
-        safeModuleSetUpAddress,
-        safeWebAuthnSharedSignerAddress,
-        safeP256VerifierAddress,
+        setUpContractAddress,
+        safeWebAuthnSharedSignerContractAddress,
+        p256Verifier,
         multisendAddress
     );
 

@@ -21,6 +21,13 @@ export type UserOperation = {
     paymasterData?: never;
 };
 
+export type MultiSendTransaction = {
+    to: string;
+    value?: Hex;
+    data: Hex;
+    operation: number;
+};
+
 export type DeviceData = {
     browser: string;
     os: string;

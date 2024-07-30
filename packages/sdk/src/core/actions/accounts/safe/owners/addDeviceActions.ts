@@ -1,7 +1,7 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { safeWebauthnSignerFactory } from "@/core/accounts/safe/abi/safeWebauthnSignerFactory";
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
-import type { SafeContractConfig } from "@/core/accounts/safe/types";
+import type { SafeContractParams } from "@/core/accounts/safe/types";
 import type { Signer } from "@/core/types";
 import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
 import {
@@ -56,8 +56,11 @@ export async function validateAddDevice<
     ];
 
     if (signer.publicKeyX && signer.publicKeyY) {
-        const { safeP256VerifierAddress, safeWebAuthnSignerFactoryAddress } =
-            (await api.getProjectParams()) as SafeContractConfig;
+        const {
+            p256Verifier: safeP256VerifierAddress,
+            safeWebAuthnSharedSignerContractAddress: safeWebAuthnSignerFactoryAddress,
+        } = (await api.getProjectParams())
+            .safeContractParams as SafeContractParams;
 
         const deployWebAuthnSignerCalldata = encodeFunctionData({
             abi: safeWebauthnSignerFactory,
