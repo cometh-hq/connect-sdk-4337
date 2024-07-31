@@ -60,6 +60,7 @@ export type SafeSmartAccount<
     ): Promise<Hex>;
     getConnectApi(): API;
     safe4337SessionKeysModule: Address;
+    signerAddress: Address;
 };
 
 /**
@@ -201,6 +202,11 @@ export async function createSafeSmartAccount<
         safeWebAuthnSharedSignerAddress,
         ...comethSignerConfig,
     });
+
+    const signerAddress =
+        comethSigner.type === "localWallet"
+            ? comethSigner.eoaFallback.signer.address
+            : comethSigner.passkey.signerAddress;
 
     const initializer = getSafeInitializer(
         comethSigner,
@@ -359,6 +365,7 @@ export async function createSafeSmartAccount<
 
     return {
         ...smartAccount,
+        signerAddress,
         safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
         async signUserOperationWithSessionKey(
             userOp: UserOperation<GetEntryPointVersion<entryPoint>>

@@ -1,7 +1,7 @@
-import { useSmartAccount } from "@/hooks";
+import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash } from "viem";
-import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
+import type { QueryResultType, Transaction } from "./types";
 
 /**
  * Props for the useSendTransaction hook.
@@ -26,6 +26,18 @@ export type SendTransactionMutate = (
 export type SendTransactionMutateAsync = (
     variables: UseSendTransactionProps
 ) => Promise<Hash>;
+
+// Optional mutation properties
+export type MutationOptionsWithoutMutationFn = Omit<
+    Parameters<typeof useMutation>[0],
+    "mutationFn"
+>;
+
+// Return type of the hook
+export type UseSendTransactionReturn = QueryResultType & {
+    sendTransaction: SendTransactionMutate;
+    sendTransactionAsync: SendTransactionMutateAsync;
+};
 
 /**
  * A custom hook for sending transactions through a smart account.
@@ -113,7 +125,7 @@ export type SendTransactionMutateAsync = (
  */
 export const useSendTransaction = (
     mutationProps?: MutationOptionsWithoutMutationFn
-) => {
+): UseSendTransactionReturn => {
     // Get the smart account client and query client from the useSmartAccount hook
     const { smartAccountClient, queryClient } = useSmartAccount();
 
@@ -145,7 +157,11 @@ export const useSendTransaction = (
 
     // Return the mutation object along with the sendTransaction and sendTransactionAsync functions
     return {
-        ...result,
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
         sendTransaction: mutate,
         sendTransactionAsync: mutateAsync,
     };

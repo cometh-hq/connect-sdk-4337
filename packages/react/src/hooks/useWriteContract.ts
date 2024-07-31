@@ -1,4 +1,4 @@
-import { useSmartAccount } from "@/hooks";
+import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type {
     Account,
@@ -18,7 +18,10 @@ import { type Abi, encodeFunctionData } from "viem";
 import type { GetAccountParameter } from "viem/_types/types/account";
 import type { Prettify } from "viem/chains";
 import type { UnionEvaluate } from "viem/types/utils";
-import type { MutationOptionsWithoutMutationFn } from "./types";
+import type {
+    MutationOptionsWithoutMutationFn,
+    QueryResultType,
+} from "./types";
 
 /**
  * @description A custom hook for writing to smart contracts through a smart account.
@@ -83,6 +86,26 @@ import type { MutationOptionsWithoutMutationFn } from "./types";
  *   that resolves to the transaction hash.
  */
 
+/**
+ * Type for the writeContract function.
+ * This function doesn't return a promise, suitable for fire-and-forget usage.
+ */
+export type WriteContractMutate = (variables: WriteContractParameters) => void;
+
+/**
+ * Type for the writeContractAsync function.
+ * This function returns a promise that resolves to the transaction hash.
+ */
+export type WriteContractMutateAsync = (
+    variables: WriteContractParameters
+) => Promise<Hash>;
+
+// Return type of the hook
+export type UseWriteContractReturn = QueryResultType & {
+    writeContract: WriteContractMutate;
+    writeContractAsync: WriteContractMutateAsync;
+};
+
 export type WriteContractParameters<
     abi extends Abi | readonly unknown[] = Abi,
     functionName extends ContractFunctionName<
@@ -125,7 +148,7 @@ export type WriteContractParameters<
 
 export const useWriteContract = (
     mutationProps?: MutationOptionsWithoutMutationFn
-) => {
+): UseWriteContractReturn => {
     const { smartAccountClient, queryClient } = useSmartAccount();
 
     const { mutate, mutateAsync, ...result } = useMutation(
@@ -159,7 +182,11 @@ export const useWriteContract = (
     );
 
     return {
-        ...result,
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
         writeContract: mutate,
         writeContractAsync: mutateAsync,
     };

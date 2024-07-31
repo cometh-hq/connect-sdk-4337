@@ -1,4 +1,4 @@
-export * from "@/hooks/useSmartAccount";
+export * from "@/hooks/useAccount";
 
 export * from "@/hooks/useSendTransaction";
 
@@ -9,6 +9,8 @@ export * from "@/hooks/useSendTransactionWithSessionKey";
 export * from "@/hooks/useWriteContractWithSessionKey";
 
 export * from "@/hooks/useConnect";
+
+export * from "@/hooks/useDisconnect";
 
 export * from "@/hooks/useOwners";
 
@@ -23,3 +25,5 @@ export * from "@/hooks/useGetGasPrice";
 export * from "@/hooks/useRetrieveAddressFromPasskey";
 
 export * from "@/hooks/useCreatePasskeySigner";
+
+export * from "@/hooks/useSignMessage";

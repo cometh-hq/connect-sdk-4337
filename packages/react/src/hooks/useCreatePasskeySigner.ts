@@ -4,15 +4,14 @@ import {
     createNewSigner,
     generateQRCodeUrl,
     serializeUrlWithSignerPayload,
+    type webAuthnOptions,
 } from "@cometh/connect-sdk-4337";
-import { useMutation } from "@tanstack/react-query";
-import type { UseMutationOptions } from "@tanstack/react-query";
-import type { Address } from "viem";
+import { useCallback, useState } from "react";
+import { useSmartAccount } from "./useSmartAccount";
 
 type CreateNewSignerParameters = {
-    smartAccountAddress: Address;
     passKeyName?: string;
-    encryptionSalt?: string;
+    webAuthnOptions?: webAuthnOptions;
 };
 
 type SerializeUrlParameters = {
@@ -67,82 +66,167 @@ type GenerateQRCodeUrlParameters = {
  *
  * @returns An object containing the mutation function and related properties.
  */
-export const useCreateNewSigner = (
-    apiKey: string,
-    baseUrl?: string,
-    mutationProps?: Omit<
-        UseMutationOptions<Signer, Error, CreateNewSignerParameters>,
-        "mutationFn"
-    >
-) => {
-    const { mutate, mutateAsync, ...result } = useMutation({
-        mutationFn: (variables: CreateNewSignerParameters): Promise<Signer> =>
-            createNewSigner(apiKey, baseUrl, variables),
-        ...mutationProps,
-    });
+export const useCreateNewSigner = (apiKey: string, baseUrl?: string) => {
+    const { queryClient } = useSmartAccount();
+    const [isPending, setIsPending] = useState(false);
+    const [error, setError] = useState<Error | null>(null);
+
+    const createSigner = useCallback(
+        (params: CreateNewSignerParameters = {}) => {
+            setIsPending(true);
+            setError(null);
+            createNewSigner(apiKey, baseUrl, params)
+                .then((signer) => {
+                    queryClient?.invalidateQueries({ queryKey: ["signer"] });
+                    return signer;
+                })
+                .catch((e) => {
+                    const err =
+                        e instanceof Error ? e : new Error("An error occurred");
+                    setError(err);
+                })
+                .finally(() => {
+                    setIsPending(false);
+                });
+        },
+        [apiKey, baseUrl, queryClient]
+    );
+
+    const createSignerAsync = useCallback(
+        async (params: CreateNewSignerParameters = {}) => {
+            setIsPending(true);
+            setError(null);
+            try {
+                const signer = await createNewSigner(apiKey, baseUrl, params);
+                queryClient?.invalidateQueries({ queryKey: ["signer"] });
+                return signer;
+            } catch (e) {
+                const err =
+                    e instanceof Error ? e : new Error("An error occurred");
+                setError(err);
+                throw err;
+            } finally {
+                setIsPending(false);
+            }
+        },
+        [apiKey, baseUrl, queryClient]
+    );
 
     return {
-        ...result,
-        createSigner: mutate,
-        createSignerAsync: mutateAsync,
+        createSigner,
+        createSignerAsync,
+        isPending,
+        error,
     };
 };
 
-/**
- * Hook for serializing URL with signer payload
- *
- * @param mutationProps - Optional mutation properties from @tanstack/react-query
- *
- * @returns An object containing the mutation function and related properties.
- */
-export const useSerializeUrlWithSignerPayload = (
-    mutationProps?: Omit<
-        UseMutationOptions<URL, Error, SerializeUrlParameters>,
-        "mutationFn"
-    >
-) => {
-    const { mutate, mutateAsync, ...result } = useMutation({
-        mutationFn: ({
-            validationPageUrl,
-            signerPayload,
-        }: SerializeUrlParameters): Promise<URL> =>
-            serializeUrlWithSignerPayload(validationPageUrl, signerPayload),
-        ...mutationProps,
-    });
+export const useSerializeUrlWithSignerPayload = () => {
+    const [isPending, setIsPending] = useState(false);
+    const [error, setError] = useState<Error | null>(null);
+
+    const serializeUrl = useCallback((params: SerializeUrlParameters) => {
+        setIsPending(true);
+        setError(null);
+        serializeUrlWithSignerPayload(
+            params.validationPageUrl,
+            params.signerPayload
+        )
+            .then((url) => {
+                return url;
+            })
+            .catch((e) => {
+                const err =
+                    e instanceof Error ? e : new Error("An error occurred");
+                setError(err);
+            })
+            .finally(() => {
+                setIsPending(false);
+            });
+    }, []);
+
+    const serializeUrlAsync = useCallback(
+        async (params: SerializeUrlParameters) => {
+            setIsPending(true);
+            setError(null);
+            try {
+                return await serializeUrlWithSignerPayload(
+                    params.validationPageUrl,
+                    params.signerPayload
+                );
+            } catch (e) {
+                const err =
+                    e instanceof Error ? e : new Error("An error occurred");
+                setError(err);
+                throw err;
+            } finally {
+                setIsPending(false);
+            }
+        },
+        []
+    );
 
     return {
-        ...result,
-        serializeUrl: mutate,
-        serializeUrlAsync: mutateAsync,
+        serializeUrl,
+        serializeUrlAsync,
+        isPending,
+        error,
     };
 };
 
-/**
- * Hook for generating QR code URL
- *
- * @param mutationProps - Optional mutation properties from @tanstack/react-query
- *
- * @returns An object containing the mutation function and related properties.
- */
-export const useGenerateQRCodeUrl = (
-    mutationProps?: Omit<
-        UseMutationOptions<string, Error, GenerateQRCodeUrlParameters>,
-        "mutationFn"
-    >
-) => {
-    const { mutate, mutateAsync, ...result } = useMutation({
-        mutationFn: ({
-            validationPageUrl,
-            signerPayload,
-            options,
-        }: GenerateQRCodeUrlParameters): Promise<string> =>
-            generateQRCodeUrl(validationPageUrl, signerPayload, options),
-        ...mutationProps,
-    });
+export const useGenerateQRCodeUrl = () => {
+    const [isPending, setIsPending] = useState(false);
+    const [error, setError] = useState<Error | null>(null);
+
+    const generateQRCode = useCallback(
+        (params: GenerateQRCodeUrlParameters) => {
+            setIsPending(true);
+            setError(null);
+            generateQRCodeUrl(
+                params.validationPageUrl,
+                params.signerPayload,
+                params.options
+            )
+                .then((qrCodeUrl) => {
+                    return qrCodeUrl;
+                })
+                .catch((e) => {
+                    const err =
+                        e instanceof Error ? e : new Error("An error occurred");
+                    setError(err);
+                })
+                .finally(() => {
+                    setIsPending(false);
+                });
+        },
+        []
+    );
+
+    const generateQRCodeAsync = useCallback(
+        async (params: GenerateQRCodeUrlParameters) => {
+            setIsPending(true);
+            setError(null);
+            try {
+                return await generateQRCodeUrl(
+                    params.validationPageUrl,
+                    params.signerPayload,
+                    params.options
+                );
+            } catch (e) {
+                const err =
+                    e instanceof Error ? e : new Error("An error occurred");
+                setError(err);
+                throw err;
+            } finally {
+                setIsPending(false);
+            }
+        },
+        []
+    );
 
     return {
-        ...result,
-        generateQRCode: mutate,
-        generateQRCodeAsync: mutateAsync,
+        generateQRCode,
+        generateQRCodeAsync,
+        isPending,
+        error,
     };
 };

@@ -1,4 +1,5 @@
 import { createSmartAccount } from "@/actions/createSmartAccount";
+import type { ConnectParameters } from "@/hooks/useConnect";
 import type {
     ComethSmartAccountClient,
     SafeSmartAccount,
@@ -30,10 +31,11 @@ type ContextComethSmartAccountClient = ComethSmartAccountClient<
 >;
 
 export type ConnectContextPayload = {
-    queryClient: QueryClient | undefined;
+    queryClient?: QueryClient;
     smartAccountClient: ContextComethSmartAccountClient | null;
     smartAccountAddress: Address | undefined;
-    updateSmartAccountClient: (address?: Address) => Promise<void>;
+    updateSmartAccountClient: (params?: ConnectParameters) => Promise<void>;
+    disconnectSmartAccount: () => Promise<void>;
 };
 
 export const ConnectContext = createContext<ConnectContextPayload>({
@@ -41,6 +43,7 @@ export const ConnectContext = createContext<ConnectContextPayload>({
     smartAccountClient: null,
     smartAccountAddress: undefined,
     updateSmartAccountClient: async () => {},
+    disconnectSmartAccount: async () => {},
 });
 
 export const ConnectProvider = <
@@ -62,20 +65,30 @@ export const ConnectProvider = <
     >(undefined);
 
     const updateSmartAccountClient = useCallback(
-        async (address?: Address) => {
+        async (params: ConnectParameters = {}) => {
             const { client, address: newAddress } = await createSmartAccount({
                 ...config,
-                smartAccountAddress: address,
+                smartAccountAddress: params.address,
+                comethSignerConfig: {
+                    ...config.comethSignerConfig,
+                    passKeyName: params.passKeyName,
+                },
             });
+
             setSmartAccountClient(client);
             setSmartAccountAddress(newAddress);
         },
         [config]
     );
 
+    const disconnectSmartAccount = useCallback(async () => {
+        setSmartAccountClient(null);
+        setSmartAccountAddress(undefined);
+    }, []);
+
     useEffect(() => {
         if (config.smartAccountAddress) {
-            updateSmartAccountClient(config.smartAccountAddress);
+            updateSmartAccountClient({ address: config.smartAccountAddress });
         }
     }, [config.smartAccountAddress, updateSmartAccountClient]);
 
@@ -85,12 +98,14 @@ export const ConnectProvider = <
             smartAccountClient,
             smartAccountAddress,
             updateSmartAccountClient,
+            disconnectSmartAccount,
         }),
         [
             queryClient,
             smartAccountClient,
             smartAccountAddress,
             updateSmartAccountClient,
+            disconnectSmartAccount,
         ]
     );
 
