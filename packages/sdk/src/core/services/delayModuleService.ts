@@ -1,3 +1,4 @@
+import { SENTINEL_MODULES } from "@/constants";
 import {
     http,
     type Address,
@@ -215,6 +216,30 @@ const encodeDeployDelayModule = ({
     });
 };
 
+const getGuardianAddress = async ({
+    delayAddress,
+    chain,
+    rpcUrl,
+}: {
+    delayAddress: Address;
+    chain: Chain;
+    rpcUrl?: string;
+}): Promise<Address> => {
+    const client = createPublicClient({
+        chain: chain,
+        transport: http(rpcUrl),
+    });
+
+    const modulesPaginated = await client.readContract({
+        address: delayAddress,
+        abi: delayModuleABI,
+        functionName: "getModulesPaginated",
+        args: [SENTINEL_MODULES, 1n],
+    });
+
+    return modulesPaginated[0][0];
+};
+
 export default {
     getDelayAddress,
     isDeployed,
@@ -223,4 +248,5 @@ export default {
     isQueueEmpty,
     setUpDelayModule,
     encodeDeployDelayModule,
+    getGuardianAddress,
 };

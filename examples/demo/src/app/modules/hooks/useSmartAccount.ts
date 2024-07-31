@@ -86,6 +86,8 @@ export function useSmartAccount() {
                 ownerToAdd: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
             }); */
 
+            const recoveryDetails = await smartAccountClient.isRecoveryActive({ rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public"});
+
             const owners = await smartAccountClient.getOwners();
 
             const enrichedOwners = await smartAccountClient.getEnrichedOwners();

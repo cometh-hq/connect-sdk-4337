@@ -47,14 +47,19 @@ export type WebAuthnSigner = {
     creationDate?: Date;
 };
 
-export type WalletInfos = {
-    chainId: string;
-    address: Address;
-    creationDate: Date;
-    initiatorAddress: Address;
+export enum WebauthnVersion {
+    V1 = "v1.0",
+}
+
+export type WebAuthnDeploymentParams = {
+    version: WebauthnVersion;
+    safeWebAuthnSharedSignerAddress: string;
+    safeWebAuthnSignerFactory: string;
+    safeWebAuthnSignerSingleton: string;
+    verifier: string;
 };
 
-export enum NewSignerRequestType {
+export enum SignerType {
     WEBAUTHN = "WEBAUTHN",
     FALLBACK_WALLET = "FALLBACK_WALLET",
 }
@@ -65,4 +70,18 @@ export type Signer = {
     publicKeyId?: Hex;
     publicKeyX?: Hex;
     publicKeyY?: Hex;
+};
+
+export type RecoveryRequest = {
+    projectId: string;
+    chainId: string;
+    walletAddress: string;
+    signerAddress: string;
+    deviceData: DeviceData;
+    type: SignerType;
+    publicKeyId?: string;
+    publicKeyX?: string;
+    publicKeyY?: string;
+    deploymentParams?: WebAuthnDeploymentParams;
+    creationDate?: Date;
 };

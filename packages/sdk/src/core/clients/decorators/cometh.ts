@@ -12,6 +12,11 @@ import {
     validateAddDevice,
 } from "@/core/actions/accounts/safe/owners/addDeviceActions.js";
 import {
+    type IsRecoveryActiveParams,
+    type IsRecoveryActiveReturnType,
+    isRecoveryActive,
+} from "@/core/actions/accounts/safe/recovery/isRecoveryActive";
+import {
     type SetUpRecoveryModuleParams,
     setUpRecoveryModule,
 } from "@/core/actions/accounts/safe/recovery/setUpRecoveryModule";
@@ -44,6 +49,11 @@ export type ComethClientActions<
             typeof setUpRecoveryModule<entryPoint, TTransport, TChain, TAccount>
         >[1]
     ) => Promise<Hash>;
+    isRecoveryActive: <TTransport extends Transport>(
+        args: Parameters<
+            typeof isRecoveryActive<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<IsRecoveryActiveReturnType>;
     verifySignature: <TTransport extends Transport>(
         args: Parameters<
             typeof verifySignature<entryPoint, TTransport, TChain, TAccount>
@@ -102,6 +112,11 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                     middleware,
                 } as SetUpRecoveryModuleParams<entryPoint>
             ),
+        isRecoveryActive: (args) =>
+            isRecoveryActive<entryPoint, TTransport, TChain, TAccount>(client, {
+                ...args,
+                middleware,
+            } as IsRecoveryActiveParams<entryPoint>),
         verifySignature: (args) =>
             verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {
                 ...args,
