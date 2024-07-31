@@ -29,6 +29,7 @@ export interface QRCodeOptions {
 type CreateNewSignerParams = {
     webAuthnOptions?: webAuthnOptions;
     passKeyName?: string;
+    encryptionSalt?: string;
 };
 
 const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
@@ -71,20 +72,12 @@ export const createNewSignerWithAccountAddress = async (
     apiKey: string,
     baseUrl: string | undefined,
     smartAccountAddress: Address,
-    {
-        webAuthnOptions,
-        passKeyName,
-        encryptionSalt,
-    }: {
-        webAuthnOptions: webAuthnOptions;
-        passKeyName?: string;
-        encryptionSalt?: string;
-    }
+    params: CreateNewSignerParams = {}
 ): Promise<Signer> => {
     const api = new API(apiKey, baseUrl);
     const { signer, localPrivateKey } = await _createNewSigner(api, {
-        passKeyName,
-        webAuthnOptions,
+        passKeyName: params.passKeyName,
+        webAuthnOptions:params.webAuthnOptions,
     });
 
     if (signer.publicKeyId) {
@@ -106,7 +99,7 @@ export const createNewSignerWithAccountAddress = async (
         encryptSignerInStorage(
             smartAccountAddress,
             localPrivateKey as Hex,
-            encryptionSalt
+            params.encryptionSalt
         );
     }
     return signer;
