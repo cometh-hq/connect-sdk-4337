@@ -1,10 +1,5 @@
 import type { ProjectParams, Wallet } from "@/core/accounts/safe/types";
-import type {
-    DeviceData,
-    RecoveryRequest,
-    SignerType,
-    WebAuthnSigner,
-} from "@/core/types";
+import type { DeviceData, WebAuthnSigner } from "@/core/types";
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
@@ -147,56 +142,5 @@ export class API {
             body
         );
         return response?.data?.result;
-    }
-
-    /**
-     * Recovery request Section
-     */
-
-    async createRecoveryRequest({
-        walletAddress,
-        signerAddress,
-        deviceData,
-        type,
-        publicKeyX,
-        publicKeyY,
-        publicKeyId,
-    }: {
-        walletAddress: string;
-        signerAddress: string;
-        deviceData: DeviceData;
-        type: SignerType;
-        publicKeyId?: string;
-        publicKeyX?: string;
-        publicKeyY?: string;
-    }): Promise<void> {
-        const body = {
-            walletAddress,
-            signerAddress,
-            deviceData,
-            type,
-            publicKeyX,
-            publicKeyY,
-            publicKeyId,
-        };
-        await this.api.post("/recovery-request", body);
-    }
-
-    async getRecoveryRequests(
-        walletAddress: string
-    ): Promise<RecoveryRequest[] | null> {
-        const response = await this.api.get(
-            `/new-signer-request/${walletAddress}`
-        );
-
-        return response.data.signerRequests;
-    }
-
-    async deleteRecoveryRequest({
-        signerAddress,
-    }: {
-        signerAddress: string;
-    }): Promise<void> {
-        await this.api.delete(`/recovery-request/${signerAddress}`);
     }
 }

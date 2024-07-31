@@ -2,15 +2,15 @@
 
 import React, { useState } from "react";
 
+import { createRecoveryRequest } from "@cometh/connect-sdk-4337";
 import { api } from "../../api";
 import ConnectWallet from "./components/ConnectWallet";
 import Transaction from "./components/Transaction";
 import { useSmartAccount } from "./modules/hooks/useSmartAccount";
-import {  createRecoveryRequest } from "@cometh/connect-sdk-4337";
 
-const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY
-const apiKeySecret = process.env.NEXT_PUBLIC_COMETH_API_SECRET
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
+const apiKeySecret = process.env.NEXT_PUBLIC_COMETH_API_SECRET;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function App() {
     const {
@@ -47,7 +47,11 @@ export default function App() {
 
     const startRecovery = async () => {
         try {
-            const signer = await createRecoveryRequest(apiKey!, baseUrl!, smartAccount.account?.address);
+            const signer = await createRecoveryRequest(
+                apiKey!,
+                baseUrl!,
+                smartAccount.account?.address
+            );
             console.log({ signer });
 
             const body = {
@@ -96,7 +100,7 @@ export default function App() {
 
                                 <button onClick={setUpRecovery}>
                                     Set up recovery
-                                </button>       
+                                </button>
 
                                 <button onClick={startRecovery}>
                                     Start recovery
