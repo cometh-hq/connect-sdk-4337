@@ -40,7 +40,7 @@ export function useSmartAccount() {
 
             let smartAccount;
 
-            const baseUrl = "http://127.0.0.1:8000/connect";
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({

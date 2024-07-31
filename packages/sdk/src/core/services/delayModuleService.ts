@@ -117,8 +117,18 @@ const createSetTxNonceFunction = async (
 
 const getCurrentRecoveryParams = async (
     delayModuleAddress: Address,
-    client: PublicClient
+    chain: Chain,
+    rpcUrl?: string
 ): Promise<RecoveryParamsResponse> => {
+    const client = createPublicClient({
+        chain,
+        transport: http(rpcUrl),
+        cacheTime: 60_000,
+        batch: {
+            multicall: { wait: 50 },
+        },
+    });
+
     const txNonce = await client.readContract({
         address: delayModuleAddress,
         abi: delayModuleABI,

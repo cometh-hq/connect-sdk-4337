@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 
-import { createRecoveryRequest } from "@cometh/connect-sdk-4337";
+import { createNewSignerWithAccountAddress } from "@cometh/connect-sdk-4337";
 import { api } from "../../api";
 import ConnectWallet from "./components/ConnectWallet";
 import Transaction from "./components/Transaction";
@@ -47,7 +47,7 @@ export default function App() {
 
     const startRecovery = async () => {
         try {
-            const signer = await createRecoveryRequest(
+            const signer = await createNewSignerWithAccountAddress(
                 apiKey!,
                 baseUrl!,
                 smartAccount.account?.address
@@ -64,6 +64,17 @@ export default function App() {
             console.log(e);
         }
     };
+
+    const finalizeRecovery = async () => {
+        try {
+            const body = { walletAddress: smartAccount.account?.address };
+            await api.post(`/recovery/finalize`, body);
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+   
 
     return (
         <div
@@ -104,6 +115,10 @@ export default function App() {
 
                                 <button onClick={startRecovery}>
                                     Start recovery
+                                </button>
+
+                                <button onClick={finalizeRecovery}>
+                                    Finalize recovery
                                 </button>
                             </>
                         )}
