@@ -5,7 +5,7 @@ import type { Hash } from "viem";
 import type {
     MutationOptionsWithoutMutationFn,
     QueryResultType,
-} from "./types";
+} from "./../types";
 
 /**
  * Props for the useValidateAddDevice hook.

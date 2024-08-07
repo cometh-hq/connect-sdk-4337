@@ -1,6 +1,5 @@
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import delayModuleService from "@/core/services/delayModuleService";
-import type { Middleware } from "permissionless/actions/smartAccount";
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
@@ -13,9 +12,9 @@ import {
     createPublicClient,
 } from "viem";
 
-export type IsRecoveryActiveParams<entryPoint extends EntryPoint> = {
+export type IsRecoveryActiveParams = {
     rpcUrl?: string;
-} & Middleware<entryPoint>;
+};
 
 export type IsRecoveryActiveReturnType = {
     isDelayModuleDeployed: boolean;
@@ -33,7 +32,7 @@ export async function isRecoveryActive<
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<IsRecoveryActiveParams<entryPoint>> = {}
+    args: Prettify<IsRecoveryActiveParams> = {}
 ): Promise<IsRecoveryActiveReturnType> {
     const { rpcUrl } = args;
 

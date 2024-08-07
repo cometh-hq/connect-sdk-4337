@@ -1,10 +1,7 @@
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import delayModuleService from "@/core/services/delayModuleService";
 import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
-import {
-    type Middleware,
-    sendTransactions,
-} from "permissionless/actions/smartAccount";
+import { sendTransactions } from "permissionless/actions/smartAccount";
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
@@ -22,11 +19,11 @@ import {
 } from "viem";
 import { getAction } from "viem/utils";
 
-export type SetUpRecoveryModuleParams<entryPoint extends EntryPoint> = {
+export type SetUpRecoveryModuleParams = {
     passKeyName?: string;
     webAuthnOptions?: webAuthnOptions;
     rpcUrl?: string;
-} & Middleware<entryPoint>;
+};
 
 export async function setUpRecoveryModule<
     entryPoint extends EntryPoint,
@@ -39,9 +36,9 @@ export async function setUpRecoveryModule<
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<SetUpRecoveryModuleParams<entryPoint>>
+    args: Prettify<SetUpRecoveryModuleParams>
 ): Promise<Hex> {
-    const { rpcUrl, middleware } = args;
+    const { rpcUrl } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
@@ -129,7 +126,7 @@ export async function setUpRecoveryModule<
         "sendTransactions"
     )({
         transactions: setUpDelayTx,
-        middleware,
+        middleware: {},
     } as unknown as SendTransactionsWithPaymasterParameters<
         entryPoint,
         TAccount

@@ -120,13 +120,13 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware,
-                } as SetUpRecoveryModuleParams<entryPoint>
+                } as SetUpRecoveryModuleParams
             ),
         isRecoveryActive: (args) =>
             isRecoveryActive<entryPoint, TTransport, TChain, TAccount>(client, {
                 ...args,
                 middleware,
-            } as IsRecoveryActiveParams<entryPoint>),
+            } as IsRecoveryActiveParams),
 
         getRecoveryRequest: (args) =>
             getRecoveryRequest<entryPoint, TTransport, TChain, TAccount>(
@@ -134,7 +134,7 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware,
-                } as GetRecoveryRequestParams<entryPoint>
+                } as GetRecoveryRequestParams
             ),
         verifySignature: (args) =>
             verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {

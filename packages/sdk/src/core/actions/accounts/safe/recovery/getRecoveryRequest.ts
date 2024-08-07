@@ -2,7 +2,6 @@ import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccou
 import delayModuleService, {
     type RecoveryParamsResponse,
 } from "@/core/services/delayModuleService";
-import type { Middleware } from "permissionless/actions/smartAccount";
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
@@ -15,9 +14,9 @@ import {
     createPublicClient,
 } from "viem";
 
-export type GetRecoveryRequestParams<entryPoint extends EntryPoint> = {
+export type GetRecoveryRequestParams = {
     rpcUrl?: string;
-} & Middleware<entryPoint>;
+};
 
 export async function getRecoveryRequest<
     entryPoint extends EntryPoint,
@@ -30,7 +29,7 @@ export async function getRecoveryRequest<
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<GetRecoveryRequestParams<entryPoint>> = {}
+    args: Prettify<GetRecoveryRequestParams> = {}
 ): Promise<RecoveryParamsResponse | undefined> {
     const { rpcUrl } = args;
 
@@ -83,13 +82,11 @@ export async function getRecoveryRequest<
         rpcUrl
     );
 
-    if (isRecoveryQueueEmpty) {
-        return undefined;
-    } else {
-        return await delayModuleService.getCurrentRecoveryParams(
-            delayAddress,
-            client.chain as Chain,
-            rpcUrl
-        );
-    }
+    if (isRecoveryQueueEmpty) return undefined;
+
+    return await delayModuleService.getCurrentRecoveryParams(
+        delayAddress,
+        client.chain as Chain,
+        rpcUrl
+    );
 }
