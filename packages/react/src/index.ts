@@ -10,8 +10,10 @@ import {
     useGetEnrichedOwners,
     useGetGasPrice,
     useGetOwners,
+    useGetRecoveryRequest,
     useGetSessionFromAddress,
     useIsAddressWhitelistDestination,
+    useIsRecoveryActive,
     useRemoveOwner,
     useRemoveWhitelistDestination,
     useRetrieveAccountAddressFromPasskeyId,
@@ -20,6 +22,7 @@ import {
     useSendTransaction,
     useSendTransactionWithSessionKey,
     useSerializeUrlWithSignerPayload,
+    useSetUpRecovery,
     useSignMessage,
     useValidateAddDevice,
     useVerifyMessage,
@@ -77,6 +80,9 @@ export {
     useRetrieveAccountAddressFromPasskeyId,
     useRetrieveAccountAddressFromPasskeys,
     useSignMessage,
+    useSetUpRecovery,
+    useIsRecoveryActive,
+    useGetRecoveryRequest,
 };
 
 export type {

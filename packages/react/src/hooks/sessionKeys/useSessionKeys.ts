@@ -6,7 +6,7 @@ import type {
     UseQueryOptions,
 } from "@tanstack/react-query";
 import type { Address, Hash } from "viem";
-import type { QueryResultType } from "./types";
+import type { QueryResultType } from "./../types";
 
 type AddSessionKeyParameters = AddSessionKeyParams;
 

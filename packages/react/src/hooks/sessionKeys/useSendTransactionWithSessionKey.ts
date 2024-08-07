@@ -5,7 +5,7 @@ import type {
     MutationOptionsWithoutMutationFn,
     QueryResultType,
     Transaction,
-} from "./types";
+} from "./../types";
 
 /**
  * Props for the useSendTransactionWithSessionKey hook.
