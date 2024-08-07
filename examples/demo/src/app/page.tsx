@@ -37,10 +37,7 @@ export default function App() {
 
     const setUpRecovery = async () => {
         try {
-            /* const hash = await smartAccount.setUpRecoveryModule();
-            console.log({ hash }); */
-            const req = await smartAccount.isRecoveryActive();
-            console.log({ req });
+            await smartAccount.setUpRecoveryModule();
         } catch (e) {
             console.log(e);
         }
@@ -71,9 +68,7 @@ export default function App() {
 
     const finalizeRecovery = async () => {
         try {
-            const body = {
-                walletAddress: "0x270a85c35ce49df36ec9B5ab14E02AA5D720227c",
-            };
+            const body = { walletAddress: "0x597799919400404bfd75D95375BB5136EB2883D8" };
             await api.post(`/recovery/finalize`, body);
         } catch (e) {
             console.log(e);
