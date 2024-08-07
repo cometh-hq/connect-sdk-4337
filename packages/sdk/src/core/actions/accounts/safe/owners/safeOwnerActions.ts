@@ -30,7 +30,7 @@ export type SafeOwnerPluginActions = {
     addOwner: (args: { ownerToAdd: Address }) => Promise<Hash>;
     removeOwner: (args: { ownerToRemove: Address }) => Promise<Hash>;
     getOwners: () => Promise<readonly Address[]>;
-    getEnrichedOwners: () => Promise<EnrichedOwner | EnrichedOwner[]>;
+    getEnrichedOwners: () => Promise<EnrichedOwner[]>;
 };
 
 export const safeOwnerPluginActions =
@@ -164,11 +164,11 @@ export const safeOwnerPluginActions =
                 )) as WebAuthnSigner[];
 
             if (!isDeployed)
-                return {
+                return [{
                     address: webAuthnSigners[0].signerAddress as Address,
                     deviceData: webAuthnSigners[0].deviceData,
                     creationDate: webAuthnSigners[0].creationDate,
-                };
+                }];
 
             const owners = (await publicClient.readContract({
                 address: client.account?.address as Address,
@@ -176,7 +176,7 @@ export const safeOwnerPluginActions =
                 functionName: "getOwners",
             })) as Address[];
 
-            const enrichedOwners = owners.map((owner) => {
+            const enrichedOwners: EnrichedOwner[] = owners.map((owner) => {
                 const webauthSigner = webAuthnSigners.find(
                     (webauthnSigner) => webauthnSigner.signerAddress === owner
                 );

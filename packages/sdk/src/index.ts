@@ -18,7 +18,6 @@ import {
     retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
-import { createRecoveryRequest } from "./core/actions/accounts/safe/recovery/createRecoveryRequest";
 import type {
     AddSessionKeyParams,
     Session,
@@ -41,7 +40,6 @@ export {
     retrieveAccountAddressFromPasskeyId,
     createNewSigner,
     createNewSignerWithAccountAddress,
-    createRecoveryRequest,
     serializeUrlWithSignerPayload,
     generateQRCodeUrl,
     createComethPaymasterClient,
