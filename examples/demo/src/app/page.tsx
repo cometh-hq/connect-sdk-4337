@@ -54,11 +54,11 @@ export default function App() {
 
             const body = {
                 walletAddress: smartAccount.account?.address,
-                newOwner : signer.signerAddress,
+                newOwner: signer.signerAddress,
                 publicKeyId: signer.publicKeyId,
                 publicKeyX: signer.publicKeyX,
                 publicKeyY: signer.publicKeyY,
-                deviceData:signer.deviceData
+                deviceData: signer.deviceData,
             };
 
             await api.post("/recovery/start", body);
@@ -69,16 +69,14 @@ export default function App() {
 
     const finalizeRecovery = async () => {
         try {
-            const body = { walletAddress: "0x597799919400404bfd75D95375BB5136EB2883D8" };
+            const body = {
+                walletAddress: "0x597799919400404bfd75D95375BB5136EB2883D8",
+            };
             await api.post(`/recovery/finalize`, body);
         } catch (e) {
             console.log(e);
         }
     };
-
-
-
-   
 
     return (
         <div
@@ -120,15 +118,12 @@ export default function App() {
                                 <button onClick={startRecovery}>
                                     Start recovery
                                 </button>
-
-                             
                             </>
                         )}
 
-                                <button onClick={finalizeRecovery}>
-                                    Finalize recovery
-                                </button>
-
+                        <button onClick={finalizeRecovery}>
+                            Finalize recovery
+                        </button>
                     </div>
                 </div>
             </div>
