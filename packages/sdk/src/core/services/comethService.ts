@@ -32,7 +32,6 @@ export const connectToExistingWallet = async ({
 }: { api: API; smartAccountAddress: Address }): Promise<void> => {
     {
         const storedWallet = await api.getWallet(smartAccountAddress);
-
         if (!storedWallet) throw new Error("Wallet not found");
     }
 };

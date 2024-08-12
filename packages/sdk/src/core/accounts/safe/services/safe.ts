@@ -137,46 +137,55 @@ export const getSetUpData = ({
     safeWebAuthnSharedSignerContractAddress: Address;
     safeP256VerifierAddress: Address;
 }) => {
-    const enableModuleCallData = encodeFunctionData({
-        abi: EnableModuleAbi,
-        functionName: "enableModules",
-        args: [modules],
-    });
-
-    if (comethSigner.type === "passkey") {
-        const sharedSignerConfigCallData = encodeFunctionData({
-            abi: SafeWebAuthnSharedSignerAbi,
-            functionName: "configure",
-            args: [
-                {
-                    x: hexToBigInt(comethSigner.passkey.pubkeyCoordinates.x),
-                    y: hexToBigInt(comethSigner.passkey.pubkeyCoordinates.y),
-                    verifiers: hexToBigInt(safeP256VerifierAddress),
-                },
-            ],
+    try {
+        const enableModuleCallData = encodeFunctionData({
+            abi: EnableModuleAbi,
+            functionName: "enableModules",
+            args: [modules],
         });
 
-        return encodeFunctionData({
-            abi: MultiSendContractABI,
-            functionName: "multiSend",
-            args: [
-                encodeMultiSendTransactions([
+        if (comethSigner.type === "passkey") {
+            const sharedSignerConfigCallData = encodeFunctionData({
+                abi: SafeWebAuthnSharedSignerAbi,
+                functionName: "configure",
+                args: [
                     {
-                        op: 1 as const,
-                        to: setUpContractAddress,
-                        data: enableModuleCallData,
+                        x: hexToBigInt(
+                            comethSigner.passkey.pubkeyCoordinates.x
+                        ),
+                        y: hexToBigInt(
+                            comethSigner.passkey.pubkeyCoordinates.y
+                        ),
+                        verifiers: hexToBigInt(safeP256VerifierAddress),
                     },
-                    {
-                        op: 1 as const,
-                        to: safeWebAuthnSharedSignerContractAddress,
-                        data: sharedSignerConfigCallData,
-                    },
-                ]),
-            ],
-        });
+                ],
+            });
+
+            return encodeFunctionData({
+                abi: MultiSendContractABI,
+                functionName: "multiSend",
+                args: [
+                    encodeMultiSendTransactions([
+                        {
+                            op: 1 as const,
+                            to: setUpContractAddress,
+                            data: enableModuleCallData,
+                        },
+                        {
+                            op: 1 as const,
+                            to: safeWebAuthnSharedSignerContractAddress,
+                            data: sharedSignerConfigCallData,
+                        },
+                    ]),
+                ],
+            });
+        }
+
+        return enableModuleCallData;
+    } catch (err) {
+        console.log(err);
+        return "0x";
     }
-
-    return enableModuleCallData;
 };
 
 /**
@@ -254,18 +263,13 @@ export async function executeTransaction(
         operation: number;
     }
 ): Promise<Hash> {
-    console.log("yo");
     const nonce = (await publicClient.readContract({
         address: safeAddress,
         abi: SafeAbi,
         functionName: "nonce",
     })) as number;
 
-    console.log({ nonce });
-
     const gasPrice = await getGasPrice(publicClient, DEFAULT_REWARD_PERCENTILE);
-
-    console.log({ gasPrice });
 
     const fullTx = {
         ...tx,
@@ -276,8 +280,6 @@ export async function executeTransaction(
         refundReceiver: getAddress(zeroAddress),
         nonce: BigInt(nonce),
     };
-
-    console.log({ fullTx });
 
     const signerAddress = getAddress(walletClient.account?.address!) as Address;
     const chainId = await publicClient.getChainId();
@@ -292,8 +294,6 @@ export async function executeTransaction(
         message: fullTx,
         account: signerAddress,
     });
-
-    console.log({ signature });
 
     const { request } = await publicClient.simulateContract({
         account: signerAddress,
@@ -313,8 +313,6 @@ export async function executeTransaction(
             signature,
         ],
     });
-
-    console.log({ request });
 
     const txHash = await walletClient.writeContract(request);
     await publicClient.waitForTransactionReceipt({ hash: txHash });

@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex } from "viem";
-import { arbitrumSepolia } from "viem/chains";
+import { arbitrumSepolia, polygon } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -42,10 +42,12 @@ export function useSmartAccount() {
 
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
+            console.log({ baseUrl });
+
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                    //rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -53,7 +55,7 @@ export function useSmartAccount() {
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                    //rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                 });
@@ -63,24 +65,30 @@ export function useSmartAccount() {
                 );
             }
 
-            const paymasterClient = await createComethPaymasterClient({
+            console.log({ smartAccount });
+
+            /* const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
+                chain: polygon,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                //rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
+
+            console.log({paymasterClient}) */
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain: arbitrumSepolia,
+                chain: polygon,
                 bundlerTransport: http(bundlerUrl),
-                middleware: {
+                /*   middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
-                },
-                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                }, */
+                //rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
+
+            console.log({ smartAccountClient });
 
             /*  await smartAccountClient.addOwner({
                 ownerToAdd: "0x53011E110CAd8685F4911508B4E2413f526Df73E",

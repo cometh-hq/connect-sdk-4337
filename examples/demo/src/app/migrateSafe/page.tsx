@@ -1,13 +1,12 @@
 "use client";
 
-import { migrateSafeV3toV4, importSafe } from "@cometh/connect-sdk-4337";
+import { importSafe, migrateSafeV3toV4 } from "@cometh/connect-sdk-4337";
 import { createWalletClient, custom } from "viem";
 import { polygon } from "viem/chains";
 
 export default function App() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-
 
     const migrateSafe = async () => {
         const [account] = await (window as any).ethereum!.request({
@@ -42,10 +41,10 @@ export default function App() {
             apiKey,
             walletClient,
             safeAddress: "0x1f116831295062Ef1e854E4DCd5D16aDbCAe2cf6",
-            baseUrl
+            baseUrl,
         });
 
-        console.log({hash})
+        console.log({ hash });
     };
 
     return (
