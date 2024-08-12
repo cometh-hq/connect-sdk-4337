@@ -16,6 +16,7 @@ import {
     retrieveAccountAddressFromPasskeyId,
     retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
+import { importSafe } from "./core/actions/accounts/safe/importSafe";
 import { migrateSafeV3toV4 } from "./core/actions/accounts/safe/migrateSafe";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type { CancelRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/cancelRecoveryRequest";
@@ -53,6 +54,7 @@ export {
     createComethPaymasterClient,
     smartAccountConnector,
     migrateSafeV3toV4,
+    importSafe,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
 };

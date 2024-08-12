@@ -53,6 +53,33 @@ export class API {
         await this.api.post("/wallet", body);
     }
 
+    async importExternalSafe({
+        smartAccountAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        deviceData,
+        signerAddress,
+    }: {
+        smartAccountAddress: Address;
+        publicKeyId?: Hex;
+        publicKeyX?: Hex;
+        publicKeyY?: Hex;
+        deviceData: DeviceData;
+        signerAddress: Address;
+    }) {
+        const body = {
+            walletAddress: smartAccountAddress,
+            signerAddress,
+            publicKeyId,
+            publicKeyX,
+            publicKeyY,
+            deviceData,
+        };
+
+        await this.api.post("/wallet/import", body);
+    }
+
     /**
      * WebAuthn Section
      */
