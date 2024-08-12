@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex } from "viem";
-import { arbitrumSepolia } from "viem/chains";
+import { arbitrumSepolia, polygon } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -75,23 +75,31 @@ export function useSmartAccount() {
                 );
             }
 
-            const paymasterClient = await createComethPaymasterClient({
+            console.log({ smartAccount });
+
+            /* const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
+                chain: polygon,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
                 rpcUrl,
             });
 
+            console.log({paymasterClient}) */
+
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain: arbitrumSepolia,
+                chain: polygon,
                 bundlerTransport: http(bundlerUrl),
-                middleware: {
+                /*   middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
                 },
                 rpcUrl,
+            });
+
+                }, */
+                //rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
 
             setSmartAccount(smartAccountClient);

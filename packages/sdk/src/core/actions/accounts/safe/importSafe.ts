@@ -9,7 +9,10 @@ import {
     createPublicClient,
     encodeFunctionData,
 } from "viem";
-import { type CreateNewSignerParams, createNewSigner } from "../addNewDevice";
+import {
+    type CreateNewSignerParams,
+    createNewSignerWithAccountAddress,
+} from "../addNewDevice";
 
 export const importSafe = async ({
     apiKey,
@@ -22,6 +25,7 @@ export const importSafe = async ({
     apiKey: string;
     walletClient: WalletClient;
     safeAddress: Address;
+    signerAddress: Address;
     params?: CreateNewSignerParams;
     rpcUrl?: string;
     baseUrl?: string;
@@ -29,7 +33,12 @@ export const importSafe = async ({
     const api = new API(apiKey, baseUrl);
     const chain = await getNetwork(api);
 
-    const newSigner = await createNewSigner(apiKey, baseUrl, params);
+    const newSigner = await createNewSignerWithAccountAddress(
+        apiKey,
+        baseUrl,
+        safeAddress,
+        params
+    );
 
     const publicClient = createPublicClient({
         chain: chain,

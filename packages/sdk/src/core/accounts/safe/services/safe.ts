@@ -509,18 +509,13 @@ export async function executeTransaction(
         operation: number;
     }
 ): Promise<Hash> {
-    console.log("yo");
     const nonce = (await publicClient.readContract({
         address: safeAddress,
         abi: SafeAbi,
         functionName: "nonce",
     })) as number;
 
-    console.log({ nonce });
-
     const gasPrice = await getGasPrice(publicClient, DEFAULT_REWARD_PERCENTILE);
-
-    console.log({ gasPrice });
 
     const fullTx = {
         ...tx,
@@ -531,8 +526,6 @@ export async function executeTransaction(
         refundReceiver: getAddress(zeroAddress),
         nonce: BigInt(nonce),
     };
-
-    console.log({ fullTx });
 
     const signerAddress = getAddress(walletClient.account?.address!) as Address;
     const chainId = await publicClient.getChainId();
@@ -547,8 +540,6 @@ export async function executeTransaction(
         message: fullTx,
         account: signerAddress,
     });
-
-    console.log({ signature });
 
     const { request } = await publicClient.simulateContract({
         account: signerAddress,
@@ -568,8 +559,6 @@ export async function executeTransaction(
             signature,
         ],
     });
-
-    console.log({ request });
 
     const txHash = await walletClient.writeContract(request);
     await publicClient.waitForTransactionReceipt({ hash: txHash });
