@@ -26,7 +26,7 @@ export interface QRCodeOptions {
     };
 }
 
-type CreateNewSignerParams = {
+export type CreateNewSignerParams = {
     webAuthnOptions?: webAuthnOptions;
     passKeyName?: string;
     encryptionSalt?: string;

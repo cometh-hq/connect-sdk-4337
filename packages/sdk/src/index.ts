@@ -17,6 +17,7 @@ import {
     retrieveAccountAddressFromPasskeyId,
     retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
+import { importSafe } from "./core/actions/accounts/safe/importSafe";
 import { migrateSafeV3toV4 } from "./core/actions/accounts/safe/migrateSafe";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type { GetRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/getRecoveryRequest";
@@ -54,6 +55,7 @@ export {
     smartAccountConnector,
     getNetwork,
     migrateSafeV3toV4,
+    importSafe,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
 };

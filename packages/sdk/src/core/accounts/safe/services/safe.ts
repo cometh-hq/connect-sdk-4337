@@ -2,7 +2,10 @@ import type { ComethSigner } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
 import {
     type Address,
+    type Hash,
     type Hex,
+    type PublicClient,
+    type WalletClient,
     concat,
     decodeFunctionData,
     encodeFunctionData,
@@ -17,7 +20,11 @@ import { EnableModuleAbi } from "../abi/enableModule";
 import { SafeAbi } from "../abi/safe";
 import { safe4337SessionKeyModuleAbi } from "../abi/safe4337SessionKeyModuleAbi";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
-import type { MultiSendTransaction } from "../types";
+import { EIP712_SAFE_TX_TYPES, type MultiSendTransaction } from "../types";
+
+const GAS_GAP_TOLERANCE = 10n;
+const DEFAULT_REWARD_PERCENTILE = 80;
+const DEFAULT_BASE_GAS = 80000;
 
 /**
  * Encodes multiple transactions into a single byte string for multi-send functionality
@@ -235,3 +242,105 @@ export const getSafeInitializer = (
         ],
     });
 };
+
+export async function executeTransaction(
+    publicClient: PublicClient,
+    walletClient: WalletClient,
+    safeAddress: Address,
+    tx: {
+        to: Address;
+        value: bigint;
+        data: `0x${string}`;
+        operation: number;
+    }
+): Promise<Hash> {
+    console.log("yo");
+    const nonce = (await publicClient.readContract({
+        address: safeAddress,
+        abi: SafeAbi,
+        functionName: "nonce",
+    })) as number;
+
+    console.log({ nonce });
+
+    const gasPrice = await getGasPrice(publicClient, DEFAULT_REWARD_PERCENTILE);
+
+    console.log({ gasPrice });
+
+    const fullTx = {
+        ...tx,
+        safeTxGas: BigInt(200000),
+        baseGas: BigInt(DEFAULT_BASE_GAS),
+        gasPrice: gasPrice,
+        gasToken: getAddress(zeroAddress),
+        refundReceiver: getAddress(zeroAddress),
+        nonce: BigInt(nonce),
+    };
+
+    console.log({ fullTx });
+
+    const signerAddress = getAddress(walletClient.account?.address!) as Address;
+    const chainId = await publicClient.getChainId();
+
+    const signature = await walletClient.signTypedData({
+        domain: {
+            chainId: chainId,
+            verifyingContract: getAddress(safeAddress) as Address,
+        },
+        types: EIP712_SAFE_TX_TYPES,
+        primaryType: "SafeTx",
+        message: fullTx,
+        account: signerAddress,
+    });
+
+    console.log({ signature });
+
+    const { request } = await publicClient.simulateContract({
+        account: signerAddress,
+        address: safeAddress,
+        abi: SafeAbi,
+        functionName: "execTransaction",
+        args: [
+            fullTx.to,
+            fullTx.value,
+            fullTx.data,
+            fullTx.operation,
+            fullTx.safeTxGas,
+            fullTx.baseGas,
+            fullTx.gasPrice,
+            fullTx.gasToken,
+            fullTx.refundReceiver,
+            signature,
+        ],
+    });
+
+    console.log({ request });
+
+    const txHash = await walletClient.writeContract(request);
+    await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+    return txHash;
+}
+
+export async function getGasPrice(
+    publicClient: PublicClient,
+    rewardPercentile: number
+): Promise<bigint> {
+    const feeHistory = await publicClient.getFeeHistory({
+        blockCount: 1,
+        rewardPercentiles: [rewardPercentile],
+    });
+
+    if (!feeHistory.reward![0] || feeHistory.baseFeePerGas.length === 0) {
+        throw new Error("Failed to fetch fee history");
+    }
+
+    const reward = feeHistory.reward![0][0];
+    const baseFee = feeHistory.baseFeePerGas[0];
+
+    if (reward === undefined || baseFee === undefined) {
+        throw new Error("Invalid fee history data");
+    }
+
+    return reward + baseFee + (reward + baseFee) / GAS_GAP_TOLERANCE;
+}
