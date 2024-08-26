@@ -16,8 +16,8 @@ import {
     retrieveAccountAddressFromPasskeyId,
     retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
-import { importSafe } from "./core/actions/accounts/safe/importSafe";
-import { migrateSafeV3toV4 } from "./core/actions/accounts/safe/migrateSafe";
+import { importSafe } from "./core/actions/accounts/safe/migration/importSafe";
+import { migrateSafeV3toV4 } from "./core/actions/accounts/safe/migration/migrateSafe";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type { CancelRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/cancelRecoveryRequest";
 import type { GetRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/getRecoveryRequest";

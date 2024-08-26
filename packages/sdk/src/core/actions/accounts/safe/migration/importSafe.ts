@@ -12,7 +12,7 @@ import {
 import {
     type CreateNewSignerParams,
     createNewSignerWithAccountAddress,
-} from "../addNewDevice";
+} from "../../addNewDevice";
 
 export const importSafe = async ({
     apiKey,
