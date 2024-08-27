@@ -1,10 +1,11 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import type { SetUpRecoveryModuleParams } from "@cometh/connect-sdk-4337";
 import { useMutation } from "@tanstack/react-query";
+import type { EntryPoint } from "permissionless/types/entrypoint";
 import type { Hex } from "viem";
 import type { QueryResultType } from "../types";
 
-export type UseSetUpRecoveryModuleProps = SetUpRecoveryModuleParams;
+export type UseSetUpRecoveryModuleProps = SetUpRecoveryModuleParams<EntryPoint>;
 
 export type SetUpRecoveryModuleMutate = (
     variables: UseSetUpRecoveryModuleProps
@@ -90,7 +91,13 @@ export function useSetUpRecovery(): UseSetUpRecoveryModuleReturn {
                     throw new Error("No smart account found");
                 }
 
-                return smartAccountClient.setUpRecoveryModule({ ...variables });
+                return smartAccountClient.setUpRecoveryModule({
+                    passKeyName: variables.passKeyName,
+                    rpcUrl: variables.rpcUrl,
+                    webAuthnOptions: variables.webAuthnOptions,
+                    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+                    middleware: variables.middleware as any,
+                });
             },
         },
         queryClient
