@@ -207,16 +207,16 @@ export class ConnectEIP1193Provider<
         )
 
       
-    
-            ComethSmartAccountClient = createComethSmartAccountClient({
-                account: this.smartAccountClient.account,
-                chain: this.smartAccountClient.chain,
-                entryPoint: this.smartAccountClient.account.entryPoint,
-                bundlerTransport: http(this.smartAccountClient.transport.url),
-                middleware: {
-                    sponsorUserOperation: paymasterService
-                }
-            })
+
+        ComethSmartAccountClient = createComethSmartAccountClient({
+            account: this.smartAccountClient.account,
+            chain: this.smartAccountClient.chain,
+            entryPoint: this.smartAccountClient.account.entryPoint,
+            bundlerTransport: http(this.smartAccountClient.transport.url),
+            middleware: {
+                sponsorUserOperation: paymasterService
+            }
+        })
         
 
         const encodedeCall = await ComethSmartAccountClient.account.encodeCallData(
