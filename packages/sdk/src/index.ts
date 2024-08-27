@@ -18,6 +18,12 @@ import {
     retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
+import type { GetRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/getRecoveryRequest";
+import type {
+    IsRecoveryActiveParams,
+    IsRecoveryActiveReturnType,
+} from "./core/actions/accounts/safe/recovery/isRecoveryActive";
+import type { SetUpRecoveryModuleParams } from "./core/actions/accounts/safe/recovery/setUpRecoveryModule";
 import type {
     AddSessionKeyParams,
     Session,
@@ -27,6 +33,7 @@ import {
     createSmartAccountClient,
 } from "./core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
+import type { RecoveryParamsResponse } from "./core/services/delayModuleService";
 import { createSigner } from "./core/signers/createSigner";
 import type { webAuthnOptions } from "./core/signers/passkeys/types";
 import type { Signer } from "./core/types";
@@ -59,4 +66,9 @@ export type {
     Session,
     QRCodeOptions,
     webAuthnOptions,
+    SetUpRecoveryModuleParams,
+    GetRecoveryRequestParams,
+    RecoveryParamsResponse,
+    IsRecoveryActiveParams,
+    IsRecoveryActiveReturnType,
 };

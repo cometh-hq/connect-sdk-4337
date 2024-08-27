@@ -6,7 +6,7 @@ import type {
     UseQueryOptions,
 } from "@tanstack/react-query";
 import type { Address, Hash } from "viem";
-import type { QueryResultType } from "./types";
+import type { QueryResultType } from "../types";
 
 type AddOwnerParameters = {
     ownerToAdd: Address;
@@ -144,7 +144,7 @@ export const useGetOwners = (
  */
 export const useGetEnrichedOwners = (
     queryProps?: Omit<
-        UseQueryOptions<EnrichedOwner | EnrichedOwner[], Error>,
+        UseQueryOptions<EnrichedOwner[], Error>,
         "queryKey" | "queryFn"
     >
 ) => {
@@ -153,7 +153,7 @@ export const useGetEnrichedOwners = (
     return useQuery(
         {
             queryKey: ["getEnrichedOwners"],
-            queryFn: async (): Promise<EnrichedOwner | EnrichedOwner[]> => {
+            queryFn: async (): Promise<EnrichedOwner[]> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }

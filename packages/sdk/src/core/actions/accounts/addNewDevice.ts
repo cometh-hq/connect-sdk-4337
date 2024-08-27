@@ -77,7 +77,7 @@ export const createNewSignerWithAccountAddress = async (
     const api = new API(apiKey, baseUrl);
     const { signer, localPrivateKey } = await _createNewSigner(api, {
         passKeyName: params.passKeyName,
-        webAuthnOptions:params.webAuthnOptions,
+        webAuthnOptions: params.webAuthnOptions,
     });
 
     if (signer.publicKeyId) {

@@ -40,7 +40,7 @@ export function useSmartAccount() {
 
             let smartAccount;
 
-            const baseUrl = "http://127.0.0.1:8000/connect";
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
@@ -82,9 +82,13 @@ export function useSmartAccount() {
                 rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
 
-           /*  await smartAccountClient.addOwner({
+            /*  await smartAccountClient.addOwner({
                 ownerToAdd: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
             }); */
+
+            const recoveryDetails = await smartAccountClient.isRecoveryActive({
+                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+            });
 
             const owners = await smartAccountClient.getOwners();
 

@@ -21,7 +21,7 @@ import type { UnionEvaluate } from "viem/types/utils";
 import type {
     MutationOptionsWithoutMutationFn,
     QueryResultType,
-} from "./types";
+} from "./../types";
 
 /**
  * @description A custom hook for writing to smart contracts through a smart account using a session key.

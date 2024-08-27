@@ -2,9 +2,14 @@
 
 import React, { useState } from "react";
 
+import { createNewSignerWithAccountAddress } from "@cometh/connect-sdk-4337";
+import { api } from "../../api";
 import ConnectWallet from "./components/ConnectWallet";
 import Transaction from "./components/Transaction";
 import { useSmartAccount } from "./modules/hooks/useSmartAccount";
+
+const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function App() {
     const {
@@ -29,6 +34,53 @@ export default function App() {
 
         await smartAccount.validateAddDevice({ signer });
     };
+
+    const setUpRecovery = async () => {
+        try {
+            /* const hash = await smartAccount.setUpRecoveryModule();
+            console.log({ hash }); */
+            const req = await smartAccount.isRecoveryActive()
+            console.log({req})
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    const startRecovery = async () => {
+        try {
+            const signer = await createNewSignerWithAccountAddress(
+                apiKey!,
+                baseUrl!,
+                smartAccount.account?.address
+            );
+
+            const body = {
+                walletAddress: smartAccount.account?.address,
+                newOwner : signer.signerAddress,
+                publicKeyId: signer.publicKeyId,
+                publicKeyX: signer.publicKeyX,
+                publicKeyY: signer.publicKeyY,
+                deviceData:signer.deviceData
+            };
+
+            await api.post("/recovery/start", body);
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    const finalizeRecovery = async () => {
+        try {
+            const body = { walletAddress: "0x270a85c35ce49df36ec9B5ab14E02AA5D720227c" };
+            await api.post(`/recovery/finalize`, body);
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+
+
+   
 
     return (
         <div
@@ -63,11 +115,22 @@ export default function App() {
                                     }
                                 />
 
-                                <button onClick={validate}>
-                                    Validate Add Device
+                                <button onClick={setUpRecovery}>
+                                    Set up recovery
                                 </button>
+
+                                <button onClick={startRecovery}>
+                                    Start recovery
+                                </button>
+
+                             
                             </>
                         )}
+
+                                <button onClick={finalizeRecovery}>
+                                    Finalize recovery
+                                </button>
+
                     </div>
                 </div>
             </div>
