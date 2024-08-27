@@ -37,15 +37,10 @@ export default function App() {
 
     const setUpRecovery = async () => {
         try {
-<<<<<<< HEAD
             /* const hash = await smartAccount.setUpRecoveryModule();
             console.log({ hash }); */
-            const req = await smartAccount.isRecoveryActive()
-            console.log({req})
-=======
-            const hash = await smartAccount.setUpRecoveryModule();
-            console.log({ hash });
->>>>>>> 47d0cfc (Feat/wallet (#13))
+            const req = await smartAccount.isRecoveryActive();
+            console.log({ req });
         } catch (e) {
             console.log(e);
         }
@@ -61,11 +56,11 @@ export default function App() {
 
             const body = {
                 walletAddress: smartAccount.account?.address,
-                newOwner : signer.signerAddress,
+                newOwner: signer.signerAddress,
                 publicKeyId: signer.publicKeyId,
                 publicKeyX: signer.publicKeyX,
                 publicKeyY: signer.publicKeyY,
-                deviceData:signer.deviceData
+                deviceData: signer.deviceData,
             };
 
             await api.post("/recovery/start", body);
@@ -76,20 +71,14 @@ export default function App() {
 
     const finalizeRecovery = async () => {
         try {
-<<<<<<< HEAD
-            const body = { walletAddress: "0x270a85c35ce49df36ec9B5ab14E02AA5D720227c" };
-=======
-            const body = { walletAddress: "0x597799919400404bfd75D95375BB5136EB2883D8" };
->>>>>>> 47d0cfc (Feat/wallet (#13))
+            const body = {
+                walletAddress: "0x270a85c35ce49df36ec9B5ab14E02AA5D720227c",
+            };
             await api.post(`/recovery/finalize`, body);
         } catch (e) {
             console.log(e);
         }
     };
-
-
-
-   
 
     return (
         <div
@@ -131,15 +120,12 @@ export default function App() {
                                 <button onClick={startRecovery}>
                                     Start recovery
                                 </button>
-
-                             
                             </>
                         )}
 
-                                <button onClick={finalizeRecovery}>
-                                    Finalize recovery
-                                </button>
-
+                        <button onClick={finalizeRecovery}>
+                            Finalize recovery
+                        </button>
                     </div>
                 </div>
             </div>

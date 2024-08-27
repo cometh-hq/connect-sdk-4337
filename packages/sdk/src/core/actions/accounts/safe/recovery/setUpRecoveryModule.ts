@@ -1,7 +1,10 @@
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import delayModuleService from "@/core/services/delayModuleService";
 import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
-import { sendTransactions, type Middleware } from "permissionless/actions/smartAccount";
+import {
+    type Middleware,
+    sendTransactions,
+} from "permissionless/actions/smartAccount";
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
@@ -82,7 +85,6 @@ export async function setUpRecoveryModule<
         client: publicClient,
     });
 
-
     if (isDelayModuleDeployed) throw Error("Recovery already setup");
 
     const delayModuleInitializer = await delayModuleService.setUpDelayModule({
@@ -90,8 +92,6 @@ export async function setUpRecoveryModule<
         cooldown: recoveryCooldown as number,
         expiration: recoveryExpiration as number,
     });
-
-
 
     const setUpDelayTx = [
         {

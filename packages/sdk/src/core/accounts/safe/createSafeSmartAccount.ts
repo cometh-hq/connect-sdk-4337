@@ -383,7 +383,7 @@ export async function createSafeSmartAccount<
 
         // Encode a call
         async encodeCallData(_tx) {
-            console.log({_tx})
+            console.log({ _tx });
             if (Array.isArray(_tx)) {
                 const userOpCalldata = encodeFunctionData({
                     abi: MultiSendContractABI,
@@ -400,7 +400,7 @@ export async function createSafeSmartAccount<
                     ],
                 });
 
-                console.log({userOpCalldata})
+                console.log({ userOpCalldata });
 
                 return encodeFunctionData({
                     abi: safe4337ModuleAbi,
