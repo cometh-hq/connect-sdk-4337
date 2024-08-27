@@ -1,0 +1,31 @@
+import type { Address } from "viem";
+import { muster } from "./customChains";
+
+const API_URL = "https://api.4337.cometh.io";
+
+// 4337 Contracts
+const ENTRYPOINT_ADDRESS_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
+
+const SAFE_7579_ADDRESS: Address = "0x3Fdb5BC686e861480ef99A6E3FaAe03c0b9F32e2";
+
+const LAUNCHPAD_ADDRESS: Address = "0xEBe001b3D534B9B6E2500FB78E67a1A137f561CE";
+
+const REGISTRY_ADDRESS: Address = "0x0000000000E23E0033C3e93D9D4eBc2FF2AB2AEF";
+
+const VALIDATOR_ADDRESS: Address = "0xBf2137a23F439Ca5Aa4360cC6970D70b24D07ea2";
+
+const SENTINEL_MODULES =
+    "0x0000000000000000000000000000000000000001" as Address;
+
+const customChains = [muster];
+
+export {
+    API_URL,
+    ENTRYPOINT_ADDRESS_V07,
+    SENTINEL_MODULES,
+    customChains,
+    SAFE_7579_ADDRESS,
+    LAUNCHPAD_ADDRESS,
+    REGISTRY_ADDRESS,
+    VALIDATOR_ADDRESS,
+};
