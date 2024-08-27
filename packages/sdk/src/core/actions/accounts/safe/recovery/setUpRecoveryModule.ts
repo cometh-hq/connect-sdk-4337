@@ -1,7 +1,7 @@
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import delayModuleService from "@/core/services/delayModuleService";
 import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
-import { sendTransactions } from "permissionless/actions/smartAccount";
+import { sendTransactions, type Middleware } from "permissionless/actions/smartAccount";
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
@@ -19,11 +19,11 @@ import {
 } from "viem";
 import { getAction } from "viem/utils";
 
-export type SetUpRecoveryModuleParams = {
+export type SetUpRecoveryModuleParams<entryPoint extends EntryPoint> = {
     passKeyName?: string;
     webAuthnOptions?: webAuthnOptions;
     rpcUrl?: string;
-};
+} & Middleware<entryPoint>;
 
 export async function setUpRecoveryModule<
     entryPoint extends EntryPoint,
@@ -36,9 +36,9 @@ export async function setUpRecoveryModule<
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<SetUpRecoveryModuleParams>
+    args: Prettify<SetUpRecoveryModuleParams<entryPoint>>
 ): Promise<Hex> {
-    const { rpcUrl } = args;
+    const { rpcUrl, middleware } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
@@ -67,6 +67,12 @@ export async function setUpRecoveryModule<
         guardianAddress,
     } = projectParams.recoveryParams;
 
+    console.log( {moduleFactoryAddress,
+        delayModuleAddress,
+        recoveryCooldown,
+        recoveryExpiration,
+        guardianAddress})
+
     const delayAddress = await delayModuleService.getDelayAddress(
         smartAccounAddress,
         {
@@ -77,10 +83,14 @@ export async function setUpRecoveryModule<
         }
     );
 
+    console.log( {delayAddress})
+
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
         client: publicClient,
     });
+
+    console.log( {isDelayModuleDeployed})
 
     if (isDelayModuleDeployed) throw Error("Recovery already setup");
 
@@ -89,6 +99,9 @@ export async function setUpRecoveryModule<
         cooldown: recoveryCooldown as number,
         expiration: recoveryExpiration as number,
     });
+
+    console.log( {delayModuleInitializer})
+    console.log({smartAccounAddress})
 
     const setUpDelayTx = [
         {
@@ -120,13 +133,15 @@ export async function setUpRecoveryModule<
         },
     ];
 
+    console.log( {setUpDelayTx})
+
     const hash = await getAction(
         client,
         sendTransactions<TChain, TAccount, entryPoint>,
         "sendTransactions"
     )({
         transactions: setUpDelayTx,
-        middleware: {},
+        middleware,
     } as unknown as SendTransactionsWithPaymasterParameters<
         entryPoint,
         TAccount

@@ -101,6 +101,8 @@ export async function safeWebAuthnSigner<
         source: "safeWebAuthnSigner",
         // Sign a user operation
         async signUserOperation(userOperation) {
+            console.log({userOperation})
+            console.log({safe4337SessionKeysModule})
             const hash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,

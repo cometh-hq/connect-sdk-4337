@@ -28,7 +28,6 @@ export const EIP712_SAFE_MESSAGE_TYPE = {
 
 export enum WalletVersion {
     V1 = "v1.0",
-    V2 = "v2.0",
 }
 
 export type SafeContractParams = {

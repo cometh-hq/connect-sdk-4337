@@ -120,7 +120,7 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware,
-                } as SetUpRecoveryModuleParams
+                } as SetUpRecoveryModuleParams<entryPoint>
             ),
         isRecoveryActive: (args) =>
             isRecoveryActive<entryPoint, TTransport, TChain, TAccount>(client, {
