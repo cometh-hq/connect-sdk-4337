@@ -22,18 +22,6 @@ export default function App() {
     } = useSmartAccount();
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
-    const validate = async () => {
-        const signer = {
-            signerAddress: "0x5929d4e3d17318BaB73026644A904AdbC6fa7989",
-            deviceData: {
-                browser: "Firefox",
-                os: "macOS",
-                platform: "desktop",
-            },
-        };
-
-        await smartAccount.validateAddDevice({ signer });
-    };
 
     const setUpRecovery = async () => {
         try {
@@ -118,9 +106,9 @@ export default function App() {
                             </>
                         )}
 
-                        <button onClick={finalizeRecovery}>
+                        {!isConnected && <button onClick={finalizeRecovery}>
                             Finalize recovery
-                        </button>
+                        </button>}
                     </div>
                 </div>
             </div>

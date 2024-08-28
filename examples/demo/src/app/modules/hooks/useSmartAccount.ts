@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex } from "viem";
-import { arbitrumSepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -23,6 +23,7 @@ export function useSmartAccount() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
+    const rpcUrl= process.env.NEXT_PUBLIC_RPC_URL;
 
     function displayError(message: string) {
         setConnectionError(message);
@@ -45,7 +46,7 @@ export function useSmartAccount() {
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                    rpcUrl,
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -53,7 +54,7 @@ export function useSmartAccount() {
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                    rpcUrl,
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                 });
@@ -65,21 +66,21 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                rpcUrl,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 bundlerTransport: http(bundlerUrl),
                 middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
                 },
-                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                rpcUrl,
             });
 
             /*  await smartAccountClient.addOwner({
@@ -87,7 +88,7 @@ export function useSmartAccount() {
             }); */
 
             const recoveryDetails = await smartAccountClient.isRecoveryActive({
-                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                rpcUrl,
             });
 
             const owners = await smartAccountClient.getOwners();
