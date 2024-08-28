@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 import { useAccount, useConnect, useWriteContract } from "wagmi";
-import {useWriteContracts} from "wagmi/experimental"
+import { useWriteContracts } from "wagmi/experimental";
 import Transaction from "./components/Transaction";
 
 export default function App() {
@@ -12,12 +12,14 @@ export default function App() {
 
     const { data: hash, writeContracts } = useWriteContracts();
 
-
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
     const connectWithWagmi = async () => {
+        console.log({connector: connectors[0]})
         connect({ connector: connectors[0] });
     };
+
+    console.log({isConnected})
 
     return (
         <div

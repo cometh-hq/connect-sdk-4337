@@ -96,19 +96,19 @@ function Transaction({
 
             writeContract({
                 contracts: [
-                  {
-                    address: COUNTER_CONTRACT_ADDRESS,
-                    abi: countContractAbi,
-                    functionName: "count",
-                    args: [],
-                  }
+                    {
+                        address: COUNTER_CONTRACT_ADDRESS,
+                        abi: countContractAbi,
+                        functionName: "count",
+                        args: [],
+                    },
                 ],
                 capabilities: {
-                  paymasterService: {
-                    url: process.env.NEXT_PUBLIC_4337_PAYMASTER_URL,
-                  }
-                }
-              })
+                    paymasterService: {
+                        url: process.env.NEXT_PUBLIC_4337_PAYMASTER_URL,
+                    },
+                },
+            });
 
             const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));

@@ -4,13 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Inter } from "next/font/google";
 import "./lib/ui/globals.css";
 
-import {
-    smartAccountConnector,
-} from "@cometh/connect-sdk-7579";
+import { smartAccountConnector } from "@cometh/connect-sdk-7579";
+import type { Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { http, WagmiProvider, createConfig } from "wagmi";
-import { privateKeyToAccount } from "viem/accounts";
-import type { Hex } from "viem";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -27,13 +25,6 @@ const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
-const privateKey = process.env.PK as Hex;
-const signer = privateKeyToAccount(privateKey as Hex);
-
-const comethSigner = {
-type: "localWallet",
-eoaFallback: { signer, privateKey },
-};
 
 const connector = smartAccountConnector({
     apiKey,
@@ -41,7 +32,6 @@ const connector = smartAccountConnector({
     rpcUrl,
     baseUrl,
     paymasterUrl,
-    comethSigner
 });
 
 const config = createConfig({

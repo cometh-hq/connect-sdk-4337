@@ -9,5 +9,5 @@ export type {
     GrantPermissionsParams,
     GrantPermissionsResult,
     SessionType,
-    ZeroDevVersion
-} from "./provider.js"
+    ZeroDevVersion,
+} from "./provider.js";

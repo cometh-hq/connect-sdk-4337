@@ -26,8 +26,7 @@ import type { RecoveryParamsResponse } from "./core/services/delayModuleService"
 import { createSigner } from "./core/signers/createSigner";
 import type { webAuthnOptions } from "./core/signers/passkeys/types";
 import type { Signer } from "./core/types";
-import { smartAccountConnector } from "./wagmi/connector";
-
+import { smartAccountConnector } from "./wallet/connector";
 export {
     createSigner,
     createSafeSmartAccount,
