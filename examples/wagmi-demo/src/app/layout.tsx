@@ -5,11 +5,12 @@ import { Inter } from "next/font/google";
 import "./lib/ui/globals.css";
 
 import {
-    retrieveAccountAddressFromPasskey,
     smartAccountConnector,
-} from "@cometh/connect-sdk-4337";
-import { arbitrumSepolia } from "viem/chains";
+} from "@cometh/connect-sdk-7579";
+import { baseSepolia } from "viem/chains";
 import { http, WagmiProvider, createConfig } from "wagmi";
+import { privateKeyToAccount } from "viem/accounts";
+import type { Hex } from "viem";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -20,25 +21,37 @@ const queryClient = new QueryClient();
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
 const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
 const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
-const baseUrl = "http://127.0.0.1:8000/connect";
-const rpcUrl = "https://arbitrum-sepolia.blockpi.network/v1/rpc/public";
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 
 if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
+const localStorageAddress = window.localStorage.getItem(
+    "walletAddress"
+);
+
+const privateKey = process.env.NEXT_PUBLIC_PK! as Hex;
+const signer = privateKeyToAccount(privateKey);
+
+const comethSigner = {
+    type: "localWallet",
+    eoaFallback: { privateKey, signer },
+}
+
 const connector = smartAccountConnector({
     apiKey,
     bundlerUrl,
+    smartAccountAddress: localStorageAddress,       
     rpcUrl,
-    baseUrl,
     paymasterUrl,
+    comethSigner
 });
 
 const config = createConfig({
-    chains: [arbitrumSepolia],
+    chains: [baseSepolia],
     connectors: [connector],
     transports: {
-        [arbitrumSepolia.id]: http(),
+        [baseSepolia.id]: http(),
     },
     ssr: true,
 });

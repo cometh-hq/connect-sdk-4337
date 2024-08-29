@@ -4,16 +4,17 @@ import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { http, type Address, createPublicClient, getContract } from "viem";
-import { arbitrumSepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { useAccount, useWalletClient } from "wagmi";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
+import { useCallsStatus, useCapabilities, useShowCallsStatus } from 'wagmi/experimental'
 
 const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
-    chain: arbitrumSepolia,
+    chain: baseSepolia,
     transport: http(),
     cacheTime: 60_000,
     batch: {
@@ -44,6 +45,8 @@ function Transaction({
 }: TransactionProps) {
     const { connector } = useAccount();
     const { data: client } = useWalletClient();
+    const {data:status} = useCallsStatus({id:"0x0ad98ea9cee08eaa1078b6adfeaefa0a97840b8156672c57598a2c88d1307931"})
+    const {data:capabilities} = useCapabilities()
     const [isTransactionLoading, setIsTransactionLoading] =
         useState<boolean>(false);
     const [transactionSended, setTransactionSended] = useState<any | null>(
@@ -81,9 +84,13 @@ function Transaction({
             (async () => {
                 const balance = await counterContract.read.counters([address]);
                 setNftBalance(Number(balance));
+
             })();
         }
     }, []);
+
+    console.log({status})
+    console.log({capabilities})
 
     const sendTestTransaction = async () => {
         setTransactionSended(null);
@@ -94,11 +101,22 @@ function Transaction({
         try {
             if (!address) throw new Error("No wallet instance");
 
+
+
             writeContract({
-                abi: countContractAbi,
-                address: COUNTER_CONTRACT_ADDRESS,
-                functionName: "count",
-                args: [],
+                contracts: [
+                    {
+                      address: COUNTER_CONTRACT_ADDRESS,
+                      abi: countContractAbi,
+                      functionName: "count",
+                      args: [],
+                    }
+                  ],
+                  capabilities: {
+                    paymasterService: {
+                      url: process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!,
+                    }
+                  }
             });
 
             const balance = await counterContract.read.counters([address]);

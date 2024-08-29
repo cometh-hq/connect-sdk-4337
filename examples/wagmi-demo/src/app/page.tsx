@@ -1,21 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { useAccount, useConnect, useWriteContract } from "wagmi";
+import { useWriteContracts } from "wagmi/experimental";
 import Transaction from "./components/Transaction";
 
 export default function App() {
     const { address, isConnected } = useAccount();
     const { connectors, connect } = useConnect();
 
-    const { data: hash, writeContract } = useWriteContract();
+    const { data: hash, writeContracts } = useWriteContracts();
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
     const connectWithWagmi = async () => {
         connect({ connector: connectors[0] });
+
     };
+
+    useEffect(() => {
+        if(address){
+            localStorage.setItem("walletAddress", address!);
+
+        }
+      }, [address])
 
     return (
         <div
@@ -40,7 +49,7 @@ export default function App() {
                         {isConnected && (
                             <Transaction
                                 hash={hash!}
-                                writeContract={writeContract}
+                                writeContract={writeContracts}
                                 address={address!}
                                 transactionSuccess={transactionSuccess}
                                 setTransactionSuccess={setTransactionSuccess}

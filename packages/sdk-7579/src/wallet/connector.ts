@@ -29,7 +29,6 @@ export type ConnectWagmiConfig<
 > = createSafeSmartAccountParameters<TEntryPoint> & {
     bundlerUrl: string;
     paymasterUrl?: string;
-
 } & {
     /**
      *
@@ -73,10 +72,11 @@ export function smartAccountConnector<
         type: smartAccountConnector.type,
 
         async connect({ chainId } = {}) {
-            console.log("connect starts") 
+            console.log("connect starts");
             try {
                 const api = new API(apiKey, baseUrl);
                 chain = await getNetwork(api);
+                console.log({ chain });
 
                 if (chainId && chainId !== (await this.getChainId())) {
                     throw new Error(`Invalid chainId ${chainId} requested`);
@@ -93,7 +93,7 @@ export function smartAccountConnector<
                     comethSigner,
                 });
 
-                console.log(account)
+                console.log(account);
 
                 const client = createSmartAccountClient({
                     account: account,
@@ -108,19 +108,21 @@ export function smartAccountConnector<
                     TSmartAccount
                 >;
 
-                console.log(account)
-                
-                          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-                walletProvider = new ConnectEIP1193Provider(client as any);
+                console.log(account);
 
-                console.log(client.account.address)
-                console.log(chain.id)
+                // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                walletProvider = new ConnectEIP1193Provider(client as any);
+                console.log({ walletProvider });
+
+                console.log(client.account.address);
+                console.log(chain.id);
 
                 return {
                     accounts: [client.account.address],
                     chainId: chain.id,
                 };
             } catch (error) {
+                console.log({ error });
                 if (
                     /(user closed modal|accounts received is empty|user denied account)/i.test(
                         (error as Error).message

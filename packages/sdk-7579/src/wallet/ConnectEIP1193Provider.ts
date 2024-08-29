@@ -1,15 +1,16 @@
 import { EventEmitter } from "events";
 
+import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
 } from "@/core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "@/core/clients/paymaster/createPaymasterClient";
-import {
-    ENTRYPOINT_ADDRESS_V07,
-    bundlerActions,
-} from "permissionless";
-import type { EntryPoint, ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types";
+import { ENTRYPOINT_ADDRESS_V07, bundlerActions } from "permissionless";
+import type {
+    ENTRYPOINT_ADDRESS_V07_TYPE,
+    EntryPoint,
+} from "permissionless/types";
 import type {
     Chain,
     EIP1193Parameters,
@@ -27,17 +28,16 @@ import type {
     SendCallsResult,
 } from "./types";
 import { ConnectLocalStorage } from "./utils/storage";
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 
 const WALLET_CAPABILITIES_STORAGE_KEY = "WALLET_CAPABILITIES";
 
 export class ConnectEIP1193Provider<
-TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
-TSmartAccount extends
-| SafeSmartAccount<TEntryPoint, string, Transport, Chain>
-| undefined =
-| SafeSmartAccount<TEntryPoint, string, Transport, Chain>
-| undefined,
+    TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
+    TSmartAccount extends
+        | SafeSmartAccount<TEntryPoint, string, Transport, Chain>
+        | undefined =
+        | SafeSmartAccount<TEntryPoint, string, Transport, Chain>
+        | undefined,
 > extends EventEmitter {
     private readonly storage = new ConnectLocalStorage("CONNECT_WALLET");
     private smartAccountClient: ComethSmartAccountClient<
@@ -46,15 +46,17 @@ TSmartAccount extends
         TEntryPoint,
         TSmartAccount
     >;
-              // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     private bundlerClient: any;
 
-    constructor(smartAccountClient: ComethSmartAccountClient<
-        Transport,
-        Chain,
-        TEntryPoint,
-        TSmartAccount
-    >) {
+    constructor(
+        smartAccountClient: ComethSmartAccountClient<
+            Transport,
+            Chain,
+            TEntryPoint,
+            TSmartAccount
+        >
+    ) {
         super();
         if (
             typeof smartAccountClient.account !== "object" ||
@@ -64,11 +66,11 @@ TSmartAccount extends
         }
         this.smartAccountClient =
             smartAccountClient as ComethSmartAccountClient<
-            Transport,
-            Chain,
-            TEntryPoint,
-            TSmartAccount
-        >;
+                Transport,
+                Chain,
+                TEntryPoint,
+                TSmartAccount
+            >;
 
         const permissions = {};
 
@@ -85,6 +87,7 @@ TSmartAccount extends
                 },
             },
         };
+
         this.storeItemToStorage(WALLET_CAPABILITIES_STORAGE_KEY, capabilities);
         this.bundlerClient = smartAccountClient.extend(
             bundlerActions(ENTRYPOINT_ADDRESS_V07)
@@ -199,7 +202,7 @@ TSmartAccount extends
         }
 
         const paymasterClient = await createComethPaymasterClient({
-            transport: http(capabilities?.paymasterService),
+            transport: http(capabilities?.paymasterService.url),
             chain: accountChain,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
         });
@@ -216,7 +219,7 @@ TSmartAccount extends
         });
 
         const encodedeCall =
-                  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
             await (comethSmartAccountClient.account as any).encodeCallData(
                 calls.map((call) => ({
                     to: call.to ?? comethSmartAccountClient.account.address,
@@ -229,9 +232,8 @@ TSmartAccount extends
             userOperation: {
                 callData: encodedeCall,
             },
-                      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-            account: this.smartAccountClient.account as any
-        });
+            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        } as any);
     }
 
     private handleWalletCapabilities() {
@@ -258,6 +260,7 @@ TSmartAccount extends
         const result = await this.bundlerClient.getUserOperationReceipt({
             hash: userOpHash as Hex,
         });
+
         if (!result?.success) {
             return {
                 status: "PENDING",
@@ -267,7 +270,7 @@ TSmartAccount extends
             status: "CONFIRMED",
             receipts: [
                 {
-                              // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+                    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
                     logs: result.logs.map((log: any) => ({
                         address: log.address,
                         data: log.data,
