@@ -18,6 +18,7 @@ import {
     buildSignatureBytes,
     getSignatureBytes,
     packInitCode,
+    packPaymasterData,
 } from "@/core/accounts/safe/services/utils";
 import { sign } from "@/core/signers/passkeys/passkeyService";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
@@ -115,15 +116,15 @@ export async function safeWebAuthnSigner<
                         factory: userOperation.factory,
                         factoryData: userOperation.factoryData,
                     }),
-                    paymasterAndData: encodePacked(
-                        ["address", "uint128", "uint128", "bytes"],
-                        [
-                            userOperation.paymaster as Address,
+                    paymasterAndData: packPaymasterData({
+                        paymaster: userOperation.paymaster as Address,
+                        paymasterVerificationGasLimit:
                             userOperation.paymasterVerificationGasLimit as bigint,
+                        paymasterPostOpGasLimit:
                             userOperation.paymasterPostOpGasLimit as bigint,
-                            userOperation.paymasterData as Hex,
-                        ]
-                    ) as Hex,
+                        paymasterData: userOperation.paymasterData as Hex,
+                    }),
+
                     preVerificationGas: userOperation.preVerificationGas,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     validAfter: 0,

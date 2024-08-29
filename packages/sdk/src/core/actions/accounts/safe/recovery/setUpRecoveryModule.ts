@@ -70,12 +70,7 @@ export async function setUpRecoveryModule<
         guardianAddress,
     } = projectParams.recoveryParams;
 
-    console.log({ moduleFactoryAddress,
-        delayModuleAddress,
-        recoveryCooldown,
-        recoveryExpiration,
-        guardianAddress, });
-
+  
 
     const delayAddress = await delayModuleService.getDelayAddress(
         smartAccounAddress,
@@ -87,7 +82,6 @@ export async function setUpRecoveryModule<
         }
     );
 
-    console.log({ delayAddress });
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
@@ -95,8 +89,6 @@ export async function setUpRecoveryModule<
     });
 
     if (isDelayModuleDeployed) throw Error("Recovery already setup");
-
-    console.log({ isDelayModuleDeployed });
 
     const delayModuleInitializer = await delayModuleService.setUpDelayModule({
         safe: smartAccounAddress,

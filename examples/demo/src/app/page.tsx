@@ -22,7 +22,6 @@ export default function App() {
     } = useSmartAccount();
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
-
     const setUpRecovery = async () => {
         try {
             await smartAccount.setUpRecoveryModule();
@@ -106,9 +105,11 @@ export default function App() {
                             </>
                         )}
 
-                        {!isConnected && <button onClick={finalizeRecovery}>
-                            Finalize recovery
-                        </button>}
+                        {!isConnected && (
+                            <button onClick={finalizeRecovery}>
+                                Finalize recovery
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

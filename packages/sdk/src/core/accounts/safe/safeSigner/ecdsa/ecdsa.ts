@@ -22,6 +22,7 @@ import {
     ECDSA_DUMMY_SIGNATURE,
     buildSignatureBytes,
     packInitCode,
+    packPaymasterData,
 } from "@/core/accounts/safe/services/utils";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
@@ -120,15 +121,14 @@ export async function safeECDSASigner<
                         factory: userOperation.factory,
                         factoryData: userOperation.factoryData,
                     }),
-                    paymasterAndData: encodePacked(
-                        ["address", "uint128", "uint128", "bytes"],
-                        [
-                            userOperation.paymaster as Address,
+                    paymasterAndData: packPaymasterData({
+                        paymaster: userOperation.paymaster as Address,
+                        paymasterVerificationGasLimit:
                             userOperation.paymasterVerificationGasLimit as bigint,
+                        paymasterPostOpGasLimit:
                             userOperation.paymasterPostOpGasLimit as bigint,
-                            userOperation.paymasterData as Hex,
-                        ]
-                    ) as Hex,
+                        paymasterData: userOperation.paymasterData as Hex,
+                    }),
                     preVerificationGas: userOperation.preVerificationGas,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     validAfter: 0,

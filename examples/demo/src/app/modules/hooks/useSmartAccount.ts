@@ -23,7 +23,7 @@ export function useSmartAccount() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
-    const rpcUrl= process.env.NEXT_PUBLIC_RPC_URL;
+    const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 
     function displayError(message: string) {
         setConnectionError(message);

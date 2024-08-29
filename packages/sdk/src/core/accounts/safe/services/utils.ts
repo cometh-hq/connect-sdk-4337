@@ -1,4 +1,11 @@
-import { type Address, type Hex, concat, pad, toBytes, toHex } from "viem";
+import {
+    type Address,
+    type Hex,
+    concat,
+    encodePacked,
+    toBytes,
+    toHex,
+} from "viem";
 import type { SafeSignature } from "../types";
 
 export const ECDSA_DUMMY_SIGNATURE =
@@ -124,12 +131,17 @@ export function packPaymasterData({
     paymasterPostOpGasLimit: bigint;
     paymasterData: Hex;
 }) {
-    return concat([
-        paymaster,
-        pad(toHex(paymasterVerificationGasLimit), { size: 16 }),
-        pad(toHex(paymasterPostOpGasLimit), { size: 16 }),
-        paymasterData,
-    ]);
+    if (!paymasterData) return "0x";
+
+    return encodePacked(
+        ["address", "uint128", "uint128", "bytes"],
+        [
+            paymaster as Address,
+            paymasterVerificationGasLimit as bigint,
+            paymasterPostOpGasLimit as bigint,
+            paymasterData as Hex,
+        ]
+    ) as Hex;
 }
 
 export const packInitCode = ({
