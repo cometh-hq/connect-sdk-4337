@@ -4,10 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Inter } from "next/font/google";
 import "./lib/ui/globals.css";
 
-import {
-    retrieveAccountAddressFromPasskey,
-    smartAccountConnector,
-} from "@cometh/connect-sdk-4337";
+import { smartAccountConnector } from "@cometh/connect-sdk-4337";
 import { arbitrumSepolia } from "viem/chains";
 import { http, WagmiProvider, createConfig } from "wagmi";
 

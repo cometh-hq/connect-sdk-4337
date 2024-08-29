@@ -46,7 +46,11 @@ import {
     encodeMultiSendTransactions,
     getSafeInitializer,
 } from "./services/safe";
-import { buildSignatureBytes, packInitCode } from "./services/utils";
+import {
+    buildSignatureBytes,
+    packInitCode,
+    packPaymasterData,
+} from "./services/utils";
 import {
     EIP712_SAFE_OPERATION_TYPE,
     type ProjectParams,
@@ -462,15 +466,14 @@ export async function createSafeSmartAccount<
                         factory: userOp.factory,
                         factoryData: userOp.factoryData,
                     }),
-                    paymasterAndData: encodePacked(
-                        ["address", "uint128", "uint128", "bytes"],
-                        [
-                            userOp.paymaster as Address,
+                    paymasterAndData: packPaymasterData({
+                        paymaster: userOp.paymaster as Address,
+                        paymasterVerificationGasLimit:
                             userOp.paymasterVerificationGasLimit as bigint,
+                        paymasterPostOpGasLimit:
                             userOp.paymasterPostOpGasLimit as bigint,
-                            userOp.paymasterData as Hex,
-                        ]
-                    ) as Hex,
+                        paymasterData: userOp.paymasterData as Hex,
+                    }),
                     preVerificationGas: userOp.preVerificationGas,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     validAfter: 0,
