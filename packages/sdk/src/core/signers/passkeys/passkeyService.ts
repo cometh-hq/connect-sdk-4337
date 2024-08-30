@@ -1,8 +1,10 @@
+import { isSafeOwner } from "@/core/accounts/safe/services/safe";
 import type { API } from "@/core/services/API";
 import psl from "psl";
 import type { ParsedDomain } from "psl";
 import {
     type Address,
+    type Chain,
     type Hex,
     encodeAbiParameters,
     hashMessage,
@@ -237,9 +239,13 @@ const getPasskeyInStorage = (smartAccountAddress: Address): string | null => {
 const getPasskeySigner = async ({
     api,
     smartAccountAddress,
+    chain,
+    rpcUrl,
 }: {
     api: API;
     smartAccountAddress: Address;
+    chain: Chain;
+    rpcUrl?: string;
 }): Promise<PasskeyLocalStorageFormat> => {
     /* Retrieve potentiel WebAuthn credentials in storage */
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
@@ -248,12 +254,22 @@ const getPasskeySigner = async ({
         const passkey = JSON.parse(
             localStoragePasskey
         ) as PasskeyLocalStorageFormat;
+
         /* Check if storage WebAuthn credentials exists in db */
         const registeredPasskeySigner = await api.getPasskeySignerByPublicKeyId(
             passkey.id
         );
 
         if (!registeredPasskeySigner) throw new SignerNotOwnerError();
+
+        const isOwner = await isSafeOwner(
+            smartAccountAddress,
+            registeredPasskeySigner.signerAddress as Address,
+            chain,
+            rpcUrl
+        );
+
+        if (!isOwner) throw new SignerNotOwnerError();
 
         return passkey;
     }

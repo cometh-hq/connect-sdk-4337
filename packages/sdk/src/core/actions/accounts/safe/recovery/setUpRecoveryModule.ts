@@ -70,8 +70,6 @@ export async function setUpRecoveryModule<
         guardianAddress,
     } = projectParams.recoveryParams;
 
-  
-
     const delayAddress = await delayModuleService.getDelayAddress(
         smartAccounAddress,
         {
@@ -81,7 +79,6 @@ export async function setUpRecoveryModule<
             recoveryExpiration: recoveryExpiration as number,
         }
     );
-
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,

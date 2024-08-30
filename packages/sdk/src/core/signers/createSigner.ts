@@ -98,6 +98,8 @@ export const isDeviceCompatibleWithPasskeys = async (options: {
  */
 export async function createSigner({
     apiKey,
+    chain,
+    rpcUrl,
     smartAccountAddress,
     baseUrl,
     disableEoaFallback = false,
@@ -135,6 +137,8 @@ export async function createSigner({
             passkey = await getPasskeySigner({
                 api,
                 smartAccountAddress,
+                chain,
+                rpcUrl,
             });
         }
 

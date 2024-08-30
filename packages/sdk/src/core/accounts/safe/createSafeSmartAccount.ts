@@ -253,11 +253,13 @@ export async function createSafeSmartAccount<
 
     const comethSigner = await createSigner({
         apiKey,
-        baseUrl,
+        chain: client.chain as Chain,
         smartAccountAddress,
         safeWebAuthnSharedSignerAddress:
             safeWebAuthnSharedSignerContractAddress,
         ...comethSignerConfig,
+        rpcUrl,
+        baseUrl,
     });
 
     const signerAddress =

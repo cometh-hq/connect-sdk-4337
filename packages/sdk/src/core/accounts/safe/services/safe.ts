@@ -1,13 +1,17 @@
 import type { ComethSigner } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
 import {
+    http,
     type Address,
+    type Chain,
     type Hex,
     concat,
+    createPublicClient,
     decodeFunctionData,
     encodeFunctionData,
     encodePacked,
     getAddress,
+    getContract,
     hexToBigInt,
     size,
     zeroAddress,
@@ -234,4 +238,52 @@ export const getSafeInitializer = (
             zeroAddress,
         ],
     });
+};
+
+export const isDeployed = async (
+    safeAddress: Address,
+    chain: Chain,
+    rpcUrl?: string
+): Promise<boolean> => {
+    const publicClient = createPublicClient({
+        chain: chain,
+        transport: http(rpcUrl),
+    });
+
+    const safe = getContract({
+        address: safeAddress,
+        abi: SafeAbi,
+        client: publicClient,
+    });
+
+    try {
+        await safe.read.deployed();
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+export const isSafeOwner = async (
+    safeAddress: Address,
+    signerAddress: Address,
+    chain: Chain,
+    rpcUrl?: string
+): Promise<boolean> => {
+    const publicClient = createPublicClient({
+        chain: chain,
+        transport: http(rpcUrl),
+    });
+
+    const safe = getContract({
+        address: safeAddress,
+        abi: SafeAbi,
+        client: publicClient,
+    });
+
+    if ((await isDeployed(safeAddress, chain, rpcUrl)) === true) {
+        return (await safe.read.isOwner([signerAddress])) as boolean;
+    }
+
+    return false;
 };
