@@ -106,7 +106,7 @@ export async function createSigner({
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
-    safeWebAuthnSharedSignerAddress,
+    safeContractParams,
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
 
@@ -121,7 +121,8 @@ export async function createSigner({
                 api,
                 webAuthnOptions,
                 passKeyName,
-                safeWebAuthnSharedSignerAddress,
+                safeWebAuthnSharedSignerAddress:
+                    safeContractParams.safeWebAuthnSharedSignerContractAddress,
             });
 
             if (passkey.publicKeyAlgorithm !== -7) {
@@ -139,6 +140,15 @@ export async function createSigner({
                 smartAccountAddress,
                 chain,
                 rpcUrl,
+                safeModuleSetUpAddress: safeContractParams.setUpContractAddress,
+                safeProxyFactoryAddress:
+                    safeContractParams.safeProxyFactoryAddress,
+                safeSingletonAddress: safeContractParams.safeSingletonAddress,
+                fallbackHandler: safeContractParams.safe4337SessionKeysModule,
+                p256Verifier: safeContractParams.p256Verifier,
+                multisendAddress: safeContractParams.multisendAddress,
+                safeWebAuthnSharedSignerAddress:
+                    safeContractParams.safeWebAuthnSharedSignerContractAddress,
             });
         }
 

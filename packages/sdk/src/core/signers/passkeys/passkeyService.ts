@@ -24,6 +24,7 @@ import {
     hexArrayStr,
     parseHex,
 } from "../passkeys/utils";
+import type { ComethSigner } from "../types";
 import type {
     Assertion,
     PasskeyCredential,
@@ -241,11 +242,25 @@ const getPasskeySigner = async ({
     smartAccountAddress,
     chain,
     rpcUrl,
+    safeProxyFactoryAddress,
+    safeSingletonAddress,
+    safeModuleSetUpAddress,
+    safeWebAuthnSharedSignerAddress,
+    fallbackHandler,
+    p256Verifier,
+    multisendAddress,
 }: {
     api: API;
     smartAccountAddress: Address;
     chain: Chain;
     rpcUrl?: string;
+    safeProxyFactoryAddress: Address;
+    safeSingletonAddress: Address;
+    safeModuleSetUpAddress: Address;
+    safeWebAuthnSharedSignerAddress: Address;
+    fallbackHandler: Address;
+    p256Verifier: Address;
+    multisendAddress: Address;
 }): Promise<PasskeyLocalStorageFormat> => {
     /* Retrieve potentiel WebAuthn credentials in storage */
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
@@ -262,12 +277,33 @@ const getPasskeySigner = async ({
 
         if (!registeredPasskeySigner) throw new SignerNotOwnerError();
 
-        const isOwner = await isSafeOwner(
-            smartAccountAddress,
-            registeredPasskeySigner.signerAddress as Address,
+        const comethSigner: ComethSigner = {
+            type: "passkey",
+            passkey: {
+                id: registeredPasskeySigner.publicKeyId as Hex,
+                pubkeyCoordinates: {
+                    x: registeredPasskeySigner.publicKeyX as Hex,
+                    y: registeredPasskeySigner.publicKeyY as Hex,
+                },
+                signerAddress: registeredPasskeySigner.signerAddress as Address,
+            },
+        };
+
+        const isOwner = await isSafeOwner({
+            safeAddress: smartAccountAddress,
+            comethSigner,
             chain,
-            rpcUrl
-        );
+            rpcUrl,
+            safeProxyFactoryAddress,
+            safeSingletonAddress,
+            safeModuleSetUpAddress,
+            sharedWebAuthnSignerContractAddress:
+                safeWebAuthnSharedSignerAddress,
+            modules: [fallbackHandler],
+            fallbackHandler,
+            p256Verifier,
+            multisendAddress,
+        });
 
         if (!isOwner) throw new SignerNotOwnerError();
 

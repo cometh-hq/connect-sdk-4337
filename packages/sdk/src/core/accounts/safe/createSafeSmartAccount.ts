@@ -11,9 +11,7 @@ import {
     type Transport,
     encodeFunctionData,
     encodePacked,
-    getContractAddress,
     hexToBigInt,
-    keccak256,
     zeroHash,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
@@ -44,6 +42,7 @@ import { SafeProxyContractFactoryABI } from "./abi/safeProxyFactory";
 import { comethSignerToSafeSigner } from "./safeSigner/comethSignerToSafeSigner";
 import {
     encodeMultiSendTransactions,
+    getSafeAddressFromInitializer,
     getSafeInitializer,
 } from "./services/safe";
 import {
@@ -55,7 +54,6 @@ import {
     EIP712_SAFE_OPERATION_TYPE,
     type ProjectParams,
     type SafeContractParams,
-    SafeProxyBytecode,
 } from "./types";
 import { toSmartAccount } from "./utils";
 
@@ -114,6 +112,7 @@ const getAccountInitCode = async ({
  * @param api
  */
 const authenticateToComethApi = async ({
+    chain,
     singletonAddress,
     safeProxyFactoryAddress,
     saltNonce,
@@ -121,6 +120,7 @@ const authenticateToComethApi = async ({
     signer,
     api,
 }: {
+    chain: Chain;
     singletonAddress: Address;
     safeProxyFactoryAddress: Address;
     saltNonce: Hex;
@@ -129,6 +129,7 @@ const authenticateToComethApi = async ({
     api: API;
 }): Promise<Address> => {
     const smartAccountAddress = await getAccountAddress({
+        chain,
         singletonAddress,
         safeProxyFactoryAddress,
         saltNonce,
@@ -153,36 +154,24 @@ const authenticateToComethApi = async ({
  * @returns The predicted account address
  */
 export const getAccountAddress = async ({
+    chain,
     singletonAddress,
     safeProxyFactoryAddress,
     saltNonce = zeroHash,
     initializer,
 }: {
+    chain: Chain;
     singletonAddress: Address;
     safeProxyFactoryAddress: Address;
     saltNonce?: Hex;
     initializer: Hex;
 }) => {
-    const deploymentCode = encodePacked(
-        ["bytes", "uint256"],
-        [SafeProxyBytecode, hexToBigInt(singletonAddress)]
-    );
-
-    const salt = keccak256(
-        encodePacked(
-            ["bytes32", "uint256"],
-            [
-                keccak256(encodePacked(["bytes"], [initializer])),
-                hexToBigInt(saltNonce),
-            ]
-        )
-    );
-
-    return getContractAddress({
-        from: safeProxyFactoryAddress,
-        salt,
-        bytecode: deploymentCode,
-        opcode: "CREATE2",
+    return getSafeAddressFromInitializer({
+        chain,
+        initializer,
+        saltNonce: hexToBigInt(saltNonce),
+        safeProxyFactoryAddress,
+        safeSingletonAddress: singletonAddress,
     });
 };
 
@@ -255,11 +244,19 @@ export async function createSafeSmartAccount<
         apiKey,
         chain: client.chain as Chain,
         smartAccountAddress,
-        safeWebAuthnSharedSignerAddress:
-            safeWebAuthnSharedSignerContractAddress,
         ...comethSignerConfig,
         rpcUrl,
         baseUrl,
+        safeContractParams: {
+            safeWebAuthnSharedSignerContractAddress,
+            setUpContractAddress,
+            p256Verifier,
+            safeProxyFactoryAddress,
+            safeSingletonAddress,
+            multisendAddress,
+            fallbackHandler: safe4337SessionKeysModule,
+            safe4337SessionKeysModule,
+        },
     });
 
     const signerAddress =
@@ -267,16 +264,16 @@ export async function createSafeSmartAccount<
             ? comethSigner.eoaFallback.signer.address
             : comethSigner.passkey.signerAddress;
 
-    const initializer = getSafeInitializer(
+    const initializer = getSafeInitializer({
         comethSigner,
-        1,
-        safe4337SessionKeysModule,
-        [safe4337SessionKeysModule],
+        threshold: 1,
+        fallbackHandler: safe4337SessionKeysModule,
+        modules: [safe4337SessionKeysModule],
         setUpContractAddress,
         safeWebAuthnSharedSignerContractAddress,
         p256Verifier,
-        multisendAddress
-    );
+        multisendAddress,
+    });
 
     const generateInitCode = () =>
         getAccountInitCode({
@@ -287,6 +284,7 @@ export async function createSafeSmartAccount<
 
     if (!smartAccountAddress) {
         smartAccountAddress = await authenticateToComethApi({
+            chain: client.chain as Chain,
             singletonAddress: safeSingletonAddress,
             safeProxyFactoryAddress,
             saltNonce: zeroHash,

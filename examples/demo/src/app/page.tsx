@@ -56,7 +56,7 @@ export default function App() {
     const finalizeRecovery = async () => {
         try {
             const body = {
-                walletAddress: "0x597799919400404bfd75D95375BB5136EB2883D8",
+                walletAddress: "0x525294533Fc72a2c53F199266bb75c03E152e557",
             };
             await api.post(`/recovery/finalize`, body);
         } catch (e) {
