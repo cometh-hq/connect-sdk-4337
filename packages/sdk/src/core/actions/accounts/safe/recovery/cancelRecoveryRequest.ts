@@ -8,7 +8,6 @@ import {
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
-import type { webAuthnOptions } from "@/core/signers/passkeys/types";
 import { NoRecoveryRequestFoundError } from "@/errors";
 import {
     http,
@@ -22,8 +21,6 @@ import {
 import { getAction } from "viem/utils";
 
 export type CancelRecoveryRequestParams<entryPoint extends EntryPoint> = {
-    passKeyName?: string;
-    webAuthnOptions?: webAuthnOptions;
     rpcUrl?: string;
 } & Middleware<entryPoint>;
 

@@ -37,21 +37,13 @@ export async function validateAddDevice<
 
     if (!api) throw new Error("No api found");
 
-    console.log({ signer });
-
-    console.log(signer.signerAddress);
-
     const addOwnerCalldata = encodeFunctionData({
         abi: SafeAbi,
         functionName: "addOwnerWithThreshold",
         args: [signer.signerAddress, 1],
     });
 
-    console.log({ addOwnerCalldata });
-
     const smartAccountAddress = client.account?.address;
-
-    console.log({ smartAccountAddress });
 
     if (!smartAccountAddress) throw new Error("No smart account address found");
 
@@ -70,8 +62,6 @@ export async function validateAddDevice<
         } = (await api.getProjectParams())
             .safeContractParams as SafeContractParams;
 
-        console.log({ safeWebAuthnSignerFactory });
-
         const deployWebAuthnSignerCalldata = encodeFunctionData({
             abi: safeWebauthnSignerFactory,
             functionName: "createSigner",
@@ -88,8 +78,6 @@ export async function validateAddDevice<
             data: deployWebAuthnSignerCalldata,
         });
     }
-
-    console.log({ txs });
 
     const hash = await getAction(
         client,

@@ -23,7 +23,7 @@ type ConnectConfig =
         paymasterUrl?: string;
     };
 
-type ContextComethSmartAccountClient = ComethSmartAccountClient<
+export type ContextComethSmartAccountClient = ComethSmartAccountClient<
     SafeSmartAccount<ENTRYPOINT_ADDRESS_V07_TYPE, Transport, Chain>,
     Transport,
     Chain,

@@ -1,9 +1,21 @@
-import { ConnectContext } from "@/providers/ConnectProvider";
+import {
+    ConnectContext,
+    type ContextComethSmartAccountClient,
+} from "@/providers/ConnectProvider";
 import { useContext, useMemo } from "react";
+import type { Address } from "viem";
 
 export type AccountStatus = "connected" | "disconnected";
 
-export const useAccount = () => {
+export interface UseAccountResult {
+    address: Address | undefined;
+    smartAccountClient: ContextComethSmartAccountClient | null;
+    isConnected: boolean;
+    isDisconnected: boolean;
+    status: AccountStatus;
+}
+
+export const useAccount = (): UseAccountResult => {
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
