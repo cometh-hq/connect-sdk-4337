@@ -10,12 +10,17 @@ export default function App() {
 
     const { setNewSigner } = useSmartAccount();
 
+
+    const baseUrl = undefined
+
     const createRequest = async () => {
         const signer = await createNewSigner(
             apiKey,
-            "http://127.0.0.1:8000/connect",
+            baseUrl,
             { passKeyName: "test" }
         );
+
+        console.log({signer})
 
         setNewSigner(signer);
     };

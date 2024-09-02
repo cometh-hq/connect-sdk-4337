@@ -79,3 +79,9 @@ export class UnauthorizedMethodError extends Error {
         super(`Not authorized method: ${methodName}`);
     }
 }
+
+export class NoRecoveryRequestFoundError extends Error {
+    constructor() {
+        super("No recovery request found");
+    }
+}

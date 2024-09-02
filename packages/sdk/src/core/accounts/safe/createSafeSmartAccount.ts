@@ -230,6 +230,7 @@ export async function createSafeSmartAccount<
         safeSingletonAddress,
         multisendAddress,
         safe4337SessionKeysModule,
+        safeWebAuthnSignerFactory,
     } =
         safeContractConfig ??
         ((await api.getProjectParams()) as ProjectParams).safeContractParams;
@@ -256,6 +257,7 @@ export async function createSafeSmartAccount<
             multisendAddress,
             fallbackHandler: safe4337SessionKeysModule,
             safe4337SessionKeysModule,
+            safeWebAuthnSignerFactory,
         },
     });
 
