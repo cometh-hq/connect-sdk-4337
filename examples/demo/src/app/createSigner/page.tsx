@@ -1,8 +1,6 @@
 "use client";
 
 import { createNewSigner } from "@cometh/connect-sdk-4337";
-import React from "react";
-import { base } from "viem/chains";
 import { useSmartAccount } from "../modules/hooks/useSmartAccount";
 
 export default function App() {
@@ -10,17 +8,12 @@ export default function App() {
 
     const { setNewSigner } = useSmartAccount();
 
-
-    const baseUrl = undefined
+    const baseUrl = undefined;
 
     const createRequest = async () => {
-        const signer = await createNewSigner(
-            apiKey,
-            baseUrl,
-            { passKeyName: "test" }
-        );
-
-        console.log({signer})
+        const signer = await createNewSigner({apiKey, baseUrl, params:{
+            passKeyName: "test",
+        }});
 
         setNewSigner(signer);
     };

@@ -29,7 +29,6 @@ type GenerateQRCodeUrlParameters = {
  * Hook for creating a new signer
  *
  * @param apiKey - The API key for authentication
- * @param baseUrl - Optional base URL for the API
  * @param mutationProps - Optional mutation properties from @tanstack/react-query
  *
  * @example
@@ -37,12 +36,11 @@ type GenerateQRCodeUrlParameters = {
  * import { useCreateNewSigner } from './path-to-this-file';
  *
  * const MyComponent = () => {
- *   const { createSigner, isLoading, error, data } = useCreateNewSigner('your-api-key', 'https://api.example.com');
+ *   const { createSigner, isLoading, error, data } = useCreateNewSigner('your-api-key');
  *
  *   const handleCreateSigner = async () => {
  *     try {
  *       const newSigner = await createSigner({
- *         smartAccountAddress: '0x1234...', // Replace with actual address
  *         passKeyName: 'MyNewPasskey'
  *       });
  *       console.log('New signer created:', newSigner);
@@ -75,7 +73,7 @@ export const useCreateNewSigner = (apiKey: string, baseUrl?: string) => {
         (params: CreateNewSignerParameters = {}) => {
             setIsPending(true);
             setError(null);
-            createNewSigner(apiKey, baseUrl, params)
+            createNewSigner({ apiKey, baseUrl, params })
                 .then((signer) => {
                     queryClient?.invalidateQueries({ queryKey: ["signer"] });
                     return signer;
@@ -97,7 +95,11 @@ export const useCreateNewSigner = (apiKey: string, baseUrl?: string) => {
             setIsPending(true);
             setError(null);
             try {
-                const signer = await createNewSigner(apiKey, baseUrl, params);
+                const signer = await createNewSigner({
+                    apiKey,
+                    baseUrl,
+                    params,
+                });
                 queryClient?.invalidateQueries({ queryKey: ["signer"] });
                 return signer;
             } catch (e) {
@@ -109,7 +111,7 @@ export const useCreateNewSigner = (apiKey: string, baseUrl?: string) => {
                 setIsPending(false);
             }
         },
-        [apiKey, baseUrl, queryClient]
+        [apiKey, queryClient]
     );
 
     return {
