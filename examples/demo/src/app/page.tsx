@@ -54,12 +54,12 @@ export default function App() {
 
     const startRecovery = async () => {
         try {
-            const signer = await createNewSignerWithAccountAddress(
-              {  apiKey:apiKey!,
+            const signer = await createNewSignerWithAccountAddress({
+                apiKey: apiKey!,
                 baseUrl: baseUrl!,
                 smartAccountAddress: smartAccount.account?.address,
-                params: {}}
-            );
+                params: {},
+            });
 
             const body = {
                 walletAddress: smartAccount.account?.address,

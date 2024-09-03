@@ -11,9 +11,13 @@ export default function App() {
     const baseUrl = undefined;
 
     const createRequest = async () => {
-        const signer = await createNewSigner({apiKey, baseUrl, params:{
-            passKeyName: "test",
-        }});
+        const signer = await createNewSigner({
+            apiKey,
+            baseUrl,
+            params: {
+                passKeyName: "test",
+            },
+        });
 
         setNewSigner(signer);
     };

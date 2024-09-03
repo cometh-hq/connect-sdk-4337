@@ -40,6 +40,7 @@ const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
         x: signerPayload.publicKeyX,
         y: signerPayload.publicKeyY,
         id: signerPayload.publicKeyId,
+        ad: signerPayload.signerAddress,
     };
     const flattened: Record<string, string> = {};
 
