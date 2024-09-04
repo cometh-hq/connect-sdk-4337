@@ -12,6 +12,10 @@ import {
     validateAddDevice,
 } from "@/core/actions/accounts/safe/owners/addDeviceActions.js";
 import {
+    type CancelRecoveryRequestParams,
+    cancelRecoveryRequest,
+} from "@/core/actions/accounts/safe/recovery/cancelRecoveryRequest";
+import {
     type GetRecoveryRequestParams,
     getRecoveryRequest,
 } from "@/core/actions/accounts/safe/recovery/getRecoveryRequest";
@@ -52,6 +56,16 @@ export type ComethClientActions<
     setUpRecoveryModule: <TTransport extends Transport>(
         args: Parameters<
             typeof setUpRecoveryModule<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<Hash>;
+    cancelRecoveryRequest: <TTransport extends Transport>(
+        args: Parameters<
+            typeof cancelRecoveryRequest<
+                entryPoint,
+                TTransport,
+                TChain,
+                TAccount
+            >
         >[1]
     ) => Promise<Hash>;
     isRecoveryActive: <TTransport extends Transport>(
@@ -127,7 +141,6 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 ...args,
                 middleware,
             } as IsRecoveryActiveParams),
-
         getRecoveryRequest: (args) =>
             getRecoveryRequest<entryPoint, TTransport, TChain, TAccount>(
                 client,
@@ -135,6 +148,14 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                     ...args,
                     middleware,
                 } as GetRecoveryRequestParams
+            ),
+        cancelRecoveryRequest: (args) =>
+            cancelRecoveryRequest<entryPoint, TTransport, TChain, TAccount>(
+                client,
+                {
+                    ...args,
+                    middleware,
+                } as CancelRecoveryRequestParams<entryPoint>
             ),
         verifySignature: (args) =>
             verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {

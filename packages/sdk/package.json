@@ -7,7 +7,7 @@
       "url": "https://twitter.com/slovaye"
     }
   ],
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "SDK Cometh Connect 4337",
   "repository": "https://github.com/cometh-game/connect-sdk-4337.git",
   "keywords": [
@@ -59,7 +59,7 @@
     "@types/qrcode": "^1.5.5",
     "axios": "^1.6.8",
     "bowser": "^2.11.0",
-    "permissionless": "^0.1.31",
+    "permissionless": "0.1.31",
     "psl": "^1.9.0",
     "qrcode": "^1.5.3"
   }

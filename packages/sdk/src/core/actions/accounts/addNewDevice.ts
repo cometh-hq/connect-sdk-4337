@@ -40,6 +40,7 @@ const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
         x: signerPayload.publicKeyX,
         y: signerPayload.publicKeyY,
         id: signerPayload.publicKeyId,
+        ad: signerPayload.signerAddress,
     };
     const flattened: Record<string, string> = {};
 
@@ -61,19 +62,24 @@ const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
 };
 
 /**
- * Creates a new signer for a smart account
+ * Creates a new passkey signer for a smart account
  * @param apiKey - The API key for authentication
  * @param baseUrl - Optional base URL for the API
  * @param smartAccountAddress - The address of the smart account
  * @param passKeyName - Optional name for the passkey
  * @param encryptionSalt - Optional encryption salt
  */
-export const createNewSignerWithAccountAddress = async (
-    apiKey: string,
-    baseUrl: string | undefined,
-    smartAccountAddress: Address,
-    params: CreateNewSignerParams = {}
-): Promise<Signer> => {
+export const createNewSignerWithAccountAddress = async ({
+    apiKey,
+    baseUrl,
+    smartAccountAddress,
+    params = {},
+}: {
+    apiKey: string;
+    baseUrl?: string;
+    smartAccountAddress: Address;
+    params: CreateNewSignerParams;
+}): Promise<Signer> => {
     const api = new API(apiKey, baseUrl);
     const { signer, localPrivateKey } = await _createNewSigner(api, {
         passKeyName: params.passKeyName,
@@ -106,17 +112,21 @@ export const createNewSignerWithAccountAddress = async (
 };
 
 /**
- * Creates a new signer for a smart account
+ * Creates a new passkey signer
  * @param apiKey - The API key for authentication
  * @param baseUrl - Optional base URL for the API
  * @param passKeyName - Optional name for the passkey
  * @param encryptionSalt - Optional encryption salt
  */
-export const createNewSigner = async (
-    apiKey: string,
-    baseUrl: string | undefined,
-    params: CreateNewSignerParams = {}
-): Promise<Signer> => {
+export const createNewSigner = async ({
+    apiKey,
+    baseUrl,
+    params = {},
+}: {
+    apiKey: string;
+    baseUrl?: string;
+    params: CreateNewSignerParams;
+}): Promise<Signer> => {
     const api = new API(apiKey, baseUrl);
     const { signer } = await _createNewPasskeySigner(api, {
         webAuthnOptions: params.webAuthnOptions,

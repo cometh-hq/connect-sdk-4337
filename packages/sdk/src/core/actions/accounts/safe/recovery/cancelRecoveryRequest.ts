@@ -8,7 +8,7 @@ import {
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
-import type { webAuthnOptions } from "@/core/signers/passkeys/types";
+import { NoRecoveryRequestFoundError } from "@/errors";
 import {
     http,
     type Address,
@@ -17,18 +17,14 @@ import {
     type Hex,
     type Transport,
     createPublicClient,
-    encodeFunctionData,
-    parseAbi,
 } from "viem";
 import { getAction } from "viem/utils";
 
-export type SetUpRecoveryModuleParams<entryPoint extends EntryPoint> = {
-    passKeyName?: string;
-    webAuthnOptions?: webAuthnOptions;
+export type CancelRecoveryRequestParams<entryPoint extends EntryPoint> = {
     rpcUrl?: string;
 } & Middleware<entryPoint>;
 
-export async function setUpRecoveryModule<
+export async function cancelRecoveryRequest<
     entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
@@ -39,7 +35,7 @@ export async function setUpRecoveryModule<
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<SetUpRecoveryModuleParams<entryPoint>>
+    args: Prettify<CancelRecoveryRequestParams<entryPoint>>
 ): Promise<Hex> {
     const { rpcUrl, middleware } = args;
 
@@ -67,7 +63,6 @@ export async function setUpRecoveryModule<
         delayModuleAddress,
         recoveryCooldown,
         recoveryExpiration,
-        guardianAddress,
     } = projectParams.recoveryParams;
 
     const delayAddress = await delayModuleService.getDelayAddress(
@@ -85,50 +80,27 @@ export async function setUpRecoveryModule<
         client: publicClient,
     });
 
-    if (isDelayModuleDeployed) throw Error("Recovery already setup");
+    if (!isDelayModuleDeployed) throw Error("Recovery not active");
 
-    const delayModuleInitializer = await delayModuleService.setUpDelayModule({
-        safe: smartAccounAddress,
-        cooldown: recoveryCooldown as number,
-        expiration: recoveryExpiration as number,
-    });
+    const recoveryRequest = await delayModuleService.getCurrentRecoveryParams(
+        delayAddress,
+        client.chain as Chain,
+        rpcUrl
+    );
 
-    const setUpDelayTx = [
-        {
-            to: moduleFactoryAddress,
-            value: BigInt(0),
-            data: await delayModuleService.encodeDeployDelayModule({
-                singletonDelayModule: delayModuleAddress as Address,
-                initializer: delayModuleInitializer as Hex,
-                safe: smartAccounAddress,
-            }),
-        },
-        {
-            to: smartAccounAddress,
-            value: BigInt(0),
-            data: encodeFunctionData({
-                abi: parseAbi(["function enableModule(address module) public"]),
-                functionName: "enableModule",
-                args: [delayAddress],
-            }),
-        },
-        {
-            to: delayAddress,
-            value: BigInt(0),
-            data: encodeFunctionData({
-                abi: parseAbi(["function enableModule(address module) public"]),
-                functionName: "enableModule",
-                args: [guardianAddress],
-            }),
-        },
-    ];
+    if (!recoveryRequest) throw new NoRecoveryRequestFoundError();
+
+    const updateNonceTx = await delayModuleService.createSetTxNonceFunction(
+        delayAddress,
+        client as Client
+    );
 
     const hash = await getAction(
         client,
         sendTransactions<TChain, TAccount, entryPoint>,
         "sendTransactions"
     )({
-        transactions: setUpDelayTx,
+        transactions: updateNonceTx,
         middleware,
     } as unknown as SendTransactionsWithPaymasterParameters<
         entryPoint,

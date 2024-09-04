@@ -18,6 +18,7 @@ import {
     retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
+import type { CancelRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/cancelRecoveryRequest";
 import type { GetRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/getRecoveryRequest";
 import type {
     IsRecoveryActiveParams,
@@ -69,6 +70,7 @@ export type {
     SetUpRecoveryModuleParams,
     GetRecoveryRequestParams,
     RecoveryParamsResponse,
+    CancelRecoveryRequestParams,
     IsRecoveryActiveParams,
     IsRecoveryActiveReturnType,
 };

@@ -1,4 +1,5 @@
-import type { Address } from "viem";
+import type { Address, Chain } from "viem";
+import type { SafeContractParams } from "../accounts/safe/types";
 import type { eoaFallback } from "./ecdsa/fallbackEoa/types";
 import type {
     PasskeyLocalStorageFormat,
@@ -30,7 +31,9 @@ export type SignerConfig = {
 
 export type CreateSignerParams = {
     apiKey: string;
+    chain: Chain;
     smartAccountAddress?: Address;
+    safeContractParams: SafeContractParams;
     baseUrl?: string;
-    safeWebAuthnSharedSignerAddress: Address;
+    rpcUrl?: string;
 } & SignerConfig;

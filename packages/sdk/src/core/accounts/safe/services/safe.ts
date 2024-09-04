@@ -1,14 +1,21 @@
 import type { ComethSigner } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
+import { isSmartAccountDeployed } from "permissionless";
 import {
+    http,
     type Address,
+    type Chain,
     type Hex,
     concat,
+    createPublicClient,
     decodeFunctionData,
     encodeFunctionData,
     encodePacked,
     getAddress,
+    getContract,
+    getContractAddress,
     hexToBigInt,
+    keccak256,
     size,
     zeroAddress,
 } from "viem";
@@ -16,6 +23,7 @@ import { MultiSendContractABI } from "../abi/Multisend";
 import { EnableModuleAbi } from "../abi/enableModule";
 import { SafeAbi } from "../abi/safe";
 import { safe4337SessionKeyModuleAbi } from "../abi/safe4337SessionKeyModuleAbi";
+import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
 import type { MultiSendTransaction } from "../types";
 
@@ -117,14 +125,14 @@ export const decodeUserOp = ({
  * @param safeP256VerifierAddress - Address of the P256 verifier contract
  * @returns Encoded setup data as a Hex string
  */
-export const getSetUpData = ({
+export const getSetUpCallData = ({
     modules,
     comethSigner,
     setUpContractAddress,
     safeWebAuthnSharedSignerContractAddress,
     safeP256VerifierAddress,
 }: {
-    modules: Hex[];
+    modules: Address[];
     comethSigner: ComethSigner;
     setUpContractAddress: Address;
     safeWebAuthnSharedSignerContractAddress: Address;
@@ -184,49 +192,296 @@ export const getSetUpData = ({
  * @param multisendAddress - Address of the multisend contract
  * @returns Encoded initializer data as a Hex string
  */
-export const getSafeInitializer = (
-    comethSigner: ComethSigner,
-    threshold: number,
-    fallbackHandler: Address,
-    modules: Address[],
-    setUpContractAddress: Address,
-    safeWebAuthnSharedSignerContractAddress: Address,
-    p256Verifier: Address,
-    multisendAddress: Address
-): Hex => {
-    const setUpData = getSetUpData({
+export const getSafeInitializer = ({
+    comethSigner,
+    threshold,
+    fallbackHandler,
+    modules,
+    setUpContractAddress,
+    safeWebAuthnSharedSignerContractAddress,
+    p256Verifier,
+    multisendAddress,
+}: {
+    comethSigner: ComethSigner;
+    threshold: number;
+    fallbackHandler: Address;
+    modules: Address[];
+    setUpContractAddress: Address;
+    safeWebAuthnSharedSignerContractAddress: Address;
+    p256Verifier: Address;
+    multisendAddress: Address;
+}): Hex => {
+    const setUpCallData = getSetUpCallData({
         modules,
         comethSigner,
-        setUpContractAddress: setUpContractAddress,
+        setUpContractAddress,
         safeWebAuthnSharedSignerContractAddress:
             safeWebAuthnSharedSignerContractAddress,
         safeP256VerifierAddress: p256Verifier,
     });
 
     if (comethSigner.type === "localWallet") {
-        return encodeFunctionData({
-            abi: SafeAbi,
-            functionName: "setup",
-            args: [
-                [comethSigner.eoaFallback.signer.address],
-                threshold,
-                setUpContractAddress,
-                setUpData,
-                fallbackHandler,
-                zeroAddress,
-                0,
-                zeroAddress,
-            ],
+        return getSafeSetUpData({
+            owner: comethSigner.eoaFallback.signer.address,
+            threshold,
+            setUpContractAddress,
+            setUpData: setUpCallData,
+            fallbackHandler,
         });
     }
 
+    return getSafeSetUpData({
+        owner: safeWebAuthnSharedSignerContractAddress,
+        threshold,
+        setUpContractAddress: multisendAddress,
+        setUpData: setUpCallData,
+        fallbackHandler,
+    });
+};
+
+/**
+ * Checks if a given address is an owner of a Safe smart contract
+ * @param safeAddress - Address of the Safe contract
+ * @param comethSigner - The Cometh signer instance
+ * @param chain - The blockchain network
+ * @param safeProxyFactoryAddress - Address of the Safe proxy factory
+ * @param safeSingletonAddress - Address of the Safe singleton
+ * @param safeModuleSetUpAddress - Address of the Safe module setup
+ * @param fallbackHandler - Address of the fallback handler
+ * @param modules - Array of module addresses
+ * @param sharedWebAuthnSignerContractAddress - Address of the shared WebAuthn signer contract
+ * @param p256Verifier - Address of the P256 verifier
+ * @param multisendAddress - Address of the multisend contract
+ * @param rpcUrl - Optional RPC URL for the network
+ * @returns A boolean indicating whether the address is an owner
+ */
+export const isSafeOwner = async ({
+    safeAddress,
+    comethSigner,
+    chain,
+    safeProxyFactoryAddress,
+    safeSingletonAddress,
+    safeModuleSetUpAddress,
+    fallbackHandler,
+    modules,
+    sharedWebAuthnSignerContractAddress,
+    p256Verifier,
+    multisendAddress,
+    rpcUrl,
+}: {
+    safeAddress: Address;
+    comethSigner: ComethSigner;
+    chain: Chain;
+    safeProxyFactoryAddress: Address;
+    safeSingletonAddress: Address;
+    safeModuleSetUpAddress: Address;
+    fallbackHandler: Address;
+    modules: Address[];
+    sharedWebAuthnSignerContractAddress: Address;
+    p256Verifier: Address;
+    multisendAddress: Address;
+    rpcUrl?: string;
+}): Promise<boolean> => {
+    const signerAddress =
+        comethSigner.type === "localWallet"
+            ? comethSigner.eoaFallback.signer.address
+            : comethSigner.passkey.signerAddress;
+
+    try {
+        const publicClient = createPublicClient({
+            chain: chain,
+            transport: http(rpcUrl),
+        });
+
+        const safe = getContract({
+            address: safeAddress,
+            abi: SafeAbi,
+            client: publicClient,
+        });
+
+        const isDeployed = await isSmartAccountDeployed(
+            publicClient,
+            safeAddress
+        );
+
+        if (!isDeployed) throw new Error("Safe not deployed");
+
+        return (await safe.read.isOwner([signerAddress])) as boolean;
+    } catch {
+        const predictedWalletAddress = await predictSafeAddress({
+            saltNonce: 0n,
+            chain,
+            comethSigner,
+            safeProxyFactoryAddress,
+            safeSingletonAddress,
+            setUpContractAddress: safeModuleSetUpAddress,
+            fallbackHandler,
+            p256Verifier,
+            modules,
+            multisendAddress,
+            threshold: 1,
+            sharedWebAuthnSignerContractAddress,
+        });
+
+        if (predictedWalletAddress !== safeAddress) return false;
+    }
+
+    return true;
+};
+
+/**
+ * Predicts the address of a Safe smart contract before deployment
+ * @param saltNonce - Salt nonce for address generation
+ * @param chain - The blockchain network
+ * @param comethSigner - The Cometh signer instance
+ * @param fallbackHandler - Address of the fallback handler
+ * @param modules - Array of module addresses
+ * @param setUpContractAddress - Address of the setup contract
+ * @param safeSingletonAddress - Address of the Safe singleton
+ * @param safeProxyFactoryAddress - Address of the Safe proxy factory
+ * @param sharedWebAuthnSignerContractAddress - Address of the shared WebAuthn signer contract
+ * @param p256Verifier - Address of the P256 verifier
+ * @param multisendAddress - Address of the multisend contract
+ * @param threshold - Optional threshold for the multi-signature wallet
+ * @param rpcUrl - Optional RPC URL for the network
+ * @returns The predicted address of the Safe contract
+ */
+export const predictSafeAddress = async ({
+    saltNonce,
+    chain,
+    comethSigner,
+    fallbackHandler,
+    modules,
+    setUpContractAddress,
+    safeSingletonAddress,
+    safeProxyFactoryAddress,
+    sharedWebAuthnSignerContractAddress,
+    p256Verifier,
+    multisendAddress,
+    threshold = 1,
+    rpcUrl,
+}: {
+    saltNonce: bigint;
+    chain: Chain;
+    comethSigner: ComethSigner;
+    safeSingletonAddress: Address;
+    safeProxyFactoryAddress: Address;
+    fallbackHandler: Address;
+    sharedWebAuthnSignerContractAddress: Address;
+    setUpContractAddress: Address;
+    threshold?: number;
+    p256Verifier: Address;
+    modules: Address[];
+    multisendAddress: Address;
+    rpcUrl?: string;
+}): Promise<Address> => {
+    const initializer = getSafeInitializer({
+        comethSigner,
+        threshold,
+        fallbackHandler,
+        modules,
+        setUpContractAddress,
+        safeWebAuthnSharedSignerContractAddress:
+            sharedWebAuthnSignerContractAddress,
+        p256Verifier,
+        multisendAddress,
+    });
+
+    return getSafeAddressFromInitializer({
+        chain,
+        rpcUrl,
+        safeProxyFactoryAddress,
+        safeSingletonAddress,
+        initializer,
+        saltNonce,
+    });
+};
+
+/**
+ * Calculates the Safe address based on the initializer data
+ * @param chain - The blockchain network
+ * @param rpcUrl - Optional RPC URL for the network
+ * @param safeProxyFactoryAddress - Address of the Safe proxy factory
+ * @param safeSingletonAddress - Address of the Safe singleton
+ * @param initializer - Initializer data for the Safe contract
+ * @param saltNonce - Salt nonce for address generation
+ * @returns The calculated address of the Safe contract
+ */
+export const getSafeAddressFromInitializer = async ({
+    chain,
+    rpcUrl,
+    safeProxyFactoryAddress,
+    safeSingletonAddress,
+    initializer,
+    saltNonce,
+}: {
+    chain: Chain;
+    rpcUrl?: string;
+    safeProxyFactoryAddress: Address;
+    safeSingletonAddress: Address;
+    initializer: Hex;
+    saltNonce: bigint;
+}) => {
+    const publicClient = createPublicClient({
+        chain,
+        transport: http(rpcUrl),
+    });
+
+    const proxyCreationCode = (await publicClient.readContract({
+        address: safeProxyFactoryAddress,
+        abi: SafeProxyContractFactoryABI,
+        functionName: "proxyCreationCode",
+    })) as Hex;
+
+    const deploymentCode = encodePacked(
+        ["bytes", "uint256"],
+        [proxyCreationCode, hexToBigInt(safeSingletonAddress)]
+    );
+
+    const salt = keccak256(
+        encodePacked(
+            ["bytes32", "uint256"],
+            [keccak256(encodePacked(["bytes"], [initializer])), saltNonce]
+        )
+    );
+
+    return getContractAddress({
+        bytecode: deploymentCode,
+        from: safeProxyFactoryAddress,
+        opcode: "CREATE2",
+        salt,
+    });
+};
+
+/**
+ * Generates the setup data for a Safe smart contract
+ * @param owner - Address of the owner
+ * @param threshold - The threshold for the multi-signature wallet
+ * @param setUpContractAddress - Address of the setup contract
+ * @param setUpData - Encoded setup data
+ * @param fallbackHandler - Address of the fallback handler
+ * @returns Encoded setup data as a Hex string
+ */
+export const getSafeSetUpData = ({
+    owner,
+    threshold,
+    setUpContractAddress,
+    setUpData,
+    fallbackHandler,
+}: {
+    owner: Address;
+    threshold: number;
+    setUpContractAddress: Address;
+    setUpData: Hex;
+    fallbackHandler: Address;
+}): Hex => {
     return encodeFunctionData({
         abi: SafeAbi,
         functionName: "setup",
         args: [
-            [safeWebAuthnSharedSignerContractAddress],
+            [owner],
             threshold,
-            multisendAddress,
+            setUpContractAddress,
             setUpData,
             fallbackHandler,
             zeroAddress,

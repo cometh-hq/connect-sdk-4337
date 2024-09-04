@@ -58,7 +58,7 @@ export async function validateAddDevice<
     if (signer.publicKeyX && signer.publicKeyY) {
         const {
             p256Verifier: safeP256VerifierAddress,
-            safeWebAuthnSharedSignerContractAddress: safeWebAuthnSignerFactoryAddress,
+            safeWebAuthnSignerFactory,
         } = (await api.getProjectParams())
             .safeContractParams as SafeContractParams;
 
@@ -73,7 +73,7 @@ export async function validateAddDevice<
         });
 
         txs.unshift({
-            to: safeWebAuthnSignerFactoryAddress,
+            to: safeWebAuthnSignerFactory,
             value: BigInt(0),
             data: deployWebAuthnSignerCalldata,
         });

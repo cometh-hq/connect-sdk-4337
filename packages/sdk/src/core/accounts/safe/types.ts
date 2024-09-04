@@ -38,6 +38,7 @@ export type SafeContractParams = {
     setUpContractAddress: Address;
     safeWebAuthnSharedSignerContractAddress: Address;
     p256Verifier: Address;
+    safeWebAuthnSignerFactory: Address;
     safe4337SessionKeysModule: Address;
 };
 

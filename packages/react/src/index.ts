@@ -3,6 +3,7 @@ import {
     useAddOwner,
     useAddSessionKey,
     useAddWhitelistDestination,
+    useCancelRecoveryRequest,
     useConnect,
     useCreateNewSigner,
     useDisconnect,
@@ -83,6 +84,7 @@ export {
     useSetUpRecovery,
     useIsRecoveryActive,
     useGetRecoveryRequest,
+    useCancelRecoveryRequest,
 };
 
 export type {
