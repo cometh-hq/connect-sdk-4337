@@ -9,7 +9,7 @@ import {
     encodeFunctionData,
     getContract,
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
@@ -18,7 +18,7 @@ export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
-    chain: baseSepolia,
+    chain: arbitrumSepolia,
     transport: http(),
     cacheTime: 60_000,
     batch: {

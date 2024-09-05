@@ -52,6 +52,14 @@ export default function App() {
         }
     };
 
+    const cancelRecovery = async () => {
+        try {
+            await smartAccount.cancelRecoveryRequest();
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
     const startRecovery = async () => {
         try {
             const signer = await createNewSignerWithAccountAddress({
@@ -79,7 +87,7 @@ export default function App() {
     const finalizeRecovery = async () => {
         try {
             const body = {
-                walletAddress: "0x525294533Fc72a2c53F199266bb75c03E152e557",
+                walletAddress: "0x2FF1fF21FB9b379Aab9c0Fd2E8E5a030B5076142",
             };
             await api.post(`/recovery/finalize`, body);
         } catch (e) {
@@ -128,8 +136,8 @@ export default function App() {
                                     Start recovery
                                 </button>
 
-                                <button onClick={validateAddDevice}>
-                                    Validate aa device
+                                <button onClick={cancelRecovery}>
+                                   Cancel reocvery
                                 </button>
                             </>
                         )}

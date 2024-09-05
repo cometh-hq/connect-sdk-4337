@@ -48,7 +48,6 @@ export type UseCancelRecoveryRequestReturn = QueryResultType & {
  *   const handleCancel = async () => {
  *     try {
  *       const result = await cancelRecoveryRequestAsync({
- *         passKeyName: 'myPassKey',
  *         rpcUrl: 'https://my-rpc-url.com',
  *         // other necessary parameters
  *       });

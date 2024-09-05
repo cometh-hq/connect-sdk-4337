@@ -17,6 +17,7 @@ import {
     type Hex,
     type Transport,
     createPublicClient,
+    zeroHash,
 } from "viem";
 import { getAction } from "viem/utils";
 
@@ -89,10 +90,12 @@ export async function cancelRecoveryRequest<
     );
 
     if (!recoveryRequest) throw new NoRecoveryRequestFoundError();
+    if (recoveryRequest.txHash === zeroHash)
+        throw new NoRecoveryRequestFoundError();
 
     const updateNonceTx = await delayModuleService.createSetTxNonceFunction(
         delayAddress,
-        client as Client
+        publicClient
     );
 
     const hash = await getAction(
