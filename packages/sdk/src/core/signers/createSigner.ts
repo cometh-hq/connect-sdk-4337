@@ -41,6 +41,7 @@ export const saveSigner = async (
         );
     } else {
         setPasskeyInStorage(
+            chain,
             smartAccountAddress,
             signer.passkey.id,
             signer.passkey.pubkeyCoordinates.x,
