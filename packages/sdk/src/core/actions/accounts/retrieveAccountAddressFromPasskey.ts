@@ -3,7 +3,7 @@ import {
     retrieveSmartAccountAddressFromPasskey,
     retrieveSmartAccountAddressFromPasskeyId,
 } from "@/core/signers/passkeys/passkeyService";
-import type { Address } from "viem";
+import type { Address, Chain } from "viem";
 
 /**
  * Function used to retrieve an account address from passkeys
@@ -11,11 +11,12 @@ import type { Address } from "viem";
  */
 export const retrieveAccountAddressFromPasskeys = async (
     apiKey: string,
+    chain: Chain,
     baseUrl?: string
 ): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
 
-    return await retrieveSmartAccountAddressFromPasskey(api);
+    return await retrieveSmartAccountAddressFromPasskey(chain, api);
 };
 
 /**
@@ -25,14 +26,20 @@ export const retrieveAccountAddressFromPasskeys = async (
  */
 export const retrieveAccountAddressFromPasskeyId = async ({
     apiKey,
+    chain,
     id,
     baseUrl,
 }: {
     apiKey: string;
+    chain: Chain;
     id: string;
     baseUrl?: string;
 }): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
 
-    return await retrieveSmartAccountAddressFromPasskeyId({ API: api, id });
+    return await retrieveSmartAccountAddressFromPasskeyId({
+        API: api,
+        id,
+        chain,
+    });
 };

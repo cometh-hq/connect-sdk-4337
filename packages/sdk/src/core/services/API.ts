@@ -28,15 +28,19 @@ export class API {
         return response.data.projectParams;
     }
 
-    async getWallet(walletAddress: Address): Promise<Wallet> {
-        const response = await this.api.get(`/wallet/${walletAddress}`);
+    async getWallet(walletAddress: Address, chainId: number): Promise<Wallet> {
+        const response = await this.api.get(
+            `/wallet/${walletAddress}/${chainId}`
+        );
         return response.data.wallet;
     }
 
     async createWallet({
+        chainId,
         smartAccountAddress,
         initiatorAddress,
     }: {
+        chainId: number;
         smartAccountAddress: Address;
         initiatorAddress: Address;
     }): Promise<void> {
@@ -45,13 +49,14 @@ export class API {
             initiatorAddress,
         };
 
-        await this.api.post("/wallet", body);
+        await this.api.post(`/wallet/${chainId}`, body);
     }
 
     /**
      * WebAuthn Section
      */
     async createWebAuthnSigner({
+        chainId,
         walletAddress,
         publicKeyId,
         publicKeyX,
@@ -60,6 +65,7 @@ export class API {
         signerAddress,
         isSharedWebAuthnSigner,
     }: {
+        chainId: number;
         walletAddress: Hex;
         publicKeyId: Hex;
         publicKeyX: Hex;
@@ -78,23 +84,25 @@ export class API {
             isSharedWebAuthnSigner,
         };
 
-        await this.api.post("/webauthn-signer/create", body);
+        await this.api.post(`/webauthn-signer/create/${chainId}`, body);
     }
 
     async getPasskeySignerByPublicKeyId(
-        publicKeyId: Hex
+        publicKeyId: Hex,
+        chainId: number
     ): Promise<WebAuthnSigner> {
         const response = await this.api.get(
-            `/webauthn-signer/public-key-id/${publicKeyId}`
+            `/webauthn-signer/public-key-id/${publicKeyId}/${chainId}`
         );
         return response.data.webAuthnSigner;
     }
 
     async getPasskeySignersByWalletAddress(
-        walletAddress: Address
+        walletAddress: Address,
+        chainId: number
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
-            `/webauthn-signer/${walletAddress}`
+            `/webauthn-signer/${walletAddress}/${chainId}`
         );
         return response.data.webAuthnSigners;
     }

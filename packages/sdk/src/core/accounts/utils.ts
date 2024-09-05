@@ -37,8 +37,3 @@ export const getViemClient = (chain: Chain, rpcUrl?: string) => {
         },
     });
 };
-
-export const getClient = async (api: API, rpcUrl?: string) => {
-    const chain = await getNetwork(api);
-    return getViemClient(chain, rpcUrl);
-};

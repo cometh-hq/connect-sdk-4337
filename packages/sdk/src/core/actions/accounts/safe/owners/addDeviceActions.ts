@@ -93,6 +93,7 @@ export async function validateAddDevice<
 
     if (signer.publicKeyX && signer.publicKeyY && signer.publicKeyId) {
         await api.createWebAuthnSigner({
+            chainId: client.chain?.id as number,
             walletAddress: smartAccountAddress,
             publicKeyId: signer.publicKeyId,
             publicKeyX: signer.publicKeyX,

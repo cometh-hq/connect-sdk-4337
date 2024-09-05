@@ -91,6 +91,7 @@ export function smartAccountConnector<
 
                 const account = await createSafeSmartAccount({
                     apiKey,
+                    chain,
                     rpcUrl,
                     baseUrl,
                     smartAccountAddress,

@@ -17,7 +17,7 @@ import {
 import type { Prettify } from "viem/types/utils";
 
 import { API } from "@/core/services/API";
-import { getClient } from "../utils";
+import { getViemClient } from "../utils";
 
 import { createSigner, saveSigner } from "@/core/signers/createSigner";
 import type { ComethSigner, SignerConfig } from "@/core/signers/types";
@@ -137,6 +137,7 @@ const authenticateToComethApi = async ({
     });
 
     await createNewWalletInDb({
+        chain,
         api,
         smartAccountAddress,
         signer,
@@ -179,6 +180,7 @@ export type createSafeSmartAccountParameters<
     TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
 > = Prettify<{
     apiKey: string;
+    chain: Chain;
     rpcUrl?: string;
     baseUrl?: string;
     smartAccountAddress?: Address;
@@ -204,6 +206,7 @@ export async function createSafeSmartAccount<
     TChain extends Chain = Chain,
 >({
     apiKey,
+    chain,
     rpcUrl,
     baseUrl,
     smartAccountAddress,
@@ -217,6 +220,7 @@ export async function createSafeSmartAccount<
 
     if (smartAccountAddress) {
         await connectToExistingWallet({
+            chain,
             api,
             smartAccountAddress,
         });
@@ -235,7 +239,7 @@ export async function createSafeSmartAccount<
         safeContractConfig ??
         ((await api.getProjectParams()) as ProjectParams).safeContractParams;
 
-    const client = (await getClient(api, rpcUrl)) as Client<
+    const client = (await getViemClient(chain, rpcUrl)) as Client<
         TTransport,
         TChain,
         undefined
@@ -243,7 +247,7 @@ export async function createSafeSmartAccount<
 
     const comethSigner = await createSigner({
         apiKey,
-        chain: client.chain as Chain,
+        chain,
         smartAccountAddress,
         ...comethSignerConfig,
         rpcUrl,
@@ -295,7 +299,7 @@ export async function createSafeSmartAccount<
             api,
         });
 
-        await saveSigner(api, comethSigner, smartAccountAddress);
+        await saveSigner(chain, api, comethSigner, smartAccountAddress);
     }
 
     if (!smartAccountAddress) throw new Error("Account address not found");

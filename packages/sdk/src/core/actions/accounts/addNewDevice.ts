@@ -14,7 +14,7 @@ import {
 import type { Signer } from "@/core/types";
 import { NoFallbackSignerError } from "@/errors";
 import * as QRCode from "qrcode";
-import type { Address, Hex } from "viem";
+import type { Address, Chain, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 export interface QRCodeOptions {
@@ -71,11 +71,13 @@ const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
  */
 export const createNewSignerWithAccountAddress = async ({
     apiKey,
+    chain,
     baseUrl,
     smartAccountAddress,
     params = {},
 }: {
     apiKey: string;
+    chain: Chain;
     baseUrl?: string;
     smartAccountAddress: Address;
     params: CreateNewSignerParams;
@@ -93,6 +95,7 @@ export const createNewSignerWithAccountAddress = async ({
             throw new Error("Invalid signer data");
 
         setPasskeyInStorage(
+            chain,
             smartAccountAddress,
             publicKeyId,
             publicKeyX,

@@ -1,6 +1,6 @@
 import type { Address } from "viem/accounts";
 
-import type { Hex } from "viem";
+import type { Chain, Hex } from "viem";
 
 import type { SmartAccountSigner } from "permissionless/accounts";
 import {
@@ -28,6 +28,7 @@ import {
 import type { ComethSigner, CreateSignerParams } from "./types";
 
 export const saveSigner = async (
+    chain: Chain,
     api: API,
     signer: ComethSigner,
     smartAccountAddress: Address
@@ -40,6 +41,7 @@ export const saveSigner = async (
         );
     } else {
         setPasskeyInStorage(
+            chain,
             smartAccountAddress,
             signer.passkey.id,
             signer.passkey.pubkeyCoordinates.x,
@@ -48,6 +50,7 @@ export const saveSigner = async (
         );
 
         await api.createWebAuthnSigner({
+            chainId: chain.id,
             walletAddress: smartAccountAddress,
             publicKeyId: signer.passkey.id,
             publicKeyX: signer.passkey.pubkeyCoordinates.x,
