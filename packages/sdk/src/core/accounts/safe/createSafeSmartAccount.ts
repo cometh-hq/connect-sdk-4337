@@ -28,8 +28,9 @@ import {
     isUserOpWhitelisted,
 } from "@/core/actions/accounts/safe/sessionKeys/utils";
 import {
-    connectToExistingWallet,
     createNewWalletInDb,
+    getProjectParamsByChain,
+    getWalletsByNetworks,
 } from "@/core/services/comethService";
 import type {
     EntryPoint,
@@ -50,11 +51,7 @@ import {
     packInitCode,
     packPaymasterData,
 } from "./services/utils";
-import {
-    EIP712_SAFE_OPERATION_TYPE,
-    type ProjectParams,
-    type SafeContractParams,
-} from "./types";
+import { EIP712_SAFE_OPERATION_TYPE, type SafeContractParams } from "./types";
 import { toSmartAccount } from "./utils";
 
 export type SafeSmartAccount<
@@ -111,7 +108,7 @@ const getAccountInitCode = async ({
  * @param signer
  * @param api
  */
-const authenticateToComethApi = async ({
+const storeWalletInComethApi = async ({
     chain,
     singletonAddress,
     safeProxyFactoryAddress,
@@ -218,13 +215,11 @@ export async function createSafeSmartAccount<
 > {
     const api = new API(apiKey, baseUrl);
 
-    if (smartAccountAddress) {
-        await connectToExistingWallet({
-            chain,
-            api,
-            smartAccountAddress,
-        });
-    }
+    const client = (await getViemClient(chain, rpcUrl)) as Client<
+        TTransport,
+        TChain,
+        undefined
+    >;
 
     const {
         safeWebAuthnSharedSignerContractAddress,
@@ -237,13 +232,20 @@ export async function createSafeSmartAccount<
         safeWebAuthnSignerFactory,
     } =
         safeContractConfig ??
-        ((await api.getProjectParams()) as ProjectParams).safeContractParams;
+        (await getProjectParamsByChain({ api, chain })).safeContractParams;
 
-    const client = (await getViemClient(chain, rpcUrl)) as Client<
-        TTransport,
-        TChain,
-        undefined
-    >;
+    let isWalletStoredInDbForThisChain = true;
+
+    if (smartAccountAddress) {
+        const walletsByNetworks = await getWalletsByNetworks({
+            api,
+            smartAccountAddress,
+        });
+
+        if (!walletsByNetworks.find((wallet) => +wallet.chainId == chain.id)) {
+            isWalletStoredInDbForThisChain = false;
+        }
+    }
 
     const comethSigner = await createSigner({
         apiKey,
@@ -288,8 +290,8 @@ export async function createSafeSmartAccount<
             safeFactoryAddress: safeProxyFactoryAddress,
         });
 
-    if (!smartAccountAddress) {
-        smartAccountAddress = await authenticateToComethApi({
+    if (!smartAccountAddress || !isWalletStoredInDbForThisChain) {
+        smartAccountAddress = await storeWalletInComethApi({
             chain: client.chain as Chain,
             singletonAddress: safeSingletonAddress,
             safeProxyFactoryAddress,
@@ -298,7 +300,6 @@ export async function createSafeSmartAccount<
             signer: comethSigner,
             api,
         });
-
         await saveSigner(chain, api, comethSigner, smartAccountAddress);
     }
 
@@ -344,7 +345,6 @@ export async function createSafeSmartAccount<
             return safeSigner.signUserOperation(userOp);
         },
 
-        // Encode the init code
         async getInitCode() {
             if (smartAccountDeployed) return "0x";
 

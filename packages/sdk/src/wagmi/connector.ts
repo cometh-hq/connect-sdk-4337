@@ -3,13 +3,11 @@ import {
     createSafeSmartAccount,
     type createSafeSmartAccountParameters,
 } from "@/core/accounts/safe/createSafeSmartAccount";
-import { getNetwork } from "@/core/accounts/utils";
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
 } from "@/core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "@/core/clients/paymaster/createPaymasterClient";
-import { API } from "@/core/services/API";
 import { ENTRYPOINT_ADDRESS_V07 } from "permissionless";
 import type {
     ENTRYPOINT_ADDRESS_V07_TYPE,
@@ -82,9 +80,6 @@ export function smartAccountConnector<
             chainId: number;
         }> {
             try {
-                const api = new API(apiKey, baseUrl);
-                chain = await getNetwork(api);
-
                 if (chainId && chainId !== (await this.getChainId())) {
                     throw new Error(`Invalid chainId ${chainId} requested`);
                 }

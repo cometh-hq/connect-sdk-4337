@@ -23,8 +23,8 @@ export class API {
         return this._apiKey;
     }
 
-    async getProjectParams(): Promise<ProjectParams> {
-        const response = await this.api.get("/project/params");
+    async getProjectParams(chainId: number): Promise<ProjectParams> {
+        const response = await this.api.get(`/project/params/${chainId}`);
         return response.data.projectParams;
     }
 
@@ -33,6 +33,11 @@ export class API {
             `/wallet/${walletAddress}/${chainId}`
         );
         return response.data.wallet;
+    }
+
+    async getWalletByNetworks(walletAddress: Address): Promise<Wallet[]> {
+        const response = await this.api.get(`/wallet/${walletAddress}`);
+        return response.data.wallets;
     }
 
     async createWallet({
@@ -98,11 +103,10 @@ export class API {
     }
 
     async getPasskeySignersByWalletAddress(
-        walletAddress: Address,
-        chainId: number
+        walletAddress: Address
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
-            `/webauthn-signer/${walletAddress}/${chainId}`
+            `/webauthn-signer/${walletAddress}`
         );
         return response.data.webAuthnSigners;
     }
@@ -127,10 +131,11 @@ export class API {
     }
 
     async getWebAuthnSignersByWalletAddress(
-        walletAddress: Address
+        walletAddress: Address,
+        chainId: number
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
-            `/webauthn-signer/${walletAddress}`
+            `/webauthn-signer/${walletAddress}/${chainId}`
         );
         return response?.data?.webAuthnSigners;
     }
