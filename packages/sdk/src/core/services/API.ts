@@ -102,11 +102,10 @@ export class API {
     }
 
     async getPasskeySignersByWalletAddress(
-        walletAddress: Address,
-        chainId: number
+        walletAddress: Address
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
-            `/webauthn-signer/${walletAddress}/${chainId}`
+            `/webauthn-signer/${walletAddress}`
         );
         return response.data.webAuthnSigners;
     }
