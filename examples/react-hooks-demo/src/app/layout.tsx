@@ -5,7 +5,7 @@ import { Inter } from "next/font/google";
 import "./lib/ui/globals.css";
 
 import { ConnectProvider } from "@cometh/connect-react-hooks";
-import { arbitrumSepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { http, WagmiProvider, createConfig } from "wagmi";
 
 const queryClient = new QueryClient();
@@ -24,9 +24,9 @@ if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
 const config = createConfig({
-    chains: [arbitrumSepolia],
+    chains: [baseSepolia],
     transports: {
-        [arbitrumSepolia.id]: http(),
+        [baseSepolia.id]: http(),
     },
     ssr: true,
 });
@@ -46,7 +46,7 @@ export default function RootLayout({
                             bundlerUrl,
                             baseUrl,
                             apiKey,
-                            rpcUrl,
+                            chain:baseSepolia
                         }}
                         queryClient={queryClient}
                     >

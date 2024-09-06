@@ -23,7 +23,8 @@ export function useSmartAccount() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
-    const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
+    const baseUrl = "http://127.0.0.1:8000/connect";
+    const rpcUrl = undefined;
 
     function displayError(message: string) {
         setConnectionError(message);
@@ -43,9 +44,12 @@ export function useSmartAccount() {
 
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
+            console.log(baseUrl);
+
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
+                    chain: arbitrumSepolia,
                     rpcUrl,
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
@@ -54,6 +58,7 @@ export function useSmartAccount() {
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
+                    chain: arbitrumSepolia,
                     rpcUrl,
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -87,13 +92,7 @@ export function useSmartAccount() {
                 ownerToAdd: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
             }); */
 
-            const recoveryDetails = await smartAccountClient.isRecoveryActive({
-                rpcUrl,
-            });
-
-            const owners = await smartAccountClient.getOwners();
-
-            const enrichedOwners = await smartAccountClient.getEnrichedOwners();
+           
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);
