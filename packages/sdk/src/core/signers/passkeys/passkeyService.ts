@@ -1,5 +1,8 @@
 import { isSafeOwner } from "@/core/accounts/safe/services/safe";
 import type { API } from "@/core/services/API";
+import { parseAuthenticatorData } from "@simplewebauthn/server/helpers";
+import CBOR from "cbor-js";
+import { ec as EC } from "elliptic";
 import psl from "psl";
 import type { ParsedDomain } from "psl";
 import {
@@ -94,54 +97,46 @@ const createPasskeySigner = async ({
         const publicKeyAlgorithm =
             passkeyCredential.response.getPublicKeyAlgorithm();
 
-        // Import the public key to later export it to get the XY coordinates
-        const key = await crypto.subtle.importKey(
-            "spki",
-            passkeyCredential.response.getPublicKey(),
-            {
-                name: "ECDSA",
-                namedCurve: "P-256",
-                hash: { name: "SHA-256" },
-            },
-            true, // boolean that marks the key as an exportable one
-            ["verify"]
-        );
+        const attestationObject =
+            passkeyCredential?.response?.attestationObject;
 
-        // Export the public key in JWK format and extract XY coordinates
-        const exportedKeyWithXYCoordinates = await crypto.subtle.exportKey(
-            "jwk",
-            key
-        );
-
-        if (
-            !(exportedKeyWithXYCoordinates.x && exportedKeyWithXYCoordinates.y)
-        ) {
-            throw new Error("Failed to retrieve x and y coordinates");
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        let attestation: any;
+        if (attestationObject instanceof ArrayBuffer) {
+            attestation = CBOR.decode(attestationObject);
+        } else {
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+            attestation = CBOR.decode((attestationObject as any).buffer);
         }
 
+        const authData = parseAuthenticatorData(attestation.authData);
+
+        const credentialPublicKeyBuffer = authData?.credentialPublicKey
+            ?.buffer as ArrayBufferLike;
+
+        const publicKey = CBOR.decode(credentialPublicKeyBuffer);
+        const x = publicKey[-2];
+        const y = publicKey[-3];
+        const curve = new EC("p256");
+        const point = curve.curve.point(x, y);
+
+        const publicKeyX = `0x${point.getX().toString(16)}` as Hex;
+        const publicKeyY = `0x${point.getY().toString(16)}` as Hex;
         const publicKeyId = hexArrayStr(passkeyCredential.rawId) as Hex;
-        const x = `0x${Buffer.from(
-            exportedKeyWithXYCoordinates.x,
-            "base64"
-        ).toString("hex")}` as Hex;
-        const y = `0x${Buffer.from(
-            exportedKeyWithXYCoordinates.y,
-            "base64"
-        ).toString("hex")}` as Hex;
 
         const signerAddress =
             safeWebAuthnSharedSignerAddress ??
             (await api.predictWebAuthnSignerAddress({
-                publicKeyX: x,
-                publicKeyY: y,
+                publicKeyX: publicKeyX,
+                publicKeyY: publicKeyY,
             }));
 
         // Create a PasskeyCredentialWithPubkeyCoordinates object
         const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
             id: publicKeyId,
             pubkeyCoordinates: {
-                x,
-                y,
+                x: publicKeyX,
+                y: publicKeyY,
             },
             publicKeyAlgorithm,
             signerAddress,
