@@ -137,7 +137,7 @@ export default function App() {
                                 </button>
 
                                 <button onClick={cancelRecovery}>
-                                   Cancel reocvery
+                                    Cancel reocvery
                                 </button>
                             </>
                         )}
