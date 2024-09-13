@@ -2,7 +2,7 @@ import { isSafeOwner } from "@/core/accounts/safe/services/safe";
 import type { API } from "@/core/services/API";
 import { parseAuthenticatorData } from "@simplewebauthn/server/helpers";
 import CBOR from "cbor-js";
-import { ec as EC } from "elliptic";
+import elliptic from 'elliptic';
 import psl from "psl";
 import type { ParsedDomain } from "psl";
 import {
@@ -35,6 +35,8 @@ import type {
     WebAuthnSigner,
     webAuthnOptions,
 } from "./types";
+
+const EC = elliptic.ec;
 
 const _formatCreatingRpId = (): { name: string; id?: string } => {
     const domain = (psl.parse(window.location.host) as ParsedDomain).domain;
