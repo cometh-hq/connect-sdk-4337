@@ -378,7 +378,7 @@ const retrieveSmartAccountAddressFromPasskey = async (
         throw new NoPasskeySignerFoundForGivenChain();
 
     const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
-        signingPasskeySigners[0];
+        webAuthnSignerForGivenChain;
 
     setPasskeyInStorage(
         smartAccountAddress as Address,
@@ -428,7 +428,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
         throw new NoPasskeySignerFoundForGivenChain();
 
     const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
-        signingPasskeySigners[0];
+        webAuthnSignerForGivenChain;
 
     setPasskeyInStorage(
         smartAccountAddress as Address,
