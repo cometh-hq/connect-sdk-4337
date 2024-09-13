@@ -14,7 +14,10 @@ import {
 } from "./passkeys/passkeyService";
 
 import { API } from "@/core/services/API";
-import { encryptSignerInStorage } from "./ecdsa/services/ecdsaService";
+import {
+    encryptSignerInStorage,
+    getSignerLocalStorage,
+} from "./ecdsa/services/ecdsaService";
 
 import { getDeviceData } from "@/core/services/deviceService";
 import type {
@@ -34,11 +37,17 @@ export const saveSigner = async (
     smartAccountAddress: Address
 ) => {
     if (signer.type === "localWallet") {
-        await encryptSignerInStorage(
+        const storedEncryptedPK = await getSignerLocalStorage(
             smartAccountAddress,
-            signer.eoaFallback.privateKey,
             signer.eoaFallback.encryptionSalt
         );
+
+        if (!storedEncryptedPK)
+            await encryptSignerInStorage(
+                smartAccountAddress,
+                signer.eoaFallback.privateKey,
+                signer.eoaFallback.encryptionSalt
+            );
     } else {
         setPasskeyInStorage(
             smartAccountAddress,
