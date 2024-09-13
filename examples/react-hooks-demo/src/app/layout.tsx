@@ -46,7 +46,7 @@ export default function RootLayout({
                             bundlerUrl,
                             baseUrl,
                             apiKey,
-                            chain:baseSepolia
+                            chain: baseSepolia,
                         }}
                         queryClient={queryClient}
                     >

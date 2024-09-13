@@ -290,7 +290,7 @@ export async function createSafeSmartAccount<
             safeFactoryAddress: safeProxyFactoryAddress,
         });
 
-    if (!smartAccountAddress || !isWalletStoredInDbForThisChain) {
+    if (!(smartAccountAddress && isWalletStoredInDbForThisChain)) {
         smartAccountAddress = await storeWalletInComethApi({
             chain: client.chain as Chain,
             singletonAddress: safeSingletonAddress,

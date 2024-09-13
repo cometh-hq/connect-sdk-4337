@@ -2,7 +2,10 @@
 
 import React, { useState } from "react";
 
-import { createNewSignerWithAccountAddress } from "@cometh/connect-sdk-4337";
+import {
+    createNewSignerWithAccountAddress,
+    retrieveAccountAddressFromPasskeys,
+} from "@cometh/connect-sdk-4337";
 import { api } from "../../api";
 import ConnectWallet from "./components/ConnectWallet";
 import Transaction from "./components/Transaction";
@@ -21,6 +24,17 @@ export default function App() {
         newSigner,
     } = useSmartAccount();
     const [transactionSuccess, setTransactionSuccess] = useState(false);
+
+    const recoverWalletAddress = async () => {
+        console.log(apiKey, baseUrl);
+
+        const walletAddress = await retrieveAccountAddressFromPasskeys(
+            apiKey!,
+            baseUrl
+        );
+
+        console.log({ walletAddress });
+    };
 
     const validateAddDevice = async () => {
         try {
@@ -143,8 +157,8 @@ export default function App() {
                         )}
 
                         {!isConnected && (
-                            <button onClick={finalizeRecovery}>
-                                Finalize recovery
+                            <button onClick={recoverWalletAddress}>
+                                recoverWalletAddress
                             </button>
                         )}
                     </div>

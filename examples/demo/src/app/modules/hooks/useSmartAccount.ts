@@ -44,6 +44,8 @@ export function useSmartAccount() {
 
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
+            const comethSignerConfig = { passKeyName: "testing multichain" };
+
             console.log(baseUrl);
 
             if (localStorageAddress) {
@@ -54,6 +56,7 @@ export function useSmartAccount() {
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
+                    comethSignerConfig,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
@@ -62,6 +65,7 @@ export function useSmartAccount() {
                     rpcUrl,
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
+                    comethSignerConfig,
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -91,8 +95,6 @@ export function useSmartAccount() {
             /*  await smartAccountClient.addOwner({
                 ownerToAdd: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
             }); */
-
-           
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);

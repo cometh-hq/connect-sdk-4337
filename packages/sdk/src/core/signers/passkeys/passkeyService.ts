@@ -214,8 +214,6 @@ const setPasskeyInStorage = (
     publicKeyY: Hex,
     signerAddress: Address
 ): void => {
-    const storageKey = `cometh-connect-${smartAccountAddress}`;
-
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
         id: publicKeyId,
         pubkeyCoordinates: {
@@ -225,21 +223,15 @@ const setPasskeyInStorage = (
         signerAddress,
     };
 
+    const localStoragePasskey = JSON.stringify(passkeyWithCoordinates);
     window.localStorage.setItem(
-        storageKey,
-        JSON.stringify(passkeyWithCoordinates)
+        `cometh-connect-${smartAccountAddress}`,
+        localStoragePasskey
     );
 };
 
-const getPasskeyInStorage = (
-    smartAccountAddress: Address
-): PasskeyLocalStorageFormat | null => {
-    const storageKey = `cometh-connect-${smartAccountAddress}`;
-    const storedData = window.localStorage.getItem(storageKey);
-
-    if (!storedData) return null;
-
-    return JSON.parse(storedData);
+const getPasskeyInStorage = (smartAccountAddress: Address): string | null => {
+    return window.localStorage.getItem(`cometh-connect-${smartAccountAddress}`);
 };
 
 const getPasskeySigner = async ({
@@ -271,7 +263,9 @@ const getPasskeySigner = async ({
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
 
     if (localStoragePasskey) {
-        const passkey = localStoragePasskey as PasskeyLocalStorageFormat;
+        const passkey = JSON.parse(
+            localStoragePasskey
+        ) as PasskeyLocalStorageFormat;
 
         const comethSigner: ComethSigner = {
             type: "passkey",
@@ -322,21 +316,22 @@ const getPasskeySigner = async ({
         throw new NoPasskeySignerFoundInDeviceError();
     }
 
-    const signingWebAuthnSigner = await api.getPasskeySignerByPublicKeyId(
-        webAuthnSignature.publicKeyId as Hex,
-        chain.id
+    const signingWebAuthnSigners = await api.getPasskeySignerByPublicKeyId(
+        webAuthnSignature.publicKeyId as Hex
     );
 
-    if (!signingWebAuthnSigner)
-        throw new Error("Multichain: passkey not for this chainId ");
+    const webAuthnSignerForGivenChain = signingWebAuthnSigners.find(
+        (signer) => +signer.chainId === chain.id
+    );
+    if (!webAuthnSignerForGivenChain) throw new NoPasskeySignerFoundInDBError();
 
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
-        id: signingWebAuthnSigner.publicKeyId as Hex,
+        id: webAuthnSignerForGivenChain.publicKeyId as Hex,
         pubkeyCoordinates: {
-            x: signingWebAuthnSigner.publicKeyX as Hex,
-            y: signingWebAuthnSigner.publicKeyY as Hex,
+            x: webAuthnSignerForGivenChain.publicKeyX as Hex,
+            y: webAuthnSignerForGivenChain.publicKeyY as Hex,
         },
-        signerAddress: signingWebAuthnSigner.signerAddress as Address,
+        signerAddress: webAuthnSignerForGivenChain.signerAddress as Address,
     };
 
     setPasskeyInStorage(
@@ -351,7 +346,6 @@ const getPasskeySigner = async ({
 };
 
 const retrieveSmartAccountAddressFromPasskey = async (
-    chain: Chain,
     API: API
 ): Promise<Address> => {
     let publicKeyId: Hex;
@@ -363,14 +357,13 @@ const retrieveSmartAccountAddressFromPasskey = async (
         throw new RetrieveWalletFromPasskeyError();
     }
 
-    const signingPasskeySigner = await API.getPasskeySignerByPublicKeyId(
-        publicKeyId,
-        chain.id
-    );
-    if (!signingPasskeySigner) throw new NoPasskeySignerFoundInDBError();
+    const signingPasskeySigners =
+        await API.getPasskeySignerByPublicKeyId(publicKeyId);
+    if (signingPasskeySigners.length == 0)
+        throw new NoPasskeySignerFoundInDBError();
 
     const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
-        signingPasskeySigner;
+        signingPasskeySigners[0];
 
     setPasskeyInStorage(
         smartAccountAddress as Address,
@@ -384,10 +377,9 @@ const retrieveSmartAccountAddressFromPasskey = async (
 };
 
 const retrieveSmartAccountAddressFromPasskeyId = async ({
-    chain,
     API,
     id,
-}: { chain: Chain; API: API; id: string }): Promise<Address> => {
+}: { API: API; id: string }): Promise<Address> => {
     const publicKeyCredentials = [
         {
             id: parseHex(id),
@@ -408,14 +400,13 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
         throw new RetrieveWalletFromPasskeyError();
     }
 
-    const signingPasskeySigner = await API.getPasskeySignerByPublicKeyId(
-        publicKeyId,
-        chain.id
-    );
-    if (!signingPasskeySigner) throw new NoPasskeySignerFoundInDBError();
+    const signingPasskeySigners =
+        await API.getPasskeySignerByPublicKeyId(publicKeyId);
+    if (signingPasskeySigners.length == 0)
+        throw new NoPasskeySignerFoundInDBError();
 
     const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
-        signingPasskeySigner;
+        signingPasskeySigners[0];
 
     setPasskeyInStorage(
         smartAccountAddress as Address,

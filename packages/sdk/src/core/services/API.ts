@@ -92,7 +92,7 @@ export class API {
         await this.api.post(`/webauthn-signer/create/${chainId}`, body);
     }
 
-    async getPasskeySignerByPublicKeyId(
+    async getPasskeySignerByPublicKeyIdByChain(
         publicKeyId: Hex,
         chainId: number
     ): Promise<WebAuthnSigner> {
@@ -100,6 +100,15 @@ export class API {
             `/webauthn-signer/public-key-id/${publicKeyId}/${chainId}`
         );
         return response.data.webAuthnSigner;
+    }
+
+    async getPasskeySignerByPublicKeyId(
+        publicKeyId: Hex
+    ): Promise<WebAuthnSigner[]> {
+        const response = await this.api.get(
+            `/webauthn-signer/public-key-id/${publicKeyId}`
+        );
+        return response.data.webAuthnSigners;
     }
 
     async getPasskeySignersByWalletAddress(
