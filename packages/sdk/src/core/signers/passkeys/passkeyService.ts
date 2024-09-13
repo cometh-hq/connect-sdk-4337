@@ -16,6 +16,7 @@ import {
     toHex,
 } from "viem";
 import {
+    NoPasskeySignerFoundForGivenChain,
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
     RetrieveWalletFromPasskeyError,
@@ -323,7 +324,8 @@ const getPasskeySigner = async ({
     const webAuthnSignerForGivenChain = signingWebAuthnSigners.find(
         (signer) => +signer.chainId === chain.id
     );
-    if (!webAuthnSignerForGivenChain) throw new NoPasskeySignerFoundInDBError();
+    if (!webAuthnSignerForGivenChain)
+        throw new NoPasskeySignerFoundForGivenChain();
 
     const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
         id: webAuthnSignerForGivenChain.publicKeyId as Hex,
@@ -346,7 +348,8 @@ const getPasskeySigner = async ({
 };
 
 const retrieveSmartAccountAddressFromPasskey = async (
-    API: API
+    API: API,
+    chain: Chain
 ): Promise<Address> => {
     let publicKeyId: Hex;
 
@@ -361,6 +364,12 @@ const retrieveSmartAccountAddressFromPasskey = async (
         await API.getPasskeySignerByPublicKeyId(publicKeyId);
     if (signingPasskeySigners.length == 0)
         throw new NoPasskeySignerFoundInDBError();
+
+    const webAuthnSignerForGivenChain = signingPasskeySigners.find(
+        (signer) => +signer.chainId === chain.id
+    );
+    if (!webAuthnSignerForGivenChain)
+        throw new NoPasskeySignerFoundForGivenChain();
 
     const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
         signingPasskeySigners[0];
@@ -379,7 +388,8 @@ const retrieveSmartAccountAddressFromPasskey = async (
 const retrieveSmartAccountAddressFromPasskeyId = async ({
     API,
     id,
-}: { API: API; id: string }): Promise<Address> => {
+    chain,
+}: { API: API; id: string; chain: Chain }): Promise<Address> => {
     const publicKeyCredentials = [
         {
             id: parseHex(id),
@@ -404,6 +414,12 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
         await API.getPasskeySignerByPublicKeyId(publicKeyId);
     if (signingPasskeySigners.length == 0)
         throw new NoPasskeySignerFoundInDBError();
+
+    const webAuthnSignerForGivenChain = signingPasskeySigners.find(
+        (signer) => +signer.chainId === chain.id
+    );
+    if (!webAuthnSignerForGivenChain)
+        throw new NoPasskeySignerFoundForGivenChain();
 
     const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
         signingPasskeySigners[0];
