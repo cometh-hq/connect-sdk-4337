@@ -28,13 +28,6 @@ export class API {
         return response.data.projectParams;
     }
 
-    async getWallet(walletAddress: Address, chainId: number): Promise<Wallet> {
-        const response = await this.api.get(
-            `/wallet/${walletAddress}/${chainId}`
-        );
-        return response.data.wallet;
-    }
-
     async getWalletByNetworks(walletAddress: Address): Promise<Wallet[]> {
         const response = await this.api.get(`/wallet/${walletAddress}`);
         return response.data.wallets;

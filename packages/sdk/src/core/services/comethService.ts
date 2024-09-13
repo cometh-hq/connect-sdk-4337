@@ -29,16 +29,6 @@ export const createNewWalletInDb = async ({
     }
 };
 
-export const connectToExistingWallet = async ({
-    chain,
-    api,
-    smartAccountAddress,
-}: { chain: Chain; api: API; smartAccountAddress: Address }): Promise<void> => {
-    const storedWallet = await api.getWallet(smartAccountAddress, chain.id);
-
-    if (!storedWallet) throw new Error("Wallet not found");
-};
-
 export const getWalletsByNetworks = async ({
     api,
     smartAccountAddress,
@@ -55,4 +45,26 @@ export const getProjectParamsByChain = async ({
     chain,
 }: { api: API; chain: Chain }): Promise<ProjectParams> => {
     return (await api.getProjectParams(chain.id)) as ProjectParams;
+};
+
+export const doesWalletNeedToBeStored = async ({
+    smartAccountAddress,
+    chainId,
+    api,
+}: {
+    smartAccountAddress?: Address;
+    chainId: number;
+    api: API;
+}): Promise<boolean> => {
+    if (!smartAccountAddress) return true;
+
+    const walletsByNetworks = await getWalletsByNetworks({
+        api,
+        smartAccountAddress,
+    });
+
+    if (walletsByNetworks.find((wallet) => +wallet.chainId === chainId))
+        return false;
+
+    return true;
 };

@@ -29,8 +29,8 @@ import {
 } from "@/core/actions/accounts/safe/sessionKeys/utils";
 import {
     createNewWalletInDb,
+    doesWalletNeedToBeStored,
     getProjectParamsByChain,
-    getWalletsByNetworks,
 } from "@/core/services/comethService";
 import type {
     EntryPoint,
@@ -234,19 +234,6 @@ export async function createSafeSmartAccount<
         safeContractConfig ??
         (await getProjectParamsByChain({ api, chain })).safeContractParams;
 
-    let isWalletStoredInDbForThisChain = true;
-
-    if (smartAccountAddress) {
-        const walletsByNetworks = await getWalletsByNetworks({
-            api,
-            smartAccountAddress,
-        });
-
-        if (!walletsByNetworks.find((wallet) => +wallet.chainId == chain.id)) {
-            isWalletStoredInDbForThisChain = false;
-        }
-    }
-
     const comethSigner = await createSigner({
         apiKey,
         chain,
@@ -290,7 +277,13 @@ export async function createSafeSmartAccount<
             safeFactoryAddress: safeProxyFactoryAddress,
         });
 
-    if (!(smartAccountAddress && isWalletStoredInDbForThisChain)) {
+    const walletNeedsToBeStored = await doesWalletNeedToBeStored({
+        smartAccountAddress,
+        chainId: chain.id,
+        api,
+    });
+
+    if (walletNeedsToBeStored) {
         smartAccountAddress = await storeWalletInComethApi({
             chain: client.chain as Chain,
             singletonAddress: safeSingletonAddress,

@@ -86,7 +86,7 @@ export async function createSmartAccount(
         }) as ContextComethSmartAccountClient;
     }
 
-    const address = await client.account.address;
+    const address = client.account.address;
 
     return { client, address };
 }
