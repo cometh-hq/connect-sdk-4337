@@ -7,7 +7,7 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Hex } from "viem";
+import { http, type Address, type Hex } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -25,6 +25,7 @@ export function useSmartAccount() {
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
     const baseUrl = "http://127.0.0.1:8000/connect";
     const rpcUrl = undefined;
+    const sessionKeysEnabled = true;
 
     function displayError(message: string) {
         setConnectionError(message);
@@ -46,8 +47,6 @@ export function useSmartAccount() {
 
             const comethSignerConfig = { passKeyName: "testing multichain" };
 
-            console.log(baseUrl);
-
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
@@ -57,6 +56,7 @@ export function useSmartAccount() {
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
+                    sessionKeysEnabled,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
@@ -66,6 +66,7 @@ export function useSmartAccount() {
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
+                    sessionKeysEnabled,
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -91,10 +92,6 @@ export function useSmartAccount() {
                 },
                 rpcUrl,
             });
-
-            /*  await smartAccountClient.addOwner({
-                ownerToAdd: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
-            }); */
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);

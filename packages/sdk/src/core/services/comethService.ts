@@ -35,7 +35,7 @@ export const getWalletsByNetworks = async ({
 }: { api: API; smartAccountAddress: Address }): Promise<Wallet[]> => {
     const walletsByNetworks =
         await api.getWalletByNetworks(smartAccountAddress);
-    if (walletsByNetworks.length == 0) throw new Error("Wallet not found");
+    if (walletsByNetworks.length === 0) throw new Error("Wallet not found");
 
     return walletsByNetworks;
 };

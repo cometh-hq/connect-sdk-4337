@@ -28,7 +28,7 @@ export const encryptSessionKeyInStorage = async (
     );
 };
 
-export const getSessionKeySignerFromLocalStorage = async (
+export const getSessionKeyPKFromLocalStorage = async (
     smartAccountAddress: Address,
     salt?: string
 ): Promise<Hex | null> => {
@@ -45,6 +45,22 @@ export const getSessionKeySignerFromLocalStorage = async (
             utils.base64toUint8Array(iv),
             salt || defaultEncryptionSalt
         );
+    }
+
+    return null;
+};
+
+export const getSessionKeySignerFromLocalStorage = async (
+    smartAccountAddress: Address
+): Promise<Address | null> => {
+    const localStorage = window.localStorage.getItem(
+        `cometh-connect-sessionKey-${smartAccountAddress}`
+    );
+
+    if (localStorage) {
+        const { signerAddress } = unFormatStorageValue(localStorage);
+
+        return signerAddress;
     }
 
     return null;

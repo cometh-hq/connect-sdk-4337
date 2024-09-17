@@ -368,7 +368,7 @@ const retrieveSmartAccountAddressFromPasskey = async (
 
     const signingPasskeySigners =
         await API.getPasskeySignerByPublicKeyId(publicKeyId);
-    if (signingPasskeySigners.length == 0)
+    if (signingPasskeySigners.length === 0)
         throw new NoPasskeySignerFoundInDBError();
 
     const webAuthnSignerForGivenChain = signingPasskeySigners.find(
@@ -418,7 +418,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
 
     const signingPasskeySigners =
         await API.getPasskeySignerByPublicKeyId(publicKeyId);
-    if (signingPasskeySigners.length == 0)
+    if (signingPasskeySigners.length === 0)
         throw new NoPasskeySignerFoundInDBError();
 
     const webAuthnSignerForGivenChain = signingPasskeySigners.find(

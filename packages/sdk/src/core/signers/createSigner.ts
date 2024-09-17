@@ -155,7 +155,8 @@ export async function createSigner({
                 safeProxyFactoryAddress:
                     safeContractParams.safeProxyFactoryAddress,
                 safeSingletonAddress: safeContractParams.safeSingletonAddress,
-                fallbackHandler: safeContractParams.safe4337SessionKeysModule,
+                fallbackHandler:
+                    safeContractParams.safe4337ModuleAddress as Address,
                 p256Verifier: safeContractParams.p256Verifier,
                 multisendAddress: safeContractParams.multisendAddress,
                 safeWebAuthnSharedSignerAddress:

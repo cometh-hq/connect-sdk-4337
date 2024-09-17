@@ -54,6 +54,7 @@ export function smartAccountConnector<
     smartAccountAddress,
     comethSignerConfig,
     safeContractConfig,
+    sessionKeysEnabled,
     paymasterUrl,
     shimDisconnect = true,
 }: ConnectWagmiConfig<TEntryPoint>): CreateConnectorFn {
@@ -93,6 +94,7 @@ export function smartAccountConnector<
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
                     safeContractConfig,
+                    sessionKeysEnabled,
                 });
 
                 if (paymasterUrl) {

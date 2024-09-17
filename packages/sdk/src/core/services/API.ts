@@ -50,7 +50,7 @@ export class API {
             initiatorAddress,
         };
 
-        await this.api.post(`/wallet`, body);
+        await this.api.post("/wallet", body);
     }
 
     /**
@@ -86,7 +86,7 @@ export class API {
             isSharedWebAuthnSigner,
         };
 
-        await this.api.post(`/webauthn-signer/create`, body);
+        await this.api.post("/webauthn-signer/create", body);
     }
 
     async getPasskeySignerByPublicKeyId(

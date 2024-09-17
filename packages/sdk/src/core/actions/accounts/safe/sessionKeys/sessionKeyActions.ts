@@ -1,7 +1,11 @@
 import { safe4337SessionKeyModuleAbi } from "@/core/accounts/safe/abi/safe4337SessionKeyModuleAbi";
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { createFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
-import { encryptSessionKeyInStorage } from "@/core/signers/ecdsa/sessionKeyEoa/sessionKeyEoaService";
+import {
+    deleteSessionKeyInStorage,
+    encryptSessionKeyInStorage,
+    getSessionKeySignerFromLocalStorage,
+} from "@/core/signers/ecdsa/sessionKeyEoa/sessionKeyEoaService";
 import type { SmartAccountClient } from "permissionless";
 import type { EntryPoint } from "permissionless/_types/types";
 import {
@@ -29,9 +33,13 @@ export type SafeSessionKeyActions = {
     getSessionFromAddress: (args: {
         sessionKey: Address;
     }) => Promise<Session>;
+    getCurrentSessionSignerAddress: (args: {
+        smartAccountAddress: Address;
+        salt?: string;
+    }) => Promise<Address | null>;
     addWhitelistDestination: (args: {
         sessionKey: Address;
-        destinations: Address[];
+        destination: Address;
     }) => Promise<Hash>;
     removeWhitelistDestination: (args: {
         sessionKey: Address;
@@ -88,7 +96,7 @@ export const safeSessionKeyActions =
         },
 
         async revokeSessionKey(args: { sessionKey: Address }) {
-            return await client.sendTransaction({
+            const txHash = await client.sendTransaction({
                 to: client.account?.address as Address,
                 data: encodeFunctionData({
                     abi: safe4337SessionKeyModuleAbi,
@@ -98,6 +106,10 @@ export const safeSessionKeyActions =
                 maxFeePerBlobGas: 0n,
                 blobs: [],
             });
+
+            deleteSessionKeyInStorage(client.account?.address as Address);
+
+            return txHash;
         },
 
         async getSessionFromAddress(args: {
@@ -113,16 +125,24 @@ export const safeSessionKeyActions =
             });
         },
 
+        async getCurrentSessionSignerAddress(args: {
+            smartAccountAddress: Address;
+        }) {
+            return getSessionKeySignerFromLocalStorage(
+                args.smartAccountAddress
+            );
+        },
+
         async addWhitelistDestination(args: {
             sessionKey: Address;
-            destinations: Address[];
+            destination: Address;
         }) {
             return await client.sendTransaction({
                 to: client.account?.address as Address,
                 data: encodeFunctionData({
                     abi: safe4337SessionKeyModuleAbi,
                     functionName: "addWhitelistDestination",
-                    args: [args.sessionKey, args.destinations],
+                    args: [args.sessionKey, args.destination],
                 }),
                 maxFeePerBlobGas: 0n,
                 blobs: [],

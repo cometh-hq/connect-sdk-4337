@@ -16,7 +16,7 @@ type RevokeSessionKeyParameters = {
 
 type AddWhitelistDestinationParameters = {
     sessionKey: Address;
-    destinations: Address[];
+    destination: Address;
 };
 
 type RemoveWhitelistDestinationParameters = {
@@ -137,14 +137,14 @@ export const useAddWhitelistDestination = (
         {
             mutationFn: async ({
                 sessionKey,
-                destinations,
+                destination,
             }: AddWhitelistDestinationParameters): Promise<Hash> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
                 return await smartAccountClient.addWhitelistDestination({
                     sessionKey,
-                    destinations,
+                    destination,
                 });
             },
             ...mutationProps,
@@ -216,6 +216,32 @@ export const useGetSessionFromAddress = (
                 }
                 return await smartAccountClient.getSessionFromAddress({
                     sessionKey,
+                });
+            },
+            ...queryProps,
+        },
+        queryClient
+    );
+};
+
+export const useGetSessionSignerFromAccount = (
+    sessionKey: Address,
+    queryProps?: Omit<
+        UseQueryOptions<Address | null, Error>,
+        "queryKey" | "queryFn"
+    >
+) => {
+    const { smartAccountClient, queryClient } = useSmartAccount();
+
+    return useQuery(
+        {
+            queryKey: ["getSessionSignerFromAccount", sessionKey],
+            queryFn: async (): Promise<Address | null> => {
+                if (!smartAccountClient) {
+                    throw new Error("No smart account found");
+                }
+                return await smartAccountClient.getCurrentSessionSignerAddress({
+                    smartAccountAddress: smartAccountClient.account.address,
                 });
             },
             ...queryProps,

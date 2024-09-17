@@ -184,6 +184,7 @@ export type createSafeSmartAccountParameters<
     entryPoint: TEntryPoint;
     comethSignerConfig?: SignerConfig;
     safeContractConfig?: SafeContractParams;
+    sessionKeysEnabled: boolean;
 }>;
 
 /**
@@ -195,6 +196,7 @@ export type createSafeSmartAccountParameters<
  * @param entryPoint - The entry point contract address
  * @param comethSignerConfig - Optional configuration for the Cometh signer
  * @param safeContractConfig - Optional configuration for the Safe contract
+ * @param sessionKeysEnabled - Optional configuration for the Safe contract
  * @returns A SafeSmartAccount instance
  */
 export async function createSafeSmartAccount<
@@ -210,6 +212,7 @@ export async function createSafeSmartAccount<
     entryPoint: entryPointAddress,
     comethSignerConfig,
     safeContractConfig,
+    sessionKeysEnabled = false,
 }: createSafeSmartAccountParameters<entryPoint>): Promise<
     SafeSmartAccount<entryPoint, TTransport, TChain>
 > {
@@ -228,11 +231,19 @@ export async function createSafeSmartAccount<
         safeProxyFactoryAddress,
         safeSingletonAddress,
         multisendAddress,
+        safe4337ModuleAddress,
         safe4337SessionKeysModule,
         safeWebAuthnSignerFactory,
     } =
         safeContractConfig ??
         (await getProjectParamsByChain({ api, chain })).safeContractParams;
+
+    if (sessionKeysEnabled && !safe4337SessionKeysModule)
+        throw Error("Session key not enable fot his network");
+
+    const safe4337Module = (
+        sessionKeysEnabled ? safe4337SessionKeysModule : safe4337ModuleAddress
+    ) as Address;
 
     const comethSigner = await createSigner({
         apiKey,
@@ -248,8 +259,7 @@ export async function createSafeSmartAccount<
             safeProxyFactoryAddress,
             safeSingletonAddress,
             multisendAddress,
-            fallbackHandler: safe4337SessionKeysModule,
-            safe4337SessionKeysModule,
+            fallbackHandler: safe4337Module,
             safeWebAuthnSignerFactory,
         },
     });
@@ -262,8 +272,8 @@ export async function createSafeSmartAccount<
     const initializer = getSafeInitializer({
         comethSigner,
         threshold: 1,
-        fallbackHandler: safe4337SessionKeysModule,
-        modules: [safe4337SessionKeysModule],
+        fallbackHandler: safe4337Module,
+        modules: [safe4337Module],
         setUpContractAddress,
         safeWebAuthnSharedSignerContractAddress,
         p256Verifier,
@@ -307,7 +317,7 @@ export async function createSafeSmartAccount<
         client,
         {
             comethSigner,
-            safe4337SessionKeysModule,
+            safe4337Module,
             smartAccountAddress,
         }
     );
@@ -432,7 +442,7 @@ export async function createSafeSmartAccount<
                 chain: client?.chain as Chain,
                 smartAccountAddress,
                 rpcUrl,
-                safe4337SessionKeysModule,
+                safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
             });
 
             if (!sessionKeySigner) throw new Error("Session key not found");
@@ -441,7 +451,7 @@ export async function createSafeSmartAccount<
 
             const isWhitelisted = await isUserOpWhitelisted({
                 chain: client?.chain as Chain,
-                safe4337SessionKeysModule,
+                safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
                 sessionKey: signer?.address as Address,
                 userOperation: userOp,
                 multisend: multisendAddress,
