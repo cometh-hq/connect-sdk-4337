@@ -25,7 +25,7 @@ export function useSmartAccount() {
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
     const baseUrl = "http://127.0.0.1:8000/connect";
     const rpcUrl = undefined;
-    const sessionKeysEnabled = true;
+    const sessionKeysEnabled = false;
 
     function displayError(message: string) {
         setConnectionError(message);
