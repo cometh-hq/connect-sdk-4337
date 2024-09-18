@@ -32,7 +32,8 @@ export async function verifySignature<
     const isValidSignature = await api.isValidSignature(
         smartAccountAddress,
         message,
-        signature
+        signature,
+        client?.chain?.id as number
     );
 
     return isValidSignature;

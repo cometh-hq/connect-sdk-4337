@@ -54,6 +54,12 @@ export class NoPasskeySignerFoundInDBError extends Error {
     }
 }
 
+export class NoPasskeySignerFoundForGivenChain extends Error {
+    constructor() {
+        super("No passkey signer found in db for this walletAddress and chain");
+    }
+}
+
 export class NoPasskeySignerFoundInDeviceError extends Error {
     constructor() {
         super(

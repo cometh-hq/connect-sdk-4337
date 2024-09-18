@@ -49,12 +49,12 @@ export async function safeWebAuthnSigner<
     {
         passkey,
         passkeySignerAddress,
-        safe4337SessionKeysModule,
+        safe4337Module,
         smartAccountAddress,
     }: {
         passkey: PasskeyLocalStorageFormat;
         passkeySignerAddress: Address;
-        safe4337SessionKeysModule: Address;
+        safe4337Module: Address;
         smartAccountAddress: Address;
     }
 ): Promise<SafeSigner<"safeWebAuthnSigner">> {
@@ -105,7 +105,7 @@ export async function safeWebAuthnSigner<
             const hash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,
-                    verifyingContract: safe4337SessionKeysModule,
+                    verifyingContract: safe4337Module,
                 },
                 types: EIP712_SAFE_OPERATION_TYPE,
                 primaryType: "SafeOp" as const,

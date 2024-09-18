@@ -8,6 +8,7 @@ import {
 
 import type { EntryPoint, Prettify } from "permissionless/types";
 
+import { getProjectParamsByChain } from "@/core/services/comethService";
 import type { webAuthnOptions } from "@/core/signers/passkeys/types";
 import {
     http,
@@ -58,7 +59,10 @@ export async function setUpRecoveryModule<
 
     if (!api) throw new Error("No api found");
 
-    const projectParams = await api.getProjectParams();
+    const projectParams = await getProjectParamsByChain({
+        api,
+        chain: client.chain as Chain,
+    });
 
     if (!projectParams) throw Error("Error fetching project params");
 

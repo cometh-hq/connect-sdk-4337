@@ -1,4 +1,5 @@
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService, {
     type RecoveryParamsResponse,
 } from "@/core/services/delayModuleService";
@@ -48,7 +49,10 @@ export async function getRecoveryRequest<
 
     if (!api) throw new Error("No api found");
 
-    const projectParams = await api.getProjectParams();
+    const projectParams = await getProjectParamsByChain({
+        api,
+        chain: client.chain as Chain,
+    });
 
     if (!projectParams) throw Error("Error fetching project params");
 

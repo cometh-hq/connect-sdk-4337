@@ -39,7 +39,8 @@ export type SafeContractParams = {
     safeWebAuthnSharedSignerContractAddress: Address;
     p256Verifier: Address;
     safeWebAuthnSignerFactory: Address;
-    safe4337SessionKeysModule: Address;
+    safe4337ModuleAddress?: Address;
+    safe4337SessionKeysModule?: Address;
 };
 
 export type RecoveryParams = {

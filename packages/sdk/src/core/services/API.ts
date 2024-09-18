@@ -23,24 +23,29 @@ export class API {
         return this._apiKey;
     }
 
-    async getProjectParams(): Promise<ProjectParams> {
-        const response = await this.api.get("/project/params");
+    async getProjectParams(chainId: number): Promise<ProjectParams> {
+        const response = await this.api.get(
+            `/project/params?chainId=${chainId}`
+        );
         return response.data.projectParams;
     }
 
-    async getWallet(walletAddress: Address): Promise<Wallet> {
+    async getWalletByNetworks(walletAddress: Address): Promise<Wallet[]> {
         const response = await this.api.get(`/wallet/${walletAddress}`);
-        return response.data.wallet;
+        return response.data.wallets;
     }
 
     async createWallet({
+        chainId,
         smartAccountAddress,
         initiatorAddress,
     }: {
+        chainId: number;
         smartAccountAddress: Address;
         initiatorAddress: Address;
     }): Promise<void> {
         const body = {
+            chainId: chainId.toString(),
             walletAddress: smartAccountAddress,
             initiatorAddress,
         };
@@ -52,6 +57,7 @@ export class API {
      * WebAuthn Section
      */
     async createWebAuthnSigner({
+        chainId,
         walletAddress,
         publicKeyId,
         publicKeyX,
@@ -60,6 +66,7 @@ export class API {
         signerAddress,
         isSharedWebAuthnSigner,
     }: {
+        chainId: number;
         walletAddress: Hex;
         publicKeyId: Hex;
         publicKeyX: Hex;
@@ -69,6 +76,7 @@ export class API {
         isSharedWebAuthnSigner: boolean;
     }): Promise<void> {
         const body = {
+            chainId: chainId.toString(),
             walletAddress,
             publicKeyId,
             publicKeyX,
@@ -83,11 +91,11 @@ export class API {
 
     async getPasskeySignerByPublicKeyId(
         publicKeyId: Hex
-    ): Promise<WebAuthnSigner> {
+    ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
             `/webauthn-signer/public-key-id/${publicKeyId}`
         );
-        return response.data.webAuthnSigner;
+        return response.data.webAuthnSigners;
     }
 
     async getPasskeySignersByWalletAddress(
@@ -119,10 +127,11 @@ export class API {
     }
 
     async getWebAuthnSignersByWalletAddress(
-        walletAddress: Address
+        walletAddress: Address,
+        chainId: number
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
-            `/webauthn-signer/${walletAddress}`
+            `/webauthn-signer/${walletAddress}?chainId=${chainId}`
         );
         return response?.data?.webAuthnSigners;
     }
@@ -130,9 +139,11 @@ export class API {
     async isValidSignature(
         walletAddress: Address,
         message: string,
-        signature: Hex
+        signature: Hex,
+        chainId: number
     ): Promise<boolean> {
         const body = {
+            chainId: chainId.toString(),
             message,
             signature,
         };

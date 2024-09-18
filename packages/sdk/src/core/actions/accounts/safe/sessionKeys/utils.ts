@@ -2,7 +2,7 @@ import { safe4337SessionKeyModuleAbi } from "@/core/accounts/safe/abi/safe4337Se
 import { defaultEncryptionSalt } from "@/core/signers/ecdsa/services/ecdsaService";
 import {
     deleteSessionKeyInStorage,
-    getSessionKeySignerFromLocalStorage,
+    getSessionKeyPKFromLocalStorage,
 } from "@/core/signers/ecdsa/sessionKeyEoa/sessionKeyEoaService";
 import type { FallbackEoaSigner } from "@/core/signers/types";
 import { isSmartAccountDeployed } from "permissionless";
@@ -149,7 +149,7 @@ export const getSessionKeySigner = async ({
     if (!smartAccountAddress) return undefined;
 
     const privateKey =
-        await getSessionKeySignerFromLocalStorage(smartAccountAddress);
+        await getSessionKeyPKFromLocalStorage(smartAccountAddress);
 
     if (!privateKey) return undefined;
 
