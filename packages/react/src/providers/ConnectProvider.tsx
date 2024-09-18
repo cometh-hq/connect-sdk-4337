@@ -66,17 +66,22 @@ export const ConnectProvider = <
 
     const updateSmartAccountClient = useCallback(
         async (params: ConnectParameters = {}) => {
-            const { client, address: newAddress } = await createSmartAccount({
-                ...config,
-                smartAccountAddress: params.address,
-                comethSignerConfig: {
-                    ...config.comethSignerConfig,
-                    passKeyName: params.passKeyName,
-                },
-            });
+            try {
+                const { client, address: newAddress } =
+                    await createSmartAccount({
+                        ...config,
+                        smartAccountAddress: params.address,
+                        comethSignerConfig: {
+                            ...config.comethSignerConfig,
+                            passKeyName: params.passKeyName,
+                        },
+                    });
 
-            setSmartAccountClient(client);
-            setSmartAccountAddress(newAddress);
+                setSmartAccountClient(client);
+                setSmartAccountAddress(newAddress);
+            } catch (e) {
+                console.log(e);
+            }
         },
         [config]
     );

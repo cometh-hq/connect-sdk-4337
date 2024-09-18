@@ -239,8 +239,7 @@ export async function createSafeSmartAccount<
         safeContractConfig ??
         (await getProjectParamsByChain({ api, chain })).safeContractParams;
 
-    if (!safe4337ModuleAddress)
-        throw Error("Network is not supported");
+    if (!safe4337ModuleAddress) throw Error("Network is not supported");
 
     if (sessionKeysEnabled && !safe4337SessionKeysModule)
         throw Error("Session key not enable fot his network");

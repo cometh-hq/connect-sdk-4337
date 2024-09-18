@@ -47,7 +47,6 @@ export default function App() {
     ) as Hex;
 
     const connectWallet = async () => {
-        console.log({ localStorageAddress });
         connectAsync({ address: localStorageAddress });
     };
 
@@ -60,8 +59,6 @@ export default function App() {
             setTransactionSuccess(false);
         }
     }, [address]);
-
-    console.log({ address });
 
     const test = async () => {
         const message = "hello world";
