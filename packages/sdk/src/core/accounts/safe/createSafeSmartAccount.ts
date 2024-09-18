@@ -64,6 +64,7 @@ export type SafeSmartAccount<
     ): Promise<Hex>;
     getConnectApi(): API;
     safe4337SessionKeysModule: Address;
+    sessionKeysEnabled: boolean;
     signerAddress: Address;
 };
 
@@ -435,6 +436,7 @@ export async function createSafeSmartAccount<
         ...smartAccount,
         signerAddress,
         safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
+        sessionKeysEnabled,
         async signUserOperationWithSessionKey(
             userOp: UserOperation<GetEntryPointVersion<entryPoint>>
         ) {

@@ -70,6 +70,9 @@ export const safeSessionKeyActions =
                 if (destinations.length === 0)
                     throw new Error("destinations cannot be empty");
 
+                if (!!client.account?.sessionKeysEnabled)
+                    throw new Error("Session Keys are not enabled");
+
                 const fallbackEoaSigner = await createFallbackEoaSigner();
 
                 await encryptSessionKeyInStorage(
@@ -95,6 +98,9 @@ export const safeSessionKeyActions =
             },
 
             async revokeSessionKey(args: { sessionKey: Address }) {
+                if (!!client.account?.sessionKeysEnabled)
+                    throw new Error("Session Keys are not enabled");
+
                 const txHash = await client.sendTransaction({
                     to: client.account?.address as Address,
                     data: encodeFunctionData({
@@ -136,6 +142,9 @@ export const safeSessionKeyActions =
                 sessionKey: Address;
                 destination: Address;
             }) {
+                if (!!client.account?.sessionKeysEnabled)
+                    throw new Error("Session Keys are not enabled");
+
                 return await client.sendTransaction({
                     to: client.account?.address as Address,
                     data: encodeFunctionData({
