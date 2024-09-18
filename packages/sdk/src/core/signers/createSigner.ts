@@ -1,6 +1,6 @@
 import type { Address } from "viem/accounts";
 
-import type { Hex } from "viem";
+import type { Chain, Hex } from "viem";
 
 import type { SmartAccountSigner } from "permissionless/accounts";
 import {
@@ -14,7 +14,10 @@ import {
 } from "./passkeys/passkeyService";
 
 import { API } from "@/core/services/API";
-import { encryptSignerInStorage } from "./ecdsa/services/ecdsaService";
+import {
+    encryptSignerInStorage,
+    getSignerLocalStorage,
+} from "./ecdsa/services/ecdsaService";
 
 import { getDeviceData } from "@/core/services/deviceService";
 import type {
@@ -28,16 +31,23 @@ import {
 import type { ComethSigner, CreateSignerParams } from "./types";
 
 export const saveSigner = async (
+    chain: Chain,
     api: API,
     signer: ComethSigner,
     smartAccountAddress: Address
 ) => {
     if (signer.type === "localWallet") {
-        await encryptSignerInStorage(
+        const storedEncryptedPK = await getSignerLocalStorage(
             smartAccountAddress,
-            signer.eoaFallback.privateKey,
             signer.eoaFallback.encryptionSalt
         );
+
+        if (!storedEncryptedPK)
+            await encryptSignerInStorage(
+                smartAccountAddress,
+                signer.eoaFallback.privateKey,
+                signer.eoaFallback.encryptionSalt
+            );
     } else {
         setPasskeyInStorage(
             smartAccountAddress,
@@ -48,6 +58,7 @@ export const saveSigner = async (
         );
 
         await api.createWebAuthnSigner({
+            chainId: chain.id,
             walletAddress: smartAccountAddress,
             publicKeyId: signer.passkey.id,
             publicKeyX: signer.passkey.pubkeyCoordinates.x,
@@ -144,7 +155,8 @@ export async function createSigner({
                 safeProxyFactoryAddress:
                     safeContractParams.safeProxyFactoryAddress,
                 safeSingletonAddress: safeContractParams.safeSingletonAddress,
-                fallbackHandler: safeContractParams.safe4337SessionKeysModule,
+                fallbackHandler:
+                    safeContractParams.safe4337ModuleAddress as Address,
                 p256Verifier: safeContractParams.p256Verifier,
                 multisendAddress: safeContractParams.multisendAddress,
                 safeWebAuthnSharedSignerAddress:

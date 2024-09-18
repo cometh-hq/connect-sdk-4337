@@ -50,11 +50,11 @@ export async function safeECDSASigner<
     client: Client<TTransport, TChain, undefined>,
     {
         signer,
-        safe4337SessionKeysModule,
+        safe4337Module,
         smartAccountAddress,
     }: {
         signer: SmartAccountSigner<TSource, TAddress>;
-        safe4337SessionKeysModule: Address;
+        safe4337Module: Address;
         smartAccountAddress: Address;
     }
 ): Promise<SafeSigner<"safeECDSASigner">> {
@@ -110,7 +110,7 @@ export async function safeECDSASigner<
             const payload = {
                 domain: {
                     chainId: client.chain?.id,
-                    verifyingContract: safe4337SessionKeysModule,
+                    verifyingContract: safe4337Module,
                 },
                 types: EIP712_SAFE_OPERATION_TYPE,
                 primaryType: "SafeOp" as const,

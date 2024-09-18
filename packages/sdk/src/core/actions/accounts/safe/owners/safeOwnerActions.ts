@@ -160,7 +160,8 @@ export const safeOwnerPluginActions =
 
             const webAuthnSigners =
                 (await api?.getWebAuthnSignersByWalletAddress(
-                    client.account?.address as Address
+                    client.account?.address as Address,
+                    publicClient.chain?.id as number
                 )) as WebAuthnSigner[];
 
             if (!isDeployed)

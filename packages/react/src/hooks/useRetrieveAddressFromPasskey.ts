@@ -3,17 +3,19 @@ import {
     retrieveAccountAddressFromPasskeys,
 } from "@cometh/connect-sdk-4337";
 import { useCallback, useState } from "react";
-import type { Address } from "viem";
+import type { Address, Chain } from "viem";
 import type { UseQueryParameters } from "wagmi/query";
 
 export type UseRetrieveAccountAddressFromPasskeyOptions = {
     apiKey: string;
+    chain: Chain;
     baseUrl?: string;
     queryProps?: UseQueryParameters;
 };
 
 export const useRetrieveAccountAddressFromPasskeys = ({
     apiKey,
+    chain,
     baseUrl,
 }: UseRetrieveAccountAddressFromPasskeyOptions) => {
     const [isPending, setIsPending] = useState(false);
@@ -25,6 +27,7 @@ export const useRetrieveAccountAddressFromPasskeys = ({
         try {
             const result = await retrieveAccountAddressFromPasskeys(
                 apiKey,
+                chain,
                 baseUrl
             );
             const address = result as Address;
@@ -47,6 +50,7 @@ export const useRetrieveAccountAddressFromPasskeys = ({
 
 export const useRetrieveAccountAddressFromPasskeyId = ({
     apiKey,
+    chain,
     baseUrl,
 }: UseRetrieveAccountAddressFromPasskeyOptions) => {
     const [isPending, setIsPending] = useState(false);
@@ -59,6 +63,7 @@ export const useRetrieveAccountAddressFromPasskeyId = ({
             try {
                 const result = await retrieveAccountAddressFromPasskeyId({
                     apiKey,
+                    chain,
                     id,
                     baseUrl,
                 });
