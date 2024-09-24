@@ -126,12 +126,12 @@ export class API {
         return response.data.signerAddress;
     }
 
-    async getWebAuthnSignersByWalletAddress(
+    async getWebAuthnSignersByWalletAddressAndChain(
         walletAddress: Address,
         chainId: number
     ): Promise<WebAuthnSigner[]> {
         const response = await this.api.get(
-            `/webauthn-signer/${walletAddress}?chainId=${chainId}`
+            `/webauthn-signer/${walletAddress}/${chainId}`
         );
         return response?.data?.webAuthnSigners;
     }

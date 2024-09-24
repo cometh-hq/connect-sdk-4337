@@ -27,13 +27,12 @@ export default function App() {
 
     const recoverWalletAddress = async () => {
         console.log(apiKey, baseUrl);
+    };
 
-        const walletAddress = await retrieveAccountAddressFromPasskeys(
-            apiKey!,
-            baseUrl
-        );
+    const verifyMessage = async () => {
+        const t = await api.get("/wallet");
 
-        console.log({ walletAddress });
+        console.log(t.data);
     };
 
     const validateAddDevice = async () => {
@@ -153,6 +152,8 @@ export default function App() {
                                 <button onClick={cancelRecovery}>
                                     Cancel reocvery
                                 </button>
+
+                                <button onClick={verifyMessage}>get</button>
                             </>
                         )}
 

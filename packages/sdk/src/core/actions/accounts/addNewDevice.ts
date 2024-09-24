@@ -76,9 +76,9 @@ export const createNewSignerWithAccountAddress = async ({
     params = {},
 }: {
     apiKey: string;
-    baseUrl?: string;
     smartAccountAddress: Address;
-    params: CreateNewSignerParams;
+    baseUrl?: string;
+    params?: CreateNewSignerParams;
 }): Promise<Signer> => {
     const api = new API(apiKey, baseUrl);
     const { signer, localPrivateKey } = await _createNewSigner(api, {
@@ -125,7 +125,7 @@ export const createNewSigner = async ({
 }: {
     apiKey: string;
     baseUrl?: string;
-    params: CreateNewSignerParams;
+    params?: CreateNewSignerParams;
 }): Promise<Signer> => {
     const api = new API(apiKey, baseUrl);
     const { signer } = await _createNewPasskeySigner(api, {
