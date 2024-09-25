@@ -190,7 +190,7 @@ export type createSafeSmartAccountParameters<
     comethSignerConfig?: ComethSignerConfig;
     safeContractConfig?: SafeContractParams;
     sessionKeysEnabled?: boolean;
-    customSigner: SignerCustom;
+    customSigner?: SignerCustom;
 }>;
 
 /**
