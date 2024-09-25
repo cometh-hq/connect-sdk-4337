@@ -24,7 +24,7 @@ import {
     getSignerAddress,
     saveSigner,
 } from "@/core/signers/createSigner";
-import type { ComethSignerConfig, SignerCustom } from "@/core/signers/types";
+import type { ComethSignerConfig, Signer } from "@/core/signers/types";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
 import {
@@ -127,7 +127,7 @@ const storeWalletInComethApi = async ({
     safeProxyFactoryAddress: Address;
     saltNonce: Hex;
     initializer: Hex;
-    signer: SignerCustom;
+    signer: Signer;
     api: API;
 }): Promise<Address> => {
     const smartAccountAddress = await getAccountAddress({
@@ -190,7 +190,7 @@ export type createSafeSmartAccountParameters<
     comethSignerConfig?: ComethSignerConfig;
     safeContractConfig?: SafeContractParams;
     sessionKeysEnabled?: boolean;
-    customSigner?: SignerCustom;
+    signer?: Signer;
 }>;
 
 /**
@@ -219,7 +219,7 @@ export async function createSafeSmartAccount<
     comethSignerConfig,
     safeContractConfig,
     sessionKeysEnabled = false,
-    customSigner,
+    signer,
 }: createSafeSmartAccountParameters<entryPoint>): Promise<
     SafeSmartAccount<entryPoint, TTransport, TChain>
 > {
@@ -254,8 +254,8 @@ export async function createSafeSmartAccount<
         sessionKeysEnabled ? safe4337SessionKeysModule : safe4337ModuleAddress
     ) as Address;
 
-    const comethSigner =
-        customSigner ??
+    const accountSigner =
+        signer ??
         (await createSigner({
             apiKey,
             chain,
@@ -275,10 +275,10 @@ export async function createSafeSmartAccount<
             },
         }));
 
-    const signerAddress = getSignerAddress(comethSigner);
+    const signerAddress = getSignerAddress(accountSigner);
 
     const initializer = getSafeInitializer({
-        comethSigner,
+        accountSigner,
         threshold: 1,
         fallbackHandler: safe4337Module,
         modules: [safe4337Module],
@@ -308,11 +308,11 @@ export async function createSafeSmartAccount<
             safeProxyFactoryAddress,
             saltNonce: zeroHash,
             initializer,
-            signer: comethSigner,
+            signer: accountSigner,
             api,
         });
 
-        await saveSigner(chain, api, comethSigner, smartAccountAddress);
+        await saveSigner(chain, api, accountSigner, smartAccountAddress);
     }
 
     if (!smartAccountAddress) throw new Error("Account address not found");
@@ -325,7 +325,7 @@ export async function createSafeSmartAccount<
     const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
         client,
         {
-            comethSigner,
+            accountSigner,
             safe4337Module,
             smartAccountAddress,
         }

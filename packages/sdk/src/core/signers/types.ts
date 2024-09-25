@@ -39,4 +39,4 @@ export type CreateSignerParams = {
     rpcUrl?: string;
 } & ComethSignerConfig;
 
-export type SignerCustom = ComethSigner | SmartAccountSigner<"custom", Address>;
+export type Signer = ComethSigner | SmartAccountSigner<"custom", Address>;

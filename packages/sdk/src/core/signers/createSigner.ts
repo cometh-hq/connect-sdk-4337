@@ -28,18 +28,16 @@ import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "./passkeys/utils";
-import type { ComethSigner, CreateSignerParams, SignerCustom } from "./types";
+import type { ComethSigner, CreateSignerParams, Signer } from "./types";
 
-export const isComethSigner = (
-    signer: SignerCustom
-): signer is ComethSigner => {
+export const isComethSigner = (signer: Signer): signer is ComethSigner => {
     return (
         "type" in signer &&
         (signer.type === "localWallet" || signer.type === "passkey")
     );
 };
 
-export const getSignerAddress = (customSigner: SignerCustom) => {
+export const getSignerAddress = (customSigner: Signer) => {
     if (isComethSigner(customSigner)) {
         return customSigner.type === "localWallet"
             ? customSigner.eoaFallback.signer.address
@@ -49,7 +47,7 @@ export const getSignerAddress = (customSigner: SignerCustom) => {
     return customSigner.address;
 };
 
-export const getSigner = (customSigner: SignerCustom) => {
+export const getSigner = (customSigner: Signer) => {
     if (isComethSigner(customSigner)) {
         if (customSigner.type === "passkey")
             throw Error("passkey signer not valid");
@@ -63,7 +61,7 @@ export const getSigner = (customSigner: SignerCustom) => {
 export const saveSigner = async (
     chain: Chain,
     api: API,
-    signer: SignerCustom,
+    signer: Signer,
     smartAccountAddress: Address
 ) => {
     if (isComethSigner(signer)) {

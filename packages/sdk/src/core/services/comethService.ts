@@ -1,7 +1,7 @@
 import type { Address, Chain } from "viem";
 import type { ProjectParams, Wallet } from "../accounts/safe/types";
 import { getSignerAddress } from "../signers/createSigner";
-import type { SignerCustom } from "../signers/types";
+import type { Signer } from "../signers/types";
 import type { API } from "./API";
 
 export const createNewWalletInDb = async ({
@@ -13,7 +13,7 @@ export const createNewWalletInDb = async ({
     chain: Chain;
     api: API;
     smartAccountAddress: Address;
-    signer: SignerCustom;
+    signer: Signer;
 }) => {
     const initiatorAddress = getSignerAddress(signer);
 

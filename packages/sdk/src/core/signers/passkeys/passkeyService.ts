@@ -28,7 +28,7 @@ import {
     hexArrayStr,
     parseHex,
 } from "../passkeys/utils";
-import type { ComethSigner } from "../types";
+import type { Signer } from "../types";
 import type {
     Assertion,
     PasskeyCredential,
@@ -274,7 +274,7 @@ const getPasskeySigner = async ({
     if (localStoragePasskey) {
         const passkey = localStoragePasskey as PasskeyLocalStorageFormat;
 
-        const comethSigner: ComethSigner = {
+        const signer: Signer = {
             type: "passkey",
             passkey: {
                 id: passkey.id as Hex,
@@ -288,7 +288,7 @@ const getPasskeySigner = async ({
 
         const isOwner = await isSafeOwner({
             safeAddress: smartAccountAddress,
-            comethSigner,
+            accountSigner: signer,
             chain,
             rpcUrl,
             safeProxyFactoryAddress,

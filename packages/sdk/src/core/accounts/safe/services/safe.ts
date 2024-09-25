@@ -1,5 +1,5 @@
 import { getSignerAddress, isComethSigner } from "@/core/signers/createSigner";
-import type { ComethSigner, SignerCustom } from "@/core/signers/types";
+import type { Signer } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
 import { isSmartAccountDeployed } from "permissionless";
 import {
@@ -120,7 +120,7 @@ export const decodeUserOp = ({
 /**
  * Generates setup data for enabling modules and configuring the signer
  * @param modules - Array of module addresses to enable
- * @param comethSigner - The Cometh signer instance
+ * @param accountSigner - The signer instance
  * @param setUpContractAddress - Address of the setup contract
  * @param safeWebAuthnSharedSignerContractAddress - Address of the WebAuthn shared signer contract
  * @param safeP256VerifierAddress - Address of the P256 verifier contract
@@ -128,13 +128,13 @@ export const decodeUserOp = ({
  */
 export const getSetUpCallData = ({
     modules,
-    comethSigner,
+    accountSigner,
     setUpContractAddress,
     safeWebAuthnSharedSignerContractAddress,
     safeP256VerifierAddress,
 }: {
     modules: Address[];
-    comethSigner: SignerCustom;
+    accountSigner: Signer;
     setUpContractAddress: Address;
     safeWebAuthnSharedSignerContractAddress: Address;
     safeP256VerifierAddress: Address;
@@ -145,14 +145,14 @@ export const getSetUpCallData = ({
         args: [modules],
     });
 
-    if (isComethSigner(comethSigner) && comethSigner.type === "passkey") {
+    if (isComethSigner(accountSigner) && accountSigner.type === "passkey") {
         const sharedSignerConfigCallData = encodeFunctionData({
             abi: SafeWebAuthnSharedSignerAbi,
             functionName: "configure",
             args: [
                 {
-                    x: hexToBigInt(comethSigner.passkey.pubkeyCoordinates.x),
-                    y: hexToBigInt(comethSigner.passkey.pubkeyCoordinates.y),
+                    x: hexToBigInt(accountSigner.passkey.pubkeyCoordinates.x),
+                    y: hexToBigInt(accountSigner.passkey.pubkeyCoordinates.y),
                     verifiers: hexToBigInt(safeP256VerifierAddress),
                 },
             ],
@@ -183,7 +183,7 @@ export const getSetUpCallData = ({
 
 /**
  * Generates the initializer data for a Safe smart contract
- * @param comethSigner - The Cometh signer instance
+ * @param accountSigner - The signer instance
  * @param threshold - The threshold for the multi-signature wallet
  * @param fallbackHandler - Address of the fallback handler
  * @param modules - Array of module addresses to enable
@@ -194,7 +194,7 @@ export const getSetUpCallData = ({
  * @returns Encoded initializer data as a Hex string
  */
 export const getSafeInitializer = ({
-    comethSigner,
+    accountSigner,
     threshold,
     fallbackHandler,
     modules,
@@ -203,7 +203,7 @@ export const getSafeInitializer = ({
     p256Verifier,
     multisendAddress,
 }: {
-    comethSigner: SignerCustom;
+    accountSigner: Signer;
     threshold: number;
     fallbackHandler: Address;
     modules: Address[];
@@ -212,18 +212,18 @@ export const getSafeInitializer = ({
     p256Verifier: Address;
     multisendAddress: Address;
 }): Hex => {
-    const signerAddress = getSignerAddress(comethSigner);
+    const signerAddress = getSignerAddress(accountSigner);
 
     const setUpCallData = getSetUpCallData({
         modules,
-        comethSigner,
+        accountSigner,
         setUpContractAddress,
         safeWebAuthnSharedSignerContractAddress:
             safeWebAuthnSharedSignerContractAddress,
         safeP256VerifierAddress: p256Verifier,
     });
 
-    if (isComethSigner(comethSigner) && comethSigner.type === "passkey") {
+    if (isComethSigner(accountSigner) && accountSigner.type === "passkey") {
         return getSafeSetUpData({
             owner: safeWebAuthnSharedSignerContractAddress,
             threshold,
@@ -260,7 +260,7 @@ export const getSafeInitializer = ({
  */
 export const isSafeOwner = async ({
     safeAddress,
-    comethSigner,
+    accountSigner,
     chain,
     safeProxyFactoryAddress,
     safeSingletonAddress,
@@ -273,7 +273,7 @@ export const isSafeOwner = async ({
     rpcUrl,
 }: {
     safeAddress: Address;
-    comethSigner: ComethSigner;
+    accountSigner: Signer;
     chain: Chain;
     safeProxyFactoryAddress: Address;
     safeSingletonAddress: Address;
@@ -285,10 +285,7 @@ export const isSafeOwner = async ({
     multisendAddress: Address;
     rpcUrl?: string;
 }): Promise<boolean> => {
-    const signerAddress =
-        comethSigner.type === "localWallet"
-            ? comethSigner.eoaFallback.signer.address
-            : comethSigner.passkey.signerAddress;
+    const signerAddress = getSignerAddress(accountSigner);
 
     try {
         const publicClient = createPublicClient({
@@ -314,7 +311,7 @@ export const isSafeOwner = async ({
         const predictedWalletAddress = await predictSafeAddress({
             saltNonce: 0n,
             chain,
-            comethSigner,
+            accountSigner,
             safeProxyFactoryAddress,
             safeSingletonAddress,
             setUpContractAddress: safeModuleSetUpAddress,
@@ -352,7 +349,7 @@ export const isSafeOwner = async ({
 export const predictSafeAddress = async ({
     saltNonce,
     chain,
-    comethSigner,
+    accountSigner,
     fallbackHandler,
     modules,
     setUpContractAddress,
@@ -366,7 +363,7 @@ export const predictSafeAddress = async ({
 }: {
     saltNonce: bigint;
     chain: Chain;
-    comethSigner: ComethSigner;
+    accountSigner: Signer;
     safeSingletonAddress: Address;
     safeProxyFactoryAddress: Address;
     fallbackHandler: Address;
@@ -379,7 +376,7 @@ export const predictSafeAddress = async ({
     rpcUrl?: string;
 }): Promise<Address> => {
     const initializer = getSafeInitializer({
-        comethSigner,
+        accountSigner,
         threshold,
         fallbackHandler,
         modules,
