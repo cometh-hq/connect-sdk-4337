@@ -1,4 +1,5 @@
-import type { ComethSigner } from "@/core/signers/types";
+import { getSignerAddress, isComethSigner } from "@/core/signers/createSigner";
+import type { ComethSigner, SignerCustom } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
 import { isSmartAccountDeployed } from "permissionless";
 import {
@@ -133,7 +134,7 @@ export const getSetUpCallData = ({
     safeP256VerifierAddress,
 }: {
     modules: Address[];
-    comethSigner: ComethSigner;
+    comethSigner: SignerCustom;
     setUpContractAddress: Address;
     safeWebAuthnSharedSignerContractAddress: Address;
     safeP256VerifierAddress: Address;
@@ -144,7 +145,7 @@ export const getSetUpCallData = ({
         args: [modules],
     });
 
-    if (comethSigner.type === "passkey") {
+    if (isComethSigner(comethSigner) && comethSigner.type === "passkey") {
         const sharedSignerConfigCallData = encodeFunctionData({
             abi: SafeWebAuthnSharedSignerAbi,
             functionName: "configure",
@@ -202,7 +203,7 @@ export const getSafeInitializer = ({
     p256Verifier,
     multisendAddress,
 }: {
-    comethSigner: ComethSigner;
+    comethSigner: SignerCustom;
     threshold: number;
     fallbackHandler: Address;
     modules: Address[];
@@ -211,6 +212,8 @@ export const getSafeInitializer = ({
     p256Verifier: Address;
     multisendAddress: Address;
 }): Hex => {
+    const signerAddress = getSignerAddress(comethSigner);
+
     const setUpCallData = getSetUpCallData({
         modules,
         comethSigner,
@@ -220,20 +223,20 @@ export const getSafeInitializer = ({
         safeP256VerifierAddress: p256Verifier,
     });
 
-    if (comethSigner.type === "localWallet") {
+    if (isComethSigner(comethSigner) && comethSigner.type === "passkey") {
         return getSafeSetUpData({
-            owner: comethSigner.eoaFallback.signer.address,
+            owner: safeWebAuthnSharedSignerContractAddress,
             threshold,
-            setUpContractAddress,
+            setUpContractAddress: multisendAddress,
             setUpData: setUpCallData,
             fallbackHandler,
         });
     }
 
     return getSafeSetUpData({
-        owner: safeWebAuthnSharedSignerContractAddress,
+        owner: signerAddress,
         threshold,
-        setUpContractAddress: multisendAddress,
+        setUpContractAddress,
         setUpData: setUpCallData,
         fallbackHandler,
     });

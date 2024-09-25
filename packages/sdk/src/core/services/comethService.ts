@@ -1,6 +1,7 @@
 import type { Address, Chain } from "viem";
 import type { ProjectParams, Wallet } from "../accounts/safe/types";
-import type { ComethSigner } from "../signers/types";
+import { getSignerAddress } from "../signers/createSigner";
+import type { SignerCustom } from "../signers/types";
 import type { API } from "./API";
 
 export const createNewWalletInDb = async ({
@@ -12,21 +13,15 @@ export const createNewWalletInDb = async ({
     chain: Chain;
     api: API;
     smartAccountAddress: Address;
-    signer: ComethSigner;
+    signer: SignerCustom;
 }) => {
-    if (signer.type === "localWallet") {
-        await api.createWallet({
-            chainId: chain.id,
-            smartAccountAddress,
-            initiatorAddress: signer.eoaFallback.signer.address,
-        });
-    } else {
-        await api.createWallet({
-            chainId: chain.id,
-            smartAccountAddress,
-            initiatorAddress: signer.passkey.signerAddress,
-        });
-    }
+    const initiatorAddress = getSignerAddress(signer);
+
+    await api.createWallet({
+        chainId: chain.id,
+        smartAccountAddress,
+        initiatorAddress: initiatorAddress,
+    });
 };
 
 export const getWalletsByNetworks = async ({

@@ -1,12 +1,14 @@
 import type { Address, Chain, Client, Transport } from "viem";
 
-import type { ComethSigner } from "@/core/signers/types.js";
 import { safeECDSASigner } from "./ecdsa/ecdsa.js";
+
+import { getSigner, isComethSigner } from "@/core/signers/createSigner.js";
+import type { SignerCustom } from "@/core/signers/types.js";
 import type { SafeSigner } from "./types.js";
 import { safeWebAuthnSigner } from "./webauthn/webAuthn.js";
 
 type SafeSignerParams = {
-    comethSigner: ComethSigner;
+    comethSigner: SignerCustom;
     safe4337Module: Address;
     smartAccountAddress: Address;
 };
@@ -32,10 +34,11 @@ export async function comethSignerToSafeSigner<
     client: Client<TTransport, TChain, undefined>,
     { comethSigner, safe4337Module, smartAccountAddress }: SafeSignerParams
 ): Promise<SafeSigner> {
-    if (comethSigner.type === "localWallet") {
+    if (isComethSigner(comethSigner) && comethSigner.type === "passkey") {
         return {
-            ...(await safeECDSASigner(client, {
-                signer: comethSigner.eoaFallback.signer,
+            ...(await safeWebAuthnSigner(client, {
+                passkey: comethSigner.passkey,
+                passkeySignerAddress: comethSigner.passkey.signerAddress,
                 safe4337Module,
                 smartAccountAddress,
             })),
@@ -43,9 +46,8 @@ export async function comethSignerToSafeSigner<
     }
 
     return {
-        ...(await safeWebAuthnSigner(client, {
-            passkey: comethSigner.passkey,
-            passkeySignerAddress: comethSigner.passkey.signerAddress,
+        ...(await safeECDSASigner(client, {
+            signer: getSigner(comethSigner),
             safe4337Module,
             smartAccountAddress,
         })),

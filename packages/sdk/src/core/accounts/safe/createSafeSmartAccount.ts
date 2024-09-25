@@ -19,8 +19,12 @@ import type { Prettify } from "viem/types/utils";
 import { API } from "@/core/services/API";
 import { getViemClient } from "../utils";
 
-import { createSigner, saveSigner } from "@/core/signers/createSigner";
-import type { ComethSigner, SignerConfig } from "@/core/signers/types";
+import {
+    createSigner,
+    getSignerAddress,
+    saveSigner,
+} from "@/core/signers/createSigner";
+import type { ComethSignerConfig, SignerCustom } from "@/core/signers/types";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
 import {
@@ -123,7 +127,7 @@ const storeWalletInComethApi = async ({
     safeProxyFactoryAddress: Address;
     saltNonce: Hex;
     initializer: Hex;
-    signer: ComethSigner;
+    signer: SignerCustom;
     api: API;
 }): Promise<Address> => {
     const smartAccountAddress = await getAccountAddress({
@@ -183,9 +187,10 @@ export type createSafeSmartAccountParameters<
     baseUrl?: string;
     smartAccountAddress?: Address;
     entryPoint: TEntryPoint;
-    comethSignerConfig?: SignerConfig;
+    comethSignerConfig?: ComethSignerConfig;
     safeContractConfig?: SafeContractParams;
     sessionKeysEnabled?: boolean;
+    customSigner: SignerCustom;
 }>;
 
 /**
@@ -195,7 +200,7 @@ export type createSafeSmartAccountParameters<
  * @param baseUrl - Optional base URL for the API
  * @param smartAccountAddress - Optional address of an existing smart account
  * @param entryPoint - The entry point contract address
- * @param comethSignerConfig - Optional configuration for the Cometh signer
+ * @param comethComethSignerConfig - Optional configuration for the Cometh signer
  * @param safeContractConfig - Optional configuration for the Safe contract
  * @param sessionKeysEnabled - Optional configuration for the Safe contract
  * @returns A SafeSmartAccount instance
@@ -214,6 +219,7 @@ export async function createSafeSmartAccount<
     comethSignerConfig,
     safeContractConfig,
     sessionKeysEnabled = false,
+    customSigner,
 }: createSafeSmartAccountParameters<entryPoint>): Promise<
     SafeSmartAccount<entryPoint, TTransport, TChain>
 > {
@@ -248,29 +254,28 @@ export async function createSafeSmartAccount<
         sessionKeysEnabled ? safe4337SessionKeysModule : safe4337ModuleAddress
     ) as Address;
 
-    const comethSigner = await createSigner({
-        apiKey,
-        chain,
-        smartAccountAddress,
-        ...comethSignerConfig,
-        rpcUrl,
-        baseUrl,
-        safeContractParams: {
-            safeWebAuthnSharedSignerContractAddress,
-            setUpContractAddress,
-            p256Verifier,
-            safeProxyFactoryAddress,
-            safeSingletonAddress,
-            multisendAddress,
-            fallbackHandler: safe4337Module,
-            safeWebAuthnSignerFactory,
-        },
-    });
+    const comethSigner =
+        customSigner ??
+        (await createSigner({
+            apiKey,
+            chain,
+            smartAccountAddress,
+            ...comethSignerConfig,
+            rpcUrl,
+            baseUrl,
+            safeContractParams: {
+                safeWebAuthnSharedSignerContractAddress,
+                setUpContractAddress,
+                p256Verifier,
+                safeProxyFactoryAddress,
+                safeSingletonAddress,
+                multisendAddress,
+                fallbackHandler: safe4337Module,
+                safeWebAuthnSignerFactory,
+            },
+        }));
 
-    const signerAddress =
-        comethSigner.type === "localWallet"
-            ? comethSigner.eoaFallback.signer.address
-            : comethSigner.passkey.signerAddress;
+    const signerAddress = getSignerAddress(comethSigner);
 
     const initializer = getSafeInitializer({
         comethSigner,
@@ -306,6 +311,7 @@ export async function createSafeSmartAccount<
             signer: comethSigner,
             api,
         });
+
         await saveSigner(chain, api, comethSigner, smartAccountAddress);
     }
 

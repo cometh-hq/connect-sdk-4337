@@ -2,10 +2,8 @@
 
 import React, { useState } from "react";
 
-import {
-    createNewSignerWithAccountAddress,
-    retrieveAccountAddressFromPasskeys,
-} from "@cometh/connect-sdk-4337";
+import { createNewSignerWithAccountAddress } from "@cometh/connect-sdk-4337";
+import { providerToSmartAccountSigner } from "permissionless";
 import { api } from "../../api";
 import ConnectWallet from "./components/ConnectWallet";
 import Transaction from "./components/Transaction";
@@ -25,14 +23,12 @@ export default function App() {
     } = useSmartAccount();
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
-    const recoverWalletAddress = async () => {
-        console.log(apiKey, baseUrl);
-    };
-
     const verifyMessage = async () => {
-        const t = await api.get("/wallet");
+        const smartAccountSigner = await providerToSmartAccountSigner(
+            (window as any).ethereum
+        );
 
-        console.log(t.data);
+        console.log({ smartAccountSigner });
     };
 
     const validateAddDevice = async () => {
@@ -157,11 +153,11 @@ export default function App() {
                             </>
                         )}
 
-                        {!isConnected && (
+                        {/*    {!isConnected && (
                             <button onClick={recoverWalletAddress}>
                                 recoverWalletAddress
                             </button>
-                        )}
+                        )} */}
                     </div>
                 </div>
             </div>

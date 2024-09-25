@@ -57,6 +57,7 @@ export function smartAccountConnector<
     sessionKeysEnabled,
     paymasterUrl,
     shimDisconnect = true,
+    customSigner,
 }: ConnectWagmiConfig<TEntryPoint>): CreateConnectorFn {
     let chain: Chain;
 
@@ -95,6 +96,7 @@ export function smartAccountConnector<
                     comethSignerConfig,
                     safeContractConfig,
                     sessionKeysEnabled,
+                    customSigner,
                 });
 
                 if (paymasterUrl) {
