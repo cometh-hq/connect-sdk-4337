@@ -7,7 +7,7 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Address, type Hex } from "viem";
+import { http, type Hex } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -45,7 +45,8 @@ export function useSmartAccount() {
 
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-            const comethSignerConfig = { passKeyName: "testing multichain" };
+            const comethSignerConfig = { fullDomainSelected: true, passKeyName: "oiqvefor" }
+
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
@@ -55,7 +56,8 @@ export function useSmartAccount() {
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig,
+                    comethSignerConfig
+                    /*                signer, */
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
@@ -64,7 +66,8 @@ export function useSmartAccount() {
                     rpcUrl,
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig,
+                    comethSignerConfig
+                    /*                 signer, */
                 });
                 window.localStorage.setItem(
                     "walletAddress",

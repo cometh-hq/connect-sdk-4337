@@ -2,17 +2,16 @@
 
 import React, { useState } from "react";
 
-import {
-    createNewSignerWithAccountAddress,
-    retrieveAccountAddressFromPasskeys,
-} from "@cometh/connect-sdk-4337";
+import { createNewSignerWithAccountAddress, retrieveAccountAddressFromPasskeys } from "@cometh/connect-sdk-4337";
+import { providerToSmartAccountSigner } from "permissionless";
 import { api } from "../../api";
 import ConnectWallet from "./components/ConnectWallet";
 import Transaction from "./components/Transaction";
 import { useSmartAccount } from "./modules/hooks/useSmartAccount";
+import { arbitrumSepolia } from "viem/chains";
 
-const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!;
 
 export default function App() {
     const {
@@ -25,15 +24,22 @@ export default function App() {
     } = useSmartAccount();
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
-    const recoverWalletAddress = async () => {
-        console.log(apiKey, baseUrl);
-    };
-
     const verifyMessage = async () => {
-        const t = await api.get("/wallet");
+        const message = "test"
 
-        console.log(t.data);
+        const signature = await smartAccount.account.signMessage({message});
+
+        const verif = await smartAccount.verifySignature({message, signature});
+
+        console.log({verif})
     };
+
+    const retrieveAccountAddress = async () => {
+
+        const walletAddress = await retrieveAccountAddressFromPasskeys(apiKey, arbitrumSepolia, true, baseUrl);
+
+        console.log({walletAddress})
+    }
 
     const validateAddDevice = async () => {
         try {
@@ -157,11 +163,11 @@ export default function App() {
                             </>
                         )}
 
-                        {!isConnected && (
+                        {/*    {!isConnected && (
                             <button onClick={recoverWalletAddress}>
                                 recoverWalletAddress
                             </button>
-                        )}
+                        )} */}
                     </div>
                 </div>
             </div>

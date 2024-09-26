@@ -12,6 +12,7 @@ import { useSmartAccount } from "./useSmartAccount";
 type CreateNewSignerParameters = {
     passKeyName?: string;
     webAuthnOptions?: webAuthnOptions;
+    fullDomainSelected?: boolean;
 };
 
 type SerializeUrlParameters = {
@@ -111,7 +112,7 @@ export const useCreateNewSigner = (apiKey: string, baseUrl?: string) => {
                 setIsPending(false);
             }
         },
-        [apiKey, queryClient]
+        [apiKey, queryClient, baseUrl]
     );
 
     return {
