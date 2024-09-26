@@ -42,27 +42,29 @@ const EC = elliptic.ec;
 const _formatCreatingRpId = (
     fullDomainSelected: boolean
 ): { name: string; id?: string } => {
-    console.log({ fullDomainSelected });
-    const domain = fullDomainSelected
-        ? window.location.host
-        : (psl.parse(window.location.host) as ParsedDomain).domain;
-    console.log({ domain });
-    return domain
+    const rootDomain = (psl.parse(window.location.host) as ParsedDomain).domain;
+
+    if (!rootDomain) return { name: "localhost" };
+
+    return fullDomainSelected
         ? {
-              name: domain,
-              id: domain,
+              name: window.location.host,
+              id: window.location.host,
           }
-        : { name: "localhost" };
+        : {
+              name: rootDomain,
+              id: rootDomain,
+          };
 };
 
 const _formatSigningRpId = (
     fullDomainSelected: boolean
 ): string | undefined => {
-    console.log({ fullDomainSelected });
-    console.log({ domain: window.location.host });
-    return fullDomainSelected
-        ? window.location.host
-        : (psl.parse(window.location.host) as ParsedDomain).domain || undefined;
+    const rootDomain = (psl.parse(window.location.host) as ParsedDomain).domain;
+
+    if (!rootDomain) return undefined;
+
+    return fullDomainSelected ? window.location.host : rootDomain;
 };
 
 const createPasskeySigner = async ({
@@ -82,6 +84,10 @@ const createPasskeySigner = async ({
         const name = passKeyName || "Cometh Connect";
         const authenticatorSelection = webAuthnOptions?.authenticatorSelection;
         const extensions = webAuthnOptions?.extensions;
+
+        console.log("create");
+
+        console.log(_formatCreatingRpId(fullDomainSelected));
 
         const passkeyCredential = (await navigator.credentials.create({
             publicKey: {
@@ -108,6 +114,8 @@ const createPasskeySigner = async ({
                 "Failed to generate passkey. Received null as a credential"
             );
         }
+
+        console.log({ passkeyCredential });
 
         const publicKeyAlgorithm =
             passkeyCredential.response.getPublicKeyAlgorithm();
@@ -158,7 +166,8 @@ const createPasskeySigner = async ({
         };
 
         return passkeyWithCoordinates;
-    } catch {
+    } catch (e) {
+        console.log({ e });
         throw new Error("Error in the passkey creation");
     }
 };
