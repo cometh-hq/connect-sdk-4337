@@ -9,6 +9,7 @@ import type { UseQueryParameters } from "wagmi/query";
 export type UseRetrieveAccountAddressFromPasskeyOptions = {
     apiKey: string;
     chain: Chain;
+    fullDomainSelected?: boolean;
     baseUrl?: string;
     queryProps?: UseQueryParameters;
 };
@@ -16,6 +17,7 @@ export type UseRetrieveAccountAddressFromPasskeyOptions = {
 export const useRetrieveAccountAddressFromPasskeys = ({
     apiKey,
     chain,
+    fullDomainSelected = false,
     baseUrl,
 }: UseRetrieveAccountAddressFromPasskeyOptions) => {
     const [isPending, setIsPending] = useState(false);
@@ -28,6 +30,7 @@ export const useRetrieveAccountAddressFromPasskeys = ({
             const result = await retrieveAccountAddressFromPasskeys(
                 apiKey,
                 chain,
+                fullDomainSelected,
                 baseUrl
             );
             const address = result as Address;
@@ -39,7 +42,7 @@ export const useRetrieveAccountAddressFromPasskeys = ({
         } finally {
             setIsPending(false);
         }
-    }, [apiKey, baseUrl]);
+    }, [apiKey, chain, baseUrl, fullDomainSelected]);
 
     return {
         retrieveAddress,
@@ -51,6 +54,7 @@ export const useRetrieveAccountAddressFromPasskeys = ({
 export const useRetrieveAccountAddressFromPasskeyId = ({
     apiKey,
     chain,
+    fullDomainSelected = false,
     baseUrl,
 }: UseRetrieveAccountAddressFromPasskeyOptions) => {
     const [isPending, setIsPending] = useState(false);
@@ -65,6 +69,7 @@ export const useRetrieveAccountAddressFromPasskeyId = ({
                     apiKey,
                     chain,
                     id,
+                    fullDomainSelected,
                     baseUrl,
                 });
                 const address = result as Address;
@@ -78,7 +83,7 @@ export const useRetrieveAccountAddressFromPasskeyId = ({
                 setIsPending(false);
             }
         },
-        [apiKey, baseUrl]
+        [apiKey, chain, baseUrl, fullDomainSelected]
     );
 
     return {

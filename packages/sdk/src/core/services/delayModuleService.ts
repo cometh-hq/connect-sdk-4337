@@ -5,6 +5,7 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type PublicClient,
     concat,
     createPublicClient,
     encodeAbiParameters,
@@ -92,8 +93,7 @@ const getDelayAddress = (safe: Address, context: DelayContext): Address => {
 
 const createSetTxNonceFunction = async (
     proxyDelayAddress: Address,
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-    client: any
+    client: PublicClient
 ): Promise<MultiSendTransaction> => {
     const txNonce = await client.readContract({
         address: proxyDelayAddress,

@@ -16,6 +16,7 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type PublicClient,
     type Transport,
     createPublicClient,
     zeroHash,
@@ -99,7 +100,7 @@ export async function cancelRecoveryRequest<
 
     const updateNonceTx = await delayModuleService.createSetTxNonceFunction(
         delayAddress,
-        publicClient
+        publicClient as PublicClient
     );
 
     const hash = await getAction(

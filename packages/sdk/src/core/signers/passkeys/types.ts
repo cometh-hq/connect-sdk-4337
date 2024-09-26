@@ -68,6 +68,18 @@ type WebAuthnSignature = Readonly<{
     signature: P256Signature;
 }>;
 
+enum WebauthnVersion {
+    V1 = "v1.0",
+}
+
+type WebAuthnDeploymentParams = {
+    version: WebauthnVersion;
+    safeWebAuthnSharedSignerAddress: string;
+    safeWebAuthnSignerFactory: string;
+    safeWebAuthnSignerSingleton: string;
+    verifier: string;
+};
+
 type WebAuthnSigner = {
     projectId: string;
     userId: string;
@@ -78,8 +90,7 @@ type WebAuthnSigner = {
     publicKeyY: string;
     signerAddress: string;
     deviceData: DeviceData;
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-    deploymentParams: any;
+    deploymentParams: WebAuthnDeploymentParams;
 };
 
 export type {

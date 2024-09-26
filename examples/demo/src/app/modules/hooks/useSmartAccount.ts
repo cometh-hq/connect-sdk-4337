@@ -7,8 +7,8 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Address, type Hex } from "viem";
-import { baseSepolia } from "viem/chains";
+import { http, type Hex } from "viem";
+import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -45,26 +45,29 @@ export function useSmartAccount() {
 
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-            const comethSignerConfig = { passKeyName: "testing multichain" };
+            const comethSignerConfig = { fullDomainSelected: true, passKeyName: "oiqvefor" }
+
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: baseSepolia,
+                    chain: arbitrumSepolia,
                     rpcUrl,
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig,
+                    comethSignerConfig
+                    /*                signer, */
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: baseSepolia,
+                    chain: arbitrumSepolia,
                     rpcUrl,
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig,
+                    comethSignerConfig
+                    /*                 signer, */
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -74,7 +77,7 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: baseSepolia,
+                chain: arbitrumSepolia,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
                 rpcUrl,
             });
@@ -82,7 +85,7 @@ export function useSmartAccount() {
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain: baseSepolia,
+                chain: arbitrumSepolia,
                 bundlerTransport: http(bundlerUrl),
                 middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,

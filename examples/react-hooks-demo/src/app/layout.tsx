@@ -11,7 +11,7 @@ import { http, WagmiProvider, createConfig } from "wagmi";
 const queryClient = new QueryClient();
 
 const inter = Inter({
-    subsets: ["latin"],
+  subsets: ["latin"],
 });
 
 const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
@@ -24,36 +24,36 @@ if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
 const config = createConfig({
-    chains: [baseSepolia],
-    transports: {
-        [baseSepolia.id]: http(),
-    },
-    ssr: true,
+  chains: [baseSepolia],
+  transports: {
+    [baseSepolia.id]: http(),
+  },
+  ssr: true,
 });
 
 export default function RootLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    return (
-        <html lang="en">
-            <WagmiProvider config={config}>
-                <QueryClientProvider client={queryClient}>
-                    <ConnectProvider
-                        config={{
-                            paymasterUrl,
-                            bundlerUrl,
-                            baseUrl,
-                            apiKey,
-                            chain: baseSepolia,
-                        }}
-                        queryClient={queryClient}
-                    >
-                        <body className={inter.className}>{children}</body>
-                    </ConnectProvider>
-                </QueryClientProvider>
-            </WagmiProvider>
-        </html>
-    );
+  return (
+    <html lang="en">
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <ConnectProvider
+            config={{
+              paymasterUrl,
+              bundlerUrl,
+              baseUrl,
+              apiKey,
+              chain: baseSepolia,
+            }}
+            queryClient={queryClient}
+          >
+            <body className={inter.className}>{children}</body>
+          </ConnectProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
+    </html>
+  );
 }

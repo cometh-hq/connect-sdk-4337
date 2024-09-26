@@ -7,6 +7,7 @@ import {
     useAccount,
     useConnect,
     useDisconnect,
+    useGetEnrichedOwners,
     useGetGasPrice,
     useIsRecoveryActive,
     useRetrieveAccountAddressFromPasskeyId,
@@ -40,6 +41,8 @@ export default function App() {
 
     const { verifyMessageAsync, data: verify } = useVerifyMessage();
 
+    const { data: owners } = useGetEnrichedOwners();
+
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
     const localStorageAddress = window.localStorage.getItem(
@@ -47,7 +50,6 @@ export default function App() {
     ) as Hex;
 
     const connectWallet = async () => {
-        console.log({ localStorageAddress });
         connectAsync({ address: localStorageAddress });
     };
 
@@ -60,8 +62,6 @@ export default function App() {
             setTransactionSuccess(false);
         }
     }, [address]);
-
-    console.log({ address });
 
     const test = async () => {
         const message = "hello world";

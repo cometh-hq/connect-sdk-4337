@@ -28,7 +28,7 @@ import {
     hexArrayStr,
     parseHex,
 } from "../passkeys/utils";
-import type { ComethSigner } from "../types";
+import type { Signer } from "../types";
 import type {
     Assertion,
     PasskeyCredential,
@@ -39,31 +39,45 @@ import type {
 
 const EC = elliptic.ec;
 
-const _formatCreatingRpId = (): { name: string; id?: string } => {
-    const domain = (psl.parse(window.location.host) as ParsedDomain).domain;
-    return domain
+const _formatCreatingRpId = (
+    fullDomainSelected: boolean
+): { name: string; id?: string } => {
+    const rootDomain = (psl.parse(window.location.host) as ParsedDomain).domain;
+
+    if (!rootDomain) return { name: "localhost" };
+
+    return fullDomainSelected
         ? {
-              name: domain,
-              id: domain,
+              name: window.location.host,
+              id: window.location.host,
           }
-        : { name: "localhost" };
+        : {
+              name: rootDomain,
+              id: rootDomain,
+          };
 };
 
-const _formatSigningRpId = (): string | undefined => {
-    return (
-        (psl.parse(window.location.host) as ParsedDomain).domain || undefined
-    );
+const _formatSigningRpId = (
+    fullDomainSelected: boolean
+): string | undefined => {
+    const rootDomain = (psl.parse(window.location.host) as ParsedDomain).domain;
+
+    if (!rootDomain) return undefined;
+
+    return fullDomainSelected ? window.location.host : rootDomain;
 };
 
 const createPasskeySigner = async ({
     api,
     webAuthnOptions,
     passKeyName,
+    fullDomainSelected,
     safeWebAuthnSharedSignerAddress,
 }: {
     api: API;
     webAuthnOptions: webAuthnOptions;
     passKeyName?: string;
+    fullDomainSelected: boolean;
     safeWebAuthnSharedSignerAddress?: Address;
 }): Promise<PasskeyLocalStorageFormat> => {
     try {
@@ -71,9 +85,13 @@ const createPasskeySigner = async ({
         const authenticatorSelection = webAuthnOptions?.authenticatorSelection;
         const extensions = webAuthnOptions?.extensions;
 
+        console.log("create");
+
+        console.log(_formatCreatingRpId(fullDomainSelected));
+
         const passkeyCredential = (await navigator.credentials.create({
             publicKey: {
-                rp: _formatCreatingRpId(),
+                rp: _formatCreatingRpId(fullDomainSelected),
                 user: {
                     id: crypto.getRandomValues(new Uint8Array(32)),
                     name,
@@ -96,6 +114,8 @@ const createPasskeySigner = async ({
                 "Failed to generate passkey. Received null as a credential"
             );
         }
+
+        console.log({ passkeyCredential });
 
         const publicKeyAlgorithm =
             passkeyCredential.response.getPublicKeyAlgorithm();
@@ -146,19 +166,25 @@ const createPasskeySigner = async ({
         };
 
         return passkeyWithCoordinates;
-    } catch {
+    } catch (e) {
+        console.log({ e });
         throw new Error("Error in the passkey creation");
     }
 };
 
-const sign = async (
-    challenge: string,
-    publicKeyCredential?: PublicKeyCredentialDescriptor[]
-): Promise<{ signature: Hex; publicKeyId: Hex }> => {
+const sign = async ({
+    challenge,
+    fullDomainSelected,
+    publicKeyCredential,
+}: {
+    challenge: string;
+    fullDomainSelected: boolean;
+    publicKeyCredential?: PublicKeyCredentialDescriptor[];
+}): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     const assertion = (await navigator.credentials.get({
         publicKey: {
             challenge: toBytes(challenge),
-            rpId: _formatSigningRpId(),
+            rpId: _formatSigningRpId(fullDomainSelected),
             allowCredentials: publicKeyCredential || [],
             userVerification: "required",
             timeout: 60000,
@@ -185,10 +211,15 @@ const sign = async (
     return { signature, publicKeyId };
 };
 
-const signWithPasskey = async (
-    challenge: string,
-    webAuthnSigners?: WebAuthnSigner[]
-): Promise<{ signature: Hex; publicKeyId: Hex }> => {
+const signWithPasskey = async ({
+    challenge,
+    webAuthnSigners,
+    fullDomainSelected,
+}: {
+    challenge: string;
+    webAuthnSigners?: WebAuthnSigner[];
+    fullDomainSelected: boolean;
+}): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     let publicKeyCredentials: PublicKeyCredentialDescriptor[] | undefined;
 
     if (webAuthnSigners) {
@@ -200,10 +231,11 @@ const signWithPasskey = async (
         });
     }
 
-    const webAuthnSignature = await sign(
-        keccak256(hashMessage(challenge)),
-        publicKeyCredentials
-    );
+    const webAuthnSignature = await sign({
+        challenge: keccak256(hashMessage(challenge)),
+        publicKeyCredential: publicKeyCredentials,
+        fullDomainSelected,
+    });
 
     return webAuthnSignature;
 };
@@ -255,6 +287,7 @@ const getPasskeySigner = async ({
     fallbackHandler,
     p256Verifier,
     multisendAddress,
+    fullDomainSelected,
 }: {
     api: API;
     smartAccountAddress: Address;
@@ -267,6 +300,7 @@ const getPasskeySigner = async ({
     fallbackHandler: Address;
     p256Verifier: Address;
     multisendAddress: Address;
+    fullDomainSelected: boolean;
 }): Promise<PasskeyLocalStorageFormat> => {
     /* Retrieve potentiel WebAuthn credentials in storage */
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
@@ -274,7 +308,7 @@ const getPasskeySigner = async ({
     if (localStoragePasskey) {
         const passkey = localStoragePasskey as PasskeyLocalStorageFormat;
 
-        const comethSigner: ComethSigner = {
+        const signer: Signer = {
             type: "passkey",
             passkey: {
                 id: passkey.id as Hex,
@@ -288,7 +322,7 @@ const getPasskeySigner = async ({
 
         const isOwner = await isSafeOwner({
             safeAddress: smartAccountAddress,
-            comethSigner,
+            accountSigner: signer,
             chain,
             rpcUrl,
             safeProxyFactoryAddress,
@@ -315,10 +349,11 @@ const getPasskeySigner = async ({
     //If no local storage or no match in db, Call Webauthn API to get current signer
     let webAuthnSignature: { signature: Hex; publicKeyId: Hex };
     try {
-        webAuthnSignature = await signWithPasskey(
-            "SDK Connection",
-            passkeySigners as WebAuthnSigner[]
-        );
+        webAuthnSignature = await signWithPasskey({
+            challenge: "SDK Connection",
+            webAuthnSigners: passkeySigners as WebAuthnSigner[],
+            fullDomainSelected,
+        });
     } catch {
         throw new NoPasskeySignerFoundInDeviceError();
     }
@@ -355,13 +390,18 @@ const getPasskeySigner = async ({
 
 const retrieveSmartAccountAddressFromPasskey = async (
     API: API,
-    chain: Chain
+    chain: Chain,
+    fullDomainSelected: boolean
 ): Promise<Address> => {
     let publicKeyId: Hex;
 
     try {
-        publicKeyId = (await signWithPasskey("Retrieve user wallet"))
-            .publicKeyId as Hex;
+        publicKeyId = (
+            await signWithPasskey({
+                challenge: "Retrieve user wallet",
+                fullDomainSelected,
+            })
+        ).publicKeyId as Hex;
     } catch {
         throw new RetrieveWalletFromPasskeyError();
     }
@@ -395,7 +435,13 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     API,
     id,
     chain,
-}: { API: API; id: string; chain: Chain }): Promise<Address> => {
+    fullDomainSelected,
+}: {
+    API: API;
+    id: string;
+    chain: Chain;
+    fullDomainSelected: boolean;
+}): Promise<Address> => {
     const publicKeyCredentials = [
         {
             id: parseHex(id),
@@ -407,10 +453,11 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
 
     try {
         publicKeyId = (
-            await sign(
-                keccak256(hashMessage("Retrieve user wallet")),
-                publicKeyCredentials
-            )
+            await sign({
+                challenge: keccak256(hashMessage("Retrieve user wallet")),
+                publicKeyCredential: publicKeyCredentials,
+                fullDomainSelected,
+            })
         ).publicKeyId as Hex;
     } catch {
         throw new RetrieveWalletFromPasskeyError();
