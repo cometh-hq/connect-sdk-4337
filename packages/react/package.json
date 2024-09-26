@@ -58,7 +58,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@cometh/connect-sdk-4337": "^0.1.10-dev.3",
+    "@cometh/connect-sdk-4337": "^0.1.10",
     "permissionless": "0.1.31"
   }
 }
