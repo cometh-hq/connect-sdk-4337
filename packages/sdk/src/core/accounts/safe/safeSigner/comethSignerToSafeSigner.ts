@@ -11,6 +11,7 @@ type SafeSignerParams = {
     accountSigner: Signer;
     safe4337Module: Address;
     smartAccountAddress: Address;
+    fullDomainSelected: boolean;
 };
 
 /**
@@ -32,7 +33,12 @@ export async function comethSignerToSafeSigner<
     TChain extends Chain | undefined = Chain | undefined,
 >(
     client: Client<TTransport, TChain, undefined>,
-    { accountSigner, safe4337Module, smartAccountAddress }: SafeSignerParams
+    {
+        accountSigner,
+        safe4337Module,
+        smartAccountAddress,
+        fullDomainSelected,
+    }: SafeSignerParams
 ): Promise<SafeSigner> {
     if (isComethSigner(accountSigner) && accountSigner.type === "passkey") {
         return {
@@ -41,6 +47,7 @@ export async function comethSignerToSafeSigner<
                 passkeySignerAddress: accountSigner.passkey.signerAddress,
                 safe4337Module,
                 smartAccountAddress,
+                fullDomainSelected,
             })),
         };
     }

@@ -147,9 +147,12 @@ export async function createSigner({
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
+    fullDomainSelected = false,
     safeContractParams,
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
+
+    console.log({ fullDomainSelected });
 
     const passkeyCompatible = await isDeviceCompatibleWithPasskeys({
         webAuthnOptions,
@@ -162,6 +165,7 @@ export async function createSigner({
                 api,
                 webAuthnOptions,
                 passKeyName,
+                fullDomainSelected,
                 safeWebAuthnSharedSignerAddress:
                     safeContractParams.safeWebAuthnSharedSignerContractAddress,
             });
@@ -190,6 +194,7 @@ export async function createSigner({
                 multisendAddress: safeContractParams.multisendAddress,
                 safeWebAuthnSharedSignerAddress:
                     safeContractParams.safeWebAuthnSharedSignerContractAddress,
+                fullDomainSelected,
             });
         }
 

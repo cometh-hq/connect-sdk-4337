@@ -29,6 +29,7 @@ export interface QRCodeOptions {
 type CreateNewSignerParams = {
     webAuthnOptions?: webAuthnOptions;
     passKeyName?: string;
+    fullDomainSelected?: boolean;
     encryptionSalt?: string;
 };
 
@@ -68,6 +69,7 @@ const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
  * @param smartAccountAddress - The address of the smart account
  * @param passKeyName - Optional name for the passkey
  * @param encryptionSalt - Optional encryption salt
+ * @param fullDomainSelected - Optional selected the full domain for the passkey
  */
 export const createNewSignerWithAccountAddress = async ({
     apiKey,
@@ -84,6 +86,7 @@ export const createNewSignerWithAccountAddress = async ({
     const { signer, localPrivateKey } = await _createNewSigner(api, {
         passKeyName: params.passKeyName,
         webAuthnOptions: params.webAuthnOptions,
+        fullDomainSelected: params.fullDomainSelected ?? false,
     });
 
     if (signer.publicKeyId) {
@@ -117,6 +120,7 @@ export const createNewSignerWithAccountAddress = async ({
  * @param baseUrl - Optional base URL for the API
  * @param passKeyName - Optional name for the passkey
  * @param encryptionSalt - Optional encryption salt
+ * @param fullDomainSelected - Optional selected the full domain for the passkey
  */
 export const createNewSigner = async ({
     apiKey,
@@ -131,6 +135,7 @@ export const createNewSigner = async ({
     const { signer } = await _createNewPasskeySigner(api, {
         webAuthnOptions: params.webAuthnOptions,
         passKeyName: params.passKeyName,
+        fullDomainSelected: params.fullDomainSelected ?? false,
     });
 
     return signer;
@@ -185,9 +190,11 @@ const _createNewPasskeySigner = async (
     {
         passKeyName,
         webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+        fullDomainSelected = false,
     }: {
         passKeyName?: string;
         webAuthnOptions?: webAuthnOptions;
+        fullDomainSelected: boolean;
     }
 ): Promise<{
     signer: Signer;
@@ -202,6 +209,7 @@ const _createNewPasskeySigner = async (
         api,
         webAuthnOptions,
         passKeyName,
+        fullDomainSelected,
     });
 
     if (passkeyWithCoordinates.publicKeyAlgorithm !== -7)
@@ -223,9 +231,11 @@ const _createNewSigner = async (
     {
         passKeyName,
         webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+        fullDomainSelected = false,
     }: {
         passKeyName?: string;
         webAuthnOptions?: webAuthnOptions;
+        fullDomainSelected: boolean;
     }
 ): Promise<{
     signer: Signer;
@@ -238,6 +248,7 @@ const _createNewSigner = async (
             api,
             webAuthnOptions,
             passKeyName,
+            fullDomainSelected,
         });
 
         if (passkeyWithCoordinates.publicKeyAlgorithm === -7) {

@@ -28,6 +28,7 @@ export type ComethSignerConfig = {
     encryptionSalt?: string;
     webAuthnOptions?: webAuthnOptions;
     passKeyName?: string;
+    fullDomainSelected?: boolean;
 };
 
 export type CreateSignerParams = {

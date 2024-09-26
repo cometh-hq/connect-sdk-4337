@@ -328,6 +328,7 @@ export async function createSafeSmartAccount<
             accountSigner,
             safe4337Module,
             smartAccountAddress,
+            fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
         }
     );
 
