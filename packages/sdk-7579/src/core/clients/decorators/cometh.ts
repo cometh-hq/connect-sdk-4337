@@ -14,7 +14,7 @@ export type ComethClientActions<
         | undefined =
         | SafeSmartAccount<entryPoint, string, TTransport, TChain>
         | undefined,
-> = SmartAccountActions<entryPoint, TTransport, TChain, TAccount>;
+> = SmartAccountActions<entryPoint, TChain, TAccount>;
 
 export function comethAccountClientActions<entryPoint extends EntryPoint>({
     middleware,

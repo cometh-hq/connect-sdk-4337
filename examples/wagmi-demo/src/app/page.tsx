@@ -16,15 +16,13 @@ export default function App() {
 
     const connectWithWagmi = async () => {
         connect({ connector: connectors[0] });
-
     };
 
     useEffect(() => {
-        if(address){
+        if (address) {
             localStorage.setItem("walletAddress", address!);
-
         }
-      }, [address])
+    }, [address]);
 
     return (
         <div

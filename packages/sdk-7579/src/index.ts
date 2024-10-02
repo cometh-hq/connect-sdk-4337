@@ -5,7 +5,6 @@ import {
     createSafeSmartAccount,
     type createSafeSmartAccountParameters,
 } from "./core/accounts/safe/createSafeSmartAccount";
-import { getNetwork } from "./core/accounts/utils";
 import {
     type QRCodeOptions,
     createNewSigner,
@@ -38,7 +37,6 @@ export {
     serializeUrlWithSignerPayload,
     generateQRCodeUrl,
     createComethPaymasterClient,
-    getNetwork,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
     smartAccountConnector,

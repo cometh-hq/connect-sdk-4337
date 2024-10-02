@@ -20,15 +20,14 @@ import {
 import type { Prettify } from "viem/types/utils";
 
 import { API } from "@/core/services/API";
-import { getClient } from "../utils";
 
-import { createSigner, saveSigner } from "@/core/signers/createSigner";
-import type { ComethSigner, SignerConfig } from "@/core/signers/types";
+import { createSigner, getSignerAddress, saveSigner } from "@/core/signers/createSigner";
 
 import { LAUNCHPAD_ADDRESS, SAFE_7579_ADDRESS } from "@/constants";
 import {
-    connectToExistingWallet,
     createNewWalletInDb,
+    doesWalletNeedToBeStored,
+    getProjectParamsByChain,
 } from "@/core/services/comethService";
 import type { EntryPoint } from "permissionless/_types/types";
 import { readContract } from "viem/actions";
@@ -39,8 +38,10 @@ import {
     getSafeInitData,
     getSafeInitializer,
 } from "./services/7579";
-import type { ProjectParams, SafeContractParams } from "./types";
+import type { SafeContractParams } from "./types";
 import { toSmartAccount } from "./utils";
+import { getViemClient } from "../utils";
+import type { ComethSignerConfig, Signer } from "@/core/signers/types";
 
 export const initSafe7579Abi = [
     {
@@ -339,7 +340,7 @@ const getAccountInitCode = async ({
  * @param signer
  * @param api
  */
-const authenticateToComethApi = async <
+/* const authenticateToComethApi = async <
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
 >({
@@ -368,6 +369,55 @@ const authenticateToComethApi = async <
     });
 
     await createNewWalletInDb({
+        api,
+        smartAccountAddress,
+        signer,
+    });
+
+    return smartAccountAddress;
+}; */
+
+/**
+ * Authenticate the wallet to the cometh api
+ * @param singletonAddress - The address of the Safe singleton contract
+ * @param safeProxyFactoryAddress - The address of the Safe proxy factory
+ * @param saltNonce - Optional salt nonce for CREATE2 deployment (defaults to zeroHash)
+ * @param initializer - The initializer data for the Safe
+ * @param signer
+ * @param api
+ */
+const storeWalletInComethApi = async <
+TTransport extends Transport = Transport,
+TChain extends Chain | undefined = Chain | undefined,
+>({
+    client,
+    chain,
+    erc7579LaunchpadAddress,
+    safeProxyFactoryAddress,
+    initializer,
+    signer,
+    api,
+    saltNonce,
+}: {
+    client: Client<TTransport, TChain>;
+    chain: Chain;
+    safeProxyFactoryAddress: Address;
+    erc7579LaunchpadAddress: Address;
+    initializer: Hex;
+    signer: Signer;
+    api: API;
+    saltNonce: bigint;
+}): Promise<Address> => {
+    const smartAccountAddress = await getAccountAddress({
+        client,
+        safeProxyFactoryAddress,
+        erc7579LaunchpadAddress,
+        saltNonce,
+        initializer,
+    });
+
+    await createNewWalletInDb({
+        chain,
         api,
         smartAccountAddress,
         signer,
@@ -430,13 +480,15 @@ export type createSafeSmartAccountParameters<
     TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
 > = Prettify<{
     apiKey: string;
+    chain: Chain;
     rpcUrl?: string;
     baseUrl?: string;
     smartAccountAddress?: Address;
     entryPoint: TEntryPoint;
-    comethSignerConfig?: SignerConfig;
+    comethSignerConfig?: ComethSignerConfig;
     safeContractConfig?: SafeContractParams;
-    comethSigner?: any;
+    sessionKeysEnabled?: boolean;
+    signer?: Signer;
 }>;
 
 /**
@@ -456,58 +508,65 @@ export async function createSafeSmartAccount<
     TChain extends Chain = Chain,
 >({
     apiKey,
+    chain,
     rpcUrl,
     baseUrl,
     smartAccountAddress,
     entryPoint: entryPointAddress,
     comethSignerConfig,
     safeContractConfig,
-    comethSigner,
+    signer,
 }: createSafeSmartAccountParameters<entryPoint>): Promise<
     SafeSmartAccount<entryPoint, string, TTransport, TChain>
 > {
     const api = new API(apiKey, baseUrl);
 
-    if (smartAccountAddress) {
-        await connectToExistingWallet({
-            api,
-            smartAccountAddress,
-        });
-    }
+    const client = (await getViemClient(chain, rpcUrl)) as Client<
+    TTransport,
+    TChain,
+    undefined
+    >;
+
 
     const {
         safeWebAuthnSharedSignerContractAddress,
+        setUpContractAddress,
+        p256Verifier,
         safeProxyFactoryAddress,
         safeSingletonAddress,
+        multisendAddress,
+        safe4337ModuleAddress,
         safe4337SessionKeysModule,
+        safeWebAuthnSignerFactory,
     } =
-        safeContractConfig ??
-        ((await api.getProjectParams()) as ProjectParams).safeContractParams;
+    safeContractConfig ??
+    (await getProjectParamsByChain({ api, chain })).safeContractParams;
 
-    const client = (await getClient(api, rpcUrl)) as Client<
-        TTransport,
-        TChain,
-        undefined
-    >;
+    const accountSigner =
+    signer ??
+    (await createSigner({
+        apiKey,
+        chain,
+        smartAccountAddress,
+        ...comethSignerConfig,
+        rpcUrl,
+        baseUrl,
+        safeContractParams: {
+            safeWebAuthnSharedSignerContractAddress,
+            setUpContractAddress,
+            p256Verifier,
+            safeProxyFactoryAddress,
+            safeSingletonAddress,
+            multisendAddress,
+            fallbackHandler: safe4337ModuleAddress as Address,
+            safeWebAuthnSignerFactory,
+        },
+    }));
 
-    if (!comethSigner) {
-        comethSigner = await createSigner({
-            apiKey,
-            baseUrl,
-            smartAccountAddress,
-            safeWebAuthnSharedSignerAddress:
-                safeWebAuthnSharedSignerContractAddress,
-            ...comethSignerConfig,
-        });
-    }
-
-    const signerAddress =
-        comethSigner.type === "localWallet"
-            ? comethSigner.eoaFallback.signer.address
-            : comethSigner.passkey.signerAddress;
+    const signerAddress = getSignerAddress(accountSigner);
 
     const initializer = await getSafeInitializer({
-        owner: comethSigner.eoaFallback.signer.address,
+        owner: signerAddress,
         safeSingletonAddress: safeSingletonAddress,
         erc7579LaunchpadAddress: LAUNCHPAD_ADDRESS,
         safe7579Address: SAFE_7579_ADDRESS,
@@ -519,18 +578,25 @@ export async function createSafeSmartAccount<
             erc7579LaunchpadAddress: LAUNCHPAD_ADDRESS,
         });
 
-    if (!smartAccountAddress) {
-        smartAccountAddress = await authenticateToComethApi({
+    const walletNeedsToBeStored = await doesWalletNeedToBeStored({
+        smartAccountAddress,
+        chainId: chain.id,
+        api,
+    });
+  
+    if (walletNeedsToBeStored) {
+        smartAccountAddress = await storeWalletInComethApi({
             client,
-            safeProxyFactoryAddress,
+            chain: client.chain as Chain,
             erc7579LaunchpadAddress: LAUNCHPAD_ADDRESS,
+            safeProxyFactoryAddress,
             saltNonce: BigInt(0),
             initializer,
-            signer: comethSigner,
+            signer: accountSigner,
             api,
         });
 
-        await saveSigner(api, comethSigner, smartAccountAddress);
+        await saveSigner(chain, api, accountSigner, smartAccountAddress);
     }
 
     if (!smartAccountAddress) throw new Error("Account address not found");
@@ -543,10 +609,11 @@ export async function createSafeSmartAccount<
     const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
         client,
         {
-            comethSigner,
+            accountSigner,
             safe4337ModuleAddress: SAFE_7579_ADDRESS,
             smartAccountAddress,
             erc7579LaunchpadAddress: LAUNCHPAD_ADDRESS,
+            fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
         }
     );
 
@@ -642,7 +709,7 @@ export async function createSafeSmartAccount<
                     hooks: [],
                     attesters: [],
                     attestersThreshold: 0,
-                    owner: comethSigner.eoaFallback.signer.address,
+                    owner: signerAddress,
                     safeSingletonAddress: safeSingletonAddress,
                     erc7579LaunchpadAddress: LAUNCHPAD_ADDRESS,
                     safe4337ModuleAddress: SAFE_7579_ADDRESS,

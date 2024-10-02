@@ -52,12 +52,14 @@ export async function safeWebAuthnSigner<
         safe4337ModuleAddress,
         smartAccountAddress,
         erc7579LaunchpadAddress,
+        fullDomainSelected,
     }: {
         passkey: PasskeyLocalStorageFormat;
         passkeySignerAddress: Address;
         safe4337ModuleAddress: Address;
         smartAccountAddress: Address;
         erc7579LaunchpadAddress: Address;
+        fullDomainSelected: boolean;
     }
 ): Promise<SafeSigner<"safeWebAuthnSigner">> {
     const publicKeyCredential: PublicKeyCredentialDescriptor = {
@@ -80,7 +82,11 @@ export async function safeWebAuthnSigner<
                 message: { message },
             });
 
-            const passkeySignature = await sign(hash, [publicKeyCredential]);
+            const passkeySignature = await sign({
+                challenge: hash,
+                publicKeyCredential: [publicKeyCredential],
+                fullDomainSelected,
+            });
 
             return buildSignatureBytes([
                 {
@@ -150,7 +156,11 @@ export async function safeWebAuthnSigner<
                 },
             });
 
-            const passkeySignature = await sign(hash, [publicKeyCredential]);
+            const passkeySignature = await sign({
+                challenge: hash,
+                publicKeyCredential: [publicKeyCredential],
+                fullDomainSelected,
+            });
 
             return encodePacked(
                 ["uint48", "uint48", "bytes"],

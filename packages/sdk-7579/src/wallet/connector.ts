@@ -4,12 +4,10 @@ import {
     createSafeSmartAccount,
     type createSafeSmartAccountParameters,
 } from "@/core/accounts/safe/createSafeSmartAccount";
-import { getNetwork } from "@/core/accounts/utils";
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
 } from "@/core/clients/accounts/safe/createClient";
-import { API } from "@/core/services/API";
 import { createConnector } from "@wagmi/core";
 import type {
     ENTRYPOINT_ADDRESS_V07_TYPE,
@@ -58,7 +56,7 @@ export function smartAccountConnector<
     smartAccountAddress,
     comethSignerConfig,
     safeContractConfig,
-    comethSigner,
+    signer,
 }: ConnectWagmiConfig<TEntryPoint>) {
     type Provider = ConnectEIP1193Provider<EntryPoint> | undefined;
     let walletProvider: Provider | undefined;
@@ -74,9 +72,7 @@ export function smartAccountConnector<
         async connect({ chainId } = {}) {
             console.log("connect starts");
             try {
-                const api = new API(apiKey, baseUrl);
-                chain = await getNetwork(api);
-                console.log({ chain });
+           
 
                 if (chainId && chainId !== (await this.getChainId())) {
                     throw new Error(`Invalid chainId ${chainId} requested`);
@@ -84,13 +80,14 @@ export function smartAccountConnector<
 
                 const account = await createSafeSmartAccount({
                     apiKey,
+                    chain,
                     rpcUrl,
                     baseUrl,
                     smartAccountAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
                     safeContractConfig,
-                    comethSigner,
+                    signer,
                 });
 
                 console.log(account);

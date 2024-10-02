@@ -28,7 +28,6 @@ export const EIP712_SAFE_MESSAGE_TYPE = {
 
 export enum WalletVersion {
     V1 = "v1.0",
-    V2 = "v2.0",
 }
 
 export type SafeContractParams = {
@@ -39,8 +38,9 @@ export type SafeContractParams = {
     setUpContractAddress: Address;
     safeWebAuthnSharedSignerContractAddress: Address;
     p256Verifier: Address;
-    safe4337Module: Address;
-    safe4337SessionKeysModule: Address;
+    safeWebAuthnSignerFactory: Address;
+    safe4337ModuleAddress?: Address;
+    safe4337SessionKeysModule?: Address;
 };
 
 export type RecoveryParams = {

@@ -54,6 +54,12 @@ export class NoPasskeySignerFoundInDBError extends Error {
     }
 }
 
+export class NoPasskeySignerFoundForGivenChain extends Error {
+    constructor() {
+        super("No passkey signer found in db for this walletAddress and chain");
+    }
+}
+
 export class NoPasskeySignerFoundInDeviceError extends Error {
     constructor() {
         super(
@@ -77,5 +83,11 @@ export class RetrieveWalletFromPasskeyError extends Error {
 export class UnauthorizedMethodError extends Error {
     constructor(methodName: string) {
         super(`Not authorized method: ${methodName}`);
+    }
+}
+
+export class NoRecoveryRequestFoundError extends Error {
+    constructor() {
+        super("No recovery request found");
     }
 }

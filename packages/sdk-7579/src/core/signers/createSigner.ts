@@ -1,6 +1,6 @@
 import type { Address } from "viem/accounts";
 
-import type { Hex } from "viem";
+import type { Chain, Hex } from "viem";
 
 import type { SmartAccountSigner } from "permissionless/accounts";
 import {
@@ -14,7 +14,10 @@ import {
 } from "./passkeys/passkeyService";
 
 import { API } from "@/core/services/API";
-import { encryptSignerInStorage } from "./ecdsa/services/ecdsaService";
+import {
+    encryptSignerInStorage,
+    getSignerLocalStorage,
+} from "./ecdsa/services/ecdsaService";
 
 import { getDeviceData } from "@/core/services/deviceService";
 import type {
@@ -25,37 +28,75 @@ import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "./passkeys/utils";
-import type { ComethSigner, CreateSignerParams } from "./types";
+import type { ComethSigner, CreateSignerParams, Signer } from "./types";
+
+export const isComethSigner = (signer: Signer): signer is ComethSigner => {
+    return (
+        "type" in signer &&
+        (signer.type === "localWallet" || signer.type === "passkey")
+    );
+};
+
+export const getSignerAddress = (customSigner: Signer) => {
+    if (isComethSigner(customSigner)) {
+        return customSigner.type === "localWallet"
+            ? customSigner.eoaFallback.signer.address
+            : customSigner.passkey.signerAddress;
+    }
+
+    return customSigner.address;
+};
+
+export const getSigner = (customSigner: Signer) => {
+    if (isComethSigner(customSigner)) {
+        if (customSigner.type === "passkey")
+            throw Error("passkey signer not valid");
+
+        return customSigner.eoaFallback.signer;
+    }
+
+    return customSigner;
+};
 
 export const saveSigner = async (
+    chain: Chain,
     api: API,
-    signer: ComethSigner,
+    signer: Signer,
     smartAccountAddress: Address
 ) => {
-    if (signer.type === "localWallet") {
-        await encryptSignerInStorage(
-            smartAccountAddress,
-            signer.eoaFallback.privateKey,
-            signer.eoaFallback.encryptionSalt
-        );
-    } else {
-        setPasskeyInStorage(
-            smartAccountAddress,
-            signer.passkey.id,
-            signer.passkey.pubkeyCoordinates.x,
-            signer.passkey.pubkeyCoordinates.y,
-            signer.passkey.signerAddress
-        );
+    if (isComethSigner(signer)) {
+        if (signer.type === "localWallet") {
+            const storedEncryptedPK = await getSignerLocalStorage(
+                smartAccountAddress,
+                signer.eoaFallback.encryptionSalt
+            );
 
-        await api.createWebAuthnSigner({
-            walletAddress: smartAccountAddress,
-            publicKeyId: signer.passkey.id,
-            publicKeyX: signer.passkey.pubkeyCoordinates.x,
-            publicKeyY: signer.passkey.pubkeyCoordinates.y,
-            deviceData: getDeviceData(),
-            signerAddress: signer.passkey.signerAddress,
-            isSharedWebAuthnSigner: true,
-        });
+            if (!storedEncryptedPK)
+                await encryptSignerInStorage(
+                    smartAccountAddress,
+                    signer.eoaFallback.privateKey,
+                    signer.eoaFallback.encryptionSalt
+                );
+        } else {
+            setPasskeyInStorage(
+                smartAccountAddress,
+                signer.passkey.id,
+                signer.passkey.pubkeyCoordinates.x,
+                signer.passkey.pubkeyCoordinates.y,
+                signer.passkey.signerAddress
+            );
+
+            await api.createWebAuthnSigner({
+                chainId: chain.id,
+                walletAddress: smartAccountAddress,
+                publicKeyId: signer.passkey.id,
+                publicKeyX: signer.passkey.pubkeyCoordinates.x,
+                publicKeyY: signer.passkey.pubkeyCoordinates.y,
+                deviceData: getDeviceData(),
+                signerAddress: signer.passkey.signerAddress,
+                isSharedWebAuthnSigner: true,
+            });
+        }
     }
 };
 
@@ -98,13 +139,16 @@ export const isDeviceCompatibleWithPasskeys = async (options: {
  */
 export async function createSigner({
     apiKey,
+    chain,
+    rpcUrl,
     smartAccountAddress,
     baseUrl,
     disableEoaFallback = false,
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
-    safeWebAuthnSharedSignerAddress,
+    fullDomainSelected = false,
+    safeContractParams,
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
 
@@ -119,7 +163,9 @@ export async function createSigner({
                 api,
                 webAuthnOptions,
                 passKeyName,
-                safeWebAuthnSharedSignerAddress,
+                fullDomainSelected,
+                safeWebAuthnSharedSignerAddress:
+                    safeContractParams.safeWebAuthnSharedSignerContractAddress,
             });
 
             if (passkey.publicKeyAlgorithm !== -7) {
@@ -135,6 +181,18 @@ export async function createSigner({
             passkey = await getPasskeySigner({
                 api,
                 smartAccountAddress,
+                chain,
+                rpcUrl,
+                safeModuleSetUpAddress: safeContractParams.setUpContractAddress,
+                safeProxyFactoryAddress:
+                    safeContractParams.safeProxyFactoryAddress,
+                safeSingletonAddress: safeContractParams.safeSingletonAddress,
+                fallbackHandler: safeContractParams.fallbackHandler as Address,
+                p256Verifier: safeContractParams.p256Verifier,
+                multisendAddress: safeContractParams.multisendAddress,
+                safeWebAuthnSharedSignerAddress:
+                    safeContractParams.safeWebAuthnSharedSignerContractAddress,
+                fullDomainSelected,
             });
         }
 

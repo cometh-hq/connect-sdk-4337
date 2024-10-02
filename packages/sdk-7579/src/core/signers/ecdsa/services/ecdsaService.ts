@@ -9,6 +9,7 @@ import { getRandomIV } from "./randomIvService";
 export type fallbackStorageValues = {
     encryptedPrivateKey: string;
     iv: string;
+    signerAddress: Address;
 };
 
 export const defaultEncryptionSalt = "COMETH-CONNECT";
