@@ -5,9 +5,10 @@ import {
     createComethPaymasterClient,
     createSafeSmartAccount,
     createSmartAccountClient,
-} from "@cometh/connect-sdk-4337";
+} from "@cometh/connect-sdk-7579";
 import { useState } from "react";
 import { http, type Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -38,24 +39,40 @@ export function useSmartAccount() {
                 "walletAddress"
             ) as Hex;
 
+            console.log({localStorageAddress})
+
             let smartAccount;
 
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
+            const privateKey = process.env.NEXT_PUBLIC_PK! as Hex;
+            const signer = privateKeyToAccount(privateKey);
+
+            console.log({signer})
+
+            const comethSigner = {
+                type: "localWallet",
+                eoaFallback: { privateKey, signer },
+            };
+
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
+                    chain:arbitrumSepolia,
                     rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
+                    signer:comethSigner
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
+                    chain:arbitrumSepolia,
                     rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
+                    signer:comethSigner
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -82,17 +99,7 @@ export function useSmartAccount() {
                 rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
 
-            /*  await smartAccountClient.addOwner({
-                ownerToAdd: "0x53011E110CAd8685F4911508B4E2413f526Df73E",
-            }); */
 
-            const recoveryDetails = await smartAccountClient.isRecoveryActive({
-                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
-            });
-
-            const owners = await smartAccountClient.getOwners();
-
-            const enrichedOwners = await smartAccountClient.getEnrichedOwners();
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);
