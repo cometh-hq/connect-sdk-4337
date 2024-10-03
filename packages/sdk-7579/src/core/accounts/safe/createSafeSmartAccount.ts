@@ -542,6 +542,10 @@ export async function createSafeSmartAccount<
     safeContractConfig ??
     (await getProjectParamsByChain({ api, chain })).safeContractParams;
 
+    console.log({safe4337ModuleAddress})
+    console.log({LAUNCHPAD_ADDRESS})
+    console.log({SAFE_7579_ADDRESS})
+
     const accountSigner =
     signer ??
     (await createSigner({
@@ -563,6 +567,8 @@ export async function createSafeSmartAccount<
         },
     }));
 
+    console.log({ accountSigner });
+
     const signerAddress = getSignerAddress(accountSigner);
 
     const initializer = await getSafeInitializer({
@@ -571,6 +577,7 @@ export async function createSafeSmartAccount<
         erc7579LaunchpadAddress: LAUNCHPAD_ADDRESS,
         safe7579Address: SAFE_7579_ADDRESS,
     });
+
 
     const generateInitCode = () =>
         getAccountInitCode({
@@ -640,7 +647,6 @@ export async function createSafeSmartAccount<
         },
 
         async signUserOperation(userOp) {
-            console.log({ userOp });
             return safeSigner.signUserOperation(userOp);
         },
 
