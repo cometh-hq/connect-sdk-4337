@@ -7,9 +7,11 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-7579";
 import { useState } from "react";
-import { http, type Hex } from "viem";
+import { createWalletClient, hexToBigInt, http, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { arbitrumSepolia } from "viem/chains";
+import { arbitrumSepolia, baseSepolia } from "viem/chains";
+
+
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -45,21 +47,33 @@ export function useSmartAccount() {
 
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
+            const sharedWebauthnSigner = "0xfD90FAd33ee8b58f32c00aceEad1358e4AFC23f9"
+            const webauthnVerifer = "0x445a0683e494ea0c5AF3E83c5159fBE47Cf9e765"
+
+            const comethSigner = {
+                id: "0x9e5215bd068221aaf3acebc938cf918bf95d526b",
+                pubkeyCoordinates: {
+                    x: "0xadd859650ef78cc9c920bd146d1f3acfccb44e2b8ea5194b2aed7dd56e76dba6",
+                    y: "0xb7fd618e516d19a5a2c1468fc2f4c9cb446ae8613f6b6ec5bb858a62158c93be"
+                },
+                signerAddress: "0xfD90FAd33ee8b58f32c00aceEad1358e4AFC23f9"
+            }
+
             const privateKey = process.env.NEXT_PUBLIC_PK! as Hex;
             const signer = privateKeyToAccount(privateKey);
 
-            console.log({signer})
-
-            const comethSigner = {
-                type: "localWallet",
-                eoaFallback: { privateKey, signer },
-            };
+            const walletClient = createWalletClient({ 
+                account: signer, 
+                chain: arbitrumSepolia,
+                transport: http()
+            })
+         
+        
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain:arbitrumSepolia,
-                    rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                    chain:baseSepolia,
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -68,8 +82,7 @@ export function useSmartAccount() {
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain:arbitrumSepolia,
-                    rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
+                    chain:baseSepolia,
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     signer:comethSigner
@@ -82,21 +95,19 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 bundlerTransport: http(bundlerUrl),
                 middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
                 },
-                rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
 
 

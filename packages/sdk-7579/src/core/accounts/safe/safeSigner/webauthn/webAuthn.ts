@@ -121,6 +121,7 @@ export async function safeWebAuthnSigner<
                 verifyingContract = userOperation.sender;
             }
 
+
             const hash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,

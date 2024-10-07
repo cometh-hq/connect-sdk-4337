@@ -12,11 +12,16 @@ import {
     toBytes,
     toHex,
     zeroAddress,
+    hexToBigInt,
 } from "viem";
 import {
     initSafe7579Abi,
     preValidationSetupAbi,
 } from "../createSafeSmartAccount";
+import type { Signer } from "@/core/signers/types";
+import { isComethSigner } from "@/core/signers/createSigner";
+import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
+
 
 const executeAbi = [
     {
@@ -82,6 +87,10 @@ export const getPublicClient = (chain: Chain) => {
 };
 
 export async function getSafeInitializer({
+    accountSigner,
+    safeWebAuthnSharedSignerContractAddress,
+    safeP256VerifierAddress,
+    multiSendAddress,
     owner,
     validators = [],
     executors = [],
@@ -93,6 +102,10 @@ export async function getSafeInitializer({
     erc7579LaunchpadAddress,
     safe7579Address,
 }: {
+    accountSigner:Signer,
+    safeWebAuthnSharedSignerContractAddress:Address,
+    safeP256VerifierAddress:Address,
+    multiSendAddress:Address,
     owner: Address;
     validators?: { address: Address; context: Address }[];
     executors?: {
@@ -108,7 +121,12 @@ export async function getSafeInitializer({
     safe7579Address: Address;
 }): Promise<Hex> {
     const safe4337ModuleAddress = safe7579Address;
+
     const initData = getSafeInitData({
+        accountSigner,
+        safeWebAuthnSharedSignerContractAddress,
+        safeP256VerifierAddress,
+        multiSendAddress,
         owner,
         validators,
         executors,
@@ -187,6 +205,26 @@ export async function getSafeInitializer({
         )
     );
 
+    if(isComethSigner(accountSigner) && accountSigner.type === "passkey") {
+        const sharedSignerConfigCallData = encodeFunctionData({
+            abi: SafeWebAuthnSharedSignerAbi,
+            functionName: "configure",
+            args: [
+                {
+                    x: hexToBigInt(accountSigner.passkey.pubkeyCoordinates.x),
+                    y: hexToBigInt(accountSigner.passkey.pubkeyCoordinates.y),
+                    verifiers: hexToBigInt(safeP256VerifierAddress),
+                },
+            ],
+        });
+
+        return encodeFunctionData({
+            abi: preValidationSetupAbi,
+            functionName: "preValidationSetup",
+            args: [initHash, "0xfD90FAd33ee8b58f32c00aceEad1358e4AFC23f9", sharedSignerConfigCallData],
+        });
+    }
+
     return encodeFunctionData({
         abi: preValidationSetupAbi,
         functionName: "preValidationSetup",
@@ -195,6 +233,10 @@ export async function getSafeInitializer({
 }
 
 export const getSafeInitData = ({
+ /*    accountSigner,
+    safeWebAuthnSharedSignerContractAddress,
+    safeP256VerifierAddress,
+    multiSendAddress, */
     safe4337ModuleAddress,
     safeSingletonAddress,
     erc7579LaunchpadAddress,
@@ -206,6 +248,10 @@ export const getSafeInitData = ({
     attesters,
     attestersThreshold,
 }: {
+    accountSigner:Signer,
+    safeWebAuthnSharedSignerContractAddress:Address,
+    safeP256VerifierAddress:Address,
+    multiSendAddress:Address,
     safe4337ModuleAddress: Address;
     safeSingletonAddress: Address;
     erc7579LaunchpadAddress: Address;
@@ -220,37 +266,40 @@ export const getSafeInitData = ({
     attesters: Address[];
     attestersThreshold: number;
 }) => {
-    const initData = {
+
+    const initSafe7579CallData = encodeFunctionData({
+        abi: initSafe7579Abi,
+        functionName: "initSafe7579",
+        args: [
+            safe4337ModuleAddress, // SAFE_7579_ADDRESS,
+            executors.map((executor) => ({
+                module: executor.address,
+                initData: executor.context,
+            })),
+            fallbacks.map((fallback) => ({
+                module: fallback.address,
+                initData: fallback.context,
+            })),
+            hooks.map((hook) => ({
+                module: hook.address,
+                initData: hook.context,
+            })),
+            attesters,
+            attestersThreshold,
+        ],
+    })
+
+
+
+    return {
         singleton: safeSingletonAddress,
         owners: [owner],
         threshold: BigInt(1),
         setupTo: erc7579LaunchpadAddress,
-        setupData: encodeFunctionData({
-            abi: initSafe7579Abi,
-            functionName: "initSafe7579",
-            args: [
-                safe4337ModuleAddress, // SAFE_7579_ADDRESS,
-                executors.map((executor) => ({
-                    module: executor.address,
-                    initData: executor.context,
-                })),
-                fallbacks.map((fallback) => ({
-                    module: fallback.address,
-                    initData: fallback.context,
-                })),
-                hooks.map((hook) => ({
-                    module: hook.address,
-                    initData: hook.context,
-                })),
-                attesters,
-                attestersThreshold,
-            ],
-        }),
+        setupData: initSafe7579CallData,
         safe7579: safe4337ModuleAddress,
         validators: validators,
     };
-
-    return initData;
 };
 
 export function encode7579CallData<callType extends CallType>({

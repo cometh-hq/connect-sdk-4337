@@ -120,6 +120,8 @@ export async function safeECDSASigner<
                 verifyingContract = userOperation.sender;
             }
 
+            console.log({ verifyingContract });
+
             const payload = {
                 domain: {
                     chainId: client.chain?.id,

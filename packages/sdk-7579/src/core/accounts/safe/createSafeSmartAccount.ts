@@ -340,52 +340,6 @@ const getAccountInitCode = async ({
  * @param signer
  * @param api
  */
-/* const authenticateToComethApi = async <
-    TTransport extends Transport = Transport,
-    TChain extends Chain | undefined = Chain | undefined,
->({
-    client,
-    safeProxyFactoryAddress,
-    erc7579LaunchpadAddress,
-    saltNonce,
-    initializer,
-    signer,
-    api,
-}: {
-    client: Client<TTransport, TChain>;
-    safeProxyFactoryAddress: Address;
-    erc7579LaunchpadAddress: Address;
-    saltNonce: bigint;
-    initializer: Hex;
-    signer: ComethSigner;
-    api: API;
-}): Promise<Address> => {
-    const smartAccountAddress = await getAccountAddress({
-        client,
-        safeProxyFactoryAddress,
-        erc7579LaunchpadAddress,
-        saltNonce,
-        initializer,
-    });
-
-    await createNewWalletInDb({
-        api,
-        smartAccountAddress,
-        signer,
-    });
-
-    return smartAccountAddress;
-}; */
-
-/**
- * Authenticate the wallet to the cometh api
- * @param singletonAddress - The address of the Safe singleton contract
- * @param safeProxyFactoryAddress - The address of the Safe proxy factory
- * @param saltNonce - Optional salt nonce for CREATE2 deployment (defaults to zeroHash)
- * @param initializer - The initializer data for the Safe
- * @param signer
- * @param api
- */
 const storeWalletInComethApi = async <
 TTransport extends Transport = Transport,
 TChain extends Chain | undefined = Chain | undefined,
@@ -542,10 +496,6 @@ export async function createSafeSmartAccount<
     safeContractConfig ??
     (await getProjectParamsByChain({ api, chain })).safeContractParams;
 
-    console.log({safe4337ModuleAddress})
-    console.log({LAUNCHPAD_ADDRESS})
-    console.log({SAFE_7579_ADDRESS})
-
     const accountSigner =
     signer ??
     (await createSigner({
@@ -567,11 +517,13 @@ export async function createSafeSmartAccount<
         },
     }));
 
-    console.log({ accountSigner });
-
     const signerAddress = getSignerAddress(accountSigner);
 
     const initializer = await getSafeInitializer({
+        accountSigner,
+        safeWebAuthnSharedSignerContractAddress,
+        safeP256VerifierAddress: p256Verifier,
+        multiSendAddress:multisendAddress,
         owner: signerAddress,
         safeSingletonAddress: safeSingletonAddress,
         erc7579LaunchpadAddress: LAUNCHPAD_ADDRESS,
@@ -624,6 +576,8 @@ export async function createSafeSmartAccount<
         }
     );
 
+    console.log({safeSigner})
+
     const smartAccount = toSmartAccount({
         address: smartAccountAddress,
         async signMessage({ message }) {
@@ -647,6 +601,7 @@ export async function createSafeSmartAccount<
         },
 
         async signUserOperation(userOp) {
+            console.log({userOp})
             return safeSigner.signUserOperation(userOp);
         },
 
@@ -709,6 +664,10 @@ export async function createSafeSmartAccount<
 
             if (!smartAccountDeployed) {
                 const initData = getSafeInitData({
+                    accountSigner,
+                    safeWebAuthnSharedSignerContractAddress,
+                    safeP256VerifierAddress:p256Verifier,
+                    multiSendAddress:multisendAddress,
                     validators: [],
                     executors: [],
                     fallbacks: [],
@@ -720,6 +679,8 @@ export async function createSafeSmartAccount<
                     erc7579LaunchpadAddress: LAUNCHPAD_ADDRESS,
                     safe4337ModuleAddress: SAFE_7579_ADDRESS,
                 });
+
+                console.log({initData})
 
                 return encodeFunctionData({
                     abi: Launchpad,

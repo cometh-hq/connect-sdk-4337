@@ -39,7 +39,6 @@ export const getProjectParamsByChain = async ({
     api,
     chain,
 }: { api: API; chain: Chain }): Promise<ProjectParams> => {
-    console.log({chain})
     return (await api.getProjectParams(chain.id)) as ProjectParams;
 };
 
