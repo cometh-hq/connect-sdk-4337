@@ -3,7 +3,7 @@ import {
     type ContextComethSmartAccountClient,
 } from "@/providers/ConnectProvider";
 import { useContext, useMemo } from "react";
-import type { Address } from "viem";
+import type { Address, Chain } from "viem";
 
 export type AccountStatus = "connected" | "disconnected";
 
@@ -13,6 +13,8 @@ export interface UseAccountResult {
     isConnected: boolean;
     isDisconnected: boolean;
     status: AccountStatus;
+    chain: Chain | undefined;
+    chainId: number | undefined;
 }
 
 export const useAccount = (): UseAccountResult => {
@@ -23,6 +25,14 @@ export const useAccount = (): UseAccountResult => {
     }
 
     const { smartAccountClient, smartAccountAddress } = context;
+
+    const { chain, chainId } = useMemo(
+        () => ({
+            chain: smartAccountClient?.chain,
+            chainId: smartAccountClient?.chain?.id,
+        }),
+        [smartAccountClient]
+    );
 
     const isConnected = useMemo(
         () => !!smartAccountClient && !!smartAccountAddress,
@@ -39,5 +49,7 @@ export const useAccount = (): UseAccountResult => {
         isConnected,
         isDisconnected: !isConnected,
         status,
+        chain,
+        chainId,
     };
 };

@@ -152,8 +152,6 @@ export async function createSigner({
 }: CreateSignerParams): Promise<ComethSigner> {
     const api = new API(apiKey, baseUrl);
 
-    console.log({ fullDomainSelected });
-
     const passkeyCompatible = await isDeviceCompatibleWithPasskeys({
         webAuthnOptions,
     });

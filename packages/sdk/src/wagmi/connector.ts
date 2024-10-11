@@ -50,6 +50,7 @@ export function smartAccountConnector<
     apiKey,
     bundlerUrl,
     rpcUrl,
+    chain,
     baseUrl,
     smartAccountAddress,
     comethSignerConfig,
@@ -59,8 +60,6 @@ export function smartAccountConnector<
     shimDisconnect = true,
     signer,
 }: ConnectWagmiConfig<TEntryPoint>): CreateConnectorFn {
-    let chain: Chain;
-
     let client: ComethSmartAccountClient<
         TSmartAccount,
         TTransport,

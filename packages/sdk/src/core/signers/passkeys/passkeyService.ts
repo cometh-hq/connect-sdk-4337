@@ -85,10 +85,6 @@ const createPasskeySigner = async ({
         const authenticatorSelection = webAuthnOptions?.authenticatorSelection;
         const extensions = webAuthnOptions?.extensions;
 
-        console.log("create");
-
-        console.log(_formatCreatingRpId(fullDomainSelected));
-
         const passkeyCredential = (await navigator.credentials.create({
             publicKey: {
                 rp: _formatCreatingRpId(fullDomainSelected),
@@ -114,8 +110,6 @@ const createPasskeySigner = async ({
                 "Failed to generate passkey. Received null as a credential"
             );
         }
-
-        console.log({ passkeyCredential });
 
         const publicKeyAlgorithm =
             passkeyCredential.response.getPublicKeyAlgorithm();
