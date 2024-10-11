@@ -7,15 +7,7 @@ import {
     useAccount,
     useConnect,
     useDisconnect,
-    useGetEnrichedOwners,
-    useGetGasPrice,
-    useIsRecoveryActive,
-    useRetrieveAccountAddressFromPasskeyId,
     useSendTransaction,
-    useSetUpRecovery,
-    useSignMessage,
-    useValidateAddDevice,
-    useVerifyMessage,
 } from "@cometh/connect-react-hooks";
 import type { Hex } from "viem";
 import Transaction from "./components/Transaction";
@@ -23,25 +15,16 @@ import Transaction from "./components/Transaction";
 export default function App() {
     const {
         isPending,
-        connect,
         connectAsync,
         error: connectError,
     } = useConnect();
 
     const { address } = useAccount();
-    const { disconnectAsync, disconnect } = useDisconnect();
+    const { disconnectAsync } = useDisconnect();
     const {
         sendTransactionAsync,
-        sendTransaction,
         data: hash,
     } = useSendTransaction();
-    const { validateAddDevice, validateAddDeviceAsync, isError, isSuccess } =
-        useValidateAddDevice();
-    const { signMessage, signMessageAsync, data } = useSignMessage();
-
-    const { verifyMessageAsync, data: verify } = useVerifyMessage();
-
-    const { data: owners } = useGetEnrichedOwners();
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
@@ -63,13 +46,6 @@ export default function App() {
         }
     }, [address]);
 
-    const test = async () => {
-        const message = "hello world";
-
-        const sig = await signMessageAsync({ message });
-
-        const verif = await verifyMessageAsync({ message, signature: sig });
-    };
 
     return (
         <div
