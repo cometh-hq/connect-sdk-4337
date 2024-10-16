@@ -23,17 +23,18 @@ export type NetworkParams = {
     chain?: Chain;
     bundlerUrl?: string;
     paymasterUrl?: string;
+    rpcUrl?: string;
 };
 
-type OmitConfig<T> = Omit<T, "chain" | "paymasterUrl" | "bundlerUrl"> & {
+type OmitConfig<T> = Omit<
+    T,
+    "chain" | "paymasterUrl" | "bundlerUrl" | "rpcUrl"
+> & {
     networksConfig: NetworkParams[];
 };
 
 type ConnectConfig = OmitConfig<
-    createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE> & {
-        bundlerUrl: string;
-        paymasterUrl?: string;
-    }
+    createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE>
 >;
 
 export type ContextComethSmartAccountClient = ComethSmartAccountClient<
@@ -43,7 +44,7 @@ export type ContextComethSmartAccountClient = ComethSmartAccountClient<
     ENTRYPOINT_ADDRESS_V07_TYPE
 >;
 
-export type UpdateClientPayload = ConnectParameters & NetworkParams;
+export type UpdateClientPayload = ConnectParameters & { chain?: Chain };
 
 export type ConnectContextPayload = {
     queryClient?: QueryClient;
@@ -94,9 +95,11 @@ export const ConnectProvider = <
             const paymasterUrl = config.networksConfig.find(
                 (network) => network.chain?.id === chain.id
             )?.paymasterUrl;
+            const rpcUrl = config.networksConfig.find(
+                (network) => network.chain?.id === chain.id
+            )?.rpcUrl;
 
-            if (!bundlerUrl || !paymasterUrl)
-                throw new Error("Bundler or paymaster url not found");
+            if (!bundlerUrl) throw new Error("Bundler url not found");
 
             try {
                 const { client, address: newAddress } =
@@ -105,6 +108,7 @@ export const ConnectProvider = <
                         chain,
                         bundlerUrl,
                         paymasterUrl,
+                        rpcUrl,
                         smartAccountAddress: params.address,
                         comethSignerConfig: {
                             ...config.comethSignerConfig,

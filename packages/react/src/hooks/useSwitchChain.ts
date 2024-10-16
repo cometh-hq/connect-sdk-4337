@@ -1,10 +1,7 @@
 import { ConnectContext } from "@/providers/ConnectProvider";
 import { useCallback, useContext, useState } from "react";
-import type { Chain } from "viem";
-import { useAccount } from "wagmi";
 
 export const useSwitchChain = () => {
-    const { address } = useAccount();
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
@@ -22,17 +19,22 @@ export const useSwitchChain = () => {
     const [error, setError] = useState<Error | null>(null);
 
     const switchChainInternal = useCallback(
-        async (params: { chain: Chain }) => {
-            const { chain } = params;
+        async (params: { chainId: number }) => {
+            const { chainId } = params;
 
-            if (!networksConfig) {
+            if (!networksConfig)
                 throw new Error("No current configuration found");
-            }
+
+            const selectedNetwork = networksConfig?.find(
+                (network) => network.chain?.id === chainId
+            );
+            if (!selectedNetwork)
+                throw new Error("No current configuration found");
 
             try {
                 await updateSmartAccountClient({
                     address: smartAccountClient?.account.address,
-                    chain,
+                    chain: selectedNetwork.chain,
                 });
 
                 queryClient?.invalidateQueries({
@@ -53,9 +55,7 @@ export const useSwitchChain = () => {
     );
 
     const switchChain = useCallback(
-        (params: { chain: Chain }) => {
-            if (!address) throw new Error("No connected wallet");
-
+        (params: { chainId: number }) => {
             setIsPending(true);
             setError(null);
             switchChainInternal(params)
@@ -76,9 +76,7 @@ export const useSwitchChain = () => {
     );
 
     const switchChainAsync = useCallback(
-        async (params: { chain: Chain }) => {
-            if (!address) throw new Error("No connected wallet");
-
+        async (params: { chainId: number }) => {
             setIsPending(true);
             setError(null);
             try {
