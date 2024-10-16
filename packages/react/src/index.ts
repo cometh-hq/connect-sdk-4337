@@ -37,7 +37,6 @@ import type {
     SendTransactionMutateAsync,
     SendTransactionWithSessionKeyMutate,
     SendTransactionWithSessionKeyMutateAsync,
-    SwitchChainParameters,
     UseAddOwnerReturn,
     UseAddSessionKeyReturn,
     UseAddWhitelistDestinationReturn,
@@ -108,5 +107,4 @@ export type {
     WriteContractMutateAsync,
     WriteContractWithSessionKeyMutate,
     WriteContractWithSessionKeyMutateAsync,
-    SwitchChainParameters,
 };

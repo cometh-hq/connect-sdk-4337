@@ -8,11 +8,9 @@ import {
     useConnect,
     useDisconnect,
     useSendTransaction,
-    useSwitchChain
+    useSwitchChain,
 } from "@cometh/connect-react-hooks";
-import type { Hex } from "viem";
 import Transaction from "./components/Transaction";
-import { baseSepolia } from "viem/chains";
 
 export default function App() {
     const { isPending, connectAsync, error: connectError } = useConnect();
@@ -21,18 +19,16 @@ export default function App() {
     const { disconnectAsync } = useDisconnect();
     const { sendTransactionAsync, data: hash } = useSendTransaction();
 
-    const {switchChainAsync} = useSwitchChain();
+    const { switchChainAsync } = useSwitchChain();
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
-
-
     const connectWallet = async () => {
-        connectAsync({address:"0x36471744F66026557CE005b1B79410477F6B0616"});
+        connectAsync();
     };
 
     useEffect(() => {
-        if ( address) {
+        if (address) {
             window.localStorage.setItem("walletAddress", address);
         }
 
@@ -40,18 +36,6 @@ export default function App() {
             setTransactionSuccess(false);
         }
     }, [address]);
-
-    const switchChain = async () => {
-
-        await switchChainAsync({
-            chain:baseSepolia, 
-            bundlerUrl:"https://bundler.cometh.io/84532?apikey=0uJydu7VY2lGKIcOBYVFWxrs1RHlqYMO", 
-            paymasterUrl:"https://paymaster.cometh.io/84532?apikey=YfYHInV6s65wUlQuiLUCOpPOyRPyDVj6"});
-
-
-    }
-
-    console.log({smartAccountClient})
 
     return (
         <div
@@ -95,7 +79,6 @@ export default function App() {
                                 </button>
                             </div>
                         )}
-                        <button onClick={switchChain}>switch</button>
                     </div>
                 </div>
             </div>

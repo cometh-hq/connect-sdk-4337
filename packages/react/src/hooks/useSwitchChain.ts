@@ -1,14 +1,10 @@
 import { ConnectContext } from "@/providers/ConnectProvider";
 import { useCallback, useContext, useState } from "react";
 import type { Chain } from "viem";
-
-export type SwitchChainParameters = {
-    chain: Chain;
-    bundlerUrl: string;
-    paymasterUrl?: string;
-};
+import { useAccount } from "wagmi";
 
 export const useSwitchChain = () => {
+    const { address } = useAccount();
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
@@ -19,29 +15,24 @@ export const useSwitchChain = () => {
         queryClient,
         smartAccountClient,
         updateSmartAccountClient,
-        disconnectSmartAccount,
-        config: currentConfig,
+        networksConfig,
     } = context;
 
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
     const switchChainInternal = useCallback(
-        async (params: SwitchChainParameters) => {
-            const { chain, bundlerUrl, paymasterUrl } = params;
+        async (params: { chain: Chain }) => {
+            const { chain } = params;
+
+            if (!networksConfig) {
+                throw new Error("No current configuration found");
+            }
 
             try {
-                await disconnectSmartAccount();
-
-                if (!currentConfig) {
-                    throw new Error("No current configuration found");
-                }
-
                 await updateSmartAccountClient({
                     address: smartAccountClient?.account.address,
                     chain,
-                    bundlerUrl,
-                    paymasterUrl,
                 });
 
                 queryClient?.invalidateQueries({
@@ -55,15 +46,16 @@ export const useSwitchChain = () => {
         },
         [
             smartAccountClient,
-            disconnectSmartAccount,
             updateSmartAccountClient,
             queryClient,
-            currentConfig,
+            networksConfig,
         ]
     );
 
     const switchChain = useCallback(
-        (params: SwitchChainParameters) => {
+        (params: { chain: Chain }) => {
+            if (!address) throw new Error("No connected wallet");
+
             setIsPending(true);
             setError(null);
             switchChainInternal(params)
@@ -84,7 +76,9 @@ export const useSwitchChain = () => {
     );
 
     const switchChainAsync = useCallback(
-        async (params: SwitchChainParameters) => {
+        async (params: { chain: Chain }) => {
+            if (!address) throw new Error("No connected wallet");
+
             setIsPending(true);
             setError(null);
             try {

@@ -17,14 +17,24 @@ import React, {
 } from "react";
 import type { Address, Chain, Transport } from "viem";
 
-const CHAIN_STORAGE_KEY = 'currentConnectedChain';
+const CHAIN_STORAGE_KEY = "currentChain";
 
+export type NetworkParams = {
+    chain?: Chain;
+    bundlerUrl?: string;
+    paymasterUrl?: string;
+};
 
-type ConnectConfig =
+type OmitConfig<T> = Omit<T, "chain" | "paymasterUrl" | "bundlerUrl"> & {
+    networksConfig: NetworkParams[];
+};
+
+type ConnectConfig = OmitConfig<
     createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE> & {
         bundlerUrl: string;
         paymasterUrl?: string;
-    };
+    }
+>;
 
 export type ContextComethSmartAccountClient = ComethSmartAccountClient<
     SafeSmartAccount<ENTRYPOINT_ADDRESS_V07_TYPE, Transport, Chain>,
@@ -33,11 +43,7 @@ export type ContextComethSmartAccountClient = ComethSmartAccountClient<
     ENTRYPOINT_ADDRESS_V07_TYPE
 >;
 
-export type UpdateClientPayload = ConnectParameters & {
-    chain?: Chain;
-    bundlerUrl?: string;
-    paymasterUrl?: string;
-};
+export type UpdateClientPayload = ConnectParameters & NetworkParams;
 
 export type ConnectContextPayload = {
     queryClient?: QueryClient;
@@ -45,7 +51,7 @@ export type ConnectContextPayload = {
     smartAccountAddress: Address | undefined;
     updateSmartAccountClient: (params?: UpdateClientPayload) => Promise<void>;
     disconnectSmartAccount: () => Promise<void>;
-    config: ConnectConfig | undefined;
+    networksConfig: NetworkParams[] | undefined;
 };
 
 export const ConnectContext = createContext<ConnectContextPayload>({
@@ -54,7 +60,7 @@ export const ConnectContext = createContext<ConnectContextPayload>({
     smartAccountAddress: undefined,
     updateSmartAccountClient: async () => {},
     disconnectSmartAccount: async () => {},
-    config: undefined,
+    networksConfig: undefined,
 });
 
 export const ConnectProvider = <
@@ -74,27 +80,31 @@ export const ConnectProvider = <
     const [smartAccountAddress, setSmartAccountAddress] = useState<
         Address | undefined
     >(undefined);
-    const [currentChain, setCurrentChain] = useState<Chain | undefined>(config.chain);
-
-
-    useEffect(() => {
-        const storedChain = localStorage.getItem(CHAIN_STORAGE_KEY);
-        if (storedChain) {
-            setCurrentChain(JSON.parse(storedChain));
-        }
-    }, []);
 
     const updateSmartAccountClient = useCallback(
         async (params: UpdateClientPayload = {}) => {
-            const updatedChain = params.chain ?? currentChain ?? config.chain
+            const chain: Chain =
+                params.chain ??
+                JSON.parse(localStorage.getItem(CHAIN_STORAGE_KEY) ?? "null") ??
+                config.networksConfig[0].chain;
+
+            const bundlerUrl = config.networksConfig.find(
+                (network) => network.chain?.id === chain.id
+            )?.bundlerUrl;
+            const paymasterUrl = config.networksConfig.find(
+                (network) => network.chain?.id === chain.id
+            )?.paymasterUrl;
+
+            if (!bundlerUrl || !paymasterUrl)
+                throw new Error("Bundler or paymaster url not found");
+
             try {
                 const { client, address: newAddress } =
                     await createSmartAccount({
                         ...config,
-                        chain: updatedChain,
-                        bundlerUrl: params.bundlerUrl ?? config.bundlerUrl,
-                        paymasterUrl:
-                            params.paymasterUrl ?? config.paymasterUrl,
+                        chain,
+                        bundlerUrl,
+                        paymasterUrl,
                         smartAccountAddress: params.address,
                         comethSignerConfig: {
                             ...config.comethSignerConfig,
@@ -104,9 +114,8 @@ export const ConnectProvider = <
 
                 setSmartAccountClient(client);
                 setSmartAccountAddress(newAddress);
-                setCurrentChain(updatedChain);
 
-                localStorage.setItem(CHAIN_STORAGE_KEY, JSON.stringify(updatedChain));
+                localStorage.setItem(CHAIN_STORAGE_KEY, JSON.stringify(chain));
             } catch (e) {
                 console.log(e);
             }
@@ -117,7 +126,6 @@ export const ConnectProvider = <
     const disconnectSmartAccount = useCallback(async () => {
         setSmartAccountClient(null);
         setSmartAccountAddress(undefined);
-        setCurrentChain(undefined);
         localStorage.removeItem(CHAIN_STORAGE_KEY);
     }, []);
 
@@ -134,7 +142,7 @@ export const ConnectProvider = <
             smartAccountAddress,
             updateSmartAccountClient,
             disconnectSmartAccount,
-            config,
+            networksConfig: config.networksConfig,
         }),
         [
             queryClient,
@@ -142,7 +150,7 @@ export const ConnectProvider = <
             smartAccountAddress,
             updateSmartAccountClient,
             disconnectSmartAccount,
-            config,
+            config.networksConfig,
         ]
     );
 
