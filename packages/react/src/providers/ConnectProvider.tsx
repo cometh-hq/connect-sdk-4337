@@ -17,6 +17,9 @@ import React, {
 } from "react";
 import type { Address, Chain, Transport } from "viem";
 
+const CHAIN_STORAGE_KEY = 'currentConnectedChain';
+
+
 type ConnectConfig =
     createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE> & {
         bundlerUrl: string;
@@ -30,12 +33,19 @@ export type ContextComethSmartAccountClient = ComethSmartAccountClient<
     ENTRYPOINT_ADDRESS_V07_TYPE
 >;
 
+export type UpdateClientPayload = ConnectParameters & {
+    chain?: Chain;
+    bundlerUrl?: string;
+    paymasterUrl?: string;
+};
+
 export type ConnectContextPayload = {
     queryClient?: QueryClient;
     smartAccountClient: ContextComethSmartAccountClient | null;
     smartAccountAddress: Address | undefined;
-    updateSmartAccountClient: (params?: ConnectParameters) => Promise<void>;
+    updateSmartAccountClient: (params?: UpdateClientPayload) => Promise<void>;
     disconnectSmartAccount: () => Promise<void>;
+    config: ConnectConfig | undefined;
 };
 
 export const ConnectContext = createContext<ConnectContextPayload>({
@@ -44,6 +54,7 @@ export const ConnectContext = createContext<ConnectContextPayload>({
     smartAccountAddress: undefined,
     updateSmartAccountClient: async () => {},
     disconnectSmartAccount: async () => {},
+    config: undefined,
 });
 
 export const ConnectProvider = <
@@ -63,13 +74,27 @@ export const ConnectProvider = <
     const [smartAccountAddress, setSmartAccountAddress] = useState<
         Address | undefined
     >(undefined);
+    const [currentChain, setCurrentChain] = useState<Chain | undefined>(config.chain);
+
+
+    useEffect(() => {
+        const storedChain = localStorage.getItem(CHAIN_STORAGE_KEY);
+        if (storedChain) {
+            setCurrentChain(JSON.parse(storedChain));
+        }
+    }, []);
 
     const updateSmartAccountClient = useCallback(
-        async (params: ConnectParameters = {}) => {
+        async (params: UpdateClientPayload = {}) => {
+            const updatedChain = params.chain ?? currentChain ?? config.chain
             try {
                 const { client, address: newAddress } =
                     await createSmartAccount({
                         ...config,
+                        chain: updatedChain,
+                        bundlerUrl: params.bundlerUrl ?? config.bundlerUrl,
+                        paymasterUrl:
+                            params.paymasterUrl ?? config.paymasterUrl,
                         smartAccountAddress: params.address,
                         comethSignerConfig: {
                             ...config.comethSignerConfig,
@@ -79,6 +104,9 @@ export const ConnectProvider = <
 
                 setSmartAccountClient(client);
                 setSmartAccountAddress(newAddress);
+                setCurrentChain(updatedChain);
+
+                localStorage.setItem(CHAIN_STORAGE_KEY, JSON.stringify(updatedChain));
             } catch (e) {
                 console.log(e);
             }
@@ -89,6 +117,8 @@ export const ConnectProvider = <
     const disconnectSmartAccount = useCallback(async () => {
         setSmartAccountClient(null);
         setSmartAccountAddress(undefined);
+        setCurrentChain(undefined);
+        localStorage.removeItem(CHAIN_STORAGE_KEY);
     }, []);
 
     useEffect(() => {
@@ -104,6 +134,7 @@ export const ConnectProvider = <
             smartAccountAddress,
             updateSmartAccountClient,
             disconnectSmartAccount,
+            config,
         }),
         [
             queryClient,
@@ -111,6 +142,7 @@ export const ConnectProvider = <
             smartAccountAddress,
             updateSmartAccountClient,
             disconnectSmartAccount,
+            config,
         ]
     );
 
