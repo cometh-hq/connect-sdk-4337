@@ -45,8 +45,10 @@ export function useSmartAccount() {
 
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
-            const comethSignerConfig = { fullDomainSelected: true, passKeyName: "oiqvefor" }
-
+            const comethSignerConfig = {
+                fullDomainSelected: true,
+                passKeyName: "oiqvefor",
+            };
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
@@ -56,7 +58,7 @@ export function useSmartAccount() {
                     baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig
+                    comethSignerConfig,
                     /*                signer, */
                 });
             } else {
@@ -66,7 +68,7 @@ export function useSmartAccount() {
                     rpcUrl,
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig
+                    comethSignerConfig,
                     /*                 signer, */
                 });
                 window.localStorage.setItem(

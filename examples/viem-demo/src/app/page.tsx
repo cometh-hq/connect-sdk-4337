@@ -16,7 +16,6 @@ export default function App() {
     } = useSmartAccount();
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
-
     return (
         <div
             style={{

@@ -17,11 +17,25 @@ import React, {
 } from "react";
 import type { Address, Chain, Transport } from "viem";
 
-type ConnectConfig =
-    createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE> & {
-        bundlerUrl: string;
-        paymasterUrl?: string;
-    };
+const CHAIN_STORAGE_KEY = "currentChain";
+
+export type NetworkParams = {
+    chain?: Chain;
+    bundlerUrl?: string;
+    paymasterUrl?: string;
+    rpcUrl?: string;
+};
+
+type OmitConfig<T> = Omit<
+    T,
+    "chain" | "paymasterUrl" | "bundlerUrl" | "rpcUrl"
+> & {
+    networksConfig: NetworkParams[];
+};
+
+type ConnectConfig = OmitConfig<
+    createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE>
+>;
 
 export type ContextComethSmartAccountClient = ComethSmartAccountClient<
     SafeSmartAccount<ENTRYPOINT_ADDRESS_V07_TYPE, Transport, Chain>,
@@ -30,12 +44,15 @@ export type ContextComethSmartAccountClient = ComethSmartAccountClient<
     ENTRYPOINT_ADDRESS_V07_TYPE
 >;
 
+export type UpdateClientPayload = ConnectParameters & { chain?: Chain };
+
 export type ConnectContextPayload = {
     queryClient?: QueryClient;
     smartAccountClient: ContextComethSmartAccountClient | null;
     smartAccountAddress: Address | undefined;
-    updateSmartAccountClient: (params?: ConnectParameters) => Promise<void>;
+    updateSmartAccountClient: (params?: UpdateClientPayload) => Promise<void>;
     disconnectSmartAccount: () => Promise<void>;
+    networksConfig: NetworkParams[] | undefined;
 };
 
 export const ConnectContext = createContext<ConnectContextPayload>({
@@ -44,6 +61,7 @@ export const ConnectContext = createContext<ConnectContextPayload>({
     smartAccountAddress: undefined,
     updateSmartAccountClient: async () => {},
     disconnectSmartAccount: async () => {},
+    networksConfig: undefined,
 });
 
 export const ConnectProvider = <
@@ -65,11 +83,32 @@ export const ConnectProvider = <
     >(undefined);
 
     const updateSmartAccountClient = useCallback(
-        async (params: ConnectParameters = {}) => {
+        async (params: UpdateClientPayload = {}) => {
+            const chain: Chain =
+                params.chain ??
+                JSON.parse(localStorage.getItem(CHAIN_STORAGE_KEY) ?? "null") ??
+                config.networksConfig[0].chain;
+
+            const bundlerUrl = config.networksConfig.find(
+                (network) => network.chain?.id === chain.id
+            )?.bundlerUrl;
+            const paymasterUrl = config.networksConfig.find(
+                (network) => network.chain?.id === chain.id
+            )?.paymasterUrl;
+            const rpcUrl = config.networksConfig.find(
+                (network) => network.chain?.id === chain.id
+            )?.rpcUrl;
+
+            if (!bundlerUrl) throw new Error("Bundler url not found");
+
             try {
                 const { client, address: newAddress } =
                     await createSmartAccount({
                         ...config,
+                        chain,
+                        bundlerUrl,
+                        paymasterUrl,
+                        rpcUrl,
                         smartAccountAddress: params.address,
                         comethSignerConfig: {
                             ...config.comethSignerConfig,
@@ -79,6 +118,8 @@ export const ConnectProvider = <
 
                 setSmartAccountClient(client);
                 setSmartAccountAddress(newAddress);
+
+                localStorage.setItem(CHAIN_STORAGE_KEY, JSON.stringify(chain));
             } catch (e) {
                 console.log(e);
             }
@@ -89,6 +130,7 @@ export const ConnectProvider = <
     const disconnectSmartAccount = useCallback(async () => {
         setSmartAccountClient(null);
         setSmartAccountAddress(undefined);
+        localStorage.removeItem(CHAIN_STORAGE_KEY);
     }, []);
 
     useEffect(() => {
@@ -104,6 +146,7 @@ export const ConnectProvider = <
             smartAccountAddress,
             updateSmartAccountClient,
             disconnectSmartAccount,
+            networksConfig: config.networksConfig,
         }),
         [
             queryClient,
@@ -111,6 +154,7 @@ export const ConnectProvider = <
             smartAccountAddress,
             updateSmartAccountClient,
             disconnectSmartAccount,
+            config.networksConfig,
         ]
     );
 

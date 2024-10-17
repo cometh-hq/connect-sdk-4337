@@ -18,14 +18,13 @@ const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
 const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
 const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
-
 if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
 const connector = smartAccountConnector({
     apiKey,
     bundlerUrl,
-    chain:arbitrumSepolia,
+    chain: arbitrumSepolia,
     paymasterUrl,
 });
 
