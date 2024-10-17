@@ -8,7 +8,6 @@ import {
     useConnect,
     useDisconnect,
     useSendTransaction,
-    useSwitchChain,
 } from "@cometh/connect-react-hooks";
 import Transaction from "./components/Transaction";
 
@@ -18,8 +17,6 @@ export default function App() {
     const { address, smartAccountClient } = useAccount();
     const { disconnectAsync } = useDisconnect();
     const { sendTransactionAsync, data: hash } = useSendTransaction();
-
-    const { switchChainAsync } = useSwitchChain();
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
