@@ -9,35 +9,23 @@ import {
     useDisconnect,
     useSendTransaction,
 } from "@cometh/connect-react-hooks";
-import type { Hex } from "viem";
 import Transaction from "./components/Transaction";
 
 export default function App() {
-    const {
-        isPending,
-        connectAsync,
-        error: connectError,
-    } = useConnect();
+    const { isPending, connectAsync, error: connectError } = useConnect();
 
-    const { address } = useAccount();
+    const { address, smartAccountClient } = useAccount();
     const { disconnectAsync } = useDisconnect();
-    const {
-        sendTransactionAsync,
-        data: hash,
-    } = useSendTransaction();
+    const { sendTransactionAsync, data: hash } = useSendTransaction();
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
-    const localStorageAddress = window.localStorage.getItem(
-        "walletAddress"
-    ) as Hex;
-
     const connectWallet = async () => {
-        connectAsync({ address: localStorageAddress });
+        connectAsync();
     };
 
     useEffect(() => {
-        if (!localStorageAddress && address) {
+        if (address) {
             window.localStorage.setItem("walletAddress", address);
         }
 
@@ -45,7 +33,6 @@ export default function App() {
             setTransactionSuccess(false);
         }
     }, [address]);
-
 
     return (
         <div
