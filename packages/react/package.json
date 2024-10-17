@@ -7,7 +7,7 @@
       "url": "https://twitter.com/slovaye"
     }
   ],
-  "version": "0.0.11-dev.3",
+  "version": "0.0.11",
   "description": "React hooks Connect 4337",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
