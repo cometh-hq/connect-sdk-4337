@@ -1,6 +1,6 @@
 # Cometh Connect SDK
 
-This SDK help any dApps to get a smoother UX for your end-users (contro a wallet with biometrics, pay for his gas fees, social recovery...)
+This SDK help any dApps to get a smoother UX for your end-users (control a wallet with biometrics, pay for his gas fees, social recovery...)
 
 ## Installation
 
