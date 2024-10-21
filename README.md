@@ -2,9 +2,9 @@
 
 # Cometh Connect ERC-4337 version
 
-This repository contains a the Cometh Connect AA sdk built on top of ERC4337. 
+This repository contains the Cometh Connect AA sdk built on top of ERC4337.
 
-Try it the wallet directly here: [demo.4337.develop.core.cometh.tech/](https://demo.4337.develop.core.cometh.tech/).
+Try it directly here: [demo.4337.develop.core.cometh.tech/](https://demo.4337.develop.core.cometh.tech/).
 
 ## Overview
 
@@ -22,7 +22,7 @@ Coupled with a web2 authentication system (or standalone to stay anonymous), use
 
 ## Folder Architecture Overview
 
-The project is built using a monorepo structure to further enhance modularity and scalability. 
+The project is built using a monorepo structure to further enhance modularity and scalability.
 
 ### Monorepo Structure
 
