@@ -6,8 +6,10 @@ import {
     createPublicClient,
     getContract,
 } from "viem";
-import type { LEGACY_API } from "../LEGACY_API";
 import { SafeLegacyAbi } from "../abi/safeLegacy";
+import type { LEGACY_API } from "./LEGACY_API";
+
+export const WEBAUTHN_DEFAULT_BASE_GAS = 300000;
 
 export const isSafeOwner = async ({
     safeAddress,

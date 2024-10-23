@@ -7,15 +7,15 @@ import type {
     Transport,
 } from "viem";
 
+import type { WebAuthnSigner } from "../types.js";
 import { safeLegacyECDSASigner } from "./ecdsa/ecdsa.js";
 import type { SafeSigner } from "./types.js";
 import { safeLegacyWebAuthnSigner } from "./webauthn/webAuthn.js";
 
 type SafeSignerParams = {
-    signerAddress: Address;
     smartAccountAddress: Address;
     eoaSigner?: PrivateKeyAccount;
-    publicKeyId?: Hex;
+    passkeySigner?: WebAuthnSigner;
 };
 
 /**
@@ -36,19 +36,14 @@ export async function comethSignerToSafeSigner<
     TChain extends Chain | undefined = Chain | undefined,
 >(
     client: Client<TTransport, TChain, undefined>,
-    {
-        smartAccountAddress,
-        eoaSigner,
-        publicKeyId,
-        signerAddress,
-    }: SafeSignerParams
+    { smartAccountAddress, eoaSigner, passkeySigner }: SafeSignerParams
 ): Promise<SafeSigner> {
-    if (publicKeyId) {
+    if (passkeySigner) {
         return {
             ...(await safeLegacyWebAuthnSigner(client, {
-                signerAddress: signerAddress,
+                signerAddress: passkeySigner.signerAddress as Address,
                 smartAccountAddress,
-                publicKeyId: publicKeyId,
+                publicKeyId: passkeySigner.publicKeyId as Hex,
             })),
         };
     }

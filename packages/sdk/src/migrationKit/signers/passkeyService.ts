@@ -7,12 +7,14 @@ import {
     type Hex,
     encodeAbiParameters,
     hexToBigInt,
+    hexToBytes,
     padHex,
     parseAbiParameters,
     toHex,
 } from "viem";
 import type { LEGACY_API } from "../services/LEGACY_API";
 import { isSigner } from "../services/safe";
+import type { WebAuthnSigner } from "../types";
 import * as utils from "./utils";
 
 const challengePrefix = "226368616c6c656e6765223a";
@@ -73,8 +75,8 @@ const getWebAuthnSignature = async (
             utils.hexArrayStr(clientData) as Hex,
             challengeOffset,
             [
-                hexToBigInt(utils.hexArrayStr(rs[0]) as Hex),
-                hexToBigInt(utils.hexArrayStr(rs[1]) as Hex),
+                BigInt(utils.hexArrayStr(rs[0]) as Hex),
+                BigInt(utils.hexArrayStr(rs[1]) as Hex),
             ],
         ]
     );
@@ -97,10 +99,13 @@ const formatToSafeContractSignature = (
     // signature type, 0 here
     const signatureType = "00";
 
+    // Convert signature to bytes to get correct length
+    const signatureBytes = hexToBytes(signature as Hex);
+
     // zero padded length of verified signature
-    const signatureLength = padHex(toHex(signature.length), { size: 32 }).slice(
-        2
-    );
+    const signatureLength = padHex(toHex(signatureBytes.length), {
+        size: 32,
+    }).slice(2);
 
     // signatures bytes that are verified by the signature verifier
     const data = signature.slice(2);
@@ -116,10 +121,7 @@ const getSigner = async ({
     API: LEGACY_API;
     walletAddress: string;
     chain: Chain;
-}): Promise<{
-    publicKeyId: Hex;
-    signerAddress: Address;
-}> => {
+}): Promise<WebAuthnSigner> => {
     const webAuthnSigners =
         await API.getWebAuthnSignersByWalletAddress(walletAddress);
 
@@ -146,10 +148,7 @@ const getSigner = async ({
 
     if (!isOwner) throw new SignerNotOwnerError();
 
-    return {
-        publicKeyId: registeredWebauthnSigner.publicKeyId as Hex,
-        signerAddress: registeredWebauthnSigner.signerAddress as Address,
-    };
+    return registeredWebauthnSigner;
 };
 
 const getWebauthnCredentialsInStorage = (

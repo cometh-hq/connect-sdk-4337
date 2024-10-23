@@ -1,6 +1,7 @@
 import { getSignerAddress, isComethSigner } from "@/core/signers/createSigner";
 import type { Signer } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
+import { WEBAUTHN_DEFAULT_BASE_GAS } from "@/migrationKit/services/safe";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
@@ -33,7 +34,6 @@ import { EIP712_SAFE_TX_TYPES, type MultiSendTransaction } from "../types";
 
 export const GAS_GAP_TOLERANCE = 10n;
 export const DEFAULT_REWARD_PERCENTILE = 80;
-export const DEFAULT_BASE_GAS = 80000;
 
 /**
  * Encodes multiple transactions into a single byte string for multi-send functionality
@@ -515,16 +515,12 @@ export async function executeTransaction(
         functionName: "nonce",
     })) as number;
 
-    console.log({ nonce });
-
     const gasPrice = await getGasPrice(publicClient, DEFAULT_REWARD_PERCENTILE);
-
-    console.log({ gasPrice });
 
     const fullTx = {
         ...tx,
         safeTxGas: BigInt(500000),
-        baseGas: BigInt(DEFAULT_BASE_GAS),
+        baseGas: BigInt(WEBAUTHN_DEFAULT_BASE_GAS),
         gasPrice: gasPrice,
         gasToken: getAddress(zeroAddress),
         refundReceiver: getAddress(zeroAddress),
@@ -533,8 +529,6 @@ export async function executeTransaction(
 
     const signerAddress = getAddress(walletClient.account?.address!) as Address;
     const chainId = await publicClient.getChainId();
-
-    console.log({ chainId });
 
     const signature = await walletClient.signTypedData({
         domain: {
@@ -566,12 +560,8 @@ export async function executeTransaction(
         ],
     });
 
-    console.log({ request });
-
     const txHash = await walletClient.writeContract(request);
     await publicClient.waitForTransactionReceipt({ hash: txHash });
-
-    console.log("done");
 
     return txHash;
 }

@@ -4,8 +4,6 @@ import {
     type Client,
     type Hex,
     type Transport,
-    type TypedData,
-    type TypedDataDefinition,
     hashTypedData,
     hexToBigInt,
     toHex,
@@ -77,7 +75,7 @@ export async function safeLegacyWebAuthnSigner<
 
             return formatToSafeContractSignature(
                 signerAddress,
-                encodedSignature
+                encodedSignature as Hex
             ) as Hex;
         },
         async signTransaction(tx: any) {
@@ -96,7 +94,7 @@ export async function safeLegacyWebAuthnSigner<
                     safeTxGas: hexToBigInt(tx.safeTxGas).toString(),
                     baseGas: hexToBigInt(tx.baseGas).toString(),
                     gasPrice: hexToBigInt(tx.gasPrice).toString(),
-                    gasToken: tx.gasToken ?? zeroAddress,
+                    gasToken: zeroAddress,
                     refundReceiver: zeroAddress,
                     nonce: hexToBigInt(tx.nonce).toString(),
                 },
@@ -116,7 +114,7 @@ export async function safeLegacyWebAuthnSigner<
 
             return formatToSafeContractSignature(
                 signerAddress,
-                encodedSignature
+                encodedSignature as Hex
             ) as Hex;
         },
         async signTypedData() {

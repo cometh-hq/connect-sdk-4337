@@ -91,3 +91,9 @@ export class NoRecoveryRequestFoundError extends Error {
         super("No recovery request found");
     }
 }
+
+export class RelayedTransactionError extends Error {
+    constructor() {
+        super("Error during the relay of the transaction");
+    }
+}

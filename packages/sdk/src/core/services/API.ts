@@ -60,6 +60,7 @@ export class API {
         publicKeyY,
         deviceData,
         signerAddress,
+        chainId,
     }: {
         smartAccountAddress: Address;
         publicKeyId?: Hex;
@@ -67,6 +68,7 @@ export class API {
         publicKeyY?: Hex;
         deviceData: DeviceData;
         signerAddress: Address;
+        chainId: string;
     }) {
         const body = {
             walletAddress: smartAccountAddress,
@@ -75,6 +77,7 @@ export class API {
             publicKeyX,
             publicKeyY,
             deviceData,
+            chainId,
         };
 
         await this.api.post("/wallet/import", body);

@@ -1,8 +1,5 @@
 import type { EntryPoint } from "permissionless/_types/types";
-import {
-    SignTransactionNotSupportedBySmartAccount,
-    type SmartAccount,
-} from "permissionless/accounts";
+import type { SmartAccount } from "permissionless/accounts";
 import type {
     Abi,
     Chain,
@@ -22,7 +19,7 @@ type LegacySmartAccount<
     chain extends Chain | undefined = Chain | undefined,
     TAbi extends Abi | readonly unknown[] = Abi,
 > = SmartAccount<TEntryPoint, TSource, transport, chain, TAbi> & {
-    migrate: (_tx: SafeTransactionDataPartial) => Promise<RelayedTransaction>;
+    migrate: () => Promise<RelayedTransaction>;
     hasMigrated: () => Promise<boolean>;
 };
 
@@ -39,6 +36,7 @@ export function toLegacySmartAccount<
     source,
     signMessage,
     signTypedData,
+    signTransaction,
     migrate,
     hasMigrated,
 }: TAccountSource & {
@@ -61,8 +59,9 @@ export function toLegacySmartAccount<
 
             return signature;
         },
-        async signTransaction(_, __) {
-            throw new SignTransactionNotSupportedBySmartAccount();
+        async signTransaction(tx: any) {
+            const signature = await signTransaction(tx as any);
+            return signature;
         },
     });
 
