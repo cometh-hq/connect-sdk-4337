@@ -16,8 +16,6 @@ import {
     retrieveAccountAddressFromPasskeyId,
     retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
-import { importSafe } from "./core/actions/accounts/safe/migration/importSafe";
-import { migrateSafeV3toV4 } from "./core/actions/accounts/safe/migration/migrateSafe";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type { CancelRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/cancelRecoveryRequest";
 import type { GetRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/getRecoveryRequest";
@@ -39,6 +37,7 @@ import type { RecoveryParamsResponse } from "./core/services/delayModuleService"
 import { createSigner } from "./core/signers/createSigner";
 import type { webAuthnOptions } from "./core/signers/passkeys/types";
 import type { Signer } from "./core/types";
+import { createLegacySafeSmartAccount } from "./migrationKit/createLegacySafeSmartAccount";
 import { smartAccountConnector } from "./wagmi/connector";
 
 export {
@@ -53,8 +52,7 @@ export {
     generateQRCodeUrl,
     createComethPaymasterClient,
     smartAccountConnector,
-    migrateSafeV3toV4,
-    importSafe,
+    createLegacySafeSmartAccount,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
 };
