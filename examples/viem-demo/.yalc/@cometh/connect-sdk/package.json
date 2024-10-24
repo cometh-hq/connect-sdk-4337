@@ -1,0 +1,50 @@
+{
+  "name": "@cometh/connect-sdk",
+  "version": "1.2.31",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "description": "SDK Cometh Connect",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build:ts": "tsc",
+    "build": "rimraf dist && yarn build:ts",
+    "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write",
+    "lint": "eslint . --ext .ts",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cometh-game/connect-sdk.git"
+  },
+  "author": "yoanslvy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cometh-game/connect-sdk/issues"
+  },
+  "homepage": "https://github.com/cometh-game/connect-sdk#readme",
+  "dependencies": {
+    "@alembic/ui": "^1.5.4",
+    "@babel/traverse": "^7.23.4",
+    "@ethersproject/abstract-provider": "^5.7.0",
+    "@ethersproject/abstract-signer": "^5.7.0",
+    "@ethersproject/providers": "^5.7.2",
+    "@simplewebauthn/server": "^7.2.0",
+    "@types/babel__core": "^7.20.0",
+    "@web3-onboard/common": "^2.2.3",
+    "axios": "^1.6.8",
+    "bowser": "^2.11.0",
+    "cbor-js": "^0.1.0",
+    "elliptic": "^6.5.4",
+    "ethers": "^5.7.1",
+    "ethers-multisend": "^2.4.0",
+    "lodash": "^4.17.21",
+    "psl": "^1.9.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "siwe": "^1.1.6",
+    "uuid": "^9.0.0"
+  },
+  "yalcSig": "6cb0e37ea1f6dae714d30d2750f56a81"
+}

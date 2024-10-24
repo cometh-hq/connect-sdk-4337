@@ -72,6 +72,7 @@ export async function safeLegacyECDSASigner<
                 message: { message },
             });
         },
+        // biome-ignore lint/suspicious/noExplicitAny: TODO
         async signTransaction(tx: any) {
             return signTypedData(client, {
                 account: viemSigner,

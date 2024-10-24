@@ -5,7 +5,7 @@ import type {
     RelayedTransaction,
     RelayedTransactionDetails,
     WebAuthnSigner,
-} from "./types";
+} from "../types";
 
 export class LEGACY_API {
     private readonly api: AxiosInstance;
@@ -14,7 +14,7 @@ export class LEGACY_API {
         this.api = axios.create({
             baseURL: baseUrl || "https://api.connect.cometh.io",
         });
-        this.api.defaults.headers.common["apikey"] = apiKey;
+        this.api.defaults.headers.common.apikey = apiKey;
     }
 
     async relayTransaction({

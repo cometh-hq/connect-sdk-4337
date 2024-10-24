@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "packages": {
+    "@cometh/connect-sdk": {
+      "signature": "6cb0e37ea1f6dae714d30d2750f56a81",
+      "file": true,
+      "replaced": "^1.2.31"
+    }
+  }
+}

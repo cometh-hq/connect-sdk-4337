@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex } from "viem";
-import { arbitrumSepolia, polygon } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -20,7 +20,7 @@ export function useSmartAccount() {
 
     const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
-    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
+    const apiKey = "YfYHInV6s65wUlQuiLUCOpPOyRPyDVj6";
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
     const baseUrl = "http://127.0.0.1:8000/connect";
@@ -89,7 +89,7 @@ export function useSmartAccount() {
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain: polygon,
+                chain: arbitrumSepolia,
                 bundlerTransport: http(bundlerUrl),
                 /*   middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,

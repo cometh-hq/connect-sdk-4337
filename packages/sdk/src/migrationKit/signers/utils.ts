@@ -66,6 +66,7 @@ export const encodeUTF8 = (s: string): ArrayBuffer => {
     return new TextEncoder().encode(s);
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: TODO
 export const bufferToArrayBuffer = (bufferObject: any): ArrayBuffer => {
     const buffer = Buffer.from(bufferObject.data);
     return Uint8Array.from(buffer).buffer;

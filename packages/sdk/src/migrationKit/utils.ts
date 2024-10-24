@@ -59,8 +59,8 @@ export function toLegacySmartAccount<
 
             return signature;
         },
-        async signTransaction(tx: any) {
-            const signature = await signTransaction(tx as any);
+        async signTransaction(tx) {
+            const signature = await signTransaction(tx);
             return signature;
         },
     });

@@ -1,3 +1,4 @@
+import type { Assertion } from "@/core/signers/passkeys/types";
 import { NoPasskeySignerFoundInDBError, SignerNotOwnerError } from "@/errors";
 import psl from "psl";
 import type { ParsedDomain } from "psl";
@@ -30,8 +31,8 @@ const _formatSigningRpId = (): string | undefined => {
 const signWithCredential = async (
     challenge: BufferSource,
     publicKeyCredential?: PublicKeyCredentialDescriptor[]
-): Promise<any> => {
-    const assertionPayload: any = await navigator.credentials.get({
+): Promise<Assertion | null> => {
+    const assertionPayload = (await navigator.credentials.get({
         publicKey: {
             challenge,
             rpId: _formatSigningRpId(),
@@ -39,7 +40,7 @@ const signWithCredential = async (
             userVerification: "required",
             timeout: 30000,
         },
-    });
+    })) as Assertion | null;
 
     return assertionPayload;
 };
@@ -49,10 +50,10 @@ const getWebAuthnSignature = async (
     publicKeyCredential?: PublicKeyCredentialDescriptor[]
 ): Promise<{ encodedSignature: string; publicKeyId: string }> => {
     const challenge = utils.parseHex(hash.slice(2));
-    const assertionPayload = await signWithCredential(
+    const assertionPayload = (await signWithCredential(
         challenge,
         publicKeyCredential
-    );
+    )) as Assertion;
     const publicKeyId = utils.hexArrayStr(assertionPayload.rawId);
 
     const {

@@ -78,6 +78,7 @@ export async function safeLegacyWebAuthnSigner<
                 encodedSignature as Hex
             ) as Hex;
         },
+        // biome-ignore lint/suspicious/noExplicitAny: TODO
         async signTransaction(tx: any) {
             const hash = hashTypedData({
                 domain: {
