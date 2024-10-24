@@ -66,7 +66,7 @@ export class API {
         publicKeyId?: Hex;
         publicKeyX?: Hex;
         publicKeyY?: Hex;
-        deviceData: DeviceData;
+        deviceData?: DeviceData;
         signerAddress: Address;
         chainId: string;
     }) {

@@ -226,25 +226,25 @@ const importWalletToApiAndSetStorage = async ({
     chain: Chain;
     signerAddress: Address;
 }) => {
-    if (!passkeySigner) return;
-
     await api.importExternalSafe({
         smartAccountAddress,
-        publicKeyId: passkeySigner.publicKeyId as Hex,
-        publicKeyY: passkeySigner.publicKeyY as Hex,
-        publicKeyX: passkeySigner.publicKeyX as Hex,
-        deviceData: passkeySigner.deviceData as DeviceData,
+        publicKeyId: passkeySigner?.publicKeyId as Hex,
+        publicKeyY: passkeySigner?.publicKeyY as Hex,
+        publicKeyX: passkeySigner?.publicKeyX as Hex,
+        deviceData: passkeySigner?.deviceData as DeviceData,
         signerAddress: signerAddress as Address,
         chainId: chain.id.toString(),
     });
 
-    setPasskeyInStorage(
-        smartAccountAddress as Address,
-        passkeySigner.publicKeyId as Hex,
-        passkeySigner.publicKeyX as Hex,
-        passkeySigner.publicKeyY as Hex,
-        signerAddress as Address
-    );
+    if (passkeySigner) {
+        setPasskeyInStorage(
+            smartAccountAddress as Address,
+            passkeySigner.publicKeyId as Hex,
+            passkeySigner.publicKeyX as Hex,
+            passkeySigner.publicKeyY as Hex,
+            signerAddress as Address
+        );
+    }
 };
 
 export type createSafeSmartAccountParameters = Prettify<{
@@ -446,7 +446,7 @@ export async function createLegacySafeSmartAccount<
                         api,
                         smartAccountAddress,
                         chain,
-                        signerAddress: safeWebAuthnSharedSignerContractAddress,
+                        signerAddress: passkeySigner ? safeWebAuthnSharedSignerContractAddress : eoaSigner?.address as Address,
                     });
                 }
             }
