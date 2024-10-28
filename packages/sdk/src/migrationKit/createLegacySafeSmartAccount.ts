@@ -322,12 +322,12 @@ export async function createLegacySafeSmartAccount<
             chain,
         });
     } else {
-        const res = await getFallbackEoaSigner({
+        const signerData = await getFallbackEoaSigner({
             smartAccountAddress: smartAccountAddress,
             encryptionSalt: comethSignerConfig?.encryptionSalt,
         });
 
-        eoaSigner = res.signer;
+        eoaSigner = signerData.signer;
     }
 
     const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
@@ -357,7 +357,6 @@ export async function createLegacySafeSmartAccount<
             );
 
             if (isDeployed) {
-                // 1. Verify current version
                 const currentVersion = await publicClient.readContract({
                     address: smartAccountAddress,
                     abi: SafeAbi,
@@ -446,7 +445,9 @@ export async function createLegacySafeSmartAccount<
                         api,
                         smartAccountAddress,
                         chain,
-                        signerAddress: passkeySigner ? safeWebAuthnSharedSignerContractAddress : eoaSigner?.address as Address,
+                        signerAddress: passkeySigner
+                            ? safeWebAuthnSharedSignerContractAddress
+                            : (eoaSigner?.address as Address),
                     });
                 }
             }
