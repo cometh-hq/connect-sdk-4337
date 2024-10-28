@@ -1,16 +1,12 @@
 import { getSignerAddress, isComethSigner } from "@/core/signers/createSigner";
 import type { Signer } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
-import { WEBAUTHN_DEFAULT_BASE_GAS } from "@/migrationKit/services/safe";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
     type Address,
     type Chain,
-    type Hash,
     type Hex,
-    type PublicClient,
-    type WalletClient,
     concat,
     createPublicClient,
     decodeFunctionData,
@@ -30,7 +26,7 @@ import { SafeAbi } from "../abi/safe";
 import { safe4337SessionKeyModuleAbi } from "../abi/safe4337SessionKeyModuleAbi";
 import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
-import { EIP712_SAFE_TX_TYPES, type MultiSendTransaction } from "../types";
+import type { MultiSendTransaction } from "../types";
 
 export const GAS_GAP_TOLERANCE = 10n;
 export const DEFAULT_REWARD_PERCENTILE = 80;
@@ -497,94 +493,3 @@ export const getSafeSetUpData = ({
         ],
     });
 };
-
-export async function executeTransaction(
-    publicClient: PublicClient,
-    walletClient: WalletClient,
-    safeAddress: Address,
-    tx: {
-        to: Address;
-        value: bigint;
-        data: `0x${string}`;
-        operation: number;
-    }
-): Promise<Hash> {
-    const nonce = (await publicClient.readContract({
-        address: safeAddress,
-        abi: SafeAbi,
-        functionName: "nonce",
-    })) as number;
-
-    const gasPrice = await getGasPrice(publicClient, DEFAULT_REWARD_PERCENTILE);
-
-    const fullTx = {
-        ...tx,
-        safeTxGas: BigInt(500000),
-        baseGas: BigInt(WEBAUTHN_DEFAULT_BASE_GAS),
-        gasPrice: gasPrice,
-        gasToken: getAddress(zeroAddress),
-        refundReceiver: getAddress(zeroAddress),
-        nonce: BigInt(nonce),
-    };
-
-    const signerAddress = getAddress(walletClient.account?.address!) as Address;
-    const chainId = await publicClient.getChainId();
-
-    const signature = await walletClient.signTypedData({
-        domain: {
-            chainId: chainId,
-            verifyingContract: getAddress(safeAddress) as Address,
-        },
-        types: EIP712_SAFE_TX_TYPES,
-        primaryType: "SafeTx",
-        message: fullTx,
-        account: signerAddress,
-    });
-
-    const { request } = await publicClient.simulateContract({
-        account: signerAddress,
-        address: safeAddress,
-        abi: SafeAbi,
-        functionName: "execTransaction",
-        args: [
-            fullTx.to,
-            fullTx.value,
-            fullTx.data,
-            fullTx.operation,
-            fullTx.safeTxGas,
-            fullTx.baseGas,
-            fullTx.gasPrice,
-            fullTx.gasToken,
-            fullTx.refundReceiver,
-            signature,
-        ],
-    });
-
-    const txHash = await walletClient.writeContract(request);
-    await publicClient.waitForTransactionReceipt({ hash: txHash });
-
-    return txHash;
-}
-
-export async function getGasPrice(
-    publicClient: PublicClient,
-    rewardPercentile: number
-): Promise<bigint> {
-    const feeHistory = await publicClient.getFeeHistory({
-        blockCount: 1,
-        rewardPercentiles: [rewardPercentile],
-    });
-
-    if (!feeHistory.reward![0] || feeHistory.baseFeePerGas.length === 0) {
-        throw new Error("Failed to fetch fee history");
-    }
-
-    const reward = feeHistory.reward![0][0];
-    const baseFee = feeHistory.baseFeePerGas[0];
-
-    if (reward === undefined || baseFee === undefined) {
-        throw new Error("Invalid fee history data");
-    }
-
-    return reward + baseFee + (reward + baseFee) / GAS_GAP_TOLERANCE;
-}

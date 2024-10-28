@@ -17,10 +17,8 @@ import {
 import { toAccount } from "viem/accounts";
 import { signTypedData } from "viem/actions";
 
-import {
-    EIP712_SAFE_MESSAGE_TYPE,
-    EIP712_SAFE_TX_TYPES,
-} from "@/core/accounts/safe/types";
+import { EIP712_SAFE_MESSAGE_TYPE } from "@/core/accounts/safe/types";
+import { EIP712_SAFE_TX_TYPES } from "@/migrationKit/types";
 import type { SafeSigner } from "../types";
 
 /**

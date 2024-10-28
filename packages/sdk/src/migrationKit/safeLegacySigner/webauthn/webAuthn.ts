@@ -11,15 +11,13 @@ import {
 } from "viem";
 import { toAccount } from "viem/accounts";
 
-import {
-    EIP712_SAFE_MESSAGE_TYPE,
-    EIP712_SAFE_TX_TYPES,
-} from "@/core/accounts/safe/types";
+import { EIP712_SAFE_MESSAGE_TYPE } from "@/core/accounts/safe/types";
 import {
     formatToSafeContractSignature,
     getWebAuthnSignature,
 } from "@/migrationKit/signers/passkeyService";
 import { parseHex } from "@/migrationKit/signers/utils";
+import { EIP712_SAFE_TX_TYPES } from "@/migrationKit/types";
 import type { SafeSigner } from "../types";
 
 /**

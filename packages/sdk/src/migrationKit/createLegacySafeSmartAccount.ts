@@ -25,7 +25,6 @@ import { API } from "@/core/services/API";
 import type { ComethSignerConfig } from "@/core/signers/types";
 
 import { MultiSendContractABI } from "@/core/accounts/safe/abi/Multisend";
-import { MigrationAbi } from "@/core/accounts/safe/abi/migration";
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { SafeWebAuthnSharedSignerAbi } from "@/core/accounts/safe/abi/sharedWebAuthnSigner";
 import { encodeMultiSendTransactions } from "@/core/accounts/safe/services/safe";
@@ -36,6 +35,7 @@ import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
 import { getFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
 import { setPasskeyInStorage } from "@/core/signers/passkeys/passkeyService";
 import { RelayedTransactionError } from "@/errors";
+import { MigrationAbi } from "@/migrationKit/abi/migration";
 import { isSmartAccountDeployed } from "permissionless";
 import { comethSignerToSafeSigner } from "./safeLegacySigner/comethSignerToSafeSigner";
 import { LEGACY_API } from "./services/LEGACY_API";
@@ -133,8 +133,8 @@ const prepareMigrationCalldata = async ({
                     functionName: "configure",
                     args: [
                         {
-                            x: hexToBigInt(passkeySigner!.publicKeyX as Hex),
-                            y: hexToBigInt(passkeySigner!.publicKeyY as Hex),
+                            x: hexToBigInt(passkeySigner.publicKeyX as Hex),
+                            y: hexToBigInt(passkeySigner.publicKeyY as Hex),
                             verifiers: hexToBigInt(p256Verifier),
                         },
                     ],
@@ -157,7 +157,7 @@ const prepareMigrationCalldata = async ({
                 data: encodeFunctionData({
                     abi: SafeAbi,
                     functionName: "removeOwner",
-                    args: [prevOwner, passkeySigner!.signerAddress, threshold],
+                    args: [prevOwner, passkeySigner.signerAddress, threshold],
                 }),
                 op: 0,
             }
@@ -194,12 +194,12 @@ const getPreviousOwner = async ({
         })) as Address[];
 
         const index = owners.findIndex(
-            (ownerToFind) => ownerToFind === passkeySigner!.signerAddress
+            (ownerToFind) => ownerToFind === passkeySigner.signerAddress
         );
 
         if (index === -1) {
             throw new Error(
-                `${passkeySigner!.signerAddress} is not a safe owner`
+                `${passkeySigner.signerAddress} is not a safe owner`
             );
         }
 
@@ -245,6 +245,59 @@ const importWalletToApiAndSetStorage = async ({
             signerAddress as Address
         );
     }
+};
+
+const waitForTransactionRelayAndImport = async ({
+    relayTx,
+    legacyApi,
+    api,
+    smartAccountAddress,
+    chain,
+    safeWebAuthnSharedSignerContractAddress,
+    passkeySigner,
+    eoaSigner,
+}: {
+    relayTx: RelayedTransaction;
+    legacyApi: LEGACY_API;
+    api: API;
+    smartAccountAddress: Address;
+    chain: Chain;
+    safeWebAuthnSharedSignerContractAddress: Address;
+    passkeySigner?: WebAuthnSigner;
+    eoaSigner?: PrivateKeyAccount;
+}): Promise<void> => {
+    const startDate = Date.now();
+    const timeoutLimit = new Date(
+        startDate + DEFAULT_CONFIRMATION_TIME
+    ).getTime();
+
+    let relayedTransaction: RelayedTransactionDetails | undefined = undefined;
+
+    while (
+        !(relayedTransaction as RelayedTransactionDetails)?.status.confirmed &&
+        Date.now() < timeoutLimit
+    ) {
+        await new Promise((resolve) => setTimeout(resolve, 4000));
+
+        relayedTransaction = await legacyApi.getRelayedTransaction(
+            relayTx.relayId
+        );
+
+        if (relayedTransaction?.status.confirmed) {
+            await importWalletToApiAndSetStorage({
+                passkeySigner,
+                api,
+                smartAccountAddress,
+                chain,
+                signerAddress: passkeySigner
+                    ? safeWebAuthnSharedSignerContractAddress
+                    : (eoaSigner?.address as Address),
+            });
+        }
+    }
+
+    if (!relayedTransaction?.status.confirmed)
+        throw new RelayedTransactionError();
 };
 
 export type createSafeSmartAccountParameters = Prettify<{
@@ -420,40 +473,16 @@ export async function createLegacySafeSmartAccount<
                 walletAddress: smartAccountAddress,
             });
 
-            const startDate = Date.now();
-            const timeoutLimit = new Date(
-                startDate + DEFAULT_CONFIRMATION_TIME
-            ).getTime();
-
-            let relayedTransaction: RelayedTransactionDetails | undefined =
-                undefined as RelayedTransactionDetails | undefined;
-
-            while (
-                !(relayedTransaction as RelayedTransactionDetails)?.status
-                    .confirmed &&
-                Date.now() < timeoutLimit
-            ) {
-                await new Promise((resolve) => setTimeout(resolve, 4000));
-
-                relayedTransaction = await legacyApi.getRelayedTransaction(
-                    relayTx.relayId
-                );
-
-                if (relayedTransaction?.status.confirmed) {
-                    await importWalletToApiAndSetStorage({
-                        passkeySigner,
-                        api,
-                        smartAccountAddress,
-                        chain,
-                        signerAddress: passkeySigner
-                            ? safeWebAuthnSharedSignerContractAddress
-                            : (eoaSigner?.address as Address),
-                    });
-                }
-            }
-
-            if (!relayedTransaction?.status.confirmed)
-                throw new RelayedTransactionError();
+            await waitForTransactionRelayAndImport({
+                relayTx,
+                passkeySigner,
+                eoaSigner,
+                legacyApi,
+                api,
+                smartAccountAddress,
+                chain,
+                safeWebAuthnSharedSignerContractAddress,
+            });
 
             return relayTx;
         },
