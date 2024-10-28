@@ -49,7 +49,9 @@ export default function App() {
         });
 
         // Step 3
-        await legacyClient.migrate();
+        const hasMigrated = await legacyClient.hasMigrated();
+
+        if (!hasMigrated) await legacyClient.migrate();
 
         // Step 4
         const safe4337SmartAccount = await createSafeSmartAccount({
