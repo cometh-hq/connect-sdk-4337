@@ -28,9 +28,6 @@ import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
 import type { MultiSendTransaction } from "../types";
 
-export const GAS_GAP_TOLERANCE = 10n;
-export const DEFAULT_REWARD_PERCENTILE = 80;
-
 /**
  * Encodes multiple transactions into a single byte string for multi-send functionality
  * @param transactions - Array of MultiSendTransaction objects
