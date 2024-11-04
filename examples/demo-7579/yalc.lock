@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "packages": {
+    "permissionless": {
+      "signature": "a1f19025a0b1986eedc16c532f879572",
+      "file": true,
+      "replaced": "^0.2.14"
+    }
+  }
+}
