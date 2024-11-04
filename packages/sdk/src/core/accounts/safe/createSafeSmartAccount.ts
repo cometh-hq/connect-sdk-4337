@@ -439,6 +439,30 @@ export async function createSafeSmartAccount<
         async getDummySignature(userOp) {
             return safeSigner.getDummySignature(userOp);
         },
+
+        async constructUserOperation(to: Address, value: bigint, data: Hex) {
+            const sender = smartAccountAddress;
+            const nonce = await this.getNonce();
+            const callData = await this.encodeCallData({ to, value, data });
+            const factory = await this.getFactory();
+            const factoryData = await this.getFactoryData();
+
+            const userOperation: UserOperation<"v0.7"> = {
+                sender,
+                nonce,
+                factory,
+                factoryData,
+                callData,
+                callGasLimit: 1n, // All gas values will be filled by Estimation Response Data.
+                verificationGasLimit: 1n,
+                preVerificationGas: 1n,
+                maxFeePerGas: 1n,
+                maxPriorityFeePerGas: 1n,
+                signature: '0x'
+            }
+            userOperation.signature = await this.getDummySignature(userOperation as UserOperation<GetEntryPointVersion<entryPoint>>);
+            return userOperation;
+        }
     });
 
     return {

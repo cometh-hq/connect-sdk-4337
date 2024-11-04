@@ -1,4 +1,5 @@
 import { gasPrice } from "@/core/actions/paymaster/gasPrice";
+import { gasEstimate } from "@/core/actions/paymaster/gasEstimate";
 import {
     type SponsorUserOperationReturnType,
     sponsorUserOperation,
@@ -40,12 +41,20 @@ export type ComethPaymasterClientActions = {
         maxFeePerGas: bigint;
         maxPriorityFeePerGas: bigint;
     }>;
+    gasEstimate:(userOperation: UserOperation<"v0.7">) => Promise<{
+        callGasLimit: bigint;
+        verificationGasLimit: bigint;
+        preVerificationGas: bigint;
+        maxFeePerGas: bigint;
+        maxPriorityFeePerGas: bigint;
+    }>;
 };
 
 const comethPaymasterActions =
     <entryPoint extends EntryPoint>(
         entryPointAddress: entryPoint,
-        rpcUrl?: string
+        rpcUrl?: string,
+        bundleUrl?: string
     ) =>
     (client: Client): ComethPaymasterClientActions => ({
         sponsorUserOperation: async <entryPoint extends EntryPoint>(args: {
@@ -57,6 +66,14 @@ const comethPaymasterActions =
             }),
         gasPrice: async () =>
             gasPrice(client as ComethPaymasterClient<entryPoint>, rpcUrl),
+        gasEstimate: async (
+            userOperation: UserOperation<"v0.7">
+        ) =>
+            gasEstimate(
+                client as ComethPaymasterClient<entryPoint>,
+                userOperation,
+                bundleUrl
+            ),
     });
 
 export const createComethPaymasterClient = <
@@ -67,6 +84,7 @@ export const createComethPaymasterClient = <
     parameters: PublicClientConfig<transport, chain> & {
         entryPoint: entryPoint;
         rpcUrl?: string;
+        bundlerUrl?: string;
     }
 ): ComethPaymasterClient<entryPoint> => {
     const { key = "public", name = "Cometh Paymaster Client" } = parameters;
@@ -77,6 +95,6 @@ export const createComethPaymasterClient = <
         type: "comethPaymasterClient",
     });
     return client.extend(
-        comethPaymasterActions(parameters.entryPoint, parameters.rpcUrl)
+        comethPaymasterActions(parameters.entryPoint, parameters.rpcUrl, parameters.bundlerUrl)
     );
 };
