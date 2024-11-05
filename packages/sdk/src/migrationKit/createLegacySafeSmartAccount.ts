@@ -491,7 +491,10 @@ export async function createLegacySafeSmartAccount<
                 publicClient,
                 smartAccountAddress
             );
-            if (!isDeployed) throw new Error("wallet not yet deployed");
+            if (!isDeployed) {
+                console.debug("Wallet is not deployed");
+                return false;
+            }
 
             const version = await publicClient.readContract({
                 address: smartAccountAddress,

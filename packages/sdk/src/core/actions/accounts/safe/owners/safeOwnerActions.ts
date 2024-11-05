@@ -171,16 +171,15 @@ export const safeOwnerPluginActions =
                             address: client.account?.signerAddress as Address,
                         },
                     ];
-                } else {
-                    return [
-                        {
-                            address: webAuthnSigners[0]
-                                .signerAddress as Address,
-                            deviceData: webAuthnSigners[0].deviceData,
-                            creationDate: webAuthnSigners[0].creationDate,
-                        },
-                    ];
                 }
+
+                return [
+                    {
+                        address: webAuthnSigners[0].signerAddress as Address,
+                        deviceData: webAuthnSigners[0].deviceData,
+                        creationDate: webAuthnSigners[0].creationDate,
+                    },
+                ];
             }
 
             const owners = (await publicClient.readContract({

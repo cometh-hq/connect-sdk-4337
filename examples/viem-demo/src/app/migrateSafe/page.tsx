@@ -40,6 +40,7 @@ export default function App() {
 
         const legacyWalletAddress = wallet.getAddress();
 
+
         // Step 2
         const legacyClient = await createLegacySafeSmartAccount({
             apiKeyLegacy: apiKey,
@@ -48,10 +49,10 @@ export default function App() {
             smartAccountAddress: legacyWalletAddress,
         });
 
-        // Step 3
-        const hasMigrated = await legacyClient.hasMigrated();
 
-        if (!hasMigrated) await legacyClient.migrate();
+        //const hasMigrated = await legacyClient.hasMigrated();
+
+        await legacyClient.migrate();
 
         // Step 4
         const safe4337SmartAccount = await createSafeSmartAccount({
@@ -77,6 +78,7 @@ export default function App() {
                 gasPrice: paymasterClient.gasPrice,
             },
         });
+
 
         const calldata = encodeFunctionData({
             abi: countContractAbi,
