@@ -164,14 +164,24 @@ export const safeOwnerPluginActions =
                     publicClient.chain?.id as number
                 )) as WebAuthnSigner[];
 
-            if (!isDeployed)
-                return [
-                    {
-                        address: webAuthnSigners[0].signerAddress as Address,
-                        deviceData: webAuthnSigners[0].deviceData,
-                        creationDate: webAuthnSigners[0].creationDate,
-                    },
-                ];
+            if (!isDeployed) {
+                if (webAuthnSigners.length === 0) {
+                    return [
+                        {
+                            address: client.account?.signerAddress as Address,
+                        },
+                    ];
+                } else {
+                    return [
+                        {
+                            address: webAuthnSigners[0]
+                                .signerAddress as Address,
+                            deviceData: webAuthnSigners[0].deviceData,
+                            creationDate: webAuthnSigners[0].creationDate,
+                        },
+                    ];
+                }
+            }
 
             const owners = (await publicClient.readContract({
                 address: client.account?.address as Address,

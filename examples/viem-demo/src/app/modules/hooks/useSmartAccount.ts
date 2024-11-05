@@ -59,7 +59,6 @@ export function useSmartAccount() {
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
-                    /*                signer, */
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
@@ -69,7 +68,6 @@ export function useSmartAccount() {
                     baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
-                    /*                 signer, */
                 });
                 window.localStorage.setItem(
                     "walletAddress",
