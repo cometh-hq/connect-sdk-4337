@@ -41,6 +41,7 @@ export type SafeContractParams = {
     safeWebAuthnSignerFactory: Address;
     safe4337ModuleAddress?: Address;
     safe4337SessionKeysModule?: Address;
+    migrationContractAddress?: Address;
 };
 
 export type RecoveryParams = {
@@ -68,7 +69,7 @@ export const SAFE_SENTINEL_OWNERS = "0x1";
 
 export type MultiSendTransaction = {
     // 0 for CALL, 1 for DELEGATECALL
-    op: 0 | 1;
+    op: number;
     to: Address;
     value?: bigint;
     data: `0x${string}`;

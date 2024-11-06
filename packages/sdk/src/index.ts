@@ -37,6 +37,7 @@ import type { RecoveryParamsResponse } from "./core/services/delayModuleService"
 import { createSigner } from "./core/signers/createSigner";
 import type { webAuthnOptions } from "./core/signers/passkeys/types";
 import type { Signer } from "./core/types";
+import { createLegacySafeSmartAccount } from "./migrationKit/createLegacySafeSmartAccount";
 import { smartAccountConnector } from "./wagmi/connector";
 
 export {
@@ -51,6 +52,7 @@ export {
     generateQRCodeUrl,
     createComethPaymasterClient,
     smartAccountConnector,
+    createLegacySafeSmartAccount,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
 };
