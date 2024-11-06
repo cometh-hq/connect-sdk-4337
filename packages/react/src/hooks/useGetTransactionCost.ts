@@ -124,7 +124,7 @@ export const useGetTransactionCost = (
                 const { transactions } = variables;
 
                 const userOperation =
-                    await smartAccountClient.account.prepareUserOperation(
+                    await smartAccountClient.account.buildUserOperation(
                         transactions
                     );
 

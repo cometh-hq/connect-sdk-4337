@@ -119,7 +119,7 @@ function Transaction({
                 data: calldata,
             }
 
-          /*   const z = await estimateGasAsync({
+            const z = await estimateGasAsync({
                 transactions: transactions
             })
 
@@ -129,7 +129,7 @@ function Transaction({
 
             console.log({z})
 
-            console.log({t})*/
+            console.log({t})
 
             const txHash = await sendTransaction({
                 transactions: {

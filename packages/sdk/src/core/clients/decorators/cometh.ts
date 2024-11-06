@@ -1,9 +1,16 @@
-import { type SmartAccountActions, smartAccountActions } from "permissionless";
+import {
+    ENTRYPOINT_ADDRESS_V07,
+    type EstimateUserOperationGasParameters,
+    type EstimateUserOperationGasReturnType,
+    type SmartAccountActions,
+    estimateUserOperationGas,
+    smartAccountActions,
+} from "permissionless";
 import type {
     Middleware,
     SendTransactionWithPaymasterParameters,
 } from "permissionless/actions/smartAccount";
-import type { EntryPoint, UserOperation } from "permissionless/types";
+import type { EntryPoint, Prettify, UserOperation } from "permissionless/types";
 import type { Chain, Client, Hash, Transport } from "viem";
 
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
@@ -39,6 +46,7 @@ import {
     verifySignature,
 } from "@/core/actions/accounts/safe/verifySignature";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
+import type { StateOverrides } from "permissionless/types/bundler";
 
 export type ComethClientActions<
     entryPoint extends EntryPoint,
@@ -113,6 +121,12 @@ export type ComethClientActions<
         paymasterVerificationGasLimit?: bigint;
         paymasterPostOpGasLimit?: bigint;
     }>;
+    estimateUserOperationGas: (
+        args: Prettify<
+            Omit<EstimateUserOperationGasParameters<entryPoint>, "entryPoint">
+        >,
+        stateOverrides?: StateOverrides
+    ) => Promise<Prettify<EstimateUserOperationGasReturnType<entryPoint>>>;
 };
 
 export function comethAccountClientActions<entryPoint extends EntryPoint>({
@@ -130,6 +144,18 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
         client: Client<TTransport, TChain, TAccount>
     ): ComethClientActions<entryPoint, TChain, TAccount> => ({
         ...smartAccountActions({ middleware })(client),
+        estimateUserOperationGas: (
+            args: Omit<
+                EstimateUserOperationGasParameters<entryPoint>,
+                "entryPoint"
+            >,
+            stateOverrides?: StateOverrides
+        ) =>
+            estimateUserOperationGas<entryPoint>(
+                client,
+                { ...args, entryPoint: ENTRYPOINT_ADDRESS_V07 as entryPoint },
+                stateOverrides
+            ),
         validateAddDevice: (args) =>
             validateAddDevice<entryPoint, TTransport, TChain, TAccount>(
                 client,

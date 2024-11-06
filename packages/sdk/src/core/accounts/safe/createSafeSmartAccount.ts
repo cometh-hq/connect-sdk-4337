@@ -63,7 +63,7 @@ export type SafeSmartAccount<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "safeSmartAccount", transport, chain> & {
-    prepareUserOperation(
+    buildUserOperation(
         _txs:
             | {
                   to: Address;
@@ -459,7 +459,7 @@ export async function createSafeSmartAccount<
         signerAddress,
         safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
         sessionKeysEnabled,
-        async prepareUserOperation(
+        async buildUserOperation(
             _txs:
                 | {
                       to: Address;
