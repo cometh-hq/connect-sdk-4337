@@ -164,7 +164,15 @@ export const safeOwnerPluginActions =
                     publicClient.chain?.id as number
                 )) as WebAuthnSigner[];
 
-            if (!isDeployed)
+            if (!isDeployed) {
+                if (webAuthnSigners.length === 0) {
+                    return [
+                        {
+                            address: client.account?.signerAddress as Address,
+                        },
+                    ];
+                }
+
                 return [
                     {
                         address: webAuthnSigners[0].signerAddress as Address,
@@ -172,6 +180,7 @@ export const safeOwnerPluginActions =
                         creationDate: webAuthnSigners[0].creationDate,
                     },
                 ];
+            }
 
             const owners = (await publicClient.readContract({
                 address: client.account?.address as Address,

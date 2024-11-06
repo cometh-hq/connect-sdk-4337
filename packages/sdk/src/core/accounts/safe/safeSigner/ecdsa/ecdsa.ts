@@ -12,7 +12,6 @@ import {
     type TypedData,
     type TypedDataDefinition,
     encodePacked,
-    toHex,
 } from "viem";
 import { toAccount } from "viem/accounts";
 import { signTypedData } from "viem/actions";
@@ -69,8 +68,6 @@ export async function safeECDSASigner<
     const account = toAccount({
         address: smartAccountAddress,
         async signMessage({ message }) {
-            if (typeof message === "string") message = toHex(message);
-
             return signTypedData(client, {
                 account: viemSigner,
                 domain: {
