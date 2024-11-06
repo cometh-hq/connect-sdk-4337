@@ -172,7 +172,6 @@ export const safeOwnerPluginActions =
                         },
                     ];
                 }
-
                 return [
                     {
                         address: webAuthnSigners[0].signerAddress as Address,

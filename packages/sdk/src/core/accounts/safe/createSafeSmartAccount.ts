@@ -418,7 +418,7 @@ export async function createSafeSmartAccount<
                                 data: tx.data,
                                 value: tx.value ?? BigInt(0),
                             }))
-                        ),
+                        ) as `0x${string}`,
                     ],
                 });
 
@@ -440,7 +440,25 @@ export async function createSafeSmartAccount<
             return safeSigner.getDummySignature(userOp);
         },
 
-        async constructUserOperation(to: Address, value: bigint, data: Hex) {
+        async prepareUserOperation({
+            to,
+            value,
+            data,
+            callGasLimit,
+            verificationGasLimit,
+            preVerificationGas,
+            maxFeePerGas,
+            maxPriorityFeePerGas,
+        }: {
+            to: Address;
+            value: bigint;
+            data: Hex;
+            callGasLimit?: bigint;
+            verificationGasLimit?: bigint;
+            preVerificationGas?: bigint;
+            maxFeePerGas?: bigint;
+            maxPriorityFeePerGas?: bigint;
+        }) {
             const sender = smartAccountAddress;
             const nonce = await this.getNonce();
             const callData = await this.encodeCallData({ to, value, data });
@@ -453,16 +471,19 @@ export async function createSafeSmartAccount<
                 factory,
                 factoryData,
                 callData,
-                callGasLimit: 1n, // All gas values will be filled by Estimation Response Data.
-                verificationGasLimit: 1n,
-                preVerificationGas: 1n,
-                maxFeePerGas: 1n,
-                maxPriorityFeePerGas: 1n,
-                signature: '0x'
-            }
-            userOperation.signature = await this.getDummySignature(userOperation as UserOperation<GetEntryPointVersion<entryPoint>>);
+                callGasLimit: callGasLimit ?? 1n,
+                verificationGasLimit: verificationGasLimit ?? 1n,
+                preVerificationGas: preVerificationGas ?? 1n,
+                maxFeePerGas: maxFeePerGas ?? 1n,
+                maxPriorityFeePerGas: maxPriorityFeePerGas ?? 1n,
+                signature: "0x",
+            };
+
+            userOperation.signature = await this.getDummySignature(
+                userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
+            );
             return userOperation;
-        }
+        },
     });
 
     return {

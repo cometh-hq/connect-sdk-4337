@@ -11,8 +11,10 @@ import type {
     SmartAccountClient,
     SmartAccountClientConfig,
 } from "permissionless";
+import { ENTRYPOINT_ADDRESS_V07, bundlerActions } from "permissionless";
 import type { BundlerRpcSchema } from "permissionless/_types/types/bundler";
 import type { SmartAccount } from "permissionless/accounts";
+import { pimlicoBundlerActions } from "permissionless/actions/pimlico";
 import type { EntryPoint } from "permissionless/types/entrypoint";
 import { type Chain, type Client, type Transport, createClient } from "viem";
 import type { Prettify } from "viem/chains";
@@ -81,11 +83,15 @@ export function createSmartAccountClient<
         name,
         transport: bundlerTransport,
         type: "smartAccountClient",
-    }).extend(
-        comethAccountClientActions({
-            middleware: parameters.middleware,
-        })
-    ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
+    })
+        .extend(bundlerActions(ENTRYPOINT_ADDRESS_V07))
+        .extend(pimlicoBundlerActions(ENTRYPOINT_ADDRESS_V07))
+        .extend(
+            comethAccountClientActions({
+                middleware: parameters.middleware,
+                // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+            }) as any
+        ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
 
     return client
         .extend(safeSessionKeyActions(parameters.rpcUrl))

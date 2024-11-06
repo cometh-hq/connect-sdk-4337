@@ -43,7 +43,7 @@ export function useSmartAccount() {
 
             let smartAccount;
 
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+            //const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
             const comethSignerConfig = {
                 fullDomainSelected: true,
@@ -55,7 +55,6 @@ export function useSmartAccount() {
                     apiKey,
                     chain: arbitrumSepolia,
                     rpcUrl,
-                    baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
@@ -65,7 +64,6 @@ export function useSmartAccount() {
                     apiKey,
                     chain: arbitrumSepolia,
                     rpcUrl,
-                    baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
                 });

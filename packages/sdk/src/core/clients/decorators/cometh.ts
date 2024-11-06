@@ -3,7 +3,7 @@ import type {
     Middleware,
     SendTransactionWithPaymasterParameters,
 } from "permissionless/actions/smartAccount";
-import type { EntryPoint } from "permissionless/types";
+import type { EntryPoint, UserOperation } from "permissionless/types";
 import type { Chain, Client, Hash, Transport } from "viem";
 
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
@@ -37,6 +37,7 @@ import {
     type VerifySignatureParams,
     verifySignature,
 } from "@/core/actions/accounts/safe/verifySignature";
+import { estimateGas } from "@/core/actions/paymaster/estimateGas";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
 
 export type ComethClientActions<
@@ -103,6 +104,15 @@ export type ComethClientActions<
             >
         >[1]
     ) => Promise<Hash>;
+    estimateGas: (args: { userOperation: UserOperation<"v0.7"> }) => Promise<{
+        callGasLimit: bigint;
+        verificationGasLimit: bigint;
+        preVerificationGas: bigint;
+        maxFeePerGas: bigint;
+        maxPriorityFeePerGas: bigint;
+        paymasterVerificationGasLimit?: bigint;
+        paymasterPostOpGasLimit?: bigint;
+    }>;
 };
 
 export function comethAccountClientActions<entryPoint extends EntryPoint>({
@@ -185,5 +195,6 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 ...args,
                 middleware,
             } as SendTransactionsWithPaymasterParameters<entryPoint, TAccount>),
+        estimateGas: async (args) => estimateGas(client, args),
     });
 }
