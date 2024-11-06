@@ -63,6 +63,19 @@ export type SafeSmartAccount<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "safeSmartAccount", transport, chain> & {
+    prepareUserOperation(
+        _txs:
+            | {
+                  to: Address;
+                  value: bigint;
+                  data: Hex;
+              }
+            | {
+                  to: Address;
+                  value: bigint;
+                  data: Hex;
+              }[]
+    ): Promise<UserOperation<"v0.7">>;
     signUserOperationWithSessionKey(
         userOp: UserOperation<GetEntryPointVersion<entryPoint>>
     ): Promise<Hex>;
@@ -439,51 +452,6 @@ export async function createSafeSmartAccount<
         async getDummySignature(userOp) {
             return safeSigner.getDummySignature(userOp);
         },
-
-        async prepareUserOperation({
-            to,
-            value,
-            data,
-            callGasLimit,
-            verificationGasLimit,
-            preVerificationGas,
-            maxFeePerGas,
-            maxPriorityFeePerGas,
-        }: {
-            to: Address;
-            value: bigint;
-            data: Hex;
-            callGasLimit?: bigint;
-            verificationGasLimit?: bigint;
-            preVerificationGas?: bigint;
-            maxFeePerGas?: bigint;
-            maxPriorityFeePerGas?: bigint;
-        }) {
-            const sender = smartAccountAddress;
-            const nonce = await this.getNonce();
-            const callData = await this.encodeCallData({ to, value, data });
-            const factory = await this.getFactory();
-            const factoryData = await this.getFactoryData();
-
-            const userOperation: UserOperation<"v0.7"> = {
-                sender,
-                nonce,
-                factory,
-                factoryData,
-                callData,
-                callGasLimit: callGasLimit ?? 1n,
-                verificationGasLimit: verificationGasLimit ?? 1n,
-                preVerificationGas: preVerificationGas ?? 1n,
-                maxFeePerGas: maxFeePerGas ?? 1n,
-                maxPriorityFeePerGas: maxPriorityFeePerGas ?? 1n,
-                signature: "0x",
-            };
-
-            userOperation.signature = await this.getDummySignature(
-                userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
-            );
-            return userOperation;
-        },
     });
 
     return {
@@ -491,6 +459,44 @@ export async function createSafeSmartAccount<
         signerAddress,
         safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
         sessionKeysEnabled,
+        async prepareUserOperation(
+            _txs:
+                | {
+                      to: Address;
+                      value: bigint;
+                      data: Hex;
+                  }
+                | {
+                      to: Address;
+                      value: bigint;
+                      data: Hex;
+                  }[]
+        ) {
+            const sender = smartAccountAddress;
+            const nonce = await smartAccount.getNonce();
+            const callData = await smartAccount.encodeCallData(_txs);
+            const factory = await smartAccount.getFactory();
+            const factoryData = await smartAccount.getFactoryData();
+
+            const userOperation: UserOperation<"v0.7"> = {
+                sender,
+                nonce,
+                factory,
+                factoryData,
+                callData,
+                callGasLimit: 1n,
+                verificationGasLimit: 1n,
+                preVerificationGas: 1n,
+                maxFeePerGas: 1n,
+                maxPriorityFeePerGas: 1n,
+                signature: "0x",
+            };
+
+            userOperation.signature = await smartAccount.getDummySignature(
+                userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
+            );
+            return userOperation;
+        },
         async signUserOperationWithSessionKey(
             userOp: UserOperation<GetEntryPointVersion<entryPoint>>
         ) {

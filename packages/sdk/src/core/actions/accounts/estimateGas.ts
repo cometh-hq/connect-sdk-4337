@@ -3,8 +3,8 @@ import {
     type UserOperation,
     estimateUserOperationGas,
 } from "permissionless";
-import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/_types/types";
 import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
+import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types";
 import type { Account, Chain, Client, Transport } from "viem";
 import { getAction } from "viem/utils";
 

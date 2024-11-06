@@ -7,6 +7,7 @@ import type { EntryPoint, UserOperation } from "permissionless/types";
 import type { Chain, Client, Hash, Transport } from "viem";
 
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { estimateGas } from "@/core/actions/accounts/estimateGas";
 import {
     type ValidateAddDevice,
     validateAddDevice,
@@ -37,7 +38,6 @@ import {
     type VerifySignatureParams,
     verifySignature,
 } from "@/core/actions/accounts/safe/verifySignature";
-import { estimateGas } from "@/core/actions/paymaster/estimateGas";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
 
 export type ComethClientActions<

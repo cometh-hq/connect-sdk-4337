@@ -39,7 +39,6 @@ export function toSmartAccount<
     getFactoryData,
     encodeCallData,
     getDummySignature,
-    prepareUserOperation,
     encodeDeployCallData,
     signUserOperation,
     signMessage,
@@ -68,25 +67,6 @@ export function toSmartAccount<
     getDummySignature(
         userOperation: UserOperation<GetEntryPointVersion<TEntryPoint>>
     ): Promise<Hex>;
-    prepareUserOperation({
-        to,
-        value,
-        data,
-        callGasLimit,
-        verificationGasLimit,
-        preVerificationGas,
-        maxFeePerGas,
-        maxPriorityFeePerGas,
-    }: {
-        to: Address;
-        value: bigint;
-        data: Hex;
-        callGasLimit?: bigint;
-        verificationGasLimit?: bigint;
-        preVerificationGas?: bigint;
-        maxFeePerGas?: bigint;
-        maxPriorityFeePerGas?: bigint;
-    }): Promise<UserOperation<"v0.7">>;
     encodeDeployCallData: ({
         abi,
         args,
@@ -128,7 +108,6 @@ export function toSmartAccount<
         getFactoryData,
         encodeCallData,
         getDummySignature,
-        prepareUserOperation,
         encodeDeployCallData,
         signUserOperation,
     } as SmartAccount<TEntryPoint, TSource, transport, chain, TAbi>;

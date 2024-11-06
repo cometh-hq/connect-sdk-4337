@@ -58,7 +58,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@cometh/connect-sdk-4337": "^0.1.11",
+    "@cometh/connect-sdk-4337": "workspace:*",
     "permissionless": "0.1.31"
   }
 }
