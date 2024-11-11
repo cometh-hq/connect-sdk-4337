@@ -8,14 +8,11 @@ import {
     type Hex,
     type LocalAccount,
     type PrivateKeyAccount,
-    type PublicClient,
     type SignableMessage,
     type Transport,
     createPublicClient,
     encodeFunctionData,
-    getAddress,
     hexToBigInt,
-    pad,
     zeroAddress,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
@@ -28,7 +25,6 @@ import { MultiSendContractABI } from "@/core/accounts/safe/abi/Multisend";
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { SafeWebAuthnSharedSignerAbi } from "@/core/accounts/safe/abi/sharedWebAuthnSigner";
 import { encodeMultiSendTransactions } from "@/core/accounts/safe/services/safe";
-import { SAFE_SENTINEL_OWNERS } from "@/core/accounts/safe/types";
 import { getViemClient } from "@/core/accounts/utils";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
@@ -63,8 +59,6 @@ export type LegacySafeSmartAccount<
 };
 
 const prepareMigrationCalldata = async ({
-    publicClient,
-    isDeployed,
     threshold,
     safe4337ModuleAddress,
     safeWebAuthnSharedSignerContractAddress,
@@ -73,8 +67,6 @@ const prepareMigrationCalldata = async ({
     smartAccountAddress,
     passkeySigner,
 }: {
-    publicClient: PublicClient;
-    isDeployed: boolean;
     threshold: number;
     safe4337ModuleAddress: Address;
     safeWebAuthnSharedSignerContractAddress: Address;
@@ -116,14 +108,6 @@ const prepareMigrationCalldata = async ({
     ];
 
     if (passkeySigner) {
-        const prevOwner = await getPreviousOwner({
-            isDeployed,
-            safeWebAuthnSharedSignerContractAddress,
-            publicClient,
-            smartAccountAddress,
-            passkeySigner,
-        });
-
         transactions.push(
             {
                 to: safeWebAuthnSharedSignerContractAddress,
@@ -150,16 +134,6 @@ const prepareMigrationCalldata = async ({
                     args: [safeWebAuthnSharedSignerContractAddress, threshold],
                 }),
                 op: 0,
-            },
-            {
-                to: smartAccountAddress,
-                value: 0n,
-                data: encodeFunctionData({
-                    abi: SafeAbi,
-                    functionName: "removeOwner",
-                    args: [prevOwner, passkeySigner.signerAddress, threshold],
-                }),
-                op: 0,
             }
         );
     }
@@ -169,48 +143,6 @@ const prepareMigrationCalldata = async ({
         functionName: "multiSend",
         args: [encodeMultiSendTransactions(transactions)],
     });
-};
-
-const getPreviousOwner = async ({
-    isDeployed,
-    safeWebAuthnSharedSignerContractAddress,
-    publicClient,
-    smartAccountAddress,
-    passkeySigner,
-}: {
-    isDeployed: boolean;
-    safeWebAuthnSharedSignerContractAddress: Address;
-    publicClient: PublicClient;
-    smartAccountAddress: Address;
-    passkeySigner: WebAuthnSigner;
-}): Promise<Address> => {
-    let prevOwner: Address = safeWebAuthnSharedSignerContractAddress;
-
-    if (isDeployed) {
-        const owners = (await publicClient.readContract({
-            address: smartAccountAddress as Address,
-            abi: SafeAbi,
-            functionName: "getOwners",
-        })) as Address[];
-
-        const index = owners.findIndex(
-            (ownerToFind) => ownerToFind === passkeySigner.signerAddress
-        );
-
-        if (index === -1) {
-            throw new Error(
-                `${passkeySigner.signerAddress} is not a safe owner`
-            );
-        }
-
-        if (index !== 0) {
-            prevOwner = getAddress(owners[index - 1]);
-        } else {
-            prevOwner = getAddress(pad(SAFE_SENTINEL_OWNERS, { size: 20 }));
-        }
-    }
-
-    return prevOwner;
 };
 
 const importWalletToApiAndSetStorage = async ({
@@ -432,8 +364,6 @@ export async function createLegacySafeSmartAccount<
                 : 1;
 
             const migrateCalldata = await prepareMigrationCalldata({
-                publicClient,
-                isDeployed,
                 threshold,
                 safe4337ModuleAddress: safe4337ModuleAddress as Address,
                 safeWebAuthnSharedSignerContractAddress,
