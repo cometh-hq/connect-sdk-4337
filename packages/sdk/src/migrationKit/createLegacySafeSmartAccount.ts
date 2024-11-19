@@ -263,57 +263,61 @@ export async function createLegacySafeSmartAccount<
 > {
     if (!smartAccountAddress) throw new Error("Account address not found");
 
-    const legacyApi = new LEGACY_API(apiKeyLegacy);
-    const api = new API(apiKey4337);
-
-    const client = (await getViemClient(chain, rpcUrl)) as Client<
-        TTransport,
-        TChain,
-        undefined
-    >;
-
-    const publicClient = createPublicClient({
-        chain: chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
+    const [
+        legacyApi,
+        api,
+        client,
+        publicClient,
+        projectParams,
+        isWebAuthnCompatible,
+    ] = await Promise.all([
+        Promise.resolve(new LEGACY_API(apiKeyLegacy)),
+        Promise.resolve(new API(apiKey4337)),
+        getViemClient(chain, rpcUrl) as unknown as Promise<
+            Client<TTransport, TChain, undefined>
+        >,
+        Promise.resolve(
+            createPublicClient({
+                chain,
+                transport: http(rpcUrl),
+                cacheTime: 60_000,
+                batch: {
+                    multicall: { wait: 50 },
+                },
+            })
+        ),
+        getProjectParamsByChain({ api: new API(apiKey4337), chain }),
+        isDeviceCompatibleWithPasskeys({ webAuthnOptions: {} }),
+    ]);
 
     const {
         safe4337ModuleAddress,
         safeWebAuthnSharedSignerContractAddress,
         p256Verifier,
         migrationContractAddress,
-    } = (await getProjectParamsByChain({ api, chain })).safeContractParams;
+    } = projectParams.safeContractParams;
 
-    if (!migrationContractAddress)
+    if (!migrationContractAddress) {
         throw new Error(
             "Migration contract address not available for this network"
         );
-
-    const isWebAuthnCompatible = await isDeviceCompatibleWithPasskeys({
-        webAuthnOptions: {},
-    });
-
-    let eoaSigner: PrivateKeyAccount | undefined;
-    let passkeySigner: WebAuthnSigner | undefined;
-
-    if (isWebAuthnCompatible) {
-        passkeySigner = await getSigner({
-            API: legacyApi,
-            walletAddress: smartAccountAddress,
-            chain,
-        });
-    } else {
-        const signerData = await getFallbackEoaSigner({
-            smartAccountAddress: smartAccountAddress,
-            encryptionSalt: comethSignerConfig?.encryptionSalt,
-        });
-
-        eoaSigner = signerData.signer;
     }
+
+    const [eoaSigner, passkeySigner] = await Promise.all([
+        !isWebAuthnCompatible
+            ? getFallbackEoaSigner({
+                  smartAccountAddress,
+                  encryptionSalt: comethSignerConfig?.encryptionSalt,
+              }).then((data) => data.signer)
+            : Promise.resolve(undefined),
+        isWebAuthnCompatible
+            ? getSigner({
+                  API: legacyApi,
+                  walletAddress: smartAccountAddress,
+                  chain,
+              })
+            : Promise.resolve(undefined),
+    ]);
 
     const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
         client,

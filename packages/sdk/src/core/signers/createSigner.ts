@@ -1,6 +1,6 @@
 import type { Address } from "viem/accounts";
 
-import type { Chain, Hex } from "viem";
+import type { Hex } from "viem";
 
 import type { SmartAccountSigner } from "permissionless/accounts";
 import {
@@ -19,7 +19,6 @@ import {
     getSignerLocalStorage,
 } from "./ecdsa/services/ecdsaService";
 
-import { getDeviceData } from "@/core/services/deviceService";
 import type {
     PasskeyLocalStorageFormat,
     webAuthnOptions,
@@ -59,8 +58,6 @@ export const getSigner = (customSigner: Signer) => {
 };
 
 export const saveSigner = async (
-    chain: Chain,
-    api: API,
     signer: Signer,
     smartAccountAddress: Address
 ) => {
@@ -85,17 +82,6 @@ export const saveSigner = async (
                 signer.passkey.pubkeyCoordinates.y,
                 signer.passkey.signerAddress
             );
-
-            await api.createWebAuthnSigner({
-                chainId: chain.id,
-                walletAddress: smartAccountAddress,
-                publicKeyId: signer.passkey.id,
-                publicKeyX: signer.passkey.pubkeyCoordinates.x,
-                publicKeyY: signer.passkey.pubkeyCoordinates.y,
-                deviceData: getDeviceData(),
-                signerAddress: signer.passkey.signerAddress,
-                isSharedWebAuthnSigner: true,
-            });
         }
     }
 };
@@ -117,15 +103,12 @@ export const isFallbackSigner = (): boolean => {
 export const isDeviceCompatibleWithPasskeys = async (options: {
     webAuthnOptions: webAuthnOptions;
 }) => {
-    const webAuthnCompatible = await isWebAuthnCompatible(
-        options.webAuthnOptions
-    );
+    const [webAuthnCompatible, hasFallbackSigner] = await Promise.all([
+        isWebAuthnCompatible(options.webAuthnOptions),
+        Promise.resolve(isFallbackSigner()),
+    ]);
 
-    if (webAuthnCompatible && !isFallbackSigner()) {
-        return true;
-    }
-
-    return false;
+    return webAuthnCompatible && !hasFallbackSigner;
 };
 
 /**
@@ -150,11 +133,10 @@ export async function createSigner({
     fullDomainSelected = false,
     safeContractParams,
 }: CreateSignerParams): Promise<ComethSigner> {
-    const api = new API(apiKey, baseUrl);
-
-    const passkeyCompatible = await isDeviceCompatibleWithPasskeys({
-        webAuthnOptions,
-    });
+    const [api, passkeyCompatible] = await Promise.all([
+        Promise.resolve(new API(apiKey, baseUrl)),
+        isDeviceCompatibleWithPasskeys({ webAuthnOptions }),
+    ]);
 
     if (passkeyCompatible) {
         let passkey: PasskeyLocalStorageFormat;

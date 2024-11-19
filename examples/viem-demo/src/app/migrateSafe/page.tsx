@@ -13,21 +13,21 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { http, encodeFunctionData } from "viem";
-import { baseSepolia } from "viem/chains";
+import { gnosis } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 
 export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 export default function App() {
-    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
+    const apiKey = "b3d391ff-5db5-4e5d-bd55-80f48f6bf242";
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL!;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!;
 
     const migrateSafe = async () => {
         // Step 1: TO DO If you create a new legcay wallet and want to update, if not go to step 2
         const walletAdaptor = new ConnectAdaptor({
-            chainId: SupportedNetworks.BASE_SEPOLIA,
+            chainId: SupportedNetworks.GNOSIS,
             apiKey: apiKey,
         });
 
@@ -43,8 +43,8 @@ export default function App() {
         // Step 2
         const legacyClient = await createLegacySafeSmartAccount({
             apiKeyLegacy: apiKey,
-            apiKey4337: apiKey,
-            chain: baseSepolia,
+            apiKey4337: "7eDL9dMQVUYR3F6iH7k2uG22MSCgztqW",
+            chain: gnosis,
             smartAccountAddress: legacyWalletAddress,
         });
 
@@ -54,8 +54,8 @@ export default function App() {
 
         // Step 4
         const safe4337SmartAccount = await createSafeSmartAccount({
-            apiKey,
-            chain: baseSepolia,
+            apiKey: "7eDL9dMQVUYR3F6iH7k2uG22MSCgztqW",
+            chain: gnosis,
             smartAccountAddress: legacyWalletAddress,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
         });
@@ -63,13 +63,13 @@ export default function App() {
         // Step 5
         const paymasterClient = await createComethPaymasterClient({
             transport: http(paymasterUrl),
-            chain: baseSepolia,
+            chain: gnosis,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
         });
         const smartAccountClient = createSmartAccountClient({
             account: safe4337SmartAccount,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
-            chain: baseSepolia,
+            chain: gnosis,
             bundlerTransport: http(bundlerUrl),
             middleware: {
                 sponsorUserOperation: paymasterClient.sponsorUserOperation,

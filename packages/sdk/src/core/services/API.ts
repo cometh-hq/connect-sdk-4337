@@ -39,18 +39,32 @@ export class API {
         chainId,
         smartAccountAddress,
         initiatorAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        deviceData,
     }: {
         chainId: number;
         smartAccountAddress: Address;
         initiatorAddress: Address;
-    }): Promise<void> {
+        publicKeyId?: Hex;
+        publicKeyX?: Hex;
+        publicKeyY?: Hex;
+        deviceData?: DeviceData;
+    }): Promise<boolean> {
         const body = {
             chainId: chainId.toString(),
             walletAddress: smartAccountAddress,
             initiatorAddress,
+            publicKeyId,
+            publicKeyX,
+            publicKeyY,
+            deviceData,
         };
 
-        await this.api.post("/wallet", body);
+        const res = await this.api.post("/wallet", body);
+
+        return res.data.isNewWallet;
     }
 
     async importExternalSafe({
