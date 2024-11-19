@@ -1,6 +1,5 @@
 "use client";
 
-import { get } from "http";
 import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -36,18 +35,13 @@ const counterContract = getContract({
 interface TransactionProps {
     hash: string | null;
     sendTransaction: any;
-    getTransactionCostAsync: any;
-    estimateGasAsync: any;
     address: Address;
     transactionSuccess: boolean;
     setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function Transaction({
-    hash,
     sendTransaction,
-    getTransactionCostAsync,
-    estimateGasAsync,
     address,
     transactionSuccess,
     setTransactionSuccess,
@@ -113,23 +107,6 @@ function Transaction({
                 functionName: "count",
             });
 
-            const transactions = {
-                to: COUNTER_CONTRACT_ADDRESS,
-                value: 0,
-                data: calldata,
-            };
-
-            const z = await estimateGasAsync({
-                transactions: transactions,
-            });
-
-            const t = await getTransactionCostAsync({
-                transactions: transactions,
-            });
-
-            console.log({ z });
-
-            console.log({ t });
 
             const txHash = await sendTransaction({
                 transactions: {

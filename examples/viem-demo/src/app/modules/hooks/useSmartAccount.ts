@@ -89,12 +89,6 @@ export function useSmartAccount() {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
                 },
-                /*
-                rpcUrl,
-            });
-
-                }, */
-                //rpcUrl: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
             });
 
             setSmartAccount(smartAccountClient);
