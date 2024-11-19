@@ -19,7 +19,7 @@ export const createNewWalletInDb = async ({
     const initiatorAddress = getSignerAddress(signer);
 
     if (signer.type === "passkey") {
-        return await api.createWallet({
+        return await api.initWallet({
             chainId: chain.id,
             smartAccountAddress,
             initiatorAddress: initiatorAddress,
@@ -30,7 +30,7 @@ export const createNewWalletInDb = async ({
         });
     }
 
-    return await api.createWallet({
+    return await api.initWallet({
         chainId: chain.id,
         smartAccountAddress,
         initiatorAddress: initiatorAddress,

@@ -100,20 +100,6 @@ function Transaction({
                 functionName: "count",
             });
 
-            const userop = await smartAccount.account.prepareUserOperation({
-                to: COUNTER_CONTRACT_ADDRESS,
-                data: calldata,
-                value: 0n,
-            });
-
-            console.log("userop", userop);
-
-            const estimation = await smartAccount.estimateGas({
-                userOperation: userop,
-            });
-
-            console.log("estimation", estimation);
-
             const txHash = await smartAccount.sendTransaction({
                 to: COUNTER_CONTRACT_ADDRESS,
                 data: calldata,

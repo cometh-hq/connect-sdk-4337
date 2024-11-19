@@ -39,6 +39,24 @@ export class API {
         chainId,
         smartAccountAddress,
         initiatorAddress,
+    }: {
+        chainId: number;
+        smartAccountAddress: Address;
+        initiatorAddress: Address;
+    }): Promise<void> {
+        const body = {
+            chainId: chainId.toString(),
+            walletAddress: smartAccountAddress,
+            initiatorAddress,
+        };
+
+        await this.api.post("/wallet", body);
+    }
+
+    async initWallet({
+        chainId,
+        smartAccountAddress,
+        initiatorAddress,
         publicKeyId,
         publicKeyX,
         publicKeyY,
@@ -62,7 +80,7 @@ export class API {
             deviceData,
         };
 
-        const res = await this.api.post("/wallet", body);
+        const res = await this.api.post("/wallet/init", body);
 
         return res.data.isNewWallet;
     }
