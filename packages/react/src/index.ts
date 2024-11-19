@@ -7,12 +7,14 @@ import {
     useConnect,
     useCreateNewSigner,
     useDisconnect,
+    useEstimateGas,
     useGenerateQRCodeUrl,
     useGetEnrichedOwners,
     useGetGasPrice,
     useGetOwners,
     useGetRecoveryRequest,
     useGetSessionFromAddress,
+    useGetTransactionCost,
     useIsAddressWhitelistDestination,
     useIsRecoveryActive,
     useRemoveOwner,
@@ -30,8 +32,6 @@ import {
     useVerifyMessage,
     useWriteContract,
     useWriteContractWithSessionKey,
-    useEstimateGas,
-    useGetTransactionCost
 } from "./hooks";
 
 import type {
@@ -90,7 +90,7 @@ export {
     useGetRecoveryRequest,
     useCancelRecoveryRequest,
     useEstimateGas,
-    useGetTransactionCost
+    useGetTransactionCost,
 };
 
 export type {

@@ -263,29 +263,20 @@ export async function createLegacySafeSmartAccount<
 > {
     if (!smartAccountAddress) throw new Error("Account address not found");
 
-    const [
-        legacyApi,
-        api,
-        client,
-        publicClient,
-        projectParams,
-        isWebAuthnCompatible,
-    ] = await Promise.all([
-        Promise.resolve(new LEGACY_API(apiKeyLegacy)),
-        Promise.resolve(new API(apiKey4337)),
-        getViemClient(chain, rpcUrl) as unknown as Promise<
-            Client<TTransport, TChain, undefined>
-        >,
-        Promise.resolve(
-            createPublicClient({
-                chain,
-                transport: http(rpcUrl),
-                cacheTime: 60_000,
-                batch: {
-                    multicall: { wait: 50 },
-                },
-            })
-        ),
+    const legacyApi = new LEGACY_API(apiKeyLegacy);
+    const api = new API(apiKey4337);
+
+    const publicClient = createPublicClient({
+        chain,
+        transport: http(rpcUrl),
+        cacheTime: 60_000,
+        batch: {
+            multicall: { wait: 50 },
+        },
+    });
+
+    const [client, projectParams, isWebAuthnCompatible] = await Promise.all([
+        getViemClient(chain, rpcUrl) as Client<TTransport, TChain, undefined>,
         getProjectParamsByChain({ api: new API(apiKey4337), chain }),
         isDeviceCompatibleWithPasskeys({ webAuthnOptions: {} }),
     ]);

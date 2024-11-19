@@ -208,12 +208,10 @@ export async function createSafeSmartAccount<
 }: createSafeSmartAccountParameters<entryPoint>): Promise<
     SafeSmartAccount<entryPoint, TTransport, TChain>
 > {
-    const [api, client, contractParams] = await Promise.all([
-        new API(apiKey, baseUrl),
-        getViemClient(chain, rpcUrl) as unknown as Promise<
-            Client<TTransport, TChain, undefined>
-        >,
-        getProjectParamsByChain({ api: new API(apiKey, baseUrl), chain }),
+    const api = new API(apiKey, baseUrl);
+    const [client, contractParams] = await Promise.all([
+        getViemClient(chain, rpcUrl) as Client<TTransport, TChain, undefined>,
+        getProjectParamsByChain({ api, chain }),
     ]);
 
     const {
@@ -304,8 +302,6 @@ export async function createSafeSmartAccount<
         signer: accountSigner,
         api,
     });
-
-    console.log({ res });
 
     if (res.isNewWallet) {
         await saveSigner(accountSigner, smartAccountAddress);

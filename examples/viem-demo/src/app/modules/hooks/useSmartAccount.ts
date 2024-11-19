@@ -85,7 +85,7 @@ export function useSmartAccount() {
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
                 chain: baseSepolia,
                 bundlerTransport: http(bundlerUrl),
-                   middleware: {
+                middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
                 },

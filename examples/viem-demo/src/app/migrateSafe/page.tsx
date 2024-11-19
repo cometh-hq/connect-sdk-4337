@@ -20,7 +20,8 @@ export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 export default function App() {
-    const apiKey = "b3d391ff-5db5-4e5d-bd55-80f48f6bf242";
+    const apiKey = process.env.NEXT_PUBLIC_API_KEY_4337!;
+    const apiKeyLegacy = process.env.NEXT_PUBLIC_API_KEY_LEGACY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL!;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!;
 
@@ -28,12 +29,12 @@ export default function App() {
         // Step 1: TO DO If you create a new legcay wallet and want to update, if not go to step 2
         const walletAdaptor = new ConnectAdaptor({
             chainId: SupportedNetworks.GNOSIS,
-            apiKey: apiKey,
+            apiKey: apiKeyLegacy,
         });
 
         const wallet = new ComethWallet({
             authAdapter: walletAdaptor,
-            apiKey: apiKey,
+            apiKey: apiKeyLegacy,
         });
 
         await wallet?.connect();
@@ -42,8 +43,8 @@ export default function App() {
 
         // Step 2
         const legacyClient = await createLegacySafeSmartAccount({
-            apiKeyLegacy: apiKey,
-            apiKey4337: "7eDL9dMQVUYR3F6iH7k2uG22MSCgztqW",
+            apiKeyLegacy: apiKeyLegacy,
+            apiKey4337: apiKey,
             chain: gnosis,
             smartAccountAddress: legacyWalletAddress,
         });
@@ -54,7 +55,7 @@ export default function App() {
 
         // Step 4
         const safe4337SmartAccount = await createSafeSmartAccount({
-            apiKey: "7eDL9dMQVUYR3F6iH7k2uG22MSCgztqW",
+            apiKey,
             chain: gnosis,
             smartAccountAddress: legacyWalletAddress,
             entryPoint: ENTRYPOINT_ADDRESS_V07,

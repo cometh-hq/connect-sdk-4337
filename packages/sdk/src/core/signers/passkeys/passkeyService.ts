@@ -296,10 +296,7 @@ const getPasskeySigner = async ({
     multisendAddress: Address;
     fullDomainSelected: boolean;
 }): Promise<PasskeyLocalStorageFormat> => {
-    const [localStoragePasskey, dbPasskeySigners] = await Promise.all([
-        Promise.resolve(getPasskeyInStorage(smartAccountAddress)),
-        api.getPasskeySignersByWalletAddress(smartAccountAddress),
-    ]);
+    const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
 
     if (localStoragePasskey) {
         const passkey = localStoragePasskey as PasskeyLocalStorageFormat;
@@ -336,6 +333,9 @@ const getPasskeySigner = async ({
 
         return passkey;
     }
+
+    const dbPasskeySigners =
+        await api.getPasskeySignersByWalletAddress(smartAccountAddress);
 
     if (dbPasskeySigners.length === 0)
         throw new NoPasskeySignerFoundInDBError();

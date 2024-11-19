@@ -1,5 +1,6 @@
 "use client";
 
+import { get } from "http";
 import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -14,7 +15,6 @@ import { baseSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
-import { get } from "http";
 
 const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
@@ -36,8 +36,8 @@ const counterContract = getContract({
 interface TransactionProps {
     hash: string | null;
     sendTransaction: any;
-    getTransactionCostAsync:any;
-    estimateGasAsync:any;
+    getTransactionCostAsync: any;
+    estimateGasAsync: any;
     address: Address;
     transactionSuccess: boolean;
     setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
@@ -117,19 +117,19 @@ function Transaction({
                 to: COUNTER_CONTRACT_ADDRESS,
                 value: 0,
                 data: calldata,
-            }
+            };
 
             const z = await estimateGasAsync({
-                transactions: transactions
-            })
+                transactions: transactions,
+            });
 
             const t = await getTransactionCostAsync({
-                transactions: transactions
-            }) 
+                transactions: transactions,
+            });
 
-            console.log({z})
+            console.log({ z });
 
-            console.log({t})
+            console.log({ t });
 
             const txHash = await sendTransaction({
                 transactions: {
