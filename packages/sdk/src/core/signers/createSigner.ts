@@ -103,12 +103,11 @@ export const isFallbackSigner = (): boolean => {
 export const isDeviceCompatibleWithPasskeys = async (options: {
     webAuthnOptions: webAuthnOptions;
 }) => {
-    const [webAuthnCompatible, hasFallbackSigner] = await Promise.all([
-        isWebAuthnCompatible(options.webAuthnOptions),
-        Promise.resolve(isFallbackSigner()),
-    ]);
+    const webAuthnCompatible = await isWebAuthnCompatible(
+        options.webAuthnOptions
+    );
 
-    return webAuthnCompatible && !hasFallbackSigner;
+    return webAuthnCompatible && !isFallbackSigner();
 };
 
 /**
@@ -133,10 +132,11 @@ export async function createSigner({
     fullDomainSelected = false,
     safeContractParams,
 }: CreateSignerParams): Promise<ComethSigner> {
-    const [api, passkeyCompatible] = await Promise.all([
-        Promise.resolve(new API(apiKey, baseUrl)),
-        isDeviceCompatibleWithPasskeys({ webAuthnOptions }),
-    ]);
+    const api = new API(apiKey, baseUrl);
+
+    const passkeyCompatible = await isDeviceCompatibleWithPasskeys({
+        webAuthnOptions,
+    });
 
     if (passkeyCompatible) {
         let passkey: PasskeyLocalStorageFormat;
