@@ -107,7 +107,6 @@ function Transaction({
                 functionName: "count",
             });
 
-
             const txHash = await sendTransaction({
                 transactions: {
                     to: COUNTER_CONTRACT_ADDRESS,
