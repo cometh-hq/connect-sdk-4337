@@ -63,6 +63,19 @@ export type SafeSmartAccount<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
 > = SmartAccount<entryPoint, "safeSmartAccount", transport, chain> & {
+    buildUserOperation(
+        _txs:
+            | {
+                  to: Address;
+                  value: bigint;
+                  data: Hex;
+              }
+            | {
+                  to: Address;
+                  value: bigint;
+                  data: Hex;
+              }[]
+    ): Promise<UserOperation<"v0.7">>;
     signUserOperationWithSessionKey(
         userOp: UserOperation<GetEntryPointVersion<entryPoint>>
     ): Promise<Hex>;
@@ -418,7 +431,7 @@ export async function createSafeSmartAccount<
                                 data: tx.data,
                                 value: tx.value ?? BigInt(0),
                             }))
-                        ),
+                        ) as `0x${string}`,
                     ],
                 });
 
@@ -446,6 +459,44 @@ export async function createSafeSmartAccount<
         signerAddress,
         safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
         sessionKeysEnabled,
+        async buildUserOperation(
+            _txs:
+                | {
+                      to: Address;
+                      value: bigint;
+                      data: Hex;
+                  }
+                | {
+                      to: Address;
+                      value: bigint;
+                      data: Hex;
+                  }[]
+        ) {
+            const sender = smartAccountAddress;
+            const nonce = await smartAccount.getNonce();
+            const callData = await smartAccount.encodeCallData(_txs);
+            const factory = await smartAccount.getFactory();
+            const factoryData = await smartAccount.getFactoryData();
+
+            const userOperation: UserOperation<"v0.7"> = {
+                sender,
+                nonce,
+                factory,
+                factoryData,
+                callData,
+                callGasLimit: 1n,
+                verificationGasLimit: 1n,
+                preVerificationGas: 1n,
+                maxFeePerGas: 1n,
+                maxPriorityFeePerGas: 1n,
+                signature: "0x",
+            };
+
+            userOperation.signature = await smartAccount.getDummySignature(
+                userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
+            );
+            return userOperation;
+        },
         async signUserOperationWithSessionKey(
             userOp: UserOperation<GetEntryPointVersion<entryPoint>>
         ) {

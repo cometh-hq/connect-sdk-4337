@@ -40,7 +40,6 @@ export default function App() {
 
         const legacyWalletAddress = wallet.getAddress();
 
-
         // Step 2
         const legacyClient = await createLegacySafeSmartAccount({
             apiKeyLegacy: apiKey,
@@ -48,7 +47,6 @@ export default function App() {
             chain: baseSepolia,
             smartAccountAddress: legacyWalletAddress,
         });
-
 
         //const hasMigrated = await legacyClient.hasMigrated();
 
@@ -78,7 +76,6 @@ export default function App() {
                 gasPrice: paymasterClient.gasPrice,
             },
         });
-
 
         const calldata = encodeFunctionData({
             abi: countContractAbi,

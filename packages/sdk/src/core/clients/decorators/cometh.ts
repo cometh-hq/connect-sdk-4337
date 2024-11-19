@@ -1,12 +1,20 @@
-import { type SmartAccountActions, smartAccountActions } from "permissionless";
+import {
+    ENTRYPOINT_ADDRESS_V07,
+    type EstimateUserOperationGasParameters,
+    type EstimateUserOperationGasReturnType,
+    type SmartAccountActions,
+    estimateUserOperationGas,
+    smartAccountActions,
+} from "permissionless";
 import type {
     Middleware,
     SendTransactionWithPaymasterParameters,
 } from "permissionless/actions/smartAccount";
-import type { EntryPoint } from "permissionless/types";
+import type { EntryPoint, Prettify, UserOperation } from "permissionless/types";
 import type { Chain, Client, Hash, Transport } from "viem";
 
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { estimateGas } from "@/core/actions/accounts/estimateGas";
 import {
     type ValidateAddDevice,
     validateAddDevice,
@@ -38,6 +46,7 @@ import {
     verifySignature,
 } from "@/core/actions/accounts/safe/verifySignature";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
+import type { StateOverrides } from "permissionless/types/bundler";
 
 export type ComethClientActions<
     entryPoint extends EntryPoint,
@@ -103,6 +112,21 @@ export type ComethClientActions<
             >
         >[1]
     ) => Promise<Hash>;
+    estimateGas: (args: { userOperation: UserOperation<"v0.7"> }) => Promise<{
+        callGasLimit: bigint;
+        verificationGasLimit: bigint;
+        preVerificationGas: bigint;
+        maxFeePerGas: bigint;
+        maxPriorityFeePerGas: bigint;
+        paymasterVerificationGasLimit?: bigint;
+        paymasterPostOpGasLimit?: bigint;
+    }>;
+    estimateUserOperationGas: (
+        args: Prettify<
+            Omit<EstimateUserOperationGasParameters<entryPoint>, "entryPoint">
+        >,
+        stateOverrides?: StateOverrides
+    ) => Promise<Prettify<EstimateUserOperationGasReturnType<entryPoint>>>;
 };
 
 export function comethAccountClientActions<entryPoint extends EntryPoint>({
@@ -120,6 +144,18 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
         client: Client<TTransport, TChain, TAccount>
     ): ComethClientActions<entryPoint, TChain, TAccount> => ({
         ...smartAccountActions({ middleware })(client),
+        estimateUserOperationGas: (
+            args: Omit<
+                EstimateUserOperationGasParameters<entryPoint>,
+                "entryPoint"
+            >,
+            stateOverrides?: StateOverrides
+        ) =>
+            estimateUserOperationGas<entryPoint>(
+                client,
+                { ...args, entryPoint: ENTRYPOINT_ADDRESS_V07 as entryPoint },
+                stateOverrides
+            ),
         validateAddDevice: (args) =>
             validateAddDevice<entryPoint, TTransport, TChain, TAccount>(
                 client,
@@ -185,5 +221,6 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 ...args,
                 middleware,
             } as SendTransactionsWithPaymasterParameters<entryPoint, TAccount>),
+        estimateGas: async (args) => estimateGas(client, args),
     });
 }

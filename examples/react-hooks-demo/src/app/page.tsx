@@ -8,6 +8,8 @@ import {
     useConnect,
     useDisconnect,
     useSendTransaction,
+    useGetTransactionCost,
+    useEstimateGas
 } from "@cometh/connect-react-hooks";
 import Transaction from "./components/Transaction";
 
@@ -17,6 +19,11 @@ export default function App() {
     const { address, smartAccountClient } = useAccount();
     const { disconnectAsync } = useDisconnect();
     const { sendTransactionAsync, data: hash } = useSendTransaction();
+    const { getTransactionCostAsync, data } = useGetTransactionCost();
+    const {estimateGasAsync} = useEstimateGas()
+
+
+    console.log({data})
 
     const [transactionSuccess, setTransactionSuccess] = useState(false);
 
@@ -60,6 +67,8 @@ export default function App() {
                             <Transaction
                                 hash={hash!}
                                 sendTransaction={sendTransactionAsync}
+                                getTransactionCostAsync={getTransactionCostAsync}
+                                estimateGasAsync={estimateGasAsync}
                                 address={address}
                                 transactionSuccess={transactionSuccess}
                                 setTransactionSuccess={setTransactionSuccess}

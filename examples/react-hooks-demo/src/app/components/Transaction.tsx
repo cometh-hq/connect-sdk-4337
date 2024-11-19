@@ -14,6 +14,7 @@ import { baseSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
+import { get } from "http";
 
 const COUNTER_CONTRACT_ADDRESS = "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
@@ -35,6 +36,8 @@ const counterContract = getContract({
 interface TransactionProps {
     hash: string | null;
     sendTransaction: any;
+    getTransactionCostAsync:any;
+    estimateGasAsync:any;
     address: Address;
     transactionSuccess: boolean;
     setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
@@ -43,6 +46,8 @@ interface TransactionProps {
 function Transaction({
     hash,
     sendTransaction,
+    getTransactionCostAsync,
+    estimateGasAsync,
     address,
     transactionSuccess,
     setTransactionSuccess,
@@ -107,6 +112,24 @@ function Transaction({
                 abi: countContractAbi,
                 functionName: "count",
             });
+
+            const transactions = {
+                to: COUNTER_CONTRACT_ADDRESS,
+                value: 0,
+                data: calldata,
+            }
+
+            const z = await estimateGasAsync({
+                transactions: transactions
+            })
+
+            const t = await getTransactionCostAsync({
+                transactions: transactions
+            }) 
+
+            console.log({z})
+
+            console.log({t})
 
             const txHash = await sendTransaction({
                 transactions: {

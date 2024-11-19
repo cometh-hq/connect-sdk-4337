@@ -30,6 +30,8 @@ import {
     useVerifyMessage,
     useWriteContract,
     useWriteContractWithSessionKey,
+    useEstimateGas,
+    useGetTransactionCost
 } from "./hooks";
 
 import type {
@@ -87,6 +89,8 @@ export {
     useIsRecoveryActive,
     useGetRecoveryRequest,
     useCancelRecoveryRequest,
+    useEstimateGas,
+    useGetTransactionCost
 };
 
 export type {

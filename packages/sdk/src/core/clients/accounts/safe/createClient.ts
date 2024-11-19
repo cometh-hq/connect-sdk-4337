@@ -84,7 +84,8 @@ export function createSmartAccountClient<
     }).extend(
         comethAccountClientActions({
             middleware: parameters.middleware,
-        })
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        }) as any
     ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
 
     return client
