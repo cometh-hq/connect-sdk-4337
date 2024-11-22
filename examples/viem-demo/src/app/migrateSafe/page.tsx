@@ -11,6 +11,7 @@ import {
     createLegacySafeSmartAccount,
     createSafeSmartAccount,
     createSmartAccountClient,
+    retrieveLegacyWalletAddress,
 } from "@cometh/connect-sdk-4337";
 import { http, encodeFunctionData } from "viem";
 import { gnosis } from "viem/chains";

@@ -20,7 +20,7 @@ export function useSmartAccount() {
 
     const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
-    const apiKey = "myapikey";
+    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
     const baseUrl = "http://127.0.0.1:8000/connect";
@@ -53,7 +53,6 @@ export function useSmartAccount() {
                     apiKey,
                     chain: baseSepolia,
                     rpcUrl,
-                    baseUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
@@ -63,7 +62,6 @@ export function useSmartAccount() {
                     apiKey,
                     chain: baseSepolia,
                     rpcUrl,
-                    baseUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
                 });
