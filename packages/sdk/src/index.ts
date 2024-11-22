@@ -38,6 +38,7 @@ import { createSigner } from "./core/signers/createSigner";
 import type { webAuthnOptions } from "./core/signers/passkeys/types";
 import type { Signer } from "./core/types";
 import { createLegacySafeSmartAccount } from "./migrationKit/createLegacySafeSmartAccount";
+import { retrieveLegacyWalletAddress } from "./migrationKit/retrieveLegacyWalletAddress";
 import { smartAccountConnector } from "./wagmi/connector";
 
 export {
@@ -53,6 +54,7 @@ export {
     createComethPaymasterClient,
     smartAccountConnector,
     createLegacySafeSmartAccount,
+    retrieveLegacyWalletAddress,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
 };

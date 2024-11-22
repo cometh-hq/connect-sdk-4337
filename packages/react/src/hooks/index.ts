@@ -37,3 +37,7 @@ export * from "@/hooks/recovery/useGetRecoveryRequest";
 export * from "@/hooks/recovery/useCancelRecoveryRequest";
 
 export * from "@/hooks/useSwitchChain";
+
+export * from "@/hooks/useGetTransactionCost";
+
+export * from "@/hooks/useEstimateGas";

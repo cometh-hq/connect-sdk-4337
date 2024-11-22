@@ -1,7 +1,11 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash } from "viem";
-import type { QueryResultType, Transaction } from "./types";
+import type {
+    MutationOptionsWithoutMutationFn,
+    QueryResultType,
+    Transaction,
+} from "./types";
 
 /**
  * Props for the useSendTransaction hook.
@@ -26,12 +30,6 @@ export type SendTransactionMutate = (
 export type SendTransactionMutateAsync = (
     variables: UseSendTransactionProps
 ) => Promise<Hash>;
-
-// Optional mutation properties
-export type MutationOptionsWithoutMutationFn = Omit<
-    Parameters<typeof useMutation>[0],
-    "mutationFn"
->;
 
 // Return type of the hook
 export type UseSendTransactionReturn = QueryResultType & {

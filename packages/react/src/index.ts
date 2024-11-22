@@ -7,12 +7,14 @@ import {
     useConnect,
     useCreateNewSigner,
     useDisconnect,
+    useEstimateGas,
     useGenerateQRCodeUrl,
     useGetEnrichedOwners,
     useGetGasPrice,
     useGetOwners,
     useGetRecoveryRequest,
     useGetSessionFromAddress,
+    useGetTransactionCost,
     useIsAddressWhitelistDestination,
     useIsRecoveryActive,
     useRemoveOwner,
@@ -87,6 +89,8 @@ export {
     useIsRecoveryActive,
     useGetRecoveryRequest,
     useCancelRecoveryRequest,
+    useEstimateGas,
+    useGetTransactionCost,
 };
 
 export type {

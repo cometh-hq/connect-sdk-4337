@@ -41,7 +41,6 @@ interface TransactionProps {
 }
 
 function Transaction({
-    hash,
     sendTransaction,
     address,
     transactionSuccess,

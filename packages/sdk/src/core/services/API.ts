@@ -53,6 +53,38 @@ export class API {
         await this.api.post("/wallet", body);
     }
 
+    async initWallet({
+        chainId,
+        smartAccountAddress,
+        initiatorAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        deviceData,
+    }: {
+        chainId: number;
+        smartAccountAddress: Address;
+        initiatorAddress: Address;
+        publicKeyId?: Hex;
+        publicKeyX?: Hex;
+        publicKeyY?: Hex;
+        deviceData?: DeviceData;
+    }): Promise<boolean> {
+        const body = {
+            chainId: chainId.toString(),
+            walletAddress: smartAccountAddress,
+            initiatorAddress,
+            publicKeyId,
+            publicKeyX,
+            publicKeyY,
+            deviceData,
+        };
+
+        const res = await this.api.post("/wallet/init", body);
+
+        return res.data.isNewWallet;
+    }
+
     async importExternalSafe({
         smartAccountAddress,
         publicKeyId,

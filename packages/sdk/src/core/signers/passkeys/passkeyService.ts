@@ -296,7 +296,6 @@ const getPasskeySigner = async ({
     multisendAddress: Address;
     fullDomainSelected: boolean;
 }): Promise<PasskeyLocalStorageFormat> => {
-    /* Retrieve potentiel WebAuthn credentials in storage */
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
 
     if (localStoragePasskey) {
@@ -335,17 +334,18 @@ const getPasskeySigner = async ({
         return passkey;
     }
 
-    const passkeySigners =
+    const dbPasskeySigners =
         await api.getPasskeySignersByWalletAddress(smartAccountAddress);
 
-    if (passkeySigners.length === 0) throw new NoPasskeySignerFoundInDBError();
+    if (dbPasskeySigners.length === 0)
+        throw new NoPasskeySignerFoundInDBError();
 
     //If no local storage or no match in db, Call Webauthn API to get current signer
     let webAuthnSignature: { signature: Hex; publicKeyId: Hex };
     try {
         webAuthnSignature = await signWithPasskey({
             challenge: "SDK Connection",
-            webAuthnSigners: passkeySigners as WebAuthnSigner[],
+            webAuthnSigners: dbPasskeySigners as WebAuthnSigner[],
             fullDomainSelected,
         });
     } catch {
