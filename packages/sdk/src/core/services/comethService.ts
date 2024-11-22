@@ -3,6 +3,7 @@ import type { ProjectParams, Wallet } from "../accounts/safe/types";
 import { getSignerAddress } from "../signers/createSigner";
 import type { Signer } from "../signers/types";
 import type { API } from "./API";
+import { getDeviceData } from "./deviceService";
 
 export const createNewWalletInDb = async ({
     chain,
@@ -14,10 +15,22 @@ export const createNewWalletInDb = async ({
     api: API;
     smartAccountAddress: Address;
     signer: Signer;
-}) => {
+}): Promise<boolean> => {
     const initiatorAddress = getSignerAddress(signer);
 
-    await api.createWallet({
+    if (signer.type === "passkey") {
+        return await api.initWallet({
+            chainId: chain.id,
+            smartAccountAddress,
+            initiatorAddress: initiatorAddress,
+            publicKeyId: signer.passkey.id,
+            publicKeyX: signer.passkey.pubkeyCoordinates.x,
+            publicKeyY: signer.passkey.pubkeyCoordinates.y,
+            deviceData: getDeviceData(),
+        });
+    }
+
+    return await api.initWallet({
         chainId: chain.id,
         smartAccountAddress,
         initiatorAddress: initiatorAddress,
@@ -30,7 +43,6 @@ export const getWalletsByNetworks = async ({
 }: { api: API; smartAccountAddress: Address }): Promise<Wallet[]> => {
     const walletsByNetworks =
         await api.getWalletByNetworks(smartAccountAddress);
-    if (walletsByNetworks.length === 0) throw new Error("Wallet not found");
 
     return walletsByNetworks;
 };
