@@ -505,6 +505,7 @@ export async function createLegacySafeSmartAccount<
                 p256Verifier,
                 smartAccountAddress,
                 passkey,
+                eoaSigner,
                 isImport: true,
             });
 
@@ -588,6 +589,7 @@ export async function createLegacySafeSmartAccount<
                 p256Verifier,
                 smartAccountAddress,
                 passkey,
+                eoaSigner,
             });
 
             const nonce = isDeployed
