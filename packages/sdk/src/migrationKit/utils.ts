@@ -5,6 +5,7 @@ import type {
     Chain,
     Client,
     CustomSource,
+    Hex,
     SignableMessage,
     Transport,
     TypedDataDefinition,
@@ -20,6 +21,14 @@ type LegacySmartAccount<
     TAbi extends Abi | readonly unknown[] = Abi,
 > = SmartAccount<TEntryPoint, TSource, transport, chain, TAbi> & {
     migrate: () => Promise<RelayedTransaction>;
+    prepareImportSafeTx: () => Promise<SafeTransactionDataPartial>;
+    importSafe: ({
+        tx,
+        signature,
+    }: {
+        tx: SafeTransactionDataPartial;
+        signature: Hex;
+    }) => Promise<RelayedTransaction>;
     hasMigrated: () => Promise<boolean>;
 };
 
@@ -39,11 +48,21 @@ export function toLegacySmartAccount<
     signTransaction,
     migrate,
     hasMigrated,
+    prepareImportSafeTx,
+    importSafe,
 }: TAccountSource & {
     source: TSource;
     client: Client<transport, chain>;
     migrate: (_tx: SafeTransactionDataPartial) => Promise<RelayedTransaction>;
     hasMigrated: () => Promise<boolean>;
+    prepareImportSafeTx: () => Promise<SafeTransactionDataPartial>;
+    importSafe: ({
+        tx,
+        signature,
+    }: {
+        tx: SafeTransactionDataPartial;
+        signature: Hex;
+    }) => Promise<RelayedTransaction>;
 }): LegacySmartAccount<TEntryPoint, TSource, transport, chain, TAbi> {
     const account = toAccount({
         address: address,
@@ -73,5 +92,7 @@ export function toLegacySmartAccount<
         publicKey: address,
         migrate,
         hasMigrated,
+        importSafe,
+        prepareImportSafeTx,
     } as LegacySmartAccount<TEntryPoint, TSource, transport, chain, TAbi>;
 }

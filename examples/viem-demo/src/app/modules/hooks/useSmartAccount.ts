@@ -46,7 +46,6 @@ export function useSmartAccount() {
             const comethSignerConfig = {
                 fullDomainSelected: true,
                 passKeyName: "oiqvefor",
-                
             };
 
             if (localStorageAddress) {

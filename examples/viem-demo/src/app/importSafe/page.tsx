@@ -11,9 +11,8 @@ import {
     createLegacySafeSmartAccount,
     createSafeSmartAccount,
     createSmartAccountClient,
-    retrieveLegacyWalletAddress,
 } from "@cometh/connect-sdk-4337";
-import { http, encodeFunctionData } from "viem";
+import { http, type Hex, encodeFunctionData } from "viem";
 import { gnosis } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 
@@ -48,11 +47,20 @@ export default function App() {
             apiKey4337: apiKey,
             chain: gnosis,
             smartAccountAddress: legacyWalletAddress,
+            isImport: true,
         });
 
         //const hasMigrated = await legacyClient.hasMigrated();
 
-        await legacyClient.migrate();
+        const tx = await legacyClient.prepareImportSafeTx();
+
+        console.log({ tx });
+
+        const signature = (await wallet.signTransaction(tx)) as Hex;
+
+        console.log({ signature });
+
+        await legacyClient.importSafe({ tx, signature });
 
         // Step 4
         const safe4337SmartAccount = await createSafeSmartAccount({

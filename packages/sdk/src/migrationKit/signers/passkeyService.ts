@@ -114,7 +114,7 @@ const formatToSafeContractSignature = (
     return `${verifierAndDataPosition}${signatureType}${signatureLength}${data}`;
 };
 
-const getSigner = async ({
+const getLegacySigner = async ({
     API,
     walletAddress,
     chain,
@@ -158,4 +158,4 @@ const getWebauthnCredentialsInStorage = (
     return window.localStorage.getItem(`cometh-connect-${walletAddress}`);
 };
 
-export { getWebAuthnSignature, formatToSafeContractSignature, getSigner };
+export { getWebAuthnSignature, formatToSafeContractSignature, getLegacySigner };
