@@ -250,6 +250,41 @@ const getGuardianAddress = async ({
     return modulesPaginated[0][0];
 };
 
+const findPrevModule = async ({
+    delayAddress,
+    targetModule,
+    chain,
+    rpcUrl,
+}: {
+    delayAddress: Address;
+    targetModule: Address;
+    chain: Chain;
+    rpcUrl?: string;
+}): Promise<Address> => {
+    const client = createPublicClient({
+        chain,
+        transport: http(rpcUrl),
+    });
+
+    const moduleList = await client.readContract({
+        address: delayAddress,
+        abi: delayModuleABI,
+        functionName: "getModulesPaginated",
+        args: [SENTINEL_MODULES, 1000n],
+    });
+
+    const index = moduleList[0].findIndex(
+        (moduleToFind) =>
+            moduleToFind.toLowerCase() === targetModule.toLowerCase()
+    );
+
+    if (index === -1) {
+        throw new Error("Address is not a guardian");
+    }
+
+    return index !== 0 ? moduleList[0][index - 1] : SENTINEL_MODULES;
+};
+
 export default {
     getDelayAddress,
     isDeployed,
@@ -259,4 +294,5 @@ export default {
     setUpDelayModule,
     encodeDeployDelayModule,
     getGuardianAddress,
+    findPrevModule,
 };
