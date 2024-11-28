@@ -7,7 +7,7 @@ import type {
     Transport,
 } from "viem";
 
-import type { WebAuthnSigner } from "../types.js";
+import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types.js";
 import { safeLegacyECDSASigner } from "./ecdsa/ecdsa.js";
 import type { SafeSigner } from "./types.js";
 import { safeLegacyWebAuthnSigner } from "./webauthn/webAuthn.js";
@@ -15,7 +15,7 @@ import { safeLegacyWebAuthnSigner } from "./webauthn/webAuthn.js";
 type SafeSignerParams = {
     smartAccountAddress: Address;
     eoaSigner?: PrivateKeyAccount;
-    passkeySigner?: WebAuthnSigner;
+    passkey?: PasskeyLocalStorageFormat;
 };
 
 /**
@@ -36,14 +36,14 @@ export async function comethSignerToSafeSigner<
     TChain extends Chain | undefined = Chain | undefined,
 >(
     client: Client<TTransport, TChain, undefined>,
-    { smartAccountAddress, eoaSigner, passkeySigner }: SafeSignerParams
+    { smartAccountAddress, eoaSigner, passkey }: SafeSignerParams
 ): Promise<SafeSigner> {
-    if (passkeySigner) {
+    if (passkey) {
         return {
             ...(await safeLegacyWebAuthnSigner(client, {
-                signerAddress: passkeySigner.signerAddress as Address,
+                signerAddress: passkey.signerAddress as Address,
                 smartAccountAddress,
-                publicKeyId: passkeySigner.publicKeyId as Hex,
+                publicKeyId: passkey.id as Hex,
             })),
         };
     }

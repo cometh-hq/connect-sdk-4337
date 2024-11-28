@@ -86,7 +86,7 @@ export const saveSigner = async (
     }
 };
 
-const throwErrorWhenEoaFallbackDisabled = (
+export const throwErrorWhenEoaFallbackDisabled = (
     disableEoaFallback: boolean
 ): void => {
     if (disableEoaFallback)

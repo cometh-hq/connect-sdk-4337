@@ -206,13 +206,17 @@ export async function createSafeSmartAccount<
     safeContractConfig,
     sessionKeysEnabled = false,
     signer,
-    clientTimeout
+    clientTimeout,
 }: createSafeSmartAccountParameters<entryPoint>): Promise<
     SafeSmartAccount<entryPoint, TTransport, TChain>
 > {
     const api = new API(apiKey, baseUrl);
     const [client, contractParams] = await Promise.all([
-        getViemClient(chain, rpcUrl, clientTimeout) as Client<TTransport, TChain, undefined>,
+        getViemClient(chain, rpcUrl, clientTimeout) as Client<
+            TTransport,
+            TChain,
+            undefined
+        >,
         getProjectParamsByChain({ api, chain }),
     ]);
 
