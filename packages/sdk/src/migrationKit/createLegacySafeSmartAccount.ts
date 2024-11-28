@@ -8,7 +8,6 @@ import {
     type Hex,
     type LocalAccount,
     type PrivateKeyAccount,
-    type SignableMessage,
     type Transport,
     createPublicClient,
     encodeFunctionData,
@@ -19,7 +18,7 @@ import type { Prettify } from "viem/types/utils";
 
 import { API } from "@/core/services/API";
 
-import type { ComethSignerConfig } from "@/core/signers/types";
+import type { ComethSigner, ComethSignerConfig } from "@/core/signers/types";
 
 import { MultiSendContractABI } from "@/core/accounts/safe/abi/Multisend";
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
@@ -27,21 +26,31 @@ import { SafeWebAuthnSharedSignerAbi } from "@/core/accounts/safe/abi/sharedWebA
 import { encodeMultiSendTransactions } from "@/core/accounts/safe/services/safe";
 import { getViemClient } from "@/core/accounts/utils";
 import { getProjectParamsByChain } from "@/core/services/comethService";
-import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
-import { getFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
-import { setPasskeyInStorage } from "@/core/signers/passkeys/passkeyService";
+import { getDeviceData } from "@/core/services/deviceService";
+import {
+    isDeviceCompatibleWithPasskeys,
+    throwErrorWhenEoaFallbackDisabled,
+} from "@/core/signers/createSigner";
+import {
+    createFallbackEoaSigner,
+    getFallbackEoaSigner,
+} from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
+import {
+    createPasskeySigner,
+    setPasskeyInStorage,
+} from "@/core/signers/passkeys/passkeyService";
+import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import { RelayedTransactionError } from "@/errors";
 import { MigrationAbi } from "@/migrationKit/abi/migration";
 import { isSmartAccountDeployed } from "permissionless";
 import { comethSignerToSafeSigner } from "./safeLegacySigner/comethSignerToSafeSigner";
 import { LEGACY_API } from "./services/LEGACY_API";
-import { getSigner } from "./signers/passkeyService";
+import { getLegacySigner } from "./signers/passkeyService";
 import type {
     DeviceData,
     RelayedTransaction,
     RelayedTransactionDetails,
     SafeTransactionDataPartial,
-    WebAuthnSigner,
 } from "./types";
 import { toLegacySmartAccount } from "./utils";
 
@@ -55,6 +64,14 @@ export type LegacySafeSmartAccount<
 > = LocalAccount<string> & {
     client: Client<transport, chain>;
     migrate: () => Promise<RelayedTransaction>;
+    importSafe: ({
+        tx,
+        signature,
+    }: {
+        tx: SafeTransactionDataPartial;
+        signature: `0x${string}`;
+    }) => Promise<RelayedTransaction>;
+    prepareImportSafeTx: () => Promise<SafeTransactionDataPartial>;
     hasMigrated: () => Promise<boolean>;
 };
 
@@ -65,7 +82,9 @@ const prepareMigrationCalldata = async ({
     migrationContractAddress,
     p256Verifier,
     smartAccountAddress,
-    passkeySigner,
+    passkey,
+    eoaSigner,
+    isImport,
 }: {
     threshold: number;
     safe4337ModuleAddress: Address;
@@ -73,7 +92,9 @@ const prepareMigrationCalldata = async ({
     migrationContractAddress: Address;
     p256Verifier: Address;
     smartAccountAddress: Address;
-    passkeySigner?: WebAuthnSigner;
+    passkey?: PasskeyLocalStorageFormat;
+    eoaSigner?: PrivateKeyAccount;
+    isImport?: boolean;
 }) => {
     const transactions = [
         {
@@ -107,7 +128,7 @@ const prepareMigrationCalldata = async ({
         },
     ];
 
-    if (passkeySigner) {
+    if (passkey) {
         transactions.push(
             {
                 to: safeWebAuthnSharedSignerContractAddress,
@@ -117,8 +138,8 @@ const prepareMigrationCalldata = async ({
                     functionName: "configure",
                     args: [
                         {
-                            x: hexToBigInt(passkeySigner.publicKeyX as Hex),
-                            y: hexToBigInt(passkeySigner.publicKeyY as Hex),
+                            x: hexToBigInt(passkey.pubkeyCoordinates.x as Hex),
+                            y: hexToBigInt(passkey.pubkeyCoordinates.y as Hex),
                             verifiers: hexToBigInt(p256Verifier),
                         },
                     ],
@@ -136,6 +157,17 @@ const prepareMigrationCalldata = async ({
                 op: 0,
             }
         );
+    } else if (isImport) {
+        transactions.push({
+            to: smartAccountAddress,
+            value: 0n,
+            data: encodeFunctionData({
+                abi: SafeAbi,
+                functionName: "addOwnerWithThreshold",
+                args: [eoaSigner?.address, threshold],
+            }),
+            op: 0,
+        });
     }
 
     return encodeFunctionData({
@@ -145,14 +177,106 @@ const prepareMigrationCalldata = async ({
     });
 };
 
+const connectToLegacySigner = async ({
+    isWebAuthnCompatible,
+    legacyApi,
+    smartAccountAddress,
+    chain,
+    encryptionSalt,
+}: {
+    isWebAuthnCompatible: boolean;
+    legacyApi: LEGACY_API;
+    smartAccountAddress: Address;
+    chain: Chain;
+    encryptionSalt?: string;
+}): Promise<ComethSigner> => {
+    if (isWebAuthnCompatible) {
+        const passkey = await getLegacySigner({
+            API: legacyApi,
+            walletAddress: smartAccountAddress,
+            chain,
+        });
+
+        return {
+            type: "passkey",
+            passkey: {
+                id: passkey.publicKeyId as Hex,
+                pubkeyCoordinates: {
+                    x: passkey.publicKeyX as Hex,
+                    y: passkey.publicKeyY as Hex,
+                },
+                signerAddress: passkey.signerAddress as Address,
+            },
+        };
+    }
+    return {
+        type: "localWallet",
+        eoaFallback: await getFallbackEoaSigner({
+            smartAccountAddress,
+            encryptionSalt: encryptionSalt,
+        }),
+    };
+};
+
+const create4337Signer = async ({
+    isWebAuthnCompatible,
+    api,
+    comethSignerConfig,
+    safeWebAuthnSharedSignerContractAddress,
+}: {
+    isWebAuthnCompatible: boolean;
+    api: API;
+    comethSignerConfig?: ComethSignerConfig;
+    safeWebAuthnSharedSignerContractAddress: Address;
+}): Promise<ComethSigner> => {
+    if (isWebAuthnCompatible) {
+        const passkey = await createPasskeySigner({
+            api,
+            webAuthnOptions: comethSignerConfig?.webAuthnOptions ?? {},
+            passKeyName: comethSignerConfig?.passKeyName,
+            fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
+            safeWebAuthnSharedSignerAddress:
+                safeWebAuthnSharedSignerContractAddress,
+        });
+
+        if (passkey.publicKeyAlgorithm !== -7) {
+            console.warn("ECC passkey are not supported by your device");
+            throwErrorWhenEoaFallbackDisabled(
+                comethSignerConfig?.disableEoaFallback as boolean
+            );
+
+            return {
+                type: "localWallet",
+                eoaFallback: await createFallbackEoaSigner(),
+            };
+        }
+
+        return {
+            type: "passkey",
+            passkey: {
+                id: passkey.id as Hex,
+                pubkeyCoordinates: {
+                    x: passkey.pubkeyCoordinates.x as Hex,
+                    y: passkey.pubkeyCoordinates.y as Hex,
+                },
+                signerAddress: passkey.signerAddress as Address,
+            },
+        };
+    }
+    return {
+        type: "localWallet",
+        eoaFallback: await createFallbackEoaSigner(),
+    };
+};
+
 const importWalletToApiAndSetStorage = async ({
-    passkeySigner,
+    passkey,
     api,
     smartAccountAddress,
     chain,
     signerAddress,
 }: {
-    passkeySigner?: WebAuthnSigner;
+    passkey?: PasskeyLocalStorageFormat;
     api: API;
     smartAccountAddress: Address;
     chain: Chain;
@@ -160,20 +284,20 @@ const importWalletToApiAndSetStorage = async ({
 }) => {
     await api.importExternalSafe({
         smartAccountAddress,
-        publicKeyId: passkeySigner?.publicKeyId as Hex,
-        publicKeyY: passkeySigner?.publicKeyY as Hex,
-        publicKeyX: passkeySigner?.publicKeyX as Hex,
-        deviceData: passkeySigner?.deviceData as DeviceData,
+        publicKeyId: passkey?.id as Hex,
+        publicKeyY: passkey?.pubkeyCoordinates.x as Hex,
+        publicKeyX: passkey?.pubkeyCoordinates.y as Hex,
+        deviceData: getDeviceData() as DeviceData,
         signerAddress: signerAddress as Address,
         chainId: chain.id.toString(),
     });
 
-    if (passkeySigner) {
+    if (passkey) {
         setPasskeyInStorage(
             smartAccountAddress as Address,
-            passkeySigner.publicKeyId as Hex,
-            passkeySigner.publicKeyX as Hex,
-            passkeySigner.publicKeyY as Hex,
+            passkey.id as Hex,
+            passkey.pubkeyCoordinates.x as Hex,
+            passkey.pubkeyCoordinates.y as Hex,
             signerAddress as Address
         );
     }
@@ -186,7 +310,7 @@ const waitForTransactionRelayAndImport = async ({
     smartAccountAddress,
     chain,
     safeWebAuthnSharedSignerContractAddress,
-    passkeySigner,
+    passkey,
     eoaSigner,
 }: {
     relayTx: RelayedTransaction;
@@ -195,7 +319,7 @@ const waitForTransactionRelayAndImport = async ({
     smartAccountAddress: Address;
     chain: Chain;
     safeWebAuthnSharedSignerContractAddress: Address;
-    passkeySigner?: WebAuthnSigner;
+    passkey?: PasskeyLocalStorageFormat;
     eoaSigner?: PrivateKeyAccount;
 }): Promise<void> => {
     const startDate = Date.now();
@@ -217,11 +341,11 @@ const waitForTransactionRelayAndImport = async ({
 
         if (relayedTransaction?.status.confirmed) {
             await importWalletToApiAndSetStorage({
-                passkeySigner,
+                passkey,
                 api,
                 smartAccountAddress,
                 chain,
-                signerAddress: passkeySigner
+                signerAddress: passkey
                     ? safeWebAuthnSharedSignerContractAddress
                     : (eoaSigner?.address as Address),
             });
@@ -239,6 +363,7 @@ export type createSafeSmartAccountParameters = Prettify<{
     rpcUrl?: string;
     smartAccountAddress?: Address;
     comethSignerConfig?: ComethSignerConfig;
+    isImport?: boolean;
 }>;
 
 /**
@@ -258,6 +383,7 @@ export async function createLegacySafeSmartAccount<
     rpcUrl,
     smartAccountAddress,
     comethSignerConfig,
+    isImport = false,
 }: createSafeSmartAccountParameters): Promise<
     LegacySafeSmartAccount<TTransport, TChain>
 > {
@@ -282,9 +408,9 @@ export async function createLegacySafeSmartAccount<
     ]);
 
     const {
-        safe4337ModuleAddress,
         safeWebAuthnSharedSignerContractAddress,
         p256Verifier,
+        safe4337ModuleAddress,
         migrationContractAddress,
     } = projectParams.safeContractParams;
 
@@ -294,41 +420,138 @@ export async function createLegacySafeSmartAccount<
         );
     }
 
-    const [eoaSigner, passkeySigner] = await Promise.all([
-        !isWebAuthnCompatible
-            ? getFallbackEoaSigner({
-                  smartAccountAddress,
-                  encryptionSalt: comethSignerConfig?.encryptionSalt,
-              }).then((data) => data.signer)
-            : Promise.resolve(undefined),
-        isWebAuthnCompatible
-            ? getSigner({
-                  API: legacyApi,
-                  walletAddress: smartAccountAddress,
-                  chain,
-              })
-            : Promise.resolve(undefined),
-    ]);
+    let signer: ComethSigner;
+
+    if (isImport) {
+        signer = await create4337Signer({
+            isWebAuthnCompatible,
+            api,
+            comethSignerConfig: comethSignerConfig,
+            safeWebAuthnSharedSignerContractAddress:
+                safeWebAuthnSharedSignerContractAddress,
+        });
+    } else {
+        signer = await connectToLegacySigner({
+            isWebAuthnCompatible,
+            legacyApi,
+            smartAccountAddress,
+            chain,
+            encryptionSalt: comethSignerConfig?.encryptionSalt,
+        });
+    }
+
+    const passkey =
+        signer.type === "passkey"
+            ? (signer.passkey as PasskeyLocalStorageFormat)
+            : undefined;
+    const eoaSigner =
+        signer.type === "localWallet"
+            ? (signer.eoaFallback.signer as PrivateKeyAccount)
+            : undefined;
 
     const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
         client,
         {
             smartAccountAddress,
-            passkeySigner,
+            passkey,
             eoaSigner,
         }
     );
 
     const smartAccount = toLegacySmartAccount({
         address: smartAccountAddress,
-        async signMessage({ message }: { message: SignableMessage }) {
-            return safeSigner.signMessage({ message });
+        async signMessage() {
+            throw new SignTransactionNotSupportedBySmartAccount();
         },
-        async signTransaction(_tx) {
-            return safeSigner.signTransaction(_tx);
+        async signTransaction() {
+            throw new SignTransactionNotSupportedBySmartAccount();
         },
         async signTypedData() {
             throw new SignTransactionNotSupportedBySmartAccount();
+        },
+        async prepareImportSafeTx(): Promise<SafeTransactionDataPartial> {
+            const isDeployed = await isSmartAccountDeployed(
+                publicClient,
+                smartAccountAddress
+            );
+
+            if (isDeployed) {
+                const currentVersion = await publicClient.readContract({
+                    address: smartAccountAddress,
+                    abi: SafeAbi,
+                    functionName: "VERSION",
+                });
+
+                if (currentVersion !== "1.3.0") {
+                    throw new Error(
+                        `Safe is not version 1.3.0. Current version: ${currentVersion}`
+                    );
+                }
+            }
+
+            const threshold = isDeployed
+                ? ((await publicClient.readContract({
+                      address: smartAccountAddress,
+                      abi: SafeAbi,
+                      functionName: "getThreshold",
+                  })) as number)
+                : 1;
+
+            const migrateCalldata = await prepareMigrationCalldata({
+                threshold,
+                safe4337ModuleAddress: safe4337ModuleAddress as Address,
+                safeWebAuthnSharedSignerContractAddress,
+                migrationContractAddress,
+                p256Verifier,
+                smartAccountAddress,
+                passkey,
+                eoaSigner,
+                isImport: true,
+            });
+
+            const nonce = isDeployed
+                ? ((await publicClient.readContract({
+                      address: smartAccountAddress,
+                      abi: SafeAbi,
+                      functionName: "nonce",
+                  })) as number)
+                : 0;
+
+            return {
+                to: multisendAddress,
+                value: BigInt(0).toString(),
+                data: migrateCalldata,
+                operation: 1,
+                safeTxGas: 0,
+                baseGas: 0,
+                gasPrice: 0,
+                gasToken: zeroAddress,
+                refundReceiver: zeroAddress,
+                nonce: Number(nonce),
+            } as SafeTransactionDataPartial;
+        },
+        async importSafe({
+            tx,
+            signature,
+        }: { tx: SafeTransactionDataPartial; signature: Hex }) {
+            const relayTx = await legacyApi.relayTransaction({
+                safeTxData: tx,
+                signatures: signature,
+                walletAddress: smartAccountAddress,
+            });
+
+            await waitForTransactionRelayAndImport({
+                relayTx,
+                passkey,
+                eoaSigner,
+                legacyApi,
+                api,
+                smartAccountAddress,
+                chain,
+                safeWebAuthnSharedSignerContractAddress,
+            });
+
+            return relayTx;
         },
         async migrate() {
             const isDeployed = await isSmartAccountDeployed(
@@ -365,7 +588,8 @@ export async function createLegacySafeSmartAccount<
                 migrationContractAddress,
                 p256Verifier,
                 smartAccountAddress,
-                passkeySigner,
+                passkey,
+                eoaSigner,
             });
 
             const nonce = isDeployed
@@ -390,7 +614,7 @@ export async function createLegacySafeSmartAccount<
             } as SafeTransactionDataPartial;
 
             // biome-ignore lint/suspicious/noExplicitAny: TODO
-            const signature = await this.signTransaction(tx as any);
+            const signature = await safeSigner.signTransaction(tx as any);
 
             const relayTx = await legacyApi.relayTransaction({
                 safeTxData: tx,
@@ -400,7 +624,7 @@ export async function createLegacySafeSmartAccount<
 
             await waitForTransactionRelayAndImport({
                 relayTx,
-                passkeySigner,
+                passkey,
                 eoaSigner,
                 legacyApi,
                 api,
