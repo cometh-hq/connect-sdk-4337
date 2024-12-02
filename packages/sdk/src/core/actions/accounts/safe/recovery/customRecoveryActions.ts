@@ -256,7 +256,7 @@ export async function disableGuardian<
         sendTransactions<TChain, TAccount, entryPoint>,
         "sendTransactions"
     )({
-        transaction: [disableGuardianTx],
+        transactions: [disableGuardianTx],
         middleware,
     } as unknown as SendTransactionsWithPaymasterParameters<
         entryPoint,
@@ -264,14 +264,14 @@ export async function disableGuardian<
     >);
 }
 
-export type SetupDelayModuleParams<entryPoint extends EntryPoint> = {
+export type SetupCustomDelayModuleParams<entryPoint extends EntryPoint> = {
     guardianAddress: Address;
     expiration?: number;
     cooldown?: number;
     rpcUrl?: string;
 } & Middleware<entryPoint>;
 
-export async function setupDelayModule<
+export async function setupCustomDelayModule<
     entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
@@ -282,7 +282,7 @@ export async function setupDelayModule<
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<SetupDelayModuleParams<entryPoint>>
+    args: Prettify<SetupCustomDelayModuleParams<entryPoint>>
 ): Promise<Hex> {
     const { guardianAddress, expiration, cooldown, rpcUrl, middleware } = args;
     const smartAccountAddress = client.account?.address as Address;

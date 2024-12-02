@@ -28,12 +28,12 @@ import {
     type DisableGuardianParams,
     type GetDelayModuleAddressParams,
     type GetGuardianAddressParams,
-    type SetupDelayModuleParams,
+    type SetupCustomDelayModuleParams,
     addGuardian,
     disableGuardian,
     getDelayModuleAddress,
     getGuardianAddress,
-    setupDelayModule,
+    setupCustomDelayModule,
 } from "@/core/actions/accounts/safe/recovery/customRecoveryActions";
 import {
     type GetRecoveryRequestParams,
@@ -165,9 +165,14 @@ export type ComethClientActions<
             typeof disableGuardian<entryPoint, TTransport, TChain, TAccount>
         >[1]
     ) => Promise<Hex>;
-    setupDelayModule: <TTransport extends Transport>(
+    setupCustomDelayModule: <TTransport extends Transport>(
         args: Parameters<
-            typeof setupDelayModule<entryPoint, TTransport, TChain, TAccount>
+            typeof setupCustomDelayModule<
+                entryPoint,
+                TTransport,
+                TChain,
+                TAccount
+            >
         >[1]
     ) => Promise<Hex>;
 };
@@ -290,10 +295,13 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 ...args,
                 middleware,
             } as DisableGuardianParams<entryPoint>),
-        setupDelayModule: (args) =>
-            setupDelayModule<entryPoint, TTransport, TChain, TAccount>(client, {
-                ...args,
-                middleware,
-            } as SetupDelayModuleParams<entryPoint>),
+        setupCustomDelayModule: (args) =>
+            setupCustomDelayModule<entryPoint, TTransport, TChain, TAccount>(
+                client,
+                {
+                    ...args,
+                    middleware,
+                } as SetupCustomDelayModuleParams<entryPoint>
+            ),
     });
 }

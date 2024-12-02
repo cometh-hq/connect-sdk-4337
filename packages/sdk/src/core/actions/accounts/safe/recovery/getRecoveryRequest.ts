@@ -16,6 +16,7 @@ import {
 } from "viem";
 
 export type GetRecoveryRequestParams = {
+    effectiveDelayAddress?: Address;
     rpcUrl?: string;
 };
 
@@ -32,7 +33,7 @@ export async function getRecoveryRequest<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetRecoveryRequestParams> = {}
 ): Promise<RecoveryParamsResponse | undefined> {
-    const { rpcUrl } = args;
+    const { effectiveDelayAddress, rpcUrl } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
@@ -63,15 +64,14 @@ export async function getRecoveryRequest<
         recoveryExpiration,
     } = projectParams.recoveryParams;
 
-    const delayAddress = await delayModuleService.getDelayAddress(
-        smartAccounAddress,
-        {
+    const delayAddress =
+        effectiveDelayAddress ??
+        (await delayModuleService.getDelayAddress(smartAccounAddress, {
             moduleFactoryAddress: moduleFactoryAddress as Address,
             delayModuleAddress: delayModuleAddress as Address,
             recoveryCooldown: recoveryCooldown as number,
             recoveryExpiration: recoveryExpiration as number,
-        }
-    );
+        }));
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,

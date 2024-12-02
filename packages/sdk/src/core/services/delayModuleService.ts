@@ -10,6 +10,7 @@ import {
     createPublicClient,
     encodeAbiParameters,
     encodeFunctionData,
+    getAddress,
     getContractAddress,
     keccak256,
     pad,
@@ -57,6 +58,8 @@ const getDelayAddress = (safe: Address, context: DelayContext): Address => {
     const expiration = context.recoveryExpiration;
     const moduleAddress = context.delayModuleAddress;
     const factoryAddress = context.moduleFactoryAddress;
+
+    console.log({ context });
 
     const args = encodeFunctionData({
         abi: delayModuleABI,
@@ -282,7 +285,9 @@ const findPrevModule = async ({
         throw new Error("Address is not a guardian");
     }
 
-    return index !== 0 ? moduleList[0][index - 1] : SENTINEL_MODULES;
+    return index !== 0
+        ? getAddress(moduleList[0][index - 1])
+        : getAddress(SENTINEL_MODULES);
 };
 
 export default {

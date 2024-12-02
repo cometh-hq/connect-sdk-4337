@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex } from "viem";
-import { baseSepolia } from "viem/chains";
+import { gnosis } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -51,7 +51,7 @@ export function useSmartAccount() {
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: baseSepolia,
+                    chain: gnosis,
                     rpcUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -60,7 +60,7 @@ export function useSmartAccount() {
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: baseSepolia,
+                    chain: gnosis,
                     rpcUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
@@ -73,7 +73,7 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: baseSepolia,
+                chain: gnosis,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
                 rpcUrl,
             });
@@ -81,8 +81,12 @@ export function useSmartAccount() {
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain: baseSepolia,
-                bundlerTransport: http(bundlerUrl),
+                chain: gnosis,
+                bundlerTransport: http(bundlerUrl, {
+                    retryCount: 5,
+                    retryDelay: 1000,
+                    timeout:20_000
+                }),
                 middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
