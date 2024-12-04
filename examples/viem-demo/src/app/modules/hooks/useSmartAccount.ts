@@ -85,7 +85,7 @@ export function useSmartAccount() {
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,
-                    timeout:20_000
+                    timeout: 20_000,
                 }),
                 middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,

@@ -1,12 +1,9 @@
-import { SignTransactionNotSupportedBySmartAccount } from "permissionless/accounts";
-
 import {
     http,
     type Address,
     type Chain,
     type Client,
     type Hex,
-    type LocalAccount,
     type PrivateKeyAccount,
     type Transport,
     createPublicClient,
@@ -52,7 +49,6 @@ import type {
     RelayedTransactionDetails,
     SafeTransactionDataPartial,
 } from "./types";
-import { toLegacySmartAccount } from "./utils";
 
 // 60 secondes
 const DEFAULT_CONFIRMATION_TIME = 60 * 1000;
@@ -61,7 +57,8 @@ const multisendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 export type LegacySafeSmartAccount<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
-> = LocalAccount<string> & {
+> = {
+    address: Address;
     client: Client<transport, chain>;
     migrate: () => Promise<RelayedTransaction>;
     importSafe: ({
@@ -73,6 +70,7 @@ export type LegacySafeSmartAccount<
     }) => Promise<RelayedTransaction>;
     prepareImportSafeTx: () => Promise<SafeTransactionDataPartial>;
     hasMigrated: () => Promise<boolean>;
+    signTransaction: (transaction: SafeTransactionDataPartial) => Promise<Hex>;
 };
 
 const prepareMigrationCalldata = async ({
@@ -458,16 +456,11 @@ export async function createLegacySafeSmartAccount<
         }
     );
 
-    const smartAccount = toLegacySmartAccount({
+    return {
         address: smartAccountAddress,
-        async signMessage() {
-            throw new SignTransactionNotSupportedBySmartAccount();
-        },
-        async signTransaction() {
-            throw new SignTransactionNotSupportedBySmartAccount();
-        },
-        async signTypedData() {
-            throw new SignTransactionNotSupportedBySmartAccount();
+
+        async signTransaction(tx: SafeTransactionDataPartial): Promise<Hex> {
+            return await safeSigner.signTransaction(tx as any);
         },
         async prepareImportSafeTx(): Promise<SafeTransactionDataPartial> {
             const isDeployed = await isSmartAccountDeployed(
@@ -671,10 +664,5 @@ export async function createLegacySafeSmartAccount<
             return true;
         },
         client: client,
-        source: "safeLegacySmartAccount",
-    });
-
-    return {
-        ...smartAccount,
     };
 }
