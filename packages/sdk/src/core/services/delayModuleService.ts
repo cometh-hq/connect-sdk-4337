@@ -59,7 +59,6 @@ const getDelayAddress = (safe: Address, context: DelayContext): Address => {
     const moduleAddress = context.delayModuleAddress;
     const factoryAddress = context.moduleFactoryAddress;
 
-    console.log({ context });
 
     const args = encodeFunctionData({
         abi: delayModuleABI,
