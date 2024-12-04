@@ -287,7 +287,7 @@ export async function createSafeSmartAccount<
         });
     }
 
-    const smartAccountDeployed = await isSmartAccountDeployed(
+    let smartAccountDeployed = await isSmartAccountDeployed(
         client,
         smartAccountAddress
     );
@@ -352,16 +352,37 @@ export async function createSafeSmartAccount<
         async getInitCode() {
             if (smartAccountDeployed) return "0x";
 
+            smartAccountDeployed = await isSmartAccountDeployed(
+                client,
+                smartAccountAddress
+            );
+
+            if (smartAccountDeployed) return "0x";
+
             return await generateInitCode();
         },
 
         async getFactory() {
             if (smartAccountDeployed) return undefined;
 
+            smartAccountDeployed = await isSmartAccountDeployed(
+                client,
+                smartAccountAddress
+            );
+
+            if (smartAccountDeployed) return undefined;
+
             return safeProxyFactoryAddress;
         },
 
         async getFactoryData() {
+            if (smartAccountDeployed) return undefined;
+
+            smartAccountDeployed = await isSmartAccountDeployed(
+                client,
+                smartAccountAddress
+            );
+
             if (smartAccountDeployed) return undefined;
 
             const initCode = await generateInitCode();
