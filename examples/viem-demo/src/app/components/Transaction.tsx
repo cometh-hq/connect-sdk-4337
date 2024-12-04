@@ -9,7 +9,7 @@ import {
     encodeFunctionData,
     getContract,
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { gnosis } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
@@ -18,7 +18,7 @@ export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
-    chain: baseSepolia,
+    chain: gnosis,
     transport: http(),
     cacheTime: 60_000,
     batch: {
@@ -54,9 +54,11 @@ function Transaction({
     function TransactionButton({
         sendTestTransaction,
         isTransactionLoading,
+        label,
     }: {
         sendTestTransaction: () => Promise<void>;
         isTransactionLoading: boolean;
+        label: string;
     }) {
         return (
             <button
@@ -70,7 +72,7 @@ function Transaction({
                         <PlusIcon width={16} height={16} />
                     </>
                 )}{" "}
-                Increment counter
+                {label}
             </button>
         );
     }
@@ -86,7 +88,7 @@ function Transaction({
         }
     }, []);
 
-    const sendTestTransaction = async () => {
+    const sendTestTransaction = async (action: () => Promise<void>) => {
         setTransactionSended(null);
         setTransactionFailure(false);
         setTransactionSuccess(false);
@@ -95,17 +97,8 @@ function Transaction({
         try {
             if (!smartAccount) throw new Error("No wallet instance");
 
-            const calldata = encodeFunctionData({
-                abi: countContractAbi,
-                functionName: "count",
-            });
+            await action();
 
-            const txHash = await smartAccount.sendTransaction({
-                to: COUNTER_CONTRACT_ADDRESS,
-                data: calldata,
-            });
-
-            setTransactionSended(txHash);
             const balance = await counterContract.read.counters([
                 smartAccount.account.address,
             ]);
@@ -123,11 +116,31 @@ function Transaction({
     return (
         <main>
             <div className="p-4">
-                <div className="relative flex items-center gap-x-6 rounded-lg p-4">
+                <div className="relative flex flex-col items-center gap-y-6 rounded-lg p-4">
                     <TransactionButton
-                        sendTestTransaction={sendTestTransaction}
+                        sendTestTransaction={() =>
+                            sendTestTransaction(async () => {
+                                if (!smartAccount)
+                                    throw new Error("No wallet instance");
+
+                                const calldata = encodeFunctionData({
+                                    abi: countContractAbi,
+                                    functionName: "count",
+                                });
+
+                                const txHash =
+                                    await smartAccount.sendTransaction({
+                                        to: COUNTER_CONTRACT_ADDRESS,
+                                        data: calldata,
+                                    });
+
+                                setTransactionSended(txHash);
+                            })
+                        }
                         isTransactionLoading={isTransactionLoading}
+                        label="Send tx"
                     />
+
                     <p className=" text-gray-600">{nftBalance}</p>
                 </div>
             </div>

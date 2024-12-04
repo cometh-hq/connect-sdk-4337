@@ -11,7 +11,7 @@ import type {
     SendTransactionWithPaymasterParameters,
 } from "permissionless/actions/smartAccount";
 import type { EntryPoint, Prettify, UserOperation } from "permissionless/types";
-import type { Chain, Client, Hash, Transport } from "viem";
+import type { Address, Chain, Client, Hash, Hex, Transport } from "viem";
 
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { estimateGas } from "@/core/actions/accounts/estimateGas";
@@ -23,6 +23,18 @@ import {
     type CancelRecoveryRequestParams,
     cancelRecoveryRequest,
 } from "@/core/actions/accounts/safe/recovery/cancelRecoveryRequest";
+import {
+    type AddGuardianParams,
+    type DisableGuardianParams,
+    type GetDelayModuleAddressParams,
+    type GetGuardianAddressParams,
+    type SetupCustomDelayModuleParams,
+    addGuardian,
+    disableGuardian,
+    getDelayModuleAddress,
+    getGuardianAddress,
+    setupCustomDelayModule,
+} from "@/core/actions/accounts/safe/recovery/customRecoveryActions";
 import {
     type GetRecoveryRequestParams,
     getRecoveryRequest,
@@ -127,6 +139,42 @@ export type ComethClientActions<
         >,
         stateOverrides?: StateOverrides
     ) => Promise<Prettify<EstimateUserOperationGasReturnType<entryPoint>>>;
+
+    getDelayModuleAddress: <TTransport extends Transport>(
+        args: Parameters<
+            typeof getDelayModuleAddress<
+                entryPoint,
+                TTransport,
+                TChain,
+                TAccount
+            >
+        >[1]
+    ) => Promise<Address>;
+    getGuardianAddress: <TTransport extends Transport>(
+        args: Parameters<
+            typeof getGuardianAddress<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<Address>;
+    addGuardian: <TTransport extends Transport>(
+        args: Parameters<
+            typeof addGuardian<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<Hex>;
+    disableGuardian: <TTransport extends Transport>(
+        args: Parameters<
+            typeof disableGuardian<entryPoint, TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<Hex>;
+    setupCustomDelayModule: <TTransport extends Transport>(
+        args: Parameters<
+            typeof setupCustomDelayModule<
+                entryPoint,
+                TTransport,
+                TChain,
+                TAccount
+            >
+        >[1]
+    ) => Promise<Hex>;
 };
 
 export function comethAccountClientActions<entryPoint extends EntryPoint>({
@@ -193,6 +241,7 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                     middleware,
                 } as CancelRecoveryRequestParams<entryPoint>
             ),
+
         verifySignature: (args) =>
             verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {
                 ...args,
@@ -222,5 +271,37 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 middleware,
             } as SendTransactionsWithPaymasterParameters<entryPoint, TAccount>),
         estimateGas: async (args) => estimateGas(client, args),
+        getDelayModuleAddress: (args) =>
+            getDelayModuleAddress<entryPoint, TTransport, TChain, TAccount>(
+                client,
+                {
+                    ...args,
+                } as GetDelayModuleAddressParams
+            ),
+        getGuardianAddress: (args) =>
+            getGuardianAddress<entryPoint, TTransport, TChain, TAccount>(
+                client,
+                {
+                    ...args,
+                } as GetGuardianAddressParams
+            ),
+        addGuardian: (args) =>
+            addGuardian<entryPoint, TTransport, TChain, TAccount>(client, {
+                ...args,
+                middleware,
+            } as AddGuardianParams<entryPoint>),
+        disableGuardian: (args) =>
+            disableGuardian<entryPoint, TTransport, TChain, TAccount>(client, {
+                ...args,
+                middleware,
+            } as DisableGuardianParams<entryPoint>),
+        setupCustomDelayModule: (args) =>
+            setupCustomDelayModule<entryPoint, TTransport, TChain, TAccount>(
+                client,
+                {
+                    ...args,
+                    middleware,
+                } as SetupCustomDelayModuleParams<entryPoint>
+            ),
     });
 }
