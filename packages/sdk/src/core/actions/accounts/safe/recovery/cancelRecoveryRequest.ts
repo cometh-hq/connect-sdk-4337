@@ -24,6 +24,7 @@ import {
 import { getAction } from "viem/utils";
 
 export type CancelRecoveryRequestParams<entryPoint extends EntryPoint> = {
+    effectiveDelayAddress?: Address;
     rpcUrl?: string;
 } & Middleware<entryPoint>;
 
@@ -40,7 +41,7 @@ export async function cancelRecoveryRequest<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<CancelRecoveryRequestParams<entryPoint>>
 ): Promise<Hex> {
-    const { rpcUrl, middleware } = args;
+    const { effectiveDelayAddress, rpcUrl, middleware } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
@@ -53,33 +54,39 @@ export async function cancelRecoveryRequest<
         },
     });
 
-    const api = client?.account?.getConnectApi();
+    let delayAddress: Address;
 
-    if (!api) throw new Error("No api found");
+    if (effectiveDelayAddress) {
+        delayAddress = effectiveDelayAddress;
+    } else {
+        const api = client?.account?.getConnectApi();
 
-    const projectParams = await getProjectParamsByChain({
-        api,
-        chain: client.chain as Chain,
-    });
+        if (!api) throw new Error("No api found");
 
-    if (!projectParams) throw Error("Error fetching project params");
+        const projectParams = await getProjectParamsByChain({
+            api,
+            chain: client.chain as Chain,
+        });
 
-    const {
-        moduleFactoryAddress,
-        delayModuleAddress,
-        recoveryCooldown,
-        recoveryExpiration,
-    } = projectParams.recoveryParams;
+        if (!projectParams) throw Error("Error fetching project params");
 
-    const delayAddress = await delayModuleService.getDelayAddress(
-        smartAccounAddress,
-        {
-            moduleFactoryAddress: moduleFactoryAddress as Address,
-            delayModuleAddress: delayModuleAddress as Address,
-            recoveryCooldown: recoveryCooldown as number,
-            recoveryExpiration: recoveryExpiration as number,
-        }
-    );
+        const {
+            moduleFactoryAddress,
+            delayModuleAddress,
+            recoveryCooldown,
+            recoveryExpiration,
+        } = projectParams.recoveryParams;
+
+        delayAddress = await delayModuleService.getDelayAddress(
+            smartAccounAddress,
+            {
+                moduleFactoryAddress: moduleFactoryAddress as Address,
+                delayModuleAddress: delayModuleAddress as Address,
+                recoveryCooldown: recoveryCooldown as number,
+                recoveryExpiration: recoveryExpiration as number,
+            }
+        );
+    }
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,

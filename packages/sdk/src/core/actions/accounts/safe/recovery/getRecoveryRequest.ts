@@ -46,32 +46,39 @@ export async function getRecoveryRequest<
         },
     });
 
-    const api = client?.account?.getConnectApi();
+    let delayAddress: Address;
 
-    if (!api) throw new Error("No api found");
+    if (effectiveDelayAddress) {
+        delayAddress = effectiveDelayAddress;
+    } else {
+        const api = client?.account?.getConnectApi();
 
-    const projectParams = await getProjectParamsByChain({
-        api,
-        chain: client.chain as Chain,
-    });
+        if (!api) throw new Error("No api found");
 
-    if (!projectParams) throw Error("Error fetching project params");
+        const projectParams = await getProjectParamsByChain({
+            api,
+            chain: client.chain as Chain,
+        });
 
-    const {
-        moduleFactoryAddress,
-        delayModuleAddress,
-        recoveryCooldown,
-        recoveryExpiration,
-    } = projectParams.recoveryParams;
+        if (!projectParams) throw Error("Error fetching project params");
 
-    const delayAddress =
-        effectiveDelayAddress ??
-        (await delayModuleService.getDelayAddress(smartAccounAddress, {
-            moduleFactoryAddress: moduleFactoryAddress as Address,
-            delayModuleAddress: delayModuleAddress as Address,
-            recoveryCooldown: recoveryCooldown as number,
-            recoveryExpiration: recoveryExpiration as number,
-        }));
+        const {
+            moduleFactoryAddress,
+            delayModuleAddress,
+            recoveryCooldown,
+            recoveryExpiration,
+        } = projectParams.recoveryParams;
+
+        delayAddress = await delayModuleService.getDelayAddress(
+            smartAccounAddress,
+            {
+                moduleFactoryAddress: moduleFactoryAddress as Address,
+                delayModuleAddress: delayModuleAddress as Address,
+                recoveryCooldown: recoveryCooldown as number,
+                recoveryExpiration: recoveryExpiration as number,
+            }
+        );
+    }
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
