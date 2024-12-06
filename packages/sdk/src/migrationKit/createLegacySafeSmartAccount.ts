@@ -10,7 +10,6 @@ import {
     encodeFunctionData,
     hexToBigInt,
     zeroAddress,
-    type WalletClient,
 } from "viem";
 import type { Prettify } from "viem/types/utils";
 
@@ -44,11 +43,11 @@ import { isSmartAccountDeployed } from "permissionless";
 import { comethSignerToSafeSigner } from "./safeLegacySigner/comethSignerToSafeSigner";
 import { LEGACY_API } from "./services/LEGACY_API";
 import { getLegacySigner } from "./signers/passkeyService";
-import {
-    type DeviceData,
-    type RelayedTransaction,
-    type RelayedTransactionDetails,
-    type SafeTransactionDataPartial,
+import type {
+    DeviceData,
+    RelayedTransaction,
+    RelayedTransactionDetails,
+    SafeTransactionDataPartial,
 } from "./types";
 
 // 60 secondes
@@ -72,12 +71,10 @@ export type LegacySafeSmartAccount<
     prepareImportSafeTx: () => Promise<SafeTransactionDataPartial>;
     hasMigrated: () => Promise<boolean>;
     legacySignTransaction: ({
-        walletClient,
-        signerAddress,
+        signer,
         tx,
     }: {
-        walletClient: WalletClient;
-        signerAddress: Address;
+        signer: PrivateKeyAccount;
         tx: SafeTransactionDataPartial;
     }) => Promise<Hex>;
     signTransaction: (transaction: SafeTransactionDataPartial) => Promise<Hex>;
@@ -473,12 +470,10 @@ export async function createLegacySafeSmartAccount<
             return await safeSigner.signTransaction(tx as any);
         },
         async legacySignTransaction({
-            walletClient,
-            signerAddress,
+            signer,
             tx,
         }: {
-            walletClient: WalletClient;
-            signerAddress: Address;
+            signer: PrivateKeyAccount;
             tx: SafeTransactionDataPartial;
         }): Promise<Hex> {
             const isDeployed = await isSmartAccountDeployed(
@@ -488,14 +483,13 @@ export async function createLegacySafeSmartAccount<
 
             const nonce = isDeployed
                 ? ((await publicClient.readContract({
-                    address: smartAccountAddress,
-                    abi: SafeAbi,
-                    functionName: "nonce",
-                })) as bigint)
+                      address: smartAccountAddress,
+                      abi: SafeAbi,
+                      functionName: "nonce",
+                  })) as bigint)
                 : BigInt(0);
 
-            return walletClient.signTypedData({
-                account: signerAddress,
+            return signer.signTypedData({
                 domain: {
                     chainId: client.chain.id,
                     verifyingContract: smartAccountAddress,
@@ -552,10 +546,10 @@ export async function createLegacySafeSmartAccount<
 
             const threshold = isDeployed
                 ? ((await publicClient.readContract({
-                    address: smartAccountAddress,
-                    abi: SafeAbi,
-                    functionName: "getThreshold",
-                })) as number)
+                      address: smartAccountAddress,
+                      abi: SafeAbi,
+                      functionName: "getThreshold",
+                  })) as number)
                 : 1;
 
             const migrateCalldata = await prepareMigrationCalldata({
@@ -572,10 +566,10 @@ export async function createLegacySafeSmartAccount<
 
             const nonce = isDeployed
                 ? ((await publicClient.readContract({
-                    address: smartAccountAddress,
-                    abi: SafeAbi,
-                    functionName: "nonce",
-                })) as number)
+                      address: smartAccountAddress,
+                      abi: SafeAbi,
+                      functionName: "nonce",
+                  })) as number)
                 : 0;
 
             return {
@@ -636,10 +630,10 @@ export async function createLegacySafeSmartAccount<
 
             const threshold = isDeployed
                 ? ((await publicClient.readContract({
-                    address: smartAccountAddress,
-                    abi: SafeAbi,
-                    functionName: "getThreshold",
-                })) as number)
+                      address: smartAccountAddress,
+                      abi: SafeAbi,
+                      functionName: "getThreshold",
+                  })) as number)
                 : 1;
 
             const migrateCalldata = await prepareMigrationCalldata({
@@ -655,10 +649,10 @@ export async function createLegacySafeSmartAccount<
 
             const nonce = isDeployed
                 ? ((await publicClient.readContract({
-                    address: smartAccountAddress,
-                    abi: SafeAbi,
-                    functionName: "nonce",
-                })) as number)
+                      address: smartAccountAddress,
+                      abi: SafeAbi,
+                      functionName: "nonce",
+                  })) as number)
                 : 0;
 
             const tx = {
