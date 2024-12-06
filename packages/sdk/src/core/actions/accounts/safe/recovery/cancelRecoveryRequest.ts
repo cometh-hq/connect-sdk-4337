@@ -115,7 +115,7 @@ export async function cancelRecoveryRequest<
         sendTransactions<TChain, TAccount, entryPoint>,
         "sendTransactions"
     )({
-        transactions: updateNonceTx,
+        transactions: [updateNonceTx],
         middleware,
     } as unknown as SendTransactionsWithPaymasterParameters<
         entryPoint,
