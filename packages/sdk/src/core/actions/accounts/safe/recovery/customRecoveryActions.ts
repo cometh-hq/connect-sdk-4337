@@ -5,13 +5,13 @@ import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService from "@/core/services/delayModuleService";
 import { sendTransaction } from "permissionless/actions/smartAccount";
 
-import type { Prettify } from "permissionless/types";
 import {
     http,
     type Address,
     type Chain,
     type Client,
     type Hex,
+    type Prettify,
     type SendTransactionParameters,
     type Transport,
     createPublicClient,

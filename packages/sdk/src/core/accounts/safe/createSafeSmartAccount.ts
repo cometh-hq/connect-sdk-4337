@@ -19,7 +19,6 @@ import {
     type Hex,
     type Transport,
     encodeFunctionData,
-    encodePacked,
     hexToBigInt,
     zeroHash,
 } from "viem";
@@ -63,25 +62,17 @@ export type createSafeSmartAccountParameters = Prettify<{
 const getAccountInitCode = async ({
     initializer,
     singletonAddress,
-    safeFactoryAddress,
     saltNonce = zeroHash,
 }: {
     initializer: Hex;
     singletonAddress: Address;
-    safeFactoryAddress: Address;
     saltNonce?: Hex;
 }): Promise<Hex> => {
-    return encodePacked(
-        ["address", "bytes"],
-        [
-            safeFactoryAddress,
-            encodeFunctionData({
-                abi: SafeProxyContractFactoryABI,
-                functionName: "createProxyWithNonce",
-                args: [singletonAddress, initializer, hexToBigInt(saltNonce)],
-            }),
-        ]
-    );
+    return encodeFunctionData({
+        abi: SafeProxyContractFactoryABI,
+        functionName: "createProxyWithNonce",
+        args: [singletonAddress, initializer, hexToBigInt(saltNonce)],
+    });
 };
 
 /**
@@ -236,7 +227,6 @@ export async function createSafeSmartAccount<
         getAccountInitCode({
             initializer,
             singletonAddress: safeSingletonAddress,
-            safeFactoryAddress: safeProxyFactoryAddress,
         });
 
     const res = await storeWalletInComethApi({
@@ -316,11 +306,6 @@ export async function createSafeSmartAccount<
         async encodeCalls(calls) {
             const hasMultipleCalls = calls.length > 1;
 
-            /*   const smartAccountDeployed = await isSmartAccountDeployed(
-                  client,
-                  smartAccountAddress as Address
-              ); */
-
             if (hasMultipleCalls) {
                 const userOpCalldata = encodeFunctionData({
                     abi: MultiSendContractABI,
@@ -355,47 +340,4 @@ export async function createSafeSmartAccount<
             return safeSigner.getStubSignature();
         },
     }) as unknown as ComethSafeSmartAccount;
-
-    /*   return {
-          ...smartAccount,
-          signerAddress,
-          async buildUserOperation(
-              _txs:
-                  | {
-                        to: Address;
-                        value: bigint;
-                        data: Hex;
-                    }
-                  | {
-                        to: Address;
-                        value: bigint;
-                        data: Hex;
-                    }[]
-          ) {
-              const sender = smartAccountAddress;
-              const nonce = await smartAccount.getNonce();
-              const callData = await smartAccount.encodeCallData(_txs);
-              const factory = await smartAccount.getFactory();
-              const factoryData = await smartAccount.getFactoryData();
-  
-              const userOperation: UserOperation<"v0.7"> = {
-                  sender,
-                  nonce,
-                  factory,
-                  factoryData,
-                  callData,
-                  callGasLimit: 1n,
-                  verificationGasLimit: 1n,
-                  preVerificationGas: 1n,
-                  maxFeePerGas: 1n,
-                  maxPriorityFeePerGas: 1n,
-                  signature: "0x",
-              };
-  
-              userOperation.signature = await smartAccount.getDummySignature(
-                  userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
-              );
-              return userOperation;
-          },
-      }; */
 }

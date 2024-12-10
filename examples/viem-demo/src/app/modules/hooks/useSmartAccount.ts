@@ -74,23 +74,24 @@ export function useSmartAccount() {
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
                 chain: gnosis,
-                entryPoint: ENTRYPOINT_ADDRESS_V07,
                 rpcUrl,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                entryPoint: ENTRYPOINT_ADDRESS_V07,
                 chain: gnosis,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,
                     timeout: 20_000,
                 }),
-                middleware: {
-                    sponsorUserOperation: paymasterClient.sponsorUserOperation,
-                    gasPrice: paymasterClient.gasPrice,
+                paymaster: paymasterClient,
+                userOperation: {
+                    estimateFeesPerGas: async () => {
+                        return await paymasterClient.getUserOperationGasPrice();
+                    },
                 },
+               
             });
 
             setSmartAccount(smartAccountClient);

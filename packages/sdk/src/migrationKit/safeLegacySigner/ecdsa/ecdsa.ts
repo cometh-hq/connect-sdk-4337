@@ -1,12 +1,9 @@
 import {
-    SignTransactionNotSupportedBySmartAccount,
-    type SmartAccountSigner,
-} from "permissionless/accounts";
-import {
     type Address,
     type Chain,
     type Client,
     type LocalAccount,
+    type PrivateKeyAccount,
     type Transport,
     type TypedData,
     type TypedDataDefinition,
@@ -34,15 +31,13 @@ import type { SafeSigner } from "../types";
 export async function safeLegacyECDSASigner<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TSource extends string = "custom",
-    TAddress extends Address = Address,
 >(
     client: Client<TTransport, TChain, undefined>,
     {
         signer,
         smartAccountAddress,
     }: {
-        signer: SmartAccountSigner<TSource, TAddress>;
+        signer: PrivateKeyAccount;
         smartAccountAddress: Address;
     }
 ): Promise<SafeSigner<"safeLegacyECDSASigner">> {
@@ -50,7 +45,7 @@ export async function safeLegacyECDSASigner<
     const viemSigner: LocalAccount = {
         ...signer,
         signTransaction: (_, __) => {
-            throw new SignTransactionNotSupportedBySmartAccount();
+            throw new Error("not supported");
         },
     } as LocalAccount;
 
