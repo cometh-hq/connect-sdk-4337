@@ -20,7 +20,6 @@ import {
     type PublicClient,
     type Transport,
     encodeFunctionData,
-    encodePacked,
     hexToBigInt,
     zeroHash,
 } from "viem";
@@ -64,25 +63,17 @@ export type createSafeSmartAccountParameters = Prettify<{
 const getAccountInitCode = async ({
     initializer,
     singletonAddress,
-    safeFactoryAddress,
     saltNonce = zeroHash,
 }: {
     initializer: Hex;
     singletonAddress: Address;
-    safeFactoryAddress: Address;
     saltNonce?: Hex;
 }): Promise<Hex> => {
-    return encodePacked(
-        ["address", "bytes"],
-        [
-            safeFactoryAddress,
-            encodeFunctionData({
-                abi: SafeProxyContractFactoryABI,
-                functionName: "createProxyWithNonce",
-                args: [singletonAddress, initializer, hexToBigInt(saltNonce)],
-            }),
-        ]
-    );
+    return encodeFunctionData({
+        abi: SafeProxyContractFactoryABI,
+        functionName: "createProxyWithNonce",
+        args: [singletonAddress, initializer, hexToBigInt(saltNonce)],
+    });
 };
 
 /**
@@ -246,7 +237,6 @@ export async function createSafeSmartAccount<
         getAccountInitCode({
             initializer,
             singletonAddress: safeSingletonAddress,
-            safeFactoryAddress: safeProxyFactoryAddress,
         });
 
     const res = await storeWalletInComethApi({
@@ -328,11 +318,6 @@ export async function createSafeSmartAccount<
 
         async encodeCalls(calls) {
             const hasMultipleCalls = calls.length > 1;
-
-            /*   const smartAccountDeployed = await isSmartAccountDeployed(
-                  client,
-                  smartAccountAddress as Address
-              ); */
 
             if (hasMultipleCalls) {
                 const userOpCalldata = encodeFunctionData({

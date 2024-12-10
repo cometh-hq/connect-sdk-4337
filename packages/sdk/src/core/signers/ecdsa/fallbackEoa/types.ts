@@ -1,8 +1,7 @@
-import type { SmartAccountSigner } from "permissionless/accounts";
-import type { Hex } from "viem";
+import type { Hex, PrivateKeyAccount } from "viem";
 
 export type eoaFallback = {
-    signer: SmartAccountSigner;
+    signer: PrivateKeyAccount;
     privateKey: Hex;
     encryptionSalt?: string;
 };
