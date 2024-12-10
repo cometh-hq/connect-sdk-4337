@@ -1,13 +1,10 @@
 import {
-    SignTransactionNotSupportedBySmartAccount,
-    type SmartAccountSigner,
-} from "permissionless/accounts";
-import {
     type Address,
     type Chain,
     type Client,
     type Hex,
     type LocalAccount,
+    type PrivateKeyAccount,
     type Transport,
     type TypedData,
     type TypedDataDefinition,
@@ -43,8 +40,6 @@ import type { SafeSigner } from "../types";
 export async function safeECDSASigner<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TSource extends string = "custom",
-    TAddress extends Address = Address,
 >(
     client: Client<TTransport, TChain, undefined>,
     {
@@ -52,7 +47,7 @@ export async function safeECDSASigner<
         safe4337Module,
         smartAccountAddress,
     }: {
-        signer: SmartAccountSigner<TSource, TAddress>;
+        signer: PrivateKeyAccount;
         safe4337Module: Address;
         smartAccountAddress: Address;
     }
@@ -61,7 +56,7 @@ export async function safeECDSASigner<
     const viemSigner: LocalAccount = {
         ...signer,
         signTransaction: (_, __) => {
-            throw new SignTransactionNotSupportedBySmartAccount();
+            throw new Error("not supported");
         },
     } as LocalAccount;
 
@@ -80,7 +75,7 @@ export async function safeECDSASigner<
             });
         },
         async signTransaction(_, __) {
-            throw new SignTransactionNotSupportedBySmartAccount();
+            throw new Error("not supported");
         },
         async signTypedData<
             const TTypedData extends TypedData | Record<string, unknown>,
@@ -103,7 +98,9 @@ export async function safeECDSASigner<
         address: smartAccountAddress,
         source: "safeECDSASigner",
         // Sign a user operation
-        async signUserOperation(userOperation) {
+        async signUserOperation(parameters) {
+            const { ...userOperation } = parameters;
+
             const payload = {
                 domain: {
                     chainId: client.chain?.id,
@@ -156,7 +153,7 @@ export async function safeECDSASigner<
         /**
          * Get a dummy signature for this smart account
          */
-        async getDummySignature() {
+        async getStubSignature() {
             return ECDSA_DUMMY_SIGNATURE;
         },
     };

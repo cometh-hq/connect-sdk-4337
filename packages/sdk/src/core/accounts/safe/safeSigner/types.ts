@@ -1,19 +1,11 @@
-import type { UserOperation } from "permissionless";
-import type {
-    ENTRYPOINT_ADDRESS_V07_TYPE,
-    GetEntryPointVersion,
-} from "permissionless/_types/types";
-import type { Hex, LocalAccount } from "viem";
+import type { Hex, LocalAccount, UnionPartialBy } from "viem";
+import type { UserOperation } from "viem/account-abstraction";
 
-export type SafeSigner<
-    Name extends string = string,
-    entryPoint extends
-        ENTRYPOINT_ADDRESS_V07_TYPE = ENTRYPOINT_ADDRESS_V07_TYPE,
-> = LocalAccount<Name> & {
-    getDummySignature(
-        userOperation: UserOperation<GetEntryPointVersion<entryPoint>>
-    ): Promise<Hex>;
+export type SafeSigner<Name extends string = string> = LocalAccount<Name> & {
+    getStubSignature(): Promise<Hex>;
     signUserOperation: (
-        userOperation: UserOperation<GetEntryPointVersion<entryPoint>>
+        parameters: UnionPartialBy<UserOperation, "sender"> & {
+            chainId?: number | undefined;
+        }
     ) => Promise<Hex>;
 };

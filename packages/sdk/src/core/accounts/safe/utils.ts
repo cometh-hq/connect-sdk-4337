@@ -1,114 +1,173 @@
-import type {
-    EntryPoint,
-    GetEntryPointVersion,
-    UserOperation,
-} from "permissionless/_types/types";
+import type { API } from "@/core/services/API";
+import { type Abi, parseAbi } from "abitype";
 import {
-    SignTransactionNotSupportedBySmartAccount,
-    type SmartAccount,
-} from "permissionless/accounts";
-import type {
-    Abi,
-    Address,
-    Chain,
-    Client,
-    CustomSource,
-    EncodeDeployDataParameters,
-    Hex,
-    SignableMessage,
-    Transport,
-    TypedDataDefinition,
+    type Address,
+    type Prettify,
+    createNonceManager,
+    serializeErc6492Signature,
 } from "viem";
-import { toAccount } from "viem/accounts";
+import type {
+    EntryPointVersion,
+    SmartAccount,
+    SmartAccountImplementation,
+} from "viem/account-abstraction";
+import { getCode, readContract } from "viem/actions";
+import { getAction } from "viem/utils";
 
-export function toSmartAccount<
-    TAccountSource extends CustomSource,
-    TEntryPoint extends EntryPoint,
-    TSource extends string = string,
-    transport extends Transport = Transport,
-    chain extends Chain | undefined = Chain | undefined,
-    TAbi extends Abi | readonly unknown[] = Abi,
->({
-    address,
-    client,
-    source,
-    entryPoint,
-    getNonce,
-    getInitCode,
-    getFactory,
-    getFactoryData,
-    encodeCallData,
-    getDummySignature,
-    encodeDeployCallData,
-    signUserOperation,
-    signMessage,
-    signTypedData,
-}: TAccountSource & {
-    source: TSource;
-    client: Client<transport, chain>;
-    entryPoint: TEntryPoint;
-    getNonce: () => Promise<bigint>;
-    getInitCode: () => Promise<Hex>;
-    getFactory: () => Promise<Address | undefined>;
-    getFactoryData: () => Promise<Hex | undefined>;
-    encodeCallData: (
-        args:
-            | {
-                  to: Address;
-                  value: bigint;
-                  data: Hex;
-              }
-            | {
-                  to: Address;
-                  value: bigint;
-                  data: Hex;
-              }[]
-    ) => Promise<Hex>;
-    getDummySignature(
-        userOperation: UserOperation<GetEntryPointVersion<TEntryPoint>>
-    ): Promise<Hex>;
-    encodeDeployCallData: ({
-        abi,
-        args,
-        bytecode,
-    }: EncodeDeployDataParameters<TAbi>) => Promise<Hex>;
-    signUserOperation: (
-        userOperation: UserOperation<GetEntryPointVersion<TEntryPoint>>
-    ) => Promise<Hex>;
-}): SmartAccount<TEntryPoint, TSource, transport, chain, TAbi> {
-    const account = toAccount({
-        address: address,
-        signMessage: async ({ message }: { message: SignableMessage }) => {
-            const signature = await signMessage({ message });
+export type ToSmartAccountParameters<
+    entryPointAbi extends Abi | readonly unknown[] = Abi,
+    entryPointVersion extends EntryPointVersion = EntryPointVersion,
+    extend extends object = object,
+> = SmartAccountImplementation<entryPointAbi, entryPointVersion, extend>;
 
-            return signature;
-        },
-        signTypedData: async (typedData) => {
-            const signature = await signTypedData(
-                typedData as TypedDataDefinition
-            );
+export type ToSmartAccountReturnType<
+    implementation extends
+        SmartAccountImplementation = SmartAccountImplementation,
+> = Prettify<SmartAccount<implementation>>;
 
-            return signature;
-        },
-        async signTransaction(_, __) {
-            throw new SignTransactionNotSupportedBySmartAccount();
-        },
-    });
+/**
+ * @description Creates a Smart Account with a provided account implementation.
+ *
+ * @param parameters - {@link ToSmartAccountParameters}
+ * @returns A Smart Account. {@link ToSmartAccountReturnType}
+ */
+export async function toSmartAccount<
+    implementation extends SmartAccountImplementation & {
+        connectApiInstance: API;
+        signerAddress: Address;
+        rpcUrl?: string;
+    },
+>(
+    comethImplementation: implementation
+): Promise<
+    ToSmartAccountReturnType<implementation> & {
+        connectApiInstance: API;
+        signerAddress: Address;
+        rpcUrl?: string;
+    }
+> {
+    const {
+        extend,
+        nonceKeyManager = createNonceManager({
+            source: {
+                get() {
+                    return Date.now();
+                },
+                set() {},
+            },
+        }),
+        ...rest
+    } = comethImplementation;
+
+    let deployed = false;
+
+    const address = await comethImplementation.getAddress();
+    const signerAddress = comethImplementation.signerAddress;
+    const connectApiInstance = comethImplementation.connectApiInstance;
+    const rpcUrl = comethImplementation.rpcUrl;
 
     return {
-        ...account,
-        source,
-        client,
-        type: "local",
-        entryPoint,
-        publicKey: address,
-        getNonce,
-        getInitCode,
-        getFactory,
-        getFactoryData,
-        encodeCallData,
-        getDummySignature,
-        encodeDeployCallData,
-        signUserOperation,
-    } as SmartAccount<TEntryPoint, TSource, transport, chain, TAbi>;
+        ...extend,
+        ...rest,
+        address,
+        signerAddress,
+        connectApiInstance,
+        rpcUrl,
+        async getFactoryArgs() {
+            if ("isDeployed" in this && (await this.isDeployed()))
+                return { factory: undefined, factoryData: undefined };
+            return comethImplementation.getFactoryArgs();
+        },
+        async getNonce(parameters) {
+            const key =
+                parameters?.key ??
+                BigInt(
+                    await nonceKeyManager.consume({
+                        address,
+                        chainId: comethImplementation.client.chain
+                            ?.id as number,
+                        client: comethImplementation.client,
+                    })
+                );
+
+            if (comethImplementation.getNonce)
+                return await comethImplementation.getNonce({
+                    ...parameters,
+                    key,
+                });
+
+            const nonce = await readContract(comethImplementation.client, {
+                abi: parseAbi([
+                    "function getNonce(address, uint192) pure returns (uint256)",
+                ]),
+                address: comethImplementation.entryPoint.address,
+                functionName: "getNonce",
+                args: [address, key],
+            });
+            return nonce;
+        },
+        async isDeployed() {
+            if (deployed) return true;
+            const code = await getAction(
+                comethImplementation.client,
+                getCode,
+                "getCode"
+            )({
+                address,
+            });
+            deployed = Boolean(code);
+            return deployed;
+        },
+        ...(comethImplementation.sign
+            ? {
+                  async sign(parameters) {
+                      const [{ factory, factoryData }, signature] =
+                          await Promise.all([
+                              this.getFactoryArgs(),
+                              comethImplementation.sign
+                                  ? comethImplementation.sign(parameters)
+                                  : Promise.reject(
+                                          new Error(
+                                              "sign method is not defined"
+                                          )
+                                      ),
+                          ]);
+                      if (factory && factoryData)
+                          return serializeErc6492Signature({
+                              address: factory,
+                              data: factoryData,
+                              signature,
+                          });
+                      return signature;
+                  },
+              }
+            : {}),
+        async signMessage(parameters) {
+            const [{ factory, factoryData }, signature] = await Promise.all([
+                this.getFactoryArgs(),
+                comethImplementation.signMessage(parameters),
+            ]);
+            if (factory && factoryData)
+                return serializeErc6492Signature({
+                    address: factory,
+                    data: factoryData,
+                    signature,
+                });
+            return signature;
+        },
+        async signTypedData(parameters) {
+            const [{ factory, factoryData }, signature] = await Promise.all([
+                this.getFactoryArgs(),
+                comethImplementation.signTypedData(parameters),
+            ]);
+            if (factory && factoryData)
+                return serializeErc6492Signature({
+                    address: factory,
+                    data: factoryData,
+                    signature,
+                });
+            return signature;
+        },
+        type: "smart",
+    } as ToSmartAccountReturnType<implementation>;
 }

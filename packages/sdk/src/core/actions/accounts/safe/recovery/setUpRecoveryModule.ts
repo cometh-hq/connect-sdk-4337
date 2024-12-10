@@ -1,21 +1,17 @@
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import delayModuleService from "@/core/services/delayModuleService";
-import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
-import {
-    type Middleware,
-    sendTransactions,
-} from "permissionless/actions/smartAccount";
-
-import type { EntryPoint, Prettify } from "permissionless/types";
 
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import type { webAuthnOptions } from "@/core/signers/passkeys/types";
+import { sendTransaction } from "permissionless/actions/smartAccount";
 import {
     http,
     type Address,
     type Chain,
     type Client,
     type Hex,
+    type Prettify,
+    type SendTransactionParameters,
     type Transport,
     createPublicClient,
     encodeFunctionData,
@@ -23,26 +19,23 @@ import {
 } from "viem";
 import { getAction } from "viem/utils";
 
-export type SetUpRecoveryModuleParams<entryPoint extends EntryPoint> = {
+export type SetUpRecoveryModuleParams = {
     passKeyName?: string;
     webAuthnOptions?: webAuthnOptions;
     rpcUrl?: string;
-} & Middleware<entryPoint>;
+};
 
 export async function setUpRecoveryModule<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<SetUpRecoveryModuleParams<entryPoint>>
+    args: Prettify<SetUpRecoveryModuleParams>
 ): Promise<Hex> {
-    const { rpcUrl, middleware } = args;
+    const { rpcUrl } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
@@ -55,7 +48,7 @@ export async function setUpRecoveryModule<
         },
     });
 
-    const api = client?.account?.getConnectApi();
+    const api = client?.account?.connectApiInstance;
 
     if (!api) throw new Error("No api found");
 
@@ -129,15 +122,11 @@ export async function setUpRecoveryModule<
 
     const hash = await getAction(
         client,
-        sendTransactions<TChain, TAccount, entryPoint>,
-        "sendTransactions"
+        sendTransaction,
+        "sendTransaction"
     )({
-        transactions: setUpDelayTx,
-        middleware,
-    } as unknown as SendTransactionsWithPaymasterParameters<
-        entryPoint,
-        TAccount
-    >);
+        calls: setUpDelayTx,
+    } as unknown as SendTransactionParameters);
 
     return hash;
 }

@@ -46,7 +46,7 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2.0.0",
+    "viem": "^2.21.22",
     "wagmi": "^2"
   },
   "devDependencies": {
@@ -55,6 +55,9 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@biconomy/sdk": "^0.0.8",
+    "@noble/curves": "^1.6.0",
+    "@rhinestone/module-sdk": "^0.1.27",
     "@simplewebauthn/server": "^7.2.0",
     "@types/cbor-js": "^0.1.1",
     "@types/elliptic": "^6.4.18",
@@ -64,7 +67,7 @@
     "bowser": "^2.11.0",
     "cbor-js": "^0.1.0",
     "elliptic": "^6.5.7",
-    "permissionless": "0.1.31",
+    "permissionless": "^0.2.14",
     "psl": "^1.9.0",
     "qrcode": "^1.5.3"
   }

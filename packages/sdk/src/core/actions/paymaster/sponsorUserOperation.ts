@@ -1,12 +1,16 @@
 import type { ComethPaymasterRpcSchema } from "@/core/clients/types";
 import { deepHexlify } from "permissionless";
 import type {
-    EntryPoint,
-    GetEntryPointVersion,
+    Account,
+    Address,
+    Chain,
+    Client,
+    Hex,
     Prettify,
-} from "permissionless/types";
-import type { UserOperation } from "permissionless/types/userOperation.js";
-import type { Account, Address, Chain, Client, Hex, Transport } from "viem";
+    Transport,
+} from "viem";
+import type { UserOperation } from "viem/account-abstraction";
+import { entryPoint07Address } from "viem/account-abstraction";
 
 export type SponsorUserOperationReturnType = {
     callGasLimit: bigint;
@@ -19,25 +23,18 @@ export type SponsorUserOperationReturnType = {
 };
 
 export const sponsorUserOperation = async <
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends Account | undefined = Account | undefined,
 >(
-    client: Client<
-        TTransport,
-        TChain,
-        TAccount,
-        ComethPaymasterRpcSchema<entryPoint>
-    >,
+    client: Client<TTransport, TChain, TAccount, ComethPaymasterRpcSchema>,
     args: Prettify<{
-        userOperation: UserOperation<GetEntryPointVersion<entryPoint>>;
-        entryPoint: Address;
+        userOperation: UserOperation<"0.7">;
     }>
 ): Promise<SponsorUserOperationReturnType> => {
     const response = (await client.request({
         method: "pm_sponsorUserOperation",
-        params: [deepHexlify(args.userOperation), args.entryPoint],
+        params: [deepHexlify(args.userOperation), entryPoint07Address],
     })) as {
         paymasterAndData: never;
         preVerificationGas: Hex;

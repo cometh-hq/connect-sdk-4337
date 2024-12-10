@@ -1,8 +1,7 @@
 import type { Address } from "viem/accounts";
 
-import type { Hex } from "viem";
+import type { Hex, PrivateKeyAccount } from "viem";
 
-import type { SmartAccountSigner } from "permissionless/accounts";
 import {
     createFallbackEoaSigner,
     getFallbackEoaSigner,
@@ -188,7 +187,7 @@ export async function createSigner({
     throwErrorWhenEoaFallbackDisabled(disableEoaFallback);
 
     let privateKey: Hex;
-    let signer: SmartAccountSigner;
+    let signer: PrivateKeyAccount;
 
     if (!smartAccountAddress) {
         ({ privateKey, signer } = await createFallbackEoaSigner());

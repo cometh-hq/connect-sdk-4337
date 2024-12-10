@@ -1,20 +1,18 @@
 import { delayModuleABI } from "@/core/accounts/safe/abi/delayModule";
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { isModuleEnabled } from "@/core/accounts/safe/services/safe";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService from "@/core/services/delayModuleService";
-import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount";
-import {
-    type Middleware,
-    sendTransactions,
-} from "permissionless/actions/smartAccount";
-import type { EntryPoint, Prettify } from "permissionless/types";
+import { sendTransaction } from "permissionless/actions/smartAccount";
+
+import type { Prettify } from "permissionless/types";
 import {
     http,
     type Address,
     type Chain,
     type Client,
     type Hex,
+    type SendTransactionParameters,
     type Transport,
     createPublicClient,
     encodeFunctionData,
@@ -29,13 +27,10 @@ export type GetDelayModuleAddressParams = {
 };
 
 export async function getDelayModuleAddress<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
@@ -44,7 +39,7 @@ export async function getDelayModuleAddress<
     const { expiration, cooldown } = args;
     const smartAccountAddress = client.account?.address as Address;
 
-    const api = client?.account?.getConnectApi();
+    const api = client?.account?.connectApiInstance;
     if (!api) throw new Error("No API found");
 
     const projectParams = await getProjectParamsByChain({
@@ -69,13 +64,10 @@ export type GetGuardianAddressParams = {
 };
 
 export async function getGuardianAddress<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
@@ -102,26 +94,23 @@ export async function getGuardianAddress<
     });
 }
 
-export type AddGuardianParams<entryPoint extends EntryPoint> = {
+export type AddGuardianParams = {
     delayModuleAddress: Address;
     guardianAddress: Address;
     rpcUrl?: string;
-} & Middleware<entryPoint>;
+};
 
 export async function addGuardian<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<AddGuardianParams<entryPoint>>
+    args: Prettify<AddGuardianParams>
 ): Promise<Hex> {
-    const { delayModuleAddress, guardianAddress, rpcUrl, middleware } = args;
+    const { delayModuleAddress, guardianAddress, rpcUrl } = args;
     const smartAccountAddress = client.account?.address as Address;
 
     const isEnabled = await isModuleEnabled({
@@ -157,43 +146,36 @@ export async function addGuardian<
 
     const hash = await getAction(
         client,
-        sendTransactions<TChain, TAccount, entryPoint>,
-        "sendTransactions"
+        sendTransaction,
+        "sendTransaction"
     )({
-        transactions: [addGuardianTx],
-        middleware,
-    } as unknown as SendTransactionsWithPaymasterParameters<
-        entryPoint,
-        TAccount
-    >);
+        calls: [addGuardianTx],
+    } as unknown as SendTransactionParameters);
 
     return hash;
 }
 
-export type DisableGuardianParams<entryPoint extends EntryPoint> = {
+export type DisableGuardianParams = {
     guardianAddress: Address;
     expiration?: number;
     cooldown?: number;
     rpcUrl?: string;
-} & Middleware<entryPoint>;
+};
 
 export async function disableGuardian<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<DisableGuardianParams<entryPoint>>
+    args: Prettify<DisableGuardianParams>
 ): Promise<Hex> {
-    const { guardianAddress, expiration, cooldown, rpcUrl, middleware } = args;
+    const { guardianAddress, expiration, cooldown, rpcUrl } = args;
     const smartAccountAddress = client.account?.address as Address;
 
-    const api = client?.account?.getConnectApi();
+    const api = client?.account?.connectApiInstance;
     if (!api) throw new Error("No API found");
 
     const projectParams = await getProjectParamsByChain({
@@ -253,38 +235,31 @@ export async function disableGuardian<
 
     return await getAction(
         client,
-        sendTransactions<TChain, TAccount, entryPoint>,
-        "sendTransactions"
+        sendTransaction,
+        "sendTransaction"
     )({
         transactions: [disableGuardianTx],
-        middleware,
-    } as unknown as SendTransactionsWithPaymasterParameters<
-        entryPoint,
-        TAccount
-    >);
+    } as unknown as SendTransactionParameters);
 }
 
-export type SetupCustomDelayModuleParams<entryPoint extends EntryPoint> = {
+export type SetupCustomDelayModuleParams = {
     guardianAddress: Address;
     expiration?: number;
     cooldown?: number;
     rpcUrl?: string;
-} & Middleware<entryPoint>;
+};
 
 export async function setupCustomDelayModule<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<SetupCustomDelayModuleParams<entryPoint>>
+    args: Prettify<SetupCustomDelayModuleParams>
 ): Promise<Hex> {
-    const { guardianAddress, expiration, cooldown, rpcUrl, middleware } = args;
+    const { guardianAddress, expiration, cooldown, rpcUrl } = args;
     const smartAccountAddress = client.account?.address as Address;
 
     const publicClient = createPublicClient({
@@ -294,7 +269,7 @@ export async function setupCustomDelayModule<
         batch: { multicall: { wait: 50 } },
     });
 
-    const api = client?.account?.getConnectApi();
+    const api = client?.account?.connectApiInstance;
     if (!api) throw new Error("No API found");
 
     const projectParams = await getProjectParamsByChain({
@@ -370,15 +345,11 @@ export async function setupCustomDelayModule<
 
     const hash = await getAction(
         client,
-        sendTransactions<TChain, TAccount, entryPoint>,
-        "sendTransactions"
+        sendTransaction,
+        "sendTransaction"
     )({
         transactions: setUpDelayTx,
-        middleware,
-    } as unknown as SendTransactionsWithPaymasterParameters<
-        entryPoint,
-        TAccount
-    >);
+    } as unknown as SendTransactionParameters);
 
     return hash;
 }

@@ -1,7 +1,6 @@
 import { ENTRYPOINT_ADDRESS_V07, customChains } from "./constants";
 
 import {
-    type SafeSmartAccount,
     createSafeSmartAccount,
     type createSafeSmartAccountParameters,
 } from "./core/accounts/safe/createSafeSmartAccount";
@@ -24,10 +23,7 @@ import type {
     IsRecoveryActiveReturnType,
 } from "./core/actions/accounts/safe/recovery/isRecoveryActive";
 import type { SetUpRecoveryModuleParams } from "./core/actions/accounts/safe/recovery/setUpRecoveryModule";
-import type {
-    AddSessionKeyParams,
-    Session,
-} from "./core/actions/accounts/safe/sessionKeys/utils";
+
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
@@ -60,13 +56,10 @@ export {
 };
 
 export type {
-    SafeSmartAccount,
     ComethSmartAccountClient,
     createSafeSmartAccountParameters,
     Signer,
     EnrichedOwner,
-    AddSessionKeyParams,
-    Session,
     QRCodeOptions,
     webAuthnOptions,
     SetUpRecoveryModuleParams,
