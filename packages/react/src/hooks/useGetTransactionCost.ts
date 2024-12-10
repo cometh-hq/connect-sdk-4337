@@ -117,14 +117,14 @@ export const useGetTransactionCost = (
                 }
 
                 const estimateGas =
-                    await smartAccountClient.estimateGas(variables);
+                    await smartAccountClient.estimateUserOperationGas(variables);
 
                 const totalGas =
                     estimateGas.preVerificationGas +
                     estimateGas.verificationGasLimit +
                     estimateGas.callGasLimit;
 
-                return { totalGasCost: totalGas * estimateGas.maxFeePerGas };
+                return { totalGasCost: totalGas  /* estimateGas.maxFeePerGas */ };
             },
             ...mutationProps,
         },
