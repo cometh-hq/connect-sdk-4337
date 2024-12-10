@@ -22,14 +22,6 @@ export const estimateGas = async <
     paymasterVerificationGasLimit?: bigint;
     paymasterPostOpGasLimit?: bigint;
 }> => {
-    const estimateGas = await getAction(
-        client,
-        estimateUserOperationGas,
-        "estimateUserOperationGas"
-    )({
-        ...args,
-    });
-
     const maxGasPriceResult = await getAction(
         client,
         estimateFeesPerGas,
@@ -38,6 +30,22 @@ export const estimateGas = async <
         chain: client.chain,
         type: "eip1559",
     });
+
+    console.log({maxGasPriceResult})
+    
+    console.log({args})
+    const estimateGas = await getAction(
+        client,
+        estimateUserOperationGas,
+        "estimateUserOperationGas"
+    )({
+        ...args,
+    });
+
+    console.log({estimateGas})
+
+
+
 
     return {
         callGasLimit: estimateGas.callGasLimit,

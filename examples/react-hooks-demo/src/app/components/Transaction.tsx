@@ -35,6 +35,7 @@ const counterContract = getContract({
 interface TransactionProps {
     hash: string | null;
     sendTransaction: any;
+    estimateGas:any;
     address: Address;
     transactionSuccess: boolean;
     setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
@@ -42,6 +43,7 @@ interface TransactionProps {
 
 function Transaction({
     sendTransaction,
+    estimateGas,
     address,
     transactionSuccess,
     setTransactionSuccess,
@@ -107,21 +109,32 @@ function Transaction({
                 functionName: "count",
             });
 
-            const txHash = await sendTransaction({
+          /*   const txHash = await sendTransaction({
                 calls: {
                     to: COUNTER_CONTRACT_ADDRESS,
                     value: 0,
                     data: calldata,
                 },
+            }); */
+
+            const test = await estimateGas({
+                account: address,
+                calls: [{
+                    to: COUNTER_CONTRACT_ADDRESS,
+                    value: 0,
+                    data: calldata,
+                }],
             });
 
-            setTransactionSended(txHash);
+            console.log({test})
+
+           /*  setTransactionSended(txHash);
 
             const txResponse = await publicClient.waitForTransactionReceipt({
                 hash: txHash,
             });
 
-            setTransactionResponse(txResponse);
+            setTransactionResponse(txResponse); */
 
             const balance = await counterContract.read.counters([address]);
             setNftBalance(Number(balance));

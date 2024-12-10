@@ -30,11 +30,11 @@ export type EstimateGasMutate = (
  */
 export type EstimateGasMutateAsync = (
     variables: EstimateUserOperationGasParameters
-) => Promise<GasEstimationResult>;
+) => Promise<any>;
 
 // Return type of the hook
 export type UseEstimateGasReturn = {
-    data?: GasEstimationResult;
+    data?: any;
     error: unknown;
     isPending: boolean;
     isSuccess: boolean;
@@ -139,7 +139,7 @@ export const useEstimateGas = (
                     throw new Error("No smart account found");
                 }
 
-                return await smartAccountClient.estimateGas(variables);
+                return await smartAccountClient.estimateUserOperationGas(variables);
             },
             ...mutationProps,
         },
