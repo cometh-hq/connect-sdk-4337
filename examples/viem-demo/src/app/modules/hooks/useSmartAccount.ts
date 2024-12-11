@@ -87,10 +87,10 @@ export function useSmartAccount() {
                     retryDelay: 1000,
                     timeout: 20_000,
                 }),
-                middleware: {
+                /*      middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
-                },
+                }, */
             });
 
             setSmartAccount(smartAccountClient);

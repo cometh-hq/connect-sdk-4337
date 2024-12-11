@@ -130,8 +130,8 @@ function Transaction({
 
                                 const txHash =
                                     await smartAccount.sendTransaction({
-                                        to: COUNTER_CONTRACT_ADDRESS,
-                                        data: calldata,
+                                        to: "0x18917FD80068c7db1117B9cAFbF9eEb9fF29be08",
+                                        data: "0x00",
                                     });
 
                                 setTransactionSended(txHash);

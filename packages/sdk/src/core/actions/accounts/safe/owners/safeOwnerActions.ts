@@ -24,6 +24,7 @@ export type EnrichedOwner = {
     address: Address;
     deviceData?: DeviceData;
     creationDate?: Date;
+    isSmartContract: boolean;
 };
 
 export type SafeOwnerPluginActions = {
@@ -169,6 +170,7 @@ export const safeOwnerPluginActions =
                     return [
                         {
                             address: client.account?.signerAddress as Address,
+                            isSmartContract: false,
                         },
                     ];
                 }
@@ -177,6 +179,7 @@ export const safeOwnerPluginActions =
                         address: webAuthnSigners[0].signerAddress as Address,
                         deviceData: webAuthnSigners[0].deviceData,
                         creationDate: webAuthnSigners[0].creationDate,
+                        isSmartContract: true,
                     },
                 ];
             }
@@ -197,9 +200,27 @@ export const safeOwnerPluginActions =
                         address: owner,
                         deviceData: webauthSigner.deviceData,
                         creationDate: webauthSigner.creationDate,
+                        isSmartContract: true,
                     };
                 }
-                return { address: owner };
+                return { address: owner, isSmartContract: false };
+            });
+
+            const bytecodes = await Promise.all(
+                enrichedOwners.map((owner) =>
+                    publicClient.getCode({
+                        address: owner.address,
+                    })
+                )
+            );
+
+            enrichedOwners.forEach((enrichedOwner, index) => {
+                if (
+                    !enrichedOwner.isSmartContract &&
+                    bytecodes[index] !== undefined
+                ) {
+                    enrichedOwner.isSmartContract = true;
+                }
             });
 
             return enrichedOwners;
