@@ -7,7 +7,7 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Hex } from "viem";
+import { http, type Hex, createPublicClient, stringToBytes } from "viem";
 import { gnosis } from "viem/chains";
 
 export function useSmartAccount() {
@@ -87,10 +87,10 @@ export function useSmartAccount() {
                     retryDelay: 1000,
                     timeout: 20_000,
                 }),
-                /*      middleware: {
+                middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
-                }, */
+                },
             });
 
             setSmartAccount(smartAccountClient);
