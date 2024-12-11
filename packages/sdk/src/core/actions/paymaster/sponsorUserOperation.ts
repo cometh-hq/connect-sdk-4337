@@ -12,10 +12,10 @@ export type SponsorUserOperationReturnType = {
     callGasLimit: bigint;
     verificationGasLimit: bigint;
     preVerificationGas: bigint;
-    paymaster: Address;
-    paymasterVerificationGasLimit: bigint;
-    paymasterPostOpGasLimit: bigint;
-    paymasterData: Hex;
+    paymaster?: Address;
+    paymasterVerificationGasLimit?: bigint;
+    paymasterPostOpGasLimit?: bigint;
+    paymasterData?: Hex;
 };
 
 export const sponsorUserOperation = async <
@@ -49,17 +49,19 @@ export const sponsorUserOperation = async <
         paymasterData?: Hex;
     };
 
+    const hasPaymaster = response.paymasterVerificationGasLimit !== "0x";
+
     return {
         callGasLimit: BigInt(response.callGasLimit),
         verificationGasLimit: BigInt(response.verificationGasLimit),
         preVerificationGas: BigInt(response.preVerificationGas),
-        paymaster: response.paymaster as Address,
-        paymasterVerificationGasLimit: BigInt(
-            response.paymasterVerificationGasLimit as Hex
-        ),
-        paymasterPostOpGasLimit: BigInt(
-            response.paymasterPostOpGasLimit as Hex
-        ),
-        paymasterData: response.paymasterData as Hex,
+        paymaster: hasPaymaster ? response.paymaster : undefined,
+        paymasterVerificationGasLimit: hasPaymaster
+            ? BigInt(response.paymasterVerificationGasLimit as Hex)
+            : undefined,
+        paymasterPostOpGasLimit: hasPaymaster
+            ? BigInt(response.paymasterPostOpGasLimit as Hex)
+            : undefined,
+        paymasterData: hasPaymaster ? response.paymasterData : undefined,
     };
 };
