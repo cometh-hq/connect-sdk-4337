@@ -12,6 +12,8 @@ import {
     type TypedData,
     type TypedDataDefinition,
     encodePacked,
+    hashTypedData,
+    toBytes,
 } from "viem";
 import { toAccount } from "viem/accounts";
 import { signTypedData } from "viem/actions";
@@ -28,6 +30,7 @@ import {
     EIP712_SAFE_OPERATION_TYPE,
 } from "../../types";
 import type { SafeSigner } from "../types";
+import { adjustVInSignature, generateSafeMessageMessage } from "../utils";
 
 /**
  * Creates a SafeSigner using ECDSA for signing
@@ -68,16 +71,24 @@ export async function safeECDSASigner<
     const account = toAccount({
         address: smartAccountAddress,
         async signMessage({ message }) {
-            return signTypedData(client, {
-                account: viemSigner,
+            const messageHash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,
                     verifyingContract: smartAccountAddress,
                 },
                 types: EIP712_SAFE_MESSAGE_TYPE,
                 primaryType: "SafeMessage" as const,
-                message: { message },
+                message: { message: generateSafeMessageMessage(message) },
             });
+
+            return adjustVInSignature(
+                "eth_sign",
+                await viemSigner.signMessage({
+                    message: {
+                        raw: toBytes(messageHash),
+                    },
+                })
+            );
         },
         async signTransaction(_, __) {
             throw new SignTransactionNotSupportedBySmartAccount();
@@ -88,12 +99,17 @@ export async function safeECDSASigner<
                 | keyof TTypedData
                 | "EIP712Domain" = keyof TTypedData,
         >(typedData: TypedDataDefinition<TTypedData, TPrimaryType>) {
-            return signTypedData<TTypedData, TPrimaryType, TChain, undefined>(
-                client,
-                {
+            return adjustVInSignature(
+                "eth_signTypedData",
+                await signTypedData<
+                    TTypedData,
+                    TPrimaryType,
+                    TChain,
+                    undefined
+                >(client, {
                     account: viemSigner,
                     ...typedData,
-                }
+                })
             );
         },
     });
