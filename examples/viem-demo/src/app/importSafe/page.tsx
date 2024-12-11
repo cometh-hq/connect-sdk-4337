@@ -11,10 +11,12 @@ import {
     createLegacySafeSmartAccount,
     createSafeSmartAccount,
     createSmartAccountClient,
+    importSafeActions,
     retrieveLegacyWalletAddress,
 } from "@cometh/connect-sdk-4337";
-import { http, encodeFunctionData } from "viem";
-import { gnosis } from "viem/chains";
+import { http, type Hex, encodeFunctionData } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { base, gnosis } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 
 export const COUNTER_CONTRACT_ADDRESS =
@@ -28,7 +30,7 @@ export default function App() {
 
     const migrateSafe = async () => {
         // Step 1: TO DO If you create a new legcay wallet and want to update, if not go to step 2
-        const walletAdaptor = new ConnectAdaptor({
+                const walletAdaptor = new ConnectAdaptor({
             chainId: SupportedNetworks.GNOSIS,
             apiKey: apiKeyLegacy,
         });
@@ -40,34 +42,31 @@ export default function App() {
 
         await wallet?.connect();
 
-        await wallet.addOwner("0x39946fd82C9C86c9A61BceeD86fbdd284590bDd9") 
-
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-
         const legacyWalletAddress = wallet.getAddress();
 
         console.log({ legacyWalletAddress });
 
-        // Step 2
-        const legacyClient = await createLegacySafeSmartAccount({
-            apiKeyLegacy: apiKeyLegacy,
-            apiKey4337: apiKey,
-            chain: gnosis,
-            smartAccountAddress: legacyWalletAddress,
-            baseUrl: "https://api.4337.develop.core.cometh.tech",
-        });
+        await wallet.addOwner("0x39946fd82C9C86c9A61BceeD86fbdd284590bDd9") 
 
-        console.log({ legacyClient });
+                localStorage.removeItem(`cometh-connect-${legacyWalletAddress}`);
 
 
-        //const hasMigrated = await legacyClient.hasMigrated();
-
-        await legacyClient.migrate();
+                await new Promise((resolve) => setTimeout(resolve, 10000));
 
 
-        console.log("migrated");
+        
+       
 
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+    /*     const legacyWalletAddress =
+            "0x5d050920d8049a08c01F34D6F935f9Fbf5Ea6ca1";
+
+       ;*/
+
+    
+       const signer = privateKeyToAccount(
+        ""
+    ) 
+
 
         // Step 4
         const safe4337SmartAccount = await createSafeSmartAccount({
@@ -75,12 +74,9 @@ export default function App() {
             chain: gnosis,
             smartAccountAddress: legacyWalletAddress,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
+            signer,
             baseUrl: "https://api.4337.develop.core.cometh.tech",
-
         });
-
-
-        console.log({safe4337SmartAccount});
 
         // Step 5
         const paymasterClient = await createComethPaymasterClient({
@@ -90,6 +86,50 @@ export default function App() {
         });
         const smartAccountClient = createSmartAccountClient({
             account: safe4337SmartAccount,
+            entryPoint: ENTRYPOINT_ADDRESS_V07,
+            chain: gnosis,
+            bundlerTransport: http(bundlerUrl, {
+                retryCount:10,
+                retryDelay: 200,
+            }),
+            middleware: {
+                sponsorUserOperation: paymasterClient.sponsorUserOperation,
+                gasPrice: paymasterClient.gasPrice,
+            },
+        });
+
+        const extendedClient = smartAccountClient.extend(importSafeActions());
+
+          console.log({ extendedClient });
+
+        const importMessage = await extendedClient.prepareImportSafe1_3Tx();
+
+        console.log({ importMessage });
+
+        const signature = (await extendedClient.signTransactionByExternalOwner({
+            signer,
+            tx: importMessage.tx,
+        })) as Hex;
+
+        console.log({ signature });
+
+        await extendedClient.importSafe({
+            signature,
+            tx: importMessage.tx,
+            passkey: importMessage.passkey,
+            eoaSigner: importMessage.eoaSigner,
+        });
+        
+        const safe4337SmartAccountV2 = await createSafeSmartAccount({
+            apiKey,
+            chain: gnosis,
+            smartAccountAddress: legacyWalletAddress,
+            entryPoint: ENTRYPOINT_ADDRESS_V07,
+            baseUrl: "https://api.4337.develop.core.cometh.tech",
+        });
+
+        const smartAccountClientV2 = createSmartAccountClient({
+            account: safe4337SmartAccountV2,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
             chain: gnosis,
             bundlerTransport: http(bundlerUrl, {
@@ -107,7 +147,7 @@ export default function App() {
         });
 
         // Step 6
-        const txHash = await smartAccountClient.sendTransaction({
+        const txHash = await smartAccountClientV2.sendTransaction({
             to: COUNTER_CONTRACT_ADDRESS,
             data: calldata,
         });
