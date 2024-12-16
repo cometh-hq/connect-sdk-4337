@@ -1,5 +1,6 @@
 import type { ProjectParams, Wallet } from "@/core/accounts/safe/types";
 import type { DeviceData, WebAuthnSigner } from "@/core/types";
+import type { RelayedTransactionDetails } from "@/migrationKit/types";
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
@@ -93,6 +94,7 @@ export class API {
         deviceData,
         signerAddress,
         chainId,
+        transactionCalldata,
     }: {
         smartAccountAddress: Address;
         publicKeyId?: Hex;
@@ -101,6 +103,7 @@ export class API {
         deviceData?: DeviceData;
         signerAddress: Address;
         chainId: string;
+        transactionCalldata: Hex;
     }) {
         const body = {
             walletAddress: smartAccountAddress,
@@ -110,9 +113,12 @@ export class API {
             publicKeyY,
             deviceData,
             chainId,
+            transactionCalldata,
         };
 
-        await this.api.post("/wallet/import", body);
+        const res = await this.api.post("/wallet/import", body);
+
+        return res.data.relayId;
     }
 
     /**
@@ -215,5 +221,18 @@ export class API {
             body
         );
         return response?.data?.result;
+    }
+
+    async getRelayedTransaction(
+        relayId: string,
+        chainId: number
+    ): Promise<RelayedTransactionDetails> {
+        const body = {
+            chainId: chainId.toString(),
+            relayId,
+        };
+
+        const response = await this.api.post("/relayed-transactions", body);
+        return response.data.relayedTransaction;
     }
 }

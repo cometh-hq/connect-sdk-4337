@@ -1,18 +1,14 @@
 "use client";
 
 import {
-    ComethWallet,
-    ConnectAdaptor,
-    SupportedNetworks,
-} from "@cometh/connect-sdk";
-import {
     ENTRYPOINT_ADDRESS_V07,
     createComethPaymasterClient,
-    createLegacySafeSmartAccount,
     createSafeSmartAccount,
     createSmartAccountClient,
+    importSafeActions,
 } from "@cometh/connect-sdk-4337";
-import { http, encodeFunctionData } from "viem";
+import { http, type Hex, encodeFunctionData } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { gnosis } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 
@@ -21,49 +17,23 @@ export const COUNTER_CONTRACT_ADDRESS =
 
 export default function App() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
-    const apiKeyLegacy = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL!;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!;
+    const walletToImport = "0x";
 
     const migrateSafe = async () => {
-        // Step 1: TO DO If you create a new legcay wallet and want to update, if not go to step 2
-        const walletAdaptor = new ConnectAdaptor({
-            chainId: SupportedNetworks.GNOSIS,
-            apiKey: apiKeyLegacy,
-        });
+        const legacyWalletAddress = walletToImport;
 
-        const wallet = new ComethWallet({
-            authAdapter: walletAdaptor,
-            apiKey: apiKeyLegacy,
-        });
+        const signer = privateKeyToAccount(process.env.PRIVATE_KEY! as Hex);
 
-        await wallet?.connect();
-
-        const legacyWalletAddress = wallet.getAddress();
-
-        // Step 2
-        const legacyClient = await createLegacySafeSmartAccount({
-            apiKeyLegacy: apiKeyLegacy,
-            apiKey4337: apiKey,
-            chain: gnosis,
-            smartAccountAddress: legacyWalletAddress,
-            baseUrl: "https://api.4337.develop.core.cometh.tech",
-        });
-
-        //const hasMigrated = await legacyClient.hasMigrated();
-
-        await legacyClient.migrate();
-
-        // Step 4
         const safe4337SmartAccount = await createSafeSmartAccount({
             apiKey,
             chain: gnosis,
             smartAccountAddress: legacyWalletAddress,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
-            baseUrl: "https://api.4337.develop.core.cometh.tech",
+            signer,
         });
 
-        // Step 5
         const paymasterClient = await createComethPaymasterClient({
             transport: http(paymasterUrl),
             chain: gnosis,
@@ -83,13 +53,47 @@ export default function App() {
             },
         });
 
+        const extendedClient = smartAccountClient.extend(importSafeActions());
+
+        const importMessage = await extendedClient.prepareImportSafe1_4Tx();
+
+        const signature = (await extendedClient.signTransactionByExternalOwner({
+            signer,
+            tx: importMessage.tx,
+        })) as Hex;
+
+        await extendedClient.importSafe({
+            signature,
+            ...importMessage,
+        });
+
+        const safe4337SmartAccountImported = await createSafeSmartAccount({
+            apiKey,
+            chain: gnosis,
+            smartAccountAddress: legacyWalletAddress,
+            entryPoint: ENTRYPOINT_ADDRESS_V07,
+        });
+
+        const smartAccountClientImported = createSmartAccountClient({
+            account: safe4337SmartAccountImported,
+            entryPoint: ENTRYPOINT_ADDRESS_V07,
+            chain: gnosis,
+            bundlerTransport: http(bundlerUrl, {
+                retryCount: 10,
+                retryDelay: 200,
+            }),
+            middleware: {
+                sponsorUserOperation: paymasterClient.sponsorUserOperation,
+                gasPrice: paymasterClient.gasPrice,
+            },
+        });
+
         const calldata = encodeFunctionData({
             abi: countContractAbi,
             functionName: "count",
         });
 
-        // Step 6
-        const txHash = await smartAccountClient.sendTransaction({
+        const txHash = await smartAccountClientImported.sendTransaction({
             to: COUNTER_CONTRACT_ADDRESS,
             data: calldata,
         });

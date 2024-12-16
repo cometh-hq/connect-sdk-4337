@@ -16,6 +16,7 @@ import {
     retrieveAccountAddressFromPasskeyId,
     retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
+import { importSafeActions } from "./core/actions/accounts/safe/importSafe/importSafeActions";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type { CancelRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/cancelRecoveryRequest";
 import type { GetRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/getRecoveryRequest";
@@ -55,6 +56,7 @@ export {
     smartAccountConnector,
     createLegacySafeSmartAccount,
     retrieveLegacyWalletAddress,
+    importSafeActions,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
 };

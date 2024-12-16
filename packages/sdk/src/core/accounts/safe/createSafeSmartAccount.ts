@@ -80,6 +80,8 @@ export type SafeSmartAccount<
     safe4337SessionKeysModule: Address;
     sessionKeysEnabled: boolean;
     signerAddress: Address;
+    safeContractParams: SafeContractParams;
+    comethSignerConfig?: ComethSignerConfig;
 };
 
 export type createSafeSmartAccountParameters<
@@ -230,7 +232,9 @@ export async function createSafeSmartAccount<
         safe4337ModuleAddress,
         safe4337SessionKeysModule,
         safeWebAuthnSignerFactory,
-    } = safeContractConfig ?? contractParams.safeContractParams;
+    } =
+        safeContractConfig ??
+        (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337ModuleAddress) {
         throw new Error("Network is not supported");
@@ -435,6 +439,9 @@ export async function createSafeSmartAccount<
         signerAddress,
         safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
         sessionKeysEnabled,
+        safeContractParams:
+            safeContractConfig ?? contractParams.safeContractParams,
+        comethSignerConfig,
         async buildUserOperation(
             _txs:
                 | {

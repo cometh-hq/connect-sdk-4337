@@ -1,12 +1,15 @@
 import { getSignerAddress, isComethSigner } from "@/core/signers/createSigner";
+import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import type { Signer } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
+import { MigrationAbi } from "@/migrationKit/abi/migration";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
     type Address,
     type Chain,
     type Hex,
+    type PrivateKeyAccount,
     concat,
     createPublicClient,
     decodeFunctionData,
@@ -518,4 +521,214 @@ export const isModuleEnabled = async ({
     if (!isDeployed) throw new Error("Safe not deployed");
 
     return await safe.read.isModuleEnabled([moduleAddress]);
+};
+
+export const prepareLegacyMigrationCalldata = async ({
+    threshold,
+    safe4337ModuleAddress,
+    safeWebAuthnSharedSignerContractAddress,
+    migrationContractAddress,
+    p256Verifier,
+    smartAccountAddress,
+    passkey,
+    eoaSigner,
+    isImport,
+    is4337ModuleEnabled,
+    deploymentTx,
+}: {
+    threshold: number;
+    safe4337ModuleAddress: Address;
+    safeWebAuthnSharedSignerContractAddress: Address;
+    migrationContractAddress: Address;
+    p256Verifier: Address;
+    smartAccountAddress: Address;
+    passkey?: PasskeyLocalStorageFormat;
+    eoaSigner?: PrivateKeyAccount;
+    isImport?: boolean;
+    is4337ModuleEnabled: boolean;
+    deploymentTx?: { to: Address; value: bigint; data: Hex; op: 0 | 1 };
+}) => {
+    const transactions = [
+        {
+            to: migrationContractAddress,
+            value: 0n,
+            data: encodeFunctionData({
+                abi: MigrationAbi,
+                functionName: "migrateL2Singleton",
+            }),
+            op: 1,
+        },
+    ];
+
+    if (deploymentTx) transactions.unshift(deploymentTx);
+
+    if (!is4337ModuleEnabled) {
+        transactions.push(
+            {
+                to: smartAccountAddress,
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: SafeAbi,
+                    functionName: "setFallbackHandler",
+                    args: [safe4337ModuleAddress],
+                }),
+                op: 0,
+            },
+            {
+                to: smartAccountAddress,
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: SafeAbi,
+                    functionName: "enableModule",
+                    args: [safe4337ModuleAddress],
+                }),
+                op: 0,
+            }
+        );
+    }
+
+    if (passkey) {
+        transactions.push(
+            {
+                to: safeWebAuthnSharedSignerContractAddress,
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: SafeWebAuthnSharedSignerAbi,
+                    functionName: "configure",
+                    args: [
+                        {
+                            x: hexToBigInt(passkey.pubkeyCoordinates.x as Hex),
+                            y: hexToBigInt(passkey.pubkeyCoordinates.y as Hex),
+                            verifiers: hexToBigInt(p256Verifier),
+                        },
+                    ],
+                }),
+                op: 1,
+            },
+            {
+                to: smartAccountAddress,
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: SafeAbi,
+                    functionName: "addOwnerWithThreshold",
+                    args: [safeWebAuthnSharedSignerContractAddress, threshold],
+                }),
+                op: 0,
+            }
+        );
+    } else if (isImport) {
+        transactions.push({
+            to: smartAccountAddress,
+            value: 0n,
+            data: encodeFunctionData({
+                abi: SafeAbi,
+                functionName: "addOwnerWithThreshold",
+                args: [eoaSigner?.address, threshold],
+            }),
+            op: 0,
+        });
+    }
+
+    return encodeFunctionData({
+        abi: MultiSendContractABI,
+        functionName: "multiSend",
+        args: [encodeMultiSendTransactions(transactions)],
+    });
+};
+
+export const prepareImportCalldata = async ({
+    threshold,
+    safe4337ModuleAddress,
+    safeWebAuthnSharedSignerContractAddress,
+    p256Verifier,
+    smartAccountAddress,
+    passkey,
+    eoaSigner,
+    isImport,
+    is4337ModuleEnabled,
+}: {
+    threshold: number;
+    safe4337ModuleAddress: Address;
+    safeWebAuthnSharedSignerContractAddress: Address;
+    p256Verifier: Address;
+    smartAccountAddress: Address;
+    passkey?: PasskeyLocalStorageFormat;
+    eoaSigner?: PrivateKeyAccount;
+    isImport?: boolean;
+    is4337ModuleEnabled: boolean;
+}) => {
+    const transactions = [];
+
+    if (!is4337ModuleEnabled) {
+        transactions.push(
+            {
+                to: smartAccountAddress,
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: SafeAbi,
+                    functionName: "setFallbackHandler",
+                    args: [safe4337ModuleAddress],
+                }),
+                op: 0,
+            },
+            {
+                to: smartAccountAddress,
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: SafeAbi,
+                    functionName: "enableModule",
+                    args: [safe4337ModuleAddress],
+                }),
+                op: 0,
+            }
+        );
+    }
+
+    if (passkey) {
+        transactions.push(
+            {
+                to: safeWebAuthnSharedSignerContractAddress,
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: SafeWebAuthnSharedSignerAbi,
+                    functionName: "configure",
+                    args: [
+                        {
+                            x: hexToBigInt(passkey.pubkeyCoordinates.x as Hex),
+                            y: hexToBigInt(passkey.pubkeyCoordinates.y as Hex),
+                            verifiers: hexToBigInt(p256Verifier),
+                        },
+                    ],
+                }),
+                op: 1,
+            },
+            {
+                to: smartAccountAddress,
+                value: 0n,
+                data: encodeFunctionData({
+                    abi: SafeAbi,
+                    functionName: "addOwnerWithThreshold",
+                    args: [safeWebAuthnSharedSignerContractAddress, threshold],
+                }),
+                op: 0,
+            }
+        );
+    } else if (isImport) {
+        transactions.push({
+            to: smartAccountAddress,
+            value: 0n,
+            data: encodeFunctionData({
+                abi: SafeAbi,
+                functionName: "addOwnerWithThreshold",
+                args: [eoaSigner?.address, threshold],
+            }),
+            op: 0,
+        });
+    }
+
+    return encodeFunctionData({
+        abi: MultiSendContractABI,
+        functionName: "multiSend",
+        args: [encodeMultiSendTransactions(transactions)],
+    });
 };
