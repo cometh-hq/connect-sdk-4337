@@ -248,8 +248,6 @@ export async function createSafeSmartAccount<
         sessionKeysEnabled ? safe4337SessionKeysModule : safe4337ModuleAddress
     ) as Address;
 
-    console.log({ signer });
-
     const accountSigner = await (signer ??
         createSigner({
             apiKey,

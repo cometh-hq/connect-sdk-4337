@@ -290,8 +290,6 @@ export const isSafeOwner = async ({
 }): Promise<boolean> => {
     const signerAddress = getSignerAddress(accountSigner);
 
-    console.log({ signerAddress });
-
     try {
         const publicClient = createPublicClient({
             chain: chain,
@@ -308,8 +306,6 @@ export const isSafeOwner = async ({
             publicClient,
             safeAddress
         );
-
-        console.log({ isDeployed });
 
         if (!isDeployed) throw new Error("Safe not deployed");
 
