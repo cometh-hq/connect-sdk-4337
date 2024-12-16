@@ -7,7 +7,7 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Hex } from "viem";
+import { http, type Hex, createPublicClient, stringToBytes } from "viem";
 import { gnosis } from "viem/chains";
 
 export function useSmartAccount() {
@@ -23,9 +23,8 @@ export function useSmartAccount() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
-    const baseUrl = "http://127.0.0.1:8000/connect";
+    const baseUrl = "https://api.4337.develop.core.cometh.tech";
     const rpcUrl = undefined;
-    const sessionKeysEnabled = false;
 
     function displayError(message: string) {
         setConnectionError(message);
@@ -56,6 +55,7 @@ export function useSmartAccount() {
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
+                    baseUrl,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
@@ -64,6 +64,7 @@ export function useSmartAccount() {
                     rpcUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
+                    baseUrl,
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -87,10 +88,10 @@ export function useSmartAccount() {
                     retryDelay: 1000,
                     timeout: 20_000,
                 }),
-                /*      middleware: {
+                middleware: {
                     sponsorUserOperation: paymasterClient.sponsorUserOperation,
                     gasPrice: paymasterClient.gasPrice,
-                }, */
+                },
             });
 
             setSmartAccount(smartAccountClient);

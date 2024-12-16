@@ -7,7 +7,6 @@ import {
     type Transport,
     encodePacked,
     hashTypedData,
-    toHex,
 } from "viem";
 import { toAccount } from "viem/accounts";
 
@@ -28,6 +27,7 @@ import {
     EIP712_SAFE_OPERATION_TYPE,
 } from "../../types";
 import type { SafeSigner } from "../types";
+import { adjustVInSignature, generateSafeMessageMessage } from "../utils";
 
 /**
  * Creates a SafeSigner using WebAuthn for authentication
@@ -68,8 +68,6 @@ export async function safeWebAuthnSigner<
     const account = toAccount({
         address: smartAccountAddress,
         async signMessage({ message }) {
-            if (typeof message === "string") message = toHex(message);
-
             const hash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,
@@ -77,7 +75,7 @@ export async function safeWebAuthnSigner<
                 },
                 types: EIP712_SAFE_MESSAGE_TYPE,
                 primaryType: "SafeMessage" as const,
-                message: { message },
+                message: { message: generateSafeMessageMessage(message) },
             });
 
             const passkeySignature = await sign({
@@ -86,13 +84,16 @@ export async function safeWebAuthnSigner<
                 fullDomainSelected,
             });
 
-            return buildSignatureBytes([
-                {
-                    signer: passkeySignerAddress,
-                    data: passkeySignature.signature,
-                    dynamic: true,
-                },
-            ]) as Hex;
+            return adjustVInSignature(
+                "eth_sign",
+                buildSignatureBytes([
+                    {
+                        signer: passkeySignerAddress,
+                        data: passkeySignature.signature,
+                        dynamic: true,
+                    },
+                ]) as Hex
+            );
         },
         async signTransaction(_, __) {
             throw new SignTransactionNotSupportedBySmartAccount();

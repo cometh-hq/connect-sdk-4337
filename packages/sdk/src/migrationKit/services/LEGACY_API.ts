@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type {
+    ProjectParams,
     RelayTransactionType,
     RelayedTransaction,
     RelayedTransactionDetails,
@@ -15,6 +16,11 @@ export class LEGACY_API {
             baseURL: baseUrl || "https://api.connect.cometh.io",
         });
         this.api.defaults.headers.common.apikey = apiKey;
+    }
+
+    async getProjectParams(): Promise<ProjectParams> {
+        const response = await this.api.get("/project/params");
+        return response?.data?.projectParams;
     }
 
     async relayTransaction({
