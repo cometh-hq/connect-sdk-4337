@@ -11,7 +11,6 @@ import {
     createLegacySafeSmartAccount,
     createSafeSmartAccount,
     createSmartAccountClient,
-    retrieveLegacyWalletAddress,
 } from "@cometh/connect-sdk-4337";
 import { http, encodeFunctionData } from "viem";
 import { gnosis } from "viem/chains";
@@ -21,8 +20,8 @@ export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 export default function App() {
-    const apiKey = "";
-    const apiKeyLegacy = "";
+    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
+    const apiKeyLegacy = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL!;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!;
 
@@ -40,13 +39,7 @@ export default function App() {
 
         await wallet?.connect();
 
-        await wallet.addOwner("0x39946fd82C9C86c9A61BceeD86fbdd284590bDd9") 
-
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-
         const legacyWalletAddress = wallet.getAddress();
-
-        console.log({ legacyWalletAddress });
 
         // Step 2
         const legacyClient = await createLegacySafeSmartAccount({
@@ -57,17 +50,9 @@ export default function App() {
             baseUrl: "https://api.4337.develop.core.cometh.tech",
         });
 
-        console.log({ legacyClient });
-
-
         //const hasMigrated = await legacyClient.hasMigrated();
 
         await legacyClient.migrate();
-
-
-        console.log("migrated");
-
-        await new Promise((resolve) => setTimeout(resolve, 10000));
 
         // Step 4
         const safe4337SmartAccount = await createSafeSmartAccount({
@@ -76,11 +61,7 @@ export default function App() {
             smartAccountAddress: legacyWalletAddress,
             entryPoint: ENTRYPOINT_ADDRESS_V07,
             baseUrl: "https://api.4337.develop.core.cometh.tech",
-
         });
-
-
-        console.log({safe4337SmartAccount});
 
         // Step 5
         const paymasterClient = await createComethPaymasterClient({
@@ -93,9 +74,10 @@ export default function App() {
             entryPoint: ENTRYPOINT_ADDRESS_V07,
             chain: gnosis,
             bundlerTransport: http(bundlerUrl, {
-                retryCount:10,
+                retryCount: 10,
                 retryDelay: 200,
-            }),            middleware: {
+            }),
+            middleware: {
                 sponsorUserOperation: paymasterClient.sponsorUserOperation,
                 gasPrice: paymasterClient.gasPrice,
             },
