@@ -171,8 +171,8 @@ export const createCalldataAndImport = async ({
     const relayId = await api.importExternalSafe({
         smartAccountAddress,
         publicKeyId: passkey?.id as Hex,
-        publicKeyY: passkey?.pubkeyCoordinates.x as Hex,
-        publicKeyX: passkey?.pubkeyCoordinates.y as Hex,
+        publicKeyX: passkey?.pubkeyCoordinates.x as Hex,
+        publicKeyY: passkey?.pubkeyCoordinates.y as Hex,
         deviceData: getDeviceData() as DeviceData,
         signerAddress,
         chainId: chainId.toString() as string,
