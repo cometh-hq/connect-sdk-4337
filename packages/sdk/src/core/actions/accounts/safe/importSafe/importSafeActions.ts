@@ -221,6 +221,13 @@ export const importSafeActions =
             const comethSignerConfig = client?.account?.comethSignerConfig;
             const contractParams = client?.account?.safeContractParams;
 
+            const importedWallet = await api.getWalletByNetworks(
+                client?.account?.address as Address
+            );
+
+            if (importedWallet?.length > 0)
+                throw new Error("Wallet already imported");
+
             let threshold: number;
             let is4337ModuleEnabled: boolean;
             let nonce: bigint;
