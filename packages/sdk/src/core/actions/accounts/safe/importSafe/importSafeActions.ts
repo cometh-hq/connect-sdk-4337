@@ -21,6 +21,7 @@ import {
     type Chain,
     type Hex,
     type PrivateKeyAccount,
+    type PublicClient,
     type Transport,
     createPublicClient,
     zeroAddress,
@@ -67,7 +68,7 @@ export type SafeImportActions = {
 };
 
 export const importSafeActions =
-    (rpcUrl?: string) =>
+    (publicClient?: PublicClient) =>
     <
         TEntryPoint extends EntryPoint,
         TSmartAccount extends SafeSmartAccount<TEntryPoint> | undefined,
@@ -82,17 +83,19 @@ export const importSafeActions =
         >
     ): SafeImportActions => ({
         prepareImportSafe1_3Tx: async () => {
-            const publicClient = createPublicClient({
-                chain: client.chain,
-                transport: http(rpcUrl),
-                cacheTime: 60_000,
-                batch: {
-                    multicall: { wait: 50 },
-                },
-            });
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
 
             const isDeployed = await isSmartAccountDeployed(
-                publicClient,
+                rpcClient,
                 client.account?.address as Address
             );
 
@@ -111,17 +114,17 @@ export const importSafeActions =
             if (isDeployed) {
                 [currentVersion, threshold, is4337ModuleEnabled, nonce] =
                     (await Promise.all([
-                        publicClient.readContract({
+                        rpcClient.readContract({
                             address: client.account?.address as Address,
                             abi: SafeAbi,
                             functionName: "VERSION",
                         }),
-                        publicClient.readContract({
+                        rpcClient.readContract({
                             address: client.account?.address as Address,
                             abi: SafeAbi,
                             functionName: "getThreshold",
                         }),
-                        publicClient.readContract({
+                        rpcClient.readContract({
                             address: client.account?.address as Address,
                             abi: SafeAbi,
                             functionName: "isModuleEnabled",
@@ -129,7 +132,7 @@ export const importSafeActions =
                                 contractParams?.safe4337ModuleAddress as Address,
                             ],
                         }),
-                        publicClient.readContract({
+                        rpcClient.readContract({
                             address: client.account?.address as Address,
                             abi: SafeAbi,
                             functionName: "nonce",
@@ -195,17 +198,19 @@ export const importSafeActions =
             };
         },
         prepareImportSafe1_4Tx: async () => {
-            const publicClient = createPublicClient({
-                chain: client.chain,
-                transport: http(rpcUrl),
-                cacheTime: 60_000,
-                batch: {
-                    multicall: { wait: 50 },
-                },
-            });
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
 
             const isDeployed = await isSmartAccountDeployed(
-                publicClient,
+                rpcClient,
                 client.account?.address as Address
             );
 
@@ -224,17 +229,17 @@ export const importSafeActions =
             if (isDeployed) {
                 [currentVersion, threshold, is4337ModuleEnabled, nonce] =
                     (await Promise.all([
-                        publicClient.readContract({
+                        rpcClient.readContract({
                             address: client.account?.address as Address,
                             abi: SafeAbi,
                             functionName: "VERSION",
                         }),
-                        publicClient.readContract({
+                        rpcClient.readContract({
                             address: client.account?.address as Address,
                             abi: SafeAbi,
                             functionName: "getThreshold",
                         }),
-                        publicClient.readContract({
+                        rpcClient.readContract({
                             address: client.account?.address as Address,
                             abi: SafeAbi,
                             functionName: "isModuleEnabled",
@@ -242,7 +247,7 @@ export const importSafeActions =
                                 contractParams?.safe4337ModuleAddress as Address,
                             ],
                         }),
-                        publicClient.readContract({
+                        rpcClient.readContract({
                             address: client.account?.address as Address,
                             abi: SafeAbi,
                             functionName: "nonce",
@@ -332,21 +337,24 @@ export const importSafeActions =
         signTransactionByExternalOwner: async (args) => {
             const { signer, tx } = args;
 
-            const publicClient = createPublicClient({
-                chain: client.chain,
-                transport: http(rpcUrl),
-                cacheTime: 60_000,
-                batch: {
-                    multicall: { wait: 50 },
-                },
-            });
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
+
             const isDeployed = await isSmartAccountDeployed(
-                publicClient,
+                rpcClient,
                 client.account?.address as Address
             );
 
             const nonce = isDeployed
-                ? ((await publicClient.readContract({
+                ? ((await rpcClient.readContract({
                       address: client.account?.address as Address,
                       abi: SafeAbi,
                       functionName: "nonce",

@@ -13,6 +13,7 @@ import {
     type Address,
     type Chain,
     type Hash,
+    type PublicClient,
     type Transport,
     createPublicClient,
     encodeFunctionData,
@@ -35,7 +36,7 @@ export type SafeOwnerPluginActions = {
 };
 
 export const safeOwnerPluginActions =
-    (rpcUrl?: string) =>
+    (publicClient?: PublicClient) =>
     <
         TSmartAccount extends SafeSmartAccount<TEntryPoint> | undefined,
         TTransport extends Transport = Transport,
@@ -67,24 +68,26 @@ export const safeOwnerPluginActions =
         },
 
         async removeOwner(args: { ownerToRemove: Address }) {
-            const publicClient = createPublicClient({
-                chain: client.chain,
-                transport: http(rpcUrl),
-                cacheTime: 60_000,
-                batch: {
-                    multicall: { wait: 50 },
-                },
-            });
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
 
             const isDeployed = await isSmartAccountDeployed(
-                publicClient,
+                rpcClient,
                 client.account?.address as Address
             );
 
             if (!isDeployed)
                 throw new Error("Can't remove owner on an undeployed safe");
 
-            const owners = (await publicClient.readContract({
+            const owners = (await rpcClient.readContract({
                 address: client.account?.address as Address,
                 abi: SafeAbi,
                 functionName: "getOwners",
@@ -118,24 +121,26 @@ export const safeOwnerPluginActions =
         },
 
         async getOwners() {
-            const publicClient = createPublicClient({
-                chain: client.chain,
-                transport: http(rpcUrl),
-                cacheTime: 60_000,
-                batch: {
-                    multicall: { wait: 50 },
-                },
-            });
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
 
             const isDeployed = await isSmartAccountDeployed(
-                publicClient,
+                rpcClient,
                 client.account?.address as Address
             );
 
             if (!isDeployed)
                 return [client.account?.signerAddress] as Address[];
 
-            return (await publicClient.readContract({
+            return (await rpcClient.readContract({
                 address: client.account?.address as Address,
                 abi: SafeAbi,
                 functionName: "getOwners",
@@ -143,17 +148,19 @@ export const safeOwnerPluginActions =
         },
 
         async getEnrichedOwners() {
-            const publicClient = createPublicClient({
-                chain: client.chain,
-                transport: http(rpcUrl),
-                cacheTime: 60_000,
-                batch: {
-                    multicall: { wait: 50 },
-                },
-            });
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
 
             const isDeployed = await isSmartAccountDeployed(
-                publicClient,
+                rpcClient,
                 client.account?.address as Address
             );
 
@@ -162,7 +169,7 @@ export const safeOwnerPluginActions =
             const webAuthnSigners =
                 (await api?.getWebAuthnSignersByWalletAddressAndChain(
                     client.account?.address as Address,
-                    publicClient.chain?.id as number
+                    rpcClient.chain?.id as number
                 )) as WebAuthnSigner[];
 
             if (!isDeployed) {
@@ -184,7 +191,7 @@ export const safeOwnerPluginActions =
                 ];
             }
 
-            const owners = (await publicClient.readContract({
+            const owners = (await rpcClient.readContract({
                 address: client.account?.address as Address,
                 abi: SafeAbi,
                 functionName: "getOwners",
@@ -208,7 +215,7 @@ export const safeOwnerPluginActions =
 
             const bytecodes = await Promise.all(
                 enrichedOwners.map((owner) =>
-                    publicClient.getCode({
+                    rpcClient.getCode({
                         address: owner.address,
                     })
                 )
