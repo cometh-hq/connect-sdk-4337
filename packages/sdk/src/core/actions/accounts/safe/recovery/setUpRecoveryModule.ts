@@ -16,6 +16,7 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type PublicClient,
     type Transport,
     createPublicClient,
     encodeFunctionData,
@@ -26,7 +27,7 @@ import { getAction } from "viem/utils";
 export type SetUpRecoveryModuleParams<entryPoint extends EntryPoint> = {
     passKeyName?: string;
     webAuthnOptions?: webAuthnOptions;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 } & Middleware<entryPoint>;
 
 export async function setUpRecoveryModule<
@@ -42,18 +43,20 @@ export async function setUpRecoveryModule<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<SetUpRecoveryModuleParams<entryPoint>>
 ): Promise<Hex> {
-    const { rpcUrl, middleware } = args;
+    const { publicClient, middleware } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
-    const publicClient = createPublicClient({
-        chain: client.chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
+    const rpcClient =
+        publicClient ??
+        createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        });
 
     const api = client?.account?.getConnectApi();
 
@@ -86,7 +89,7 @@ export async function setUpRecoveryModule<
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
-        client: publicClient,
+        client: rpcClient,
     });
 
     if (isDelayModuleDeployed) throw Error("Recovery already setup");

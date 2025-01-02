@@ -11,13 +11,14 @@ import {
     type Address,
     type Chain,
     type Client,
+    type PublicClient,
     type Transport,
     createPublicClient,
 } from "viem";
 
 export type GetRecoveryRequestParams = {
     effectiveDelayAddress?: Address;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 };
 
 export async function getRecoveryRequest<
@@ -33,19 +34,19 @@ export async function getRecoveryRequest<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetRecoveryRequestParams> = {}
 ): Promise<RecoveryParamsResponse | undefined> {
-    const { effectiveDelayAddress, rpcUrl } = args;
+    const { effectiveDelayAddress, publicClient } = args;
 
     const smartAccounAddress = client.account?.address as Address;
-
-    const publicClient = createPublicClient({
-        chain: client.chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
-
+    const rpcClient =
+        publicClient ??
+        createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        });
     let delayAddress: Address;
 
     if (effectiveDelayAddress) {
@@ -82,7 +83,7 @@ export async function getRecoveryRequest<
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
-        client: publicClient,
+        client: rpcClient,
     });
 
     if (!isDelayModuleDeployed) throw new Error("Recovery has not been setup");
@@ -90,7 +91,7 @@ export async function getRecoveryRequest<
     const isRecoveryQueueEmpty = await delayModuleService.isQueueEmpty(
         delayAddress,
         client.chain as Chain,
-        rpcUrl
+        rpcClient.transport.url
     );
 
     if (isRecoveryQueueEmpty) return undefined;
@@ -98,6 +99,6 @@ export async function getRecoveryRequest<
     return await delayModuleService.getCurrentRecoveryParams(
         delayAddress,
         client.chain as Chain,
-        rpcUrl
+        rpcClient.transport.url
     );
 }

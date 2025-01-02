@@ -31,6 +31,7 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type PublicClient,
     type Transport,
     encodeFunctionData,
     encodePacked,
@@ -89,7 +90,7 @@ export type createSafeSmartAccountParameters<
 > = Prettify<{
     apiKey: string;
     chain: Chain;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
     baseUrl?: string;
     smartAccountAddress?: Address;
     entryPoint: TEntryPoint;
@@ -200,7 +201,7 @@ export async function createSafeSmartAccount<
 >({
     apiKey,
     chain,
-    rpcUrl,
+    publicClient,
     baseUrl,
     smartAccountAddress,
     entryPoint: entryPointAddress,
@@ -214,11 +215,11 @@ export async function createSafeSmartAccount<
 > {
     const api = new API(apiKey, baseUrl);
     const [client, contractParams] = await Promise.all([
-        getViemClient(chain, rpcUrl, clientTimeout) as Client<
-            TTransport,
-            TChain,
-            undefined
-        >,
+        getViemClient(
+            chain,
+            publicClient?.transport.url,
+            clientTimeout
+        ) as Client<TTransport, TChain, undefined>,
         getProjectParamsByChain({ api, chain }),
     ]);
 
@@ -254,7 +255,7 @@ export async function createSafeSmartAccount<
             chain,
             smartAccountAddress,
             ...comethSignerConfig,
-            rpcUrl,
+            rpcUrl: publicClient?.transport.url,
             baseUrl,
             safeContractParams: {
                 safeWebAuthnSharedSignerContractAddress,
@@ -486,7 +487,7 @@ export async function createSafeSmartAccount<
             const sessionKeySigner = await getSessionKeySigner({
                 chain: client?.chain as Chain,
                 smartAccountAddress,
-                rpcUrl,
+                rpcUrl: publicClient?.transport.url,
                 safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
             });
 
