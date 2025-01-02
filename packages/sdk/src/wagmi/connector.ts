@@ -49,7 +49,7 @@ export function smartAccountConnector<
 >({
     apiKey,
     bundlerUrl,
-    rpcUrl,
+    publicClient,
     chain,
     baseUrl,
     smartAccountAddress,
@@ -88,7 +88,7 @@ export function smartAccountConnector<
                 const account = await createSafeSmartAccount({
                     apiKey,
                     chain,
-                    rpcUrl,
+                    publicClient,
                     baseUrl,
                     smartAccountAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -103,7 +103,7 @@ export function smartAccountConnector<
                         transport: http(paymasterUrl),
                         chain,
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
-                        rpcUrl,
+                        publicClient,
                     });
 
                     client = createSmartAccountClient({
@@ -116,7 +116,7 @@ export function smartAccountConnector<
                                 paymasterClient.sponsorUserOperation,
                             gasPrice: paymasterClient.gasPrice,
                         },
-                        rpcUrl,
+                        publicClient,
                     }) as unknown as ComethSmartAccountClient<
                         TSmartAccount,
                         TTransport,
@@ -129,7 +129,7 @@ export function smartAccountConnector<
                         entryPoint: ENTRYPOINT_ADDRESS_V07,
                         chain,
                         bundlerTransport: http(bundlerUrl),
-                        rpcUrl,
+                        publicClient,
                     }) as unknown as ComethSmartAccountClient<
                         TSmartAccount,
                         TTransport,

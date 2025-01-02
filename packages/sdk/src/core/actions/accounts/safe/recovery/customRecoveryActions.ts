@@ -15,6 +15,7 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type PublicClient,
     type Transport,
     createPublicClient,
     encodeFunctionData,
@@ -25,7 +26,7 @@ import { getAction } from "viem/utils";
 export type GetDelayModuleAddressParams = {
     expiration: number;
     cooldown: number;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 };
 
 export async function getDelayModuleAddress<
@@ -65,7 +66,7 @@ export async function getDelayModuleAddress<
 
 export type GetGuardianAddressParams = {
     delayModuleAddress: Address;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 };
 
 export async function getGuardianAddress<
@@ -81,13 +82,13 @@ export async function getGuardianAddress<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetGuardianAddressParams>
 ): Promise<Address> {
-    const { delayModuleAddress, rpcUrl } = args;
+    const { delayModuleAddress, publicClient } = args;
     const smartAccountAddress = client.account?.address as Address;
 
     const isEnabled = await isModuleEnabled({
         safeAddress: smartAccountAddress,
         chain: client.chain as Chain,
-        rpcUrl,
+        rpcUrl: publicClient?.transport.url,
         moduleAddress: delayModuleAddress,
     });
 
@@ -98,14 +99,14 @@ export async function getGuardianAddress<
     return await delayModuleService.getGuardianAddress({
         delayAddress: delayModuleAddress,
         chain: client.chain as Chain,
-        rpcUrl,
+        rpcUrl: publicClient?.transport.url,
     });
 }
 
 export type AddGuardianParams<entryPoint extends EntryPoint> = {
     delayModuleAddress: Address;
     guardianAddress: Address;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 } & Middleware<entryPoint>;
 
 export async function addGuardian<
@@ -121,13 +122,14 @@ export async function addGuardian<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<AddGuardianParams<entryPoint>>
 ): Promise<Hex> {
-    const { delayModuleAddress, guardianAddress, rpcUrl, middleware } = args;
+    const { delayModuleAddress, guardianAddress, publicClient, middleware } =
+        args;
     const smartAccountAddress = client.account?.address as Address;
 
     const isEnabled = await isModuleEnabled({
         safeAddress: smartAccountAddress,
         chain: client.chain as Chain,
-        rpcUrl,
+        rpcUrl: publicClient?.transport.url,
         moduleAddress: delayModuleAddress,
     });
 
@@ -138,7 +140,7 @@ export async function addGuardian<
     const existingGuardian = await delayModuleService.getGuardianAddress({
         delayAddress: delayModuleAddress,
         chain: client.chain as Chain,
-        rpcUrl,
+        rpcUrl: publicClient?.transport.url,
     });
 
     if (existingGuardian) {
@@ -174,7 +176,7 @@ export type DisableGuardianParams<entryPoint extends EntryPoint> = {
     guardianAddress: Address;
     expiration?: number;
     cooldown?: number;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 } & Middleware<entryPoint>;
 
 export async function disableGuardian<
@@ -190,7 +192,8 @@ export async function disableGuardian<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<DisableGuardianParams<entryPoint>>
 ): Promise<Hex> {
-    const { guardianAddress, expiration, cooldown, rpcUrl, middleware } = args;
+    const { guardianAddress, expiration, cooldown, publicClient, middleware } =
+        args;
     const smartAccountAddress = client.account?.address as Address;
 
     const api = client?.account?.getConnectApi();
@@ -222,7 +225,7 @@ export async function disableGuardian<
     const isEnabled = await isModuleEnabled({
         safeAddress: smartAccountAddress,
         chain: client.chain as Chain,
-        rpcUrl,
+        rpcUrl: publicClient?.transport.url,
         moduleAddress: delayAddress,
     });
 
@@ -234,7 +237,7 @@ export async function disableGuardian<
         delayAddress,
         targetModule: guardianAddress,
         chain: client.chain as Chain,
-        rpcUrl,
+        rpcUrl: publicClient?.transport.url,
     });
 
     if (!prevModuleAddress) {
@@ -268,7 +271,7 @@ export type SetupCustomDelayModuleParams<entryPoint extends EntryPoint> = {
     guardianAddress: Address;
     expiration?: number;
     cooldown?: number;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 } & Middleware<entryPoint>;
 
 export async function setupCustomDelayModule<
@@ -284,15 +287,18 @@ export async function setupCustomDelayModule<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<SetupCustomDelayModuleParams<entryPoint>>
 ): Promise<Hex> {
-    const { guardianAddress, expiration, cooldown, rpcUrl, middleware } = args;
+    const { guardianAddress, expiration, cooldown, publicClient, middleware } =
+        args;
     const smartAccountAddress = client.account?.address as Address;
 
-    const publicClient = createPublicClient({
-        chain: client.chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: { multicall: { wait: 50 } },
-    });
+    const rpcClient =
+        publicClient ??
+        createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: { multicall: { wait: 50 } },
+        });
 
     const api = client?.account?.getConnectApi();
     if (!api) throw new Error("No API found");
@@ -325,7 +331,7 @@ export async function setupCustomDelayModule<
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
-        client: publicClient,
+        client: rpcClient,
     });
 
     if (isDelayModuleDeployed) {

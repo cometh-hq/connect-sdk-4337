@@ -14,7 +14,13 @@ import type {
 import type { BundlerRpcSchema } from "permissionless/_types/types/bundler";
 import type { SmartAccount } from "permissionless/accounts";
 import type { EntryPoint } from "permissionless/types/entrypoint";
-import { type Chain, type Client, type Transport, createClient } from "viem";
+import {
+    type Chain,
+    type Client,
+    type PublicClient,
+    type Transport,
+    createClient,
+} from "viem";
 import type { Prettify } from "viem/chains";
 import {
     type ComethClientActions,
@@ -67,7 +73,7 @@ export function createSmartAccountClient<
         TTransport,
         TChain,
         TSmartAccount
-    > & { rpcUrl?: string }
+    > & { publicClient?: PublicClient }
 ): ComethSmartAccountClient<TSmartAccount, TTransport, TChain, TEntryPoint> {
     const {
         key = "Account",
@@ -89,9 +95,9 @@ export function createSmartAccountClient<
     ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
 
     return client
-        .extend(safeSessionKeyActions(parameters.rpcUrl))
+        .extend(safeSessionKeyActions(parameters?.publicClient?.transport.url))
         .extend(
-            safeOwnerPluginActions(parameters.rpcUrl)
+            safeOwnerPluginActions(parameters?.publicClient)
         ) as ComethSmartAccountClient<
         TSmartAccount,
         TTransport,

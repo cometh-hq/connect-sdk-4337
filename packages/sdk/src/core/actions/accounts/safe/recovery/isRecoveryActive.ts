@@ -9,13 +9,14 @@ import {
     type Address,
     type Chain,
     type Client,
+    type PublicClient,
     type Transport,
     createPublicClient,
 } from "viem";
 
 export type IsRecoveryActiveParams = {
     effectiveDelayAddress?: Address;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 };
 
 export type IsRecoveryActiveReturnType = {
@@ -36,18 +37,20 @@ export async function isRecoveryActive<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<IsRecoveryActiveParams> = {}
 ): Promise<IsRecoveryActiveReturnType> {
-    const { effectiveDelayAddress, rpcUrl } = args;
+    const { effectiveDelayAddress, publicClient } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
-    const publicClient = createPublicClient({
-        chain: client.chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
+    const rpcClient =
+        publicClient ??
+        createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        });
     let delayAddress: Address;
 
     if (effectiveDelayAddress) {
@@ -86,14 +89,14 @@ export async function isRecoveryActive<
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
-        client: publicClient,
+        client: rpcClient,
     });
 
     if (isDelayModuleDeployed) {
         contractGuardian = await delayModuleService.getGuardianAddress({
             delayAddress,
             chain: client.chain as Chain,
-            rpcUrl,
+            rpcUrl: rpcClient.transport.url,
         });
     }
 

@@ -5,6 +5,7 @@ import {
     type Client,
     type Hex,
     type PrivateKeyAccount,
+    type PublicClient,
     type Transport,
     createPublicClient,
     zeroAddress,
@@ -111,11 +112,11 @@ export type createSafeSmartAccountParameters = Prettify<{
     apiKeyLegacy: string;
     apiKey4337: string;
     chain: Chain;
-    rpcUrl?: string;
     smartAccountAddress?: Address;
     comethSignerConfig?: ComethSignerConfig;
     isImport?: boolean;
     baseUrl: string;
+    publicClient: PublicClient;
 }>;
 
 /**
@@ -132,11 +133,11 @@ export async function createLegacySafeSmartAccount<
     apiKeyLegacy,
     apiKey4337,
     chain,
-    rpcUrl,
     smartAccountAddress,
     comethSignerConfig,
     isImport = false,
     baseUrl,
+    publicClient,
 }: createSafeSmartAccountParameters): Promise<
     LegacySafeSmartAccount<TTransport, TChain>
 > {
@@ -145,18 +146,20 @@ export async function createLegacySafeSmartAccount<
     const legacyApi = new LEGACY_API(apiKeyLegacy);
     const api = new API(apiKey4337, baseUrl);
 
-    const publicClient = createPublicClient({
-        chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
+    publicClient =
+        publicClient ??
+        createPublicClient({
+            chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        });
 
     const [client, projectParams, legacyProjectParams, isWebAuthnCompatible] =
         await Promise.all([
-            getViemClient(chain, rpcUrl) as Client<
+            getViemClient(chain, publicClient.transport.url) as Client<
                 TTransport,
                 TChain,
                 undefined

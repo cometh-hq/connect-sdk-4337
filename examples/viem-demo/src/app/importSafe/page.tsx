@@ -24,7 +24,7 @@ export default function App() {
     const migrateSafe = async () => {
         const legacyWalletAddress = walletToImport;
 
-        const signer = privateKeyToAccount(process.env.PRIVATE_KEY! as Hex);
+        const signer = privateKeyToAccount(process.env.NEXT_PUBLIC_PRIVATE_KEY! as Hex);
 
         const safe4337SmartAccount = await createSafeSmartAccount({
             apiKey,
