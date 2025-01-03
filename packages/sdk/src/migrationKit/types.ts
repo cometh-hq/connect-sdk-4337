@@ -111,3 +111,17 @@ export type WebAuthnSigner = {
     deploymentParams: WebAuthnDeploymentParams;
     creationDate?: Date;
 };
+
+export type ProjectParams = {
+    chainId: string;
+    P256FactoryContractAddress: string;
+    multisendContractAddress: string;
+    singletonAddress: string;
+    simulateTxAcessorAddress: string;
+    deploymentManagerAddress: string;
+    guardianId: string;
+    moduleFactoryAddress: string;
+    delayModuleAddress: string;
+    recoveryCooldown: number;
+    recoveryExpiration: number;
+};

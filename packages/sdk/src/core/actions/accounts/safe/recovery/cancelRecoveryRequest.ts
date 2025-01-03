@@ -21,31 +21,33 @@ import { getAction } from "viem/utils";
 
 export type CancelRecoveryRequestParams = {
     effectiveDelayAddress?: Address;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 };
 
 export async function cancelRecoveryRequest<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<CancelRecoveryRequestParams>
 ): Promise<Hex> {
-    const { effectiveDelayAddress, rpcUrl } = args;
+    const { effectiveDelayAddress, publicClient } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
-    const publicClient = createPublicClient({
-        chain: client.chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
+    const rpcClient =
+        publicClient ??
+        createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        });
 
     let delayAddress: Address;
 
@@ -83,7 +85,7 @@ export async function cancelRecoveryRequest<
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
-        client: publicClient,
+        client: rpcClient,
     });
 
     if (!isDelayModuleDeployed) throw Error("Recovery not active");
@@ -91,7 +93,7 @@ export async function cancelRecoveryRequest<
     const recoveryRequest = await delayModuleService.getCurrentRecoveryParams(
         delayAddress,
         client.chain as Chain,
-        rpcUrl
+        rpcClient.transport.url
     );
 
     if (!recoveryRequest) throw new NoRecoveryRequestFoundError();

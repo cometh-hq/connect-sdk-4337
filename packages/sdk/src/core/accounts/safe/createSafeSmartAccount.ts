@@ -40,6 +40,8 @@ import type { SafeContractParams } from "./types";
 
 export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
     connectApiInstance: API;
+    safeContractParams: SafeContractParams;
+    comethSignerConfig?: ComethSignerConfig;
     signerAddress: Address;
     rpcUrl?: string;
 };
@@ -262,6 +264,9 @@ export async function createSafeSmartAccount<
             version: "0.7",
         },
         connectApiInstance: api,
+        safeContractParams:
+            safeContractConfig ?? contractParams.safeContractParams,
+        comethSignerConfig,
         rpcUrl,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });

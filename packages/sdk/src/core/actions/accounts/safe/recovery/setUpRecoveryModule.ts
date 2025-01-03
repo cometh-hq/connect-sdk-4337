@@ -16,37 +16,40 @@ import {
     createPublicClient,
     encodeFunctionData,
     parseAbi,
+    type PublicClient,
 } from "viem";
 import { getAction } from "viem/utils";
 
 export type SetUpRecoveryModuleParams = {
     passKeyName?: string;
     webAuthnOptions?: webAuthnOptions;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 };
 
 export async function setUpRecoveryModule<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<SetUpRecoveryModuleParams>
 ): Promise<Hex> {
-    const { rpcUrl } = args;
+    const { publicClient } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
-    const publicClient = createPublicClient({
-        chain: client.chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
+    const rpcClient =
+        publicClient ??
+        createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        });
 
     const api = client?.account?.connectApiInstance;
 
@@ -79,7 +82,7 @@ export async function setUpRecoveryModule<
 
     const isDelayModuleDeployed = await delayModuleService.isDeployed({
         delayAddress,
-        client: publicClient,
+        client: rpcClient,
     });
 
     if (isDelayModuleDeployed) throw Error("Recovery already setup");

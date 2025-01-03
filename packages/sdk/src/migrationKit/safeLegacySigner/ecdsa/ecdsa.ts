@@ -92,8 +92,8 @@ export async function safeLegacyECDSASigner<
         async signTypedData<
             const TTypedData extends TypedData | Record<string, unknown>,
             TPrimaryType extends
-                | keyof TTypedData
-                | "EIP712Domain" = keyof TTypedData,
+            | keyof TTypedData
+            | "EIP712Domain" = keyof TTypedData,
         >(typedData: TypedDataDefinition<TTypedData, TPrimaryType>) {
             return signTypedData<TTypedData, TPrimaryType, TChain, undefined>(
                 client,
