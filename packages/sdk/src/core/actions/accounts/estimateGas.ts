@@ -22,17 +22,16 @@ export const estimateGas = async <
     paymasterVerificationGasLimit?: bigint;
     paymasterPostOpGasLimit?: bigint;
 }> => {
-    console.log({args})
 
-      const publicClient = createPublicClient({
-                    chain: client.chain,
-                    transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
-                    
-                });
+    const publicClient = createPublicClient({
+        chain: client.chain,
+        transport: http(),
+        cacheTime: 60_000,
+        batch: {
+            multicall: { wait: 50 },
+        },
+
+    });
     const maxGasPriceResult = await getAction(
         publicClient,
         estimateFeesPerGas,
@@ -42,9 +41,9 @@ export const estimateGas = async <
         type: "eip1559",
     });
 
-    console.log({maxGasPriceResult})
-    
-    console.log({args})
+    console.log({ maxGasPriceResult })
+
+    console.log({ args })
     const estimateGas = await getAction(
         client,
         estimateUserOperationGas,
@@ -53,7 +52,7 @@ export const estimateGas = async <
         ...args,
     });
 
-    console.log({estimateGas})
+    console.log({ estimateGas })
 
 
 
