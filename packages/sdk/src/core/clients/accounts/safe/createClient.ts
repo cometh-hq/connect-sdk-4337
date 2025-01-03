@@ -8,6 +8,7 @@ import {
     type BundlerRpcSchema,
     type Chain,
     type Client,
+    type PublicClient,
     type RpcSchema,
     type Transport,
     createClient,
@@ -22,31 +23,31 @@ import {
 export type ComethAccountClientActions<
     chain extends Chain | undefined = Chain | undefined,
     account extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 > = ComethClientActions<chain, account> & SafeOwnerPluginActions;
 
 export type SmartAccountClient<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
     account extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
     client extends Client | undefined = Client | undefined,
     rpcSchema extends RpcSchema | undefined = undefined,
 > = Prettify<
     Client<
         transport,
         chain extends Chain
-            ? chain
-            : // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-              client extends Client<any, infer chain>
-              ? chain
-              : undefined,
+        ? chain
+        : // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        client extends Client<any, infer chain>
+        ? chain
+        : undefined,
         account,
         rpcSchema extends RpcSchema
-            ? [...BundlerRpcSchema, ...rpcSchema]
-            : BundlerRpcSchema,
+        ? [...BundlerRpcSchema, ...rpcSchema]
+        : BundlerRpcSchema,
         BundlerActions<account> & ComethClientActions<chain, account>
     >
 >;
@@ -55,23 +56,23 @@ export type ComethSmartAccountClient<
     transport extends Transport = Transport,
     chain extends Chain | undefined = Chain | undefined,
     account extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
     client extends Client | undefined = Client | undefined,
     rpcSchema extends RpcSchema | undefined = undefined,
 > = Prettify<
     Client<
         transport,
         chain extends Chain
-            ? chain
-            : // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-              client extends Client<any, infer chain>
-              ? chain
-              : undefined,
+        ? chain
+        : // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        client extends Client<any, infer chain>
+        ? chain
+        : undefined,
         account,
         rpcSchema extends RpcSchema
-            ? [...BundlerRpcSchema, ...rpcSchema]
-            : BundlerRpcSchema,
+        ? [...BundlerRpcSchema, ...rpcSchema]
+        : BundlerRpcSchema,
         BundlerActions<account> & ComethAccountClientActions<chain, account>
     >
 >;
@@ -80,8 +81,8 @@ export function createSmartAccountClient<
     transport extends Transport,
     chain extends Chain | undefined = undefined,
     account extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
     client extends Client | undefined = undefined,
     rpcSchema extends RpcSchema | undefined = undefined,
 >(
@@ -91,7 +92,7 @@ export function createSmartAccountClient<
         account,
         client,
         rpcSchema
-    > & { rpcUrl?: string }
+    > & { publicClient?: PublicClient }
 ): ComethSmartAccountClient<transport, chain, account, client> {
     const {
         client: client_,
@@ -118,5 +119,5 @@ export function createSmartAccountClient<
         // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         .extend(comethAccountClientActions() as any) as any;
 
-    return client.extend(safeOwnerPluginActions(parameters.rpcUrl));
+    return client.extend(safeOwnerPluginActions(parameters?.publicClient));
 }
