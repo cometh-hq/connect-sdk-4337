@@ -1,4 +1,4 @@
-import type { Account, Chain, Client, Transport } from "viem";
+import { createPublicClient, http, type Account, type Chain, type Client, type Transport } from "viem";
 import {
     type EstimateUserOperationGasParameters,
     estimateUserOperationGas,
@@ -22,8 +22,19 @@ export const estimateGas = async <
     paymasterVerificationGasLimit?: bigint;
     paymasterPostOpGasLimit?: bigint;
 }> => {
+    console.log({args})
+
+      const publicClient = createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                    
+                });
     const maxGasPriceResult = await getAction(
-        client,
+        publicClient,
         estimateFeesPerGas,
         "estimateFeesPerGas"
     )({

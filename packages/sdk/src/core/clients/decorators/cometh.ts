@@ -40,6 +40,11 @@ import {
 } from "@/core/actions/accounts/safe/verifySignature";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
 import { type SmartAccountActions, smartAccountActions } from "permissionless";
+import {
+    type EstimateUserOperationGasParameters,
+
+} from "viem/account-abstraction";
+import { estimateGas } from "@/core/actions/accounts/estimateGas";
 
 export type ComethClientActions<
     TChain extends Chain | undefined = Chain | undefined,
@@ -77,6 +82,7 @@ export type ComethClientActions<
             typeof verifySignature<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<boolean>;
+<<<<<<< HEAD
     /*    estimateGas: (args: EstimateUserOperationGasParameters) => Promise<{
            callGasLimit: bigint;
            verificationGasLimit: bigint;
@@ -86,6 +92,17 @@ export type ComethClientActions<
            paymasterVerificationGasLimit?: bigint;
            paymasterPostOpGasLimit?: bigint;
        }>; */
+=======
+    estimateGas: (args: EstimateUserOperationGasParameters) => Promise<{
+        callGasLimit: bigint;
+        verificationGasLimit: bigint;
+        preVerificationGas: bigint;
+        maxFeePerGas: bigint;
+        maxPriorityFeePerGas: bigint;
+        paymasterVerificationGasLimit?: bigint;
+        paymasterPostOpGasLimit?: bigint;
+    }>;
+>>>>>>> 4247bec (wip)
     /*  estimateUserOperationGas: (
          args: Prettify<
              Omit<EstimateUserOperationGasParameters<entryPoint>, "entryPoint">
@@ -161,7 +178,7 @@ export function comethAccountClientActions() {
                     ...args,
                 } as VerifySignatureParams),
 
-            //estimateGas: async (args) => estimateGas(client, args),
+            estimateGas: async (args) => estimateGas(client, args),
             getDelayModuleAddress: (args) =>
                 getDelayModuleAddress<TTransport, TChain, TSmartAccount>(
                     client,
