@@ -46,7 +46,7 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2.21.22",
+    "viem": "^2",
     "wagmi": "^2"
   },
   "devDependencies": {
@@ -67,7 +67,7 @@
     "bowser": "^2.11.0",
     "cbor-js": "^0.1.0",
     "elliptic": "^6.5.7",
-    "permissionless": "^0.2.14",
+    "permissionless": "^0.2.23",
     "psl": "^1.9.0",
     "qrcode": "^1.5.3"
   }
