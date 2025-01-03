@@ -46,7 +46,7 @@ export type UseCancelRecoveryRequestReturn = QueryResultType & {
  *   const handleCancel = async () => {
  *     try {
  *       const result = await cancelRecoveryRequestAsync({
- *         rpcUrl: 'https://my-rpc-url.com',
+ *          publicClient,
  *         // other necessary parameters
  *       });
  *       console.log('Recovery request canceled successfully:', result);
@@ -90,7 +90,7 @@ export function useCancelRecoveryRequest(): UseCancelRecoveryRequestReturn {
                 }
 
                 return smartAccountClient.cancelRecoveryRequest({
-                    rpcUrl: variables.rpcUrl,
+                    publicClient: variables.publicClient
                 });
             },
         },

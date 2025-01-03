@@ -22,7 +22,7 @@ export type UseGetRecoveryRequestReturn = {
  * and retrieve the details of the recovery request if one exists.
  *
  * @param {UseGetRecoveryRequestProps} props - The properties for the hook.
- * @param {string} [props.rpcUrl] - Optional RPC URL for the blockchain network.
+ * @param {string} [props.publicClient] - Optional client for the blockchain network.
  * @param {UseQueryOptions} [queryOptions] - Optional configuration for the React Query hook.
  *
  * @example
@@ -31,7 +31,7 @@ export type UseGetRecoveryRequestReturn = {
  *
  * export const RecoveryRequestStatus = () => {
  *   const { data, isLoading, isError, error } = useGetRecoveryRequest({
- *     rpcUrl: 'https://my-rpc-url.com',
+ *     publicClient
  *   });
  *
  *   if (isLoading) return <p>Loading recovery request status...</p>;
@@ -74,7 +74,7 @@ export function useGetRecoveryRequest(
         Error
     >(
         {
-            queryKey: ["getRecoveryRequest", props.rpcUrl],
+            queryKey: ["getRecoveryRequest", props.publicClient],
             queryFn: async () => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
