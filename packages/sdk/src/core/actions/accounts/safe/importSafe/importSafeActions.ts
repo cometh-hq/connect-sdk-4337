@@ -1,5 +1,6 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+
 import {
     prepareImportCalldata,
     prepareLegacyMigrationCalldata,
@@ -14,7 +15,6 @@ import {
     type SmartAccountClient,
     isSmartAccountDeployed,
 } from "permissionless";
-import type { EntryPoint } from "permissionless/_types/types";
 import {
     http,
     type Address,
@@ -25,6 +25,7 @@ import {
     type Transport,
     createPublicClient,
     zeroAddress,
+    type Client,
 } from "viem";
 import {
     create4337Signer,
@@ -69,311 +70,311 @@ export type SafeImportActions = {
 
 export const importSafeActions =
     (publicClient?: PublicClient) =>
-    <
-        TEntryPoint extends EntryPoint,
-        TSmartAccount extends SafeSmartAccount<TEntryPoint> | undefined,
-        TChain extends Chain | undefined = undefined,
-        TTransport extends Transport = Transport,
-    >(
-        client: SmartAccountClient<
-            TEntryPoint,
-            TTransport,
-            TChain,
-            TSmartAccount
-        >
-    ): SafeImportActions => ({
-        prepareImportSafe1_3Tx: async () => {
-            const rpcClient =
-                publicClient ??
-                createPublicClient({
-                    chain: client.chain,
-                    transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
-                });
+        <
+            transport extends Transport,
+            chain extends Chain | undefined = undefined,
+            account extends ComethSafeSmartAccount | undefined = undefined,
+            client extends Client | undefined = undefined,
+        >(
+            client: SmartAccountClient<
+                transport,
+                chain,
+                account,
+                client
+            >
+        ): SafeImportActions => ({
+            prepareImportSafe1_3Tx: async () => {
+                const rpcClient =
+                    publicClient ??
+                    createPublicClient({
+                        chain: client.chain,
+                        transport: http(),
+                        cacheTime: 60_000,
+                        batch: {
+                            multicall: { wait: 50 },
+                        },
+                    });
 
-            const isDeployed = await isSmartAccountDeployed(
-                rpcClient,
-                client.account?.address as Address
-            );
+                const isDeployed = await isSmartAccountDeployed(
+                    rpcClient,
+                    client.account?.address as Address
+                );
 
-            if (!isDeployed)
-                throw new Error("Import can only be done on deployed safe");
+                if (!isDeployed)
+                    throw new Error("Import can only be done on deployed safe");
 
-            const api = client?.account?.getConnectApi() as API;
-            const comethSignerConfig = client?.account?.comethSignerConfig;
-            const contractParams = client?.account?.safeContractParams;
+                const api = client?.account?.connectApiInstance as API;
+                const comethSignerConfig = client?.account?.comethSignerConfig;
+                const contractParams = client?.account?.safeContractParams;
 
-            let threshold: number;
-            let is4337ModuleEnabled: boolean;
-            let nonce: bigint;
-            let currentVersion: string;
+                let threshold: number;
+                let is4337ModuleEnabled: boolean;
+                let nonce: bigint;
+                let currentVersion: string;
 
-            if (isDeployed) {
-                [currentVersion, threshold, is4337ModuleEnabled, nonce] =
-                    (await Promise.all([
-                        rpcClient.readContract({
-                            address: client.account?.address as Address,
-                            abi: SafeAbi,
-                            functionName: "VERSION",
-                        }),
-                        rpcClient.readContract({
-                            address: client.account?.address as Address,
-                            abi: SafeAbi,
-                            functionName: "getThreshold",
-                        }),
-                        rpcClient.readContract({
-                            address: client.account?.address as Address,
-                            abi: SafeAbi,
-                            functionName: "isModuleEnabled",
-                            args: [
-                                contractParams?.safe4337ModuleAddress as Address,
-                            ],
-                        }),
-                        rpcClient.readContract({
-                            address: client.account?.address as Address,
-                            abi: SafeAbi,
-                            functionName: "nonce",
-                        }),
-                    ])) as [string, number, boolean, bigint];
+                if (isDeployed) {
+                    [currentVersion, threshold, is4337ModuleEnabled, nonce] =
+                        (await Promise.all([
+                            rpcClient.readContract({
+                                address: client.account?.address as Address,
+                                abi: SafeAbi,
+                                functionName: "VERSION",
+                            }),
+                            rpcClient.readContract({
+                                address: client.account?.address as Address,
+                                abi: SafeAbi,
+                                functionName: "getThreshold",
+                            }),
+                            rpcClient.readContract({
+                                address: client.account?.address as Address,
+                                abi: SafeAbi,
+                                functionName: "isModuleEnabled",
+                                args: [
+                                    contractParams?.safe4337ModuleAddress as Address,
+                                ],
+                            }),
+                            rpcClient.readContract({
+                                address: client.account?.address as Address,
+                                abi: SafeAbi,
+                                functionName: "nonce",
+                            }),
+                        ])) as [string, number, boolean, bigint];
 
-                if (currentVersion !== "1.3.0") {
-                    throw new Error(
-                        `Safe is not version 1.3.0. Current version: ${currentVersion}`
-                    );
+                    if (currentVersion !== "1.3.0") {
+                        throw new Error(
+                            `Safe is not version 1.3.0. Current version: ${currentVersion}`
+                        );
+                    }
+                } else {
+                    threshold = 1;
+                    is4337ModuleEnabled = false;
+                    nonce = 0n;
                 }
-            } else {
-                threshold = 1;
-                is4337ModuleEnabled = false;
-                nonce = 0n;
-            }
 
-            const isWebAuthnCompatible = await isDeviceCompatibleWithPasskeys({
-                webAuthnOptions: {},
-            });
-
-            const signer = await create4337Signer({
-                api,
-                isWebAuthnCompatible,
-                comethSignerConfig,
-                safeWebAuthnSharedSignerContractAddress:
-                    contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
-            });
-
-            const { passkey, eoaSigner } = extractComethSignerParams(signer);
-
-            const migrateCalldata = await prepareLegacyMigrationCalldata({
-                threshold,
-                safe4337ModuleAddress:
-                    contractParams?.safe4337ModuleAddress as Address,
-                safeWebAuthnSharedSignerContractAddress:
-                    contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
-                migrationContractAddress:
-                    contractParams?.migrationContractAddress as Address,
-                p256Verifier: contractParams?.p256Verifier as Address,
-                smartAccountAddress: client.account?.address as Address,
-                passkey,
-                eoaSigner,
-                isImport: true,
-                is4337ModuleEnabled,
-            });
-
-            return {
-                tx: {
-                    to: multisendAddress,
-                    value: BigInt(0).toString(),
-                    data: migrateCalldata,
-                    operation: 1,
-                    safeTxGas: 0,
-                    baseGas: 0,
-                    gasPrice: 0,
-                    gasToken: zeroAddress,
-                    refundReceiver: zeroAddress,
-                    nonce: Number(nonce),
-                } as SafeTransactionDataPartial,
-                passkey,
-                eoaSigner,
-            };
-        },
-        prepareImportSafe1_4Tx: async () => {
-            const rpcClient =
-                publicClient ??
-                createPublicClient({
-                    chain: client.chain,
-                    transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                const isWebAuthnCompatible = await isDeviceCompatibleWithPasskeys({
+                    webAuthnOptions: {},
                 });
 
-            const isDeployed = await isSmartAccountDeployed(
-                rpcClient,
-                client.account?.address as Address
-            );
+                const signer = await create4337Signer({
+                    api,
+                    isWebAuthnCompatible,
+                    comethSignerConfig,
+                    safeWebAuthnSharedSignerContractAddress:
+                        contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
+                });
 
-            if (!isDeployed)
-                throw new Error("Import can only be done on deployed safe");
+                const { passkey, eoaSigner } = extractComethSignerParams(signer);
 
-            const api = client?.account?.getConnectApi() as API;
-            const comethSignerConfig = client?.account?.comethSignerConfig;
-            const contractParams = client?.account?.safeContractParams;
+                const migrateCalldata = await prepareLegacyMigrationCalldata({
+                    threshold,
+                    safe4337ModuleAddress:
+                        contractParams?.safe4337ModuleAddress as Address,
+                    safeWebAuthnSharedSignerContractAddress:
+                        contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
+                    migrationContractAddress:
+                        contractParams?.migrationContractAddress as Address,
+                    p256Verifier: contractParams?.p256Verifier as Address,
+                    smartAccountAddress: client.account?.address as Address,
+                    passkey,
+                    eoaSigner,
+                    isImport: true,
+                    is4337ModuleEnabled,
+                });
 
-            const importedWallet = await api.getWalletByNetworks(
-                client?.account?.address as Address
-            );
+                return {
+                    tx: {
+                        to: multisendAddress,
+                        value: BigInt(0).toString(),
+                        data: migrateCalldata,
+                        operation: 1,
+                        safeTxGas: 0,
+                        baseGas: 0,
+                        gasPrice: 0,
+                        gasToken: zeroAddress,
+                        refundReceiver: zeroAddress,
+                        nonce: Number(nonce),
+                    } as SafeTransactionDataPartial,
+                    passkey,
+                    eoaSigner,
+                };
+            },
+            prepareImportSafe1_4Tx: async () => {
+                const rpcClient =
+                    publicClient ??
+                    createPublicClient({
+                        chain: client.chain,
+                        transport: http(),
+                        cacheTime: 60_000,
+                        batch: {
+                            multicall: { wait: 50 },
+                        },
+                    });
 
-            if (importedWallet?.length > 0)
-                throw new Error("Wallet already imported");
+                const isDeployed = await isSmartAccountDeployed(
+                    rpcClient,
+                    client.account?.address as Address
+                );
 
-            let threshold: number;
-            let is4337ModuleEnabled: boolean;
-            let nonce: bigint;
-            let currentVersion: string;
+                if (!isDeployed)
+                    throw new Error("Import can only be done on deployed safe");
 
-            if (isDeployed) {
-                [currentVersion, threshold, is4337ModuleEnabled, nonce] =
-                    (await Promise.all([
-                        rpcClient.readContract({
-                            address: client.account?.address as Address,
-                            abi: SafeAbi,
-                            functionName: "VERSION",
-                        }),
-                        rpcClient.readContract({
-                            address: client.account?.address as Address,
-                            abi: SafeAbi,
-                            functionName: "getThreshold",
-                        }),
-                        rpcClient.readContract({
-                            address: client.account?.address as Address,
-                            abi: SafeAbi,
-                            functionName: "isModuleEnabled",
-                            args: [
-                                contractParams?.safe4337ModuleAddress as Address,
-                            ],
-                        }),
-                        rpcClient.readContract({
-                            address: client.account?.address as Address,
-                            abi: SafeAbi,
-                            functionName: "nonce",
-                        }),
-                    ])) as [string, number, boolean, bigint];
+                const api = client?.account?.connectApiInstance as API;
+                const comethSignerConfig = client?.account?.comethSignerConfig;
+                const contractParams = client?.account?.safeContractParams;
 
-                if (currentVersion !== "1.4.1") {
-                    throw new Error(
-                        `Safe is not version 1.4.1. Current version: ${currentVersion}`
-                    );
+                const importedWallet = await api.getWalletByNetworks(
+                    client?.account?.address as Address
+                );
+
+                if (importedWallet?.length > 0)
+                    throw new Error("Wallet already imported");
+
+                let threshold: number;
+                let is4337ModuleEnabled: boolean;
+                let nonce: bigint;
+                let currentVersion: string;
+
+                if (isDeployed) {
+                    [currentVersion, threshold, is4337ModuleEnabled, nonce] =
+                        (await Promise.all([
+                            rpcClient.readContract({
+                                address: client.account?.address as Address,
+                                abi: SafeAbi,
+                                functionName: "VERSION",
+                            }),
+                            rpcClient.readContract({
+                                address: client.account?.address as Address,
+                                abi: SafeAbi,
+                                functionName: "getThreshold",
+                            }),
+                            rpcClient.readContract({
+                                address: client.account?.address as Address,
+                                abi: SafeAbi,
+                                functionName: "isModuleEnabled",
+                                args: [
+                                    contractParams?.safe4337ModuleAddress as Address,
+                                ],
+                            }),
+                            rpcClient.readContract({
+                                address: client.account?.address as Address,
+                                abi: SafeAbi,
+                                functionName: "nonce",
+                            }),
+                        ])) as [string, number, boolean, bigint];
+
+                    if (currentVersion !== "1.4.1") {
+                        throw new Error(
+                            `Safe is not version 1.4.1. Current version: ${currentVersion}`
+                        );
+                    }
+                } else {
+                    threshold = 1;
+                    is4337ModuleEnabled = false;
+                    nonce = 0n;
                 }
-            } else {
-                threshold = 1;
-                is4337ModuleEnabled = false;
-                nonce = 0n;
-            }
 
-            const isWebAuthnCompatible = await isDeviceCompatibleWithPasskeys({
-                webAuthnOptions: {},
-            });
-
-            const signer = await create4337Signer({
-                api,
-                isWebAuthnCompatible,
-                comethSignerConfig,
-                safeWebAuthnSharedSignerContractAddress:
-                    contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
-            });
-
-            const { passkey, eoaSigner } = extractComethSignerParams(signer);
-
-            const migrateCalldata = await prepareImportCalldata({
-                threshold,
-                safe4337ModuleAddress:
-                    contractParams?.safe4337ModuleAddress as Address,
-                safeWebAuthnSharedSignerContractAddress:
-                    contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
-                p256Verifier: contractParams?.p256Verifier as Address,
-                smartAccountAddress: client.account?.address as Address,
-                passkey,
-                eoaSigner,
-                isImport: true,
-                is4337ModuleEnabled,
-            });
-
-            return {
-                tx: {
-                    to: multisendAddress,
-                    value: BigInt(0).toString(),
-                    data: migrateCalldata,
-                    operation: 1,
-                    safeTxGas: 0,
-                    baseGas: 0,
-                    gasPrice: 0,
-                    gasToken: zeroAddress,
-                    refundReceiver: zeroAddress,
-                    nonce: Number(nonce),
-                } as SafeTransactionDataPartial,
-                passkey,
-                eoaSigner,
-            };
-        },
-        importSafe: async (args) => {
-            const api = client?.account?.getConnectApi() as API;
-            const contractParams = client?.account
-                ?.safeContractParams as SafeContractParams;
-
-            const relayId = await createCalldataAndImport({
-                api,
-                smartAccountAddress: client.account?.address as Address,
-                chainId: client.chain?.id as number,
-                contractParams,
-                tx: args.tx,
-                signature: args.signature,
-                passkey: args.passkey,
-                eoaSigner: args.eoaSigner,
-            });
-
-            const txHash = await waitForTransactionRelayAndImport({
-                relayId,
-                api,
-                chainId: client.chain?.id as number,
-            });
-
-            return txHash;
-        },
-        signTransactionByExternalOwner: async (args) => {
-            const { signer, tx } = args;
-
-            const rpcClient =
-                publicClient ??
-                createPublicClient({
-                    chain: client.chain,
-                    transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                const isWebAuthnCompatible = await isDeviceCompatibleWithPasskeys({
+                    webAuthnOptions: {},
                 });
 
-            const isDeployed = await isSmartAccountDeployed(
-                rpcClient,
-                client.account?.address as Address
-            );
+                const signer = await create4337Signer({
+                    api,
+                    isWebAuthnCompatible,
+                    comethSignerConfig,
+                    safeWebAuthnSharedSignerContractAddress:
+                        contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
+                });
 
-            const nonce = isDeployed
-                ? ((await rpcClient.readContract({
-                      address: client.account?.address as Address,
-                      abi: SafeAbi,
-                      functionName: "nonce",
-                  })) as bigint)
-                : BigInt(0);
+                const { passkey, eoaSigner } = extractComethSignerParams(signer);
 
-            return signTypedData({
-                signer,
-                chainId: client.chain?.id as number,
-                verifyingContract: client.account?.address as Address,
-                tx,
-                nonce,
-            });
-        },
-    });
+                const migrateCalldata = await prepareImportCalldata({
+                    threshold,
+                    safe4337ModuleAddress:
+                        contractParams?.safe4337ModuleAddress as Address,
+                    safeWebAuthnSharedSignerContractAddress:
+                        contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
+                    p256Verifier: contractParams?.p256Verifier as Address,
+                    smartAccountAddress: client.account?.address as Address,
+                    passkey,
+                    eoaSigner,
+                    isImport: true,
+                    is4337ModuleEnabled,
+                });
+
+                return {
+                    tx: {
+                        to: multisendAddress,
+                        value: BigInt(0).toString(),
+                        data: migrateCalldata,
+                        operation: 1,
+                        safeTxGas: 0,
+                        baseGas: 0,
+                        gasPrice: 0,
+                        gasToken: zeroAddress,
+                        refundReceiver: zeroAddress,
+                        nonce: Number(nonce),
+                    } as SafeTransactionDataPartial,
+                    passkey,
+                    eoaSigner,
+                };
+            },
+            importSafe: async (args) => {
+                const api = client?.account?.connectApiInstance as API;
+                const contractParams = client?.account
+                    ?.safeContractParams as SafeContractParams;
+
+                const relayId = await createCalldataAndImport({
+                    api,
+                    smartAccountAddress: client.account?.address as Address,
+                    chainId: client.chain?.id as number,
+                    contractParams,
+                    tx: args.tx,
+                    signature: args.signature,
+                    passkey: args.passkey,
+                    eoaSigner: args.eoaSigner,
+                });
+
+                const txHash = await waitForTransactionRelayAndImport({
+                    relayId,
+                    api,
+                    chainId: client.chain?.id as number,
+                });
+
+                return txHash;
+            },
+            signTransactionByExternalOwner: async (args) => {
+                const { signer, tx } = args;
+
+                const rpcClient =
+                    publicClient ??
+                    createPublicClient({
+                        chain: client.chain,
+                        transport: http(),
+                        cacheTime: 60_000,
+                        batch: {
+                            multicall: { wait: 50 },
+                        },
+                    });
+
+                const isDeployed = await isSmartAccountDeployed(
+                    rpcClient,
+                    client.account?.address as Address
+                );
+
+                const nonce = isDeployed
+                    ? ((await rpcClient.readContract({
+                        address: client.account?.address as Address,
+                        abi: SafeAbi,
+                        functionName: "nonce",
+                    })) as bigint)
+                    : BigInt(0);
+
+                return signTypedData({
+                    signer,
+                    chainId: client.chain?.id as number,
+                    verifyingContract: client.account?.address as Address,
+                    tx,
+                    nonce,
+                });
+            },
+        });

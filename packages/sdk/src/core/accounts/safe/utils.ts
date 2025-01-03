@@ -13,6 +13,8 @@ import type {
 } from "viem/account-abstraction";
 import { getCode, readContract } from "viem/actions";
 import { getAction } from "viem/utils";
+import type { SafeContractParams } from "./types";
+import type { ComethSignerConfig } from "@/core/signers/types";
 
 export type ToSmartAccountParameters<
     entryPointAbi extends Abi | readonly unknown[] = Abi,
@@ -22,7 +24,7 @@ export type ToSmartAccountParameters<
 
 export type ToSmartAccountReturnType<
     implementation extends
-        SmartAccountImplementation = SmartAccountImplementation,
+    SmartAccountImplementation = SmartAccountImplementation,
 > = Prettify<SmartAccount<implementation>>;
 
 /**
@@ -34,6 +36,8 @@ export type ToSmartAccountReturnType<
 export async function toSmartAccount<
     implementation extends SmartAccountImplementation & {
         connectApiInstance: API;
+        safeContractParams: SafeContractParams;
+        comethSignerConfig?: ComethSignerConfig;
         signerAddress: Address;
         rpcUrl?: string;
     },
@@ -42,6 +46,8 @@ export async function toSmartAccount<
 ): Promise<
     ToSmartAccountReturnType<implementation> & {
         connectApiInstance: API;
+        safeContractParams: SafeContractParams;
+        comethSignerConfig?: ComethSignerConfig;
         signerAddress: Address;
         rpcUrl?: string;
     }
@@ -53,7 +59,7 @@ export async function toSmartAccount<
                 get() {
                     return Date.now();
                 },
-                set() {},
+                set() { },
             },
         }),
         ...rest
@@ -120,27 +126,27 @@ export async function toSmartAccount<
         },
         ...(comethImplementation.sign
             ? {
-                  async sign(parameters) {
-                      const [{ factory, factoryData }, signature] =
-                          await Promise.all([
-                              this.getFactoryArgs(),
-                              comethImplementation.sign
-                                  ? comethImplementation.sign(parameters)
-                                  : Promise.reject(
-                                          new Error(
-                                              "sign method is not defined"
-                                          )
-                                      ),
-                          ]);
-                      if (factory && factoryData)
-                          return serializeErc6492Signature({
-                              address: factory,
-                              data: factoryData,
-                              signature,
-                          });
-                      return signature;
-                  },
-              }
+                async sign(parameters) {
+                    const [{ factory, factoryData }, signature] =
+                        await Promise.all([
+                            this.getFactoryArgs(),
+                            comethImplementation.sign
+                                ? comethImplementation.sign(parameters)
+                                : Promise.reject(
+                                    new Error(
+                                        "sign method is not defined"
+                                    )
+                                ),
+                        ]);
+                    if (factory && factoryData)
+                        return serializeErc6492Signature({
+                            address: factory,
+                            data: factoryData,
+                            signature,
+                        });
+                    return signature;
+                },
+            }
             : {}),
         async signMessage(parameters) {
             const [{ factory, factoryData }, signature] = await Promise.all([
