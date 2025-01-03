@@ -47,7 +47,7 @@ export type UseSetUpRecoveryModuleReturn = QueryResultType & {
  *     try {
  *       const result = await setUpRecoveryModuleAsync({
  *         passKeyName: 'myPassKey',
- *         rpcUrl: 'https://my-rpc-url.com',
+ *         publicClient,
  *         // other necessary parameters
  *       });
  *       console.log('Recovery module set up successfully:', result);
@@ -92,7 +92,7 @@ export function useSetUpRecovery(): UseSetUpRecoveryModuleReturn {
 
                 return smartAccountClient.setUpRecoveryModule({
                     passKeyName: variables.passKeyName,
-                    rpcUrl: variables.rpcUrl,
+                    publicClient: variables.publicClient,
                     webAuthnOptions: variables.webAuthnOptions,
                 });
             },

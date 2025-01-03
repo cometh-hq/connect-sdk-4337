@@ -21,7 +21,7 @@ export type UseIsRecoveryActiveReturn = {
  * and retrieve the guardian address for the smart account's recovery setup.
  *
  * @param {UseIsRecoveryActiveProps} props - The properties for the hook.
- * @param {string} [props.rpcUrl] - Optional RPC URL for the blockchain network.
+ * @param {string} [props.publicClient] - Optional client for the blockchain network.
  *
  * @example
  * ```tsx
@@ -29,7 +29,7 @@ export type UseIsRecoveryActiveReturn = {
  *
  * export const RecoveryStatus = () => {
  *   const { data, isLoading, isError, error } = useIsRecoveryActive({
- *     rpcUrl: 'https://my-rpc-url.com',
+ *     publicClient,
  *   });
  *
  *   if (isLoading) return <p>Loading recovery status...</p>;
@@ -57,7 +57,7 @@ export function useIsRecoveryActive(
 
     return useQuery<IsRecoveryActiveReturnType, Error>(
         {
-            queryKey: ["isRecoveryActive", props.rpcUrl],
+            queryKey: ["isRecoveryActive", props.publicClient],
             queryFn: async () => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
