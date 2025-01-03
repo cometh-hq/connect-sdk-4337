@@ -8,8 +8,9 @@ import {
     createPublicClient,
     encodeFunctionData,
     getContract,
+    parseEther,
 } from "viem";
-import { gnosis } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
@@ -18,7 +19,7 @@ export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
-    chain: gnosis,
+    chain: arbitrumSepolia,
     transport: http(),
     cacheTime: 60_000,
     batch: {
@@ -128,13 +129,28 @@ function Transaction({
                                     functionName: "count",
                                 });
 
-                                const txHash =
+
+                                console.log({calldata})
+
+                       
+
+                                 
+                            const gas = await smartAccount.estimateGas({ 
+                                calls: [{
+                                    to: COUNTER_CONTRACT_ADDRESS,
+                                    data: calldata,
+                                    value: "0x00"
+                                }]
+                            })
+                            console.log({gas})
+
+                             /*    const txHash =
                                     await smartAccount.sendTransaction({
                                         to: COUNTER_CONTRACT_ADDRESS,
                                         data: calldata,
                                     });
 
-                                setTransactionSended(txHash);
+                                setTransactionSended(txHash); */
                             })
                         }
                         isTransactionLoading={isTransactionLoading}

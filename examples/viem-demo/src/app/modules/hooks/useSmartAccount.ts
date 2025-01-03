@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex } from "viem";
-import { gnosis } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -51,7 +51,7 @@ export function useSmartAccount() {
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: gnosis,
+                    chain: arbitrumSepolia,
                     rpcUrl,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -60,7 +60,7 @@ export function useSmartAccount() {
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: gnosis,
+                    chain: arbitrumSepolia,
                     rpcUrl,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
@@ -73,24 +73,24 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: gnosis,
+                chain: arbitrumSepolia,
                 rpcUrl,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                chain: gnosis,
+                chain: arbitrumSepolia,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,
                     timeout: 20_000,
                 }),
-                paymaster: paymasterClient,
+           /*      paymaster: paymasterClient,
                 userOperation: {
                     estimateFeesPerGas: async () => {
                         return await paymasterClient.getUserOperationGasPrice();
                     },
-                },
+                }, */
                
             });
 
