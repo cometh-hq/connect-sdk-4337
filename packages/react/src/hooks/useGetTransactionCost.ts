@@ -1,6 +1,10 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
-import type { EstimateUserOperationGasParameters } from "viem/account-abstraction";
+import { http } from "viem";
+import {
+    type EstimateUserOperationGasParameters,
+    createBundlerClient,
+} from "viem/account-abstraction";
 import type { MutationOptionsWithoutMutationFn } from "./types";
 
 /**
@@ -116,15 +120,21 @@ export const useGetTransactionCost = (
                     throw new Error("No smart account found");
                 }
 
+                const bundlerClient = createBundlerClient({
+                    account: smartAccountClient.account,
+                    client: smartAccountClient,
+                    transport: http(smartAccountClient.transport.url),
+                });
+
                 const estimateGas =
-                    await smartAccountClient.estimateUserOperationGas(variables);
+                    await bundlerClient.estimateUserOperationGas(variables);
 
                 const totalGas =
                     estimateGas.preVerificationGas +
                     estimateGas.verificationGasLimit +
                     estimateGas.callGasLimit;
 
-                return { totalGasCost: totalGas  /* estimateGas.maxFeePerGas */ };
+                return { totalGasCost: totalGas };
             },
             ...mutationProps,
         },

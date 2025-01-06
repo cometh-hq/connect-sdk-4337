@@ -23,7 +23,6 @@ import {
     keccak256,
     size,
     zeroAddress,
-    type PrivateKeyAccount,
 } from "viem";
 import { MultiSendContractABI } from "../abi/Multisend";
 import { EnableModuleAbi } from "../abi/enableModule";
@@ -32,8 +31,6 @@ import { safe4337SessionKeyModuleAbi } from "../abi/safe4337SessionKeyModuleAbi"
 import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
 import type { MultiSendTransaction } from "../types";
-import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
-import { MigrationAbi } from "@/migrationKit/abi/migration";
 
 /**
  * Encodes multiple transactions into a single byte string for multi-send functionality

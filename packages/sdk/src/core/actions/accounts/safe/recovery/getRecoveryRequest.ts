@@ -10,9 +10,9 @@ import {
     type Chain,
     type Client,
     type Prettify,
+    type PublicClient,
     type Transport,
     createPublicClient,
-    type PublicClient,
 } from "viem";
 
 export type GetRecoveryRequestParams = {
@@ -24,8 +24,8 @@ export async function getRecoveryRequest<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetRecoveryRequestParams> = {}

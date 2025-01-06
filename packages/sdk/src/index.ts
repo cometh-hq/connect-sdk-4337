@@ -1,8 +1,8 @@
 import { ENTRYPOINT_ADDRESS_V07, customChains } from "./constants";
 
 import {
-    createSafeSmartAccount,
     type ComethSafeSmartAccount,
+    createSafeSmartAccount,
     type createSafeSmartAccountParameters,
 } from "./core/accounts/safe/createSafeSmartAccount";
 import {

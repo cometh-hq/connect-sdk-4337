@@ -4,10 +4,18 @@ import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useEffect, useState } from "react";
 import {
+<<<<<<< HEAD
     http,
     createPublicClient,
     encodeFunctionData,
     getContract,
+=======
+  http,
+  createPublicClient,
+  encodeFunctionData,
+  getContract,
+  parseEther,
+>>>>>>> b24c65f (fix: packages)
 } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
@@ -18,12 +26,21 @@ export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
+<<<<<<< HEAD
     chain: arbitrumSepolia,
     transport: http(),
     cacheTime: 60_000,
     batch: {
         multicall: { wait: 50 },
     },
+=======
+  chain: arbitrumSepolia,
+  transport: http(),
+  cacheTime: 60_000,
+  batch: {
+    multicall: { wait: 50 },
+  },
+>>>>>>> b24c65f (fix: packages)
 });
 
 const counterContract = getContract({
@@ -97,7 +114,24 @@ function Transaction({
         try {
             if (!smartAccount) throw new Error("No wallet instance");
 
+<<<<<<< HEAD
             await action();
+=======
+                await smartAccount.estimateGas({
+                  calls: [
+                    {
+                      to: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+                      value: parseEther("0"),
+                      data: calldata,
+                    },
+                  ],
+                });
+
+                const txHash = await smartAccount.sendTransaction({
+                  to: COUNTER_CONTRACT_ADDRESS,
+                  data: calldata,
+                });
+>>>>>>> b24c65f (fix: packages)
 
             const balance = await counterContract.read.counters([
                 smartAccount.account.address,

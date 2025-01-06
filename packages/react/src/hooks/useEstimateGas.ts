@@ -1,6 +1,13 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
-import type { EstimateUserOperationGasParameters } from "viem/account-abstraction";
+import { http, createPublicClient } from "viem";
+import {
+    type EstimateUserOperationGasParameters,
+    type EstimateUserOperationGasReturnType,
+    createBundlerClient,
+} from "viem/account-abstraction";
+import { estimateFeesPerGas } from "viem/actions";
+import { getAction } from "viem/utils";
 import type { MutationOptionsWithoutMutationFn } from "./types";
 
 /**
@@ -30,11 +37,11 @@ export type EstimateGasMutate = (
  */
 export type EstimateGasMutateAsync = (
     variables: EstimateUserOperationGasParameters
-) => Promise<any>;
+) => Promise<EstimateUserOperationGasReturnType>;
 
 // Return type of the hook
 export type UseEstimateGasReturn = {
-    data?: any;
+    data?: EstimateUserOperationGasReturnType;
     error: unknown;
     isPending: boolean;
     isSuccess: boolean;
@@ -139,7 +146,45 @@ export const useEstimateGas = (
                     throw new Error("No smart account found");
                 }
 
-                return await smartAccountClient.estimateUserOperationGas(variables);
+                const publicClient = createPublicClient({
+                    chain: smartAccountClient.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
+
+                const maxGasPriceResult = await getAction(
+                    publicClient,
+                    estimateFeesPerGas,
+                    "estimateFeesPerGas"
+                )({
+                    chain: smartAccountClient.chain,
+                    type: "eip1559",
+                });
+
+                const bundlerClient = createBundlerClient({
+                    account: smartAccountClient.account,
+                    client: smartAccountClient,
+                    transport: http(smartAccountClient.transport.url),
+                });
+
+                const estimateGas =
+                    await bundlerClient.estimateUserOperationGas(variables);
+
+                return {
+                    callGasLimit: estimateGas.callGasLimit,
+                    verificationGasLimit: estimateGas.verificationGasLimit,
+                    preVerificationGas: estimateGas.preVerificationGas,
+                    paymasterVerificationGasLimit:
+                        estimateGas.paymasterVerificationGasLimit,
+                    paymasterPostOpGasLimit:
+                        estimateGas.paymasterPostOpGasLimit,
+                    maxFeePerGas: maxGasPriceResult.maxFeePerGas,
+                    maxPriorityFeePerGas:
+                        maxGasPriceResult.maxPriorityFeePerGas,
+                };
             },
             ...mutationProps,
         },

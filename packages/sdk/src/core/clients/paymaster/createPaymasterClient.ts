@@ -45,16 +45,19 @@ export type ComethPaymasterClientActions = {
 
 const comethPaymasterActions =
     (publicClient?: PublicClient) =>
-        (client: Client): ComethPaymasterClientActions => ({
-            sponsorUserOperation: async (args: {
-                userOperation: UserOperation<"0.7">;
-            }) =>
-                sponsorUserOperation(client as ComethPaymasterClient, {
-                    ...args,
-                }),
-            getUserOperationGasPrice: async () =>
-                getUserOperationGasPrice(client as ComethPaymasterClient, publicClient),
-        });
+    (client: Client): ComethPaymasterClientActions => ({
+        sponsorUserOperation: async (args: {
+            userOperation: UserOperation<"0.7">;
+        }) =>
+            sponsorUserOperation(client as ComethPaymasterClient, {
+                ...args,
+            }),
+        getUserOperationGasPrice: async () =>
+            getUserOperationGasPrice(
+                client as ComethPaymasterClient,
+                publicClient
+            ),
+    });
 
 export const createComethPaymasterClient = <
     transport extends Transport = Transport,

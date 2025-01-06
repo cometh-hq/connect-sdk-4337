@@ -181,9 +181,8 @@ export async function createSafeSmartAccount<
         multisendAddress,
         safe4337ModuleAddress: safe4337Module,
         safeWebAuthnSignerFactory,
-    } =
-        safeContractConfig ??
-        (contractParams.safeContractParams as SafeContractParams);
+    } = safeContractConfig ??
+    (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337Module) {
         throw new Error("Network is not supported");
@@ -273,7 +272,8 @@ export async function createSafeSmartAccount<
             version: "0.7",
         },
         connectApiInstance: api,
-        safeContractParams: safeContractConfig ??
+        safeContractParams:
+            safeContractConfig ??
             (contractParams.safeContractParams as SafeContractParams),
         comethSignerConfig: comethSignerConfig,
         async signMessage({ message }) {
@@ -317,6 +317,7 @@ export async function createSafeSmartAccount<
         },
 
         async encodeCalls(calls) {
+            console.log({ calls });
             const hasMultipleCalls = calls.length > 1;
 
             if (hasMultipleCalls) {

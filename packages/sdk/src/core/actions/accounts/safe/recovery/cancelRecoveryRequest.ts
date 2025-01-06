@@ -28,8 +28,8 @@ export async function cancelRecoveryRequest<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<CancelRecoveryRequestParams>
