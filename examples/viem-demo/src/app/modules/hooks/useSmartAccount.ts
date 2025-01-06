@@ -7,7 +7,8 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Hex, createPublicClient } from "viem";
+import { http, type Hex, createPublicClient, parseEther } from "viem";
+import { createBundlerClient } from "viem/account-abstraction";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -79,13 +80,13 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: gnosis,
+                chain: arbitrumSepolia,
                 publicClient,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                chain: gnosis,
+                chain: arbitrumSepolia,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,
@@ -99,6 +100,34 @@ export function useSmartAccount() {
                 },
                 publicClient,
             });
+
+            console.log("yo")
+
+            const bundlerClient = createBundlerClient({
+                account: smartAccount,
+                client: smartAccountClient,
+                transport: http(smartAccountClient.transport.url)
+            })
+
+            console.log({ bundlerClient })
+
+            try {
+                const test = await bundlerClient.estimateUserOperationGas({
+                    calls: [
+                        {
+                            to: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+                            value: parseEther("0"),
+                            data: "0x00"
+                        }
+                    ],
+                });
+                console.log({ test })
+
+            } catch (e) {
+                console.log(e)
+            }
+
+
 
 
             setSmartAccount(smartAccountClient);

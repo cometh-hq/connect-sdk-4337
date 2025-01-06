@@ -40,11 +40,6 @@ import {
 } from "@/core/actions/accounts/safe/verifySignature";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
 import { type SmartAccountActions, smartAccountActions } from "permissionless";
-import {
-    type EstimateUserOperationGasParameters,
-
-} from "viem/account-abstraction";
-import { estimateGas } from "@/core/actions/accounts/estimateGas";
 
 export type ComethClientActions<
     TChain extends Chain | undefined = Chain | undefined,
@@ -82,22 +77,6 @@ export type ComethClientActions<
             typeof verifySignature<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<boolean>;
-    estimateGas: (args: EstimateUserOperationGasParameters) => Promise<{
-        callGasLimit: bigint;
-        verificationGasLimit: bigint;
-        preVerificationGas: bigint;
-        maxFeePerGas: bigint;
-        maxPriorityFeePerGas: bigint;
-        paymasterVerificationGasLimit?: bigint;
-        paymasterPostOpGasLimit?: bigint;
-    }>;
-    /*  estimateUserOperationGas: (
-         args: Prettify<
-             Omit<EstimateUserOperationGasParameters<entryPoint>, "entryPoint">
-         >,
-         stateOverrides?: StateOverrides
-     ) => Promise<Prettify<EstimateUserOperationGasReturnType<entryPoint>>>; */
-
     getDelayModuleAddress: <TTransport extends Transport>(
         args: Parameters<
             typeof getDelayModuleAddress<TTransport, TChain, TSmartAccount>
@@ -137,18 +116,6 @@ export function comethAccountClientActions() {
     ): ComethClientActions<TChain, TSmartAccount> => {
         return {
             ...smartAccountActions(client),
-            /*    estimateUserOperationGas: (
-                   args: Omit<
-                       EstimateUserOperationGasParameters<entryPoint>,
-                       "entryPoint"
-                   >,
-                   stateOverrides?: StateOverrides
-               ) =>
-                   estimateUserOperationGas<entryPoint>(
-                       client,
-                       { ...args, entryPoint: ENTRYPOINT_ADDRESS_V07 as entryPoint },
-                       stateOverrides
-                   ), */
             validateAddDevice: (args) =>
                 validateAddDevice<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
@@ -177,8 +144,6 @@ export function comethAccountClientActions() {
                 verifySignature<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
                 } as VerifySignatureParams),
-
-            estimateGas: async (args) => estimateGas(client, args),
             getDelayModuleAddress: (args) =>
                 getDelayModuleAddress<TTransport, TChain, TSmartAccount>(
                     client,

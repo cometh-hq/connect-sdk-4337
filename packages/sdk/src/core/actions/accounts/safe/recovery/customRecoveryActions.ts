@@ -12,12 +12,12 @@ import {
     type Client,
     type Hex,
     type Prettify,
+    type PublicClient,
     type SendTransactionParameters,
     type Transport,
     createPublicClient,
     encodeFunctionData,
     parseAbi,
-    type PublicClient,
 } from "viem";
 import { getAction } from "viem/utils";
 
@@ -30,8 +30,8 @@ export async function getDelayModuleAddress<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetDelayModuleAddressParams>
@@ -67,8 +67,8 @@ export async function getGuardianAddress<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetGuardianAddressParams>
@@ -104,8 +104,8 @@ export async function addGuardian<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<AddGuardianParams>
@@ -166,8 +166,8 @@ export async function disableGuardian<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<DisableGuardianParams>
@@ -253,15 +253,14 @@ export async function setupCustomDelayModule<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<SetupCustomDelayModuleParams>
 ): Promise<Hex> {
     const { guardianAddress, expiration, cooldown, publicClient } = args;
     const smartAccountAddress = client.account?.address as Address;
-
 
     const rpcClient =
         publicClient ??

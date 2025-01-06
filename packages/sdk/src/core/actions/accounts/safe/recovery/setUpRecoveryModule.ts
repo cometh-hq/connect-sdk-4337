@@ -11,12 +11,12 @@ import {
     type Client,
     type Hex,
     type Prettify,
+    type PublicClient,
     type SendTransactionParameters,
     type Transport,
     createPublicClient,
     encodeFunctionData,
     parseAbi,
-    type PublicClient,
 } from "viem";
 import { getAction } from "viem/utils";
 
@@ -30,8 +30,8 @@ export async function setUpRecoveryModule<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<SetUpRecoveryModuleParams>

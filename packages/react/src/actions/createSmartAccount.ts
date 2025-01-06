@@ -26,7 +26,7 @@ export async function createSmartAccount(
         paymasterUrl,
         apiKey,
         chain,
-        rpcUrl,
+        publicClient,
         baseUrl,
         comethSignerConfig,
         safeContractConfig,
@@ -36,7 +36,7 @@ export async function createSmartAccount(
     const account = await createSafeSmartAccount({
         apiKey,
         chain,
-        rpcUrl,
+        publicClient,
         baseUrl,
         smartAccountAddress,
         comethSignerConfig,
@@ -49,7 +49,7 @@ export async function createSmartAccount(
         const paymasterClient = await createComethPaymasterClient({
             transport: http(paymasterUrl),
             chain,
-            rpcUrl,
+            publicClient,
         });
 
         client = createSmartAccountClient({
@@ -62,14 +62,14 @@ export async function createSmartAccount(
                     return await paymasterClient.getUserOperationGasPrice();
                 },
             },
-            rpcUrl,
+            publicClient,
         }) as ContextComethSmartAccountClient;
     } else {
         client = createSmartAccountClient({
             account: account as ComethSafeSmartAccount,
             chain,
             bundlerTransport: http(bundlerUrl),
-            rpcUrl,
+            publicClient,
         }) as ContextComethSmartAccountClient;
     }
 

@@ -136,8 +136,6 @@ export const useSendTransaction = (
                 }
                 const { calls } = variables;
 
-
-
                 // If transactions is not an array, it's a single transaction
                 if (!Array.isArray(calls)) {
                     return smartAccountClient.sendTransaction(calls);
