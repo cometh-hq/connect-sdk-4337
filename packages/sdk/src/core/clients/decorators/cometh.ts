@@ -1,24 +1,6 @@
-import {
-    ENTRYPOINT_ADDRESS_V07,
-    type EstimateUserOperationGasParameters,
-    type EstimateUserOperationGasReturnType,
-    type SmartAccountActions,
-    estimateUserOperationGas,
-    smartAccountActions,
-} from "permissionless";
-import type { Middleware } from "permissionless/actions/smartAccount";
-import type { EntryPoint, Prettify, UserOperation } from "permissionless/types";
-import type {
-    Address,
-    Chain,
-    Client,
-    Hash,
-    Hex,
-    PublicClient,
-    Transport,
-} from "viem";
+import type { Address, Chain, Client, Hash, Hex, Transport } from "viem";
 
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { estimateGas } from "@/core/actions/accounts/estimateGas";
 import {
     type ValidateAddDevice,
@@ -58,53 +40,46 @@ import {
     verifySignature,
 } from "@/core/actions/accounts/safe/verifySignature";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
-import type { StateOverrides } from "permissionless/types/bundler";
+import { type SmartAccountActions, smartAccountActions } from "permissionless";
+import type { EstimateUserOperationGasParameters } from "viem/account-abstraction";
 
 export type ComethClientActions<
-    entryPoint extends EntryPoint,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined,
-> = SmartAccountActions<entryPoint, TChain, TAccount> & {
+    TSmartAccount extends ComethSafeSmartAccount | undefined =
+    | ComethSafeSmartAccount
+    | undefined,
+> = SmartAccountActions<TChain, TSmartAccount> & {
     validateAddDevice: <TTransport extends Transport>(
         args: Parameters<
-            typeof validateAddDevice<entryPoint, TTransport, TChain, TAccount>
+            typeof validateAddDevice<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Hash>;
     setUpRecoveryModule: <TTransport extends Transport>(
         args: Parameters<
-            typeof setUpRecoveryModule<entryPoint, TTransport, TChain, TAccount>
+            typeof setUpRecoveryModule<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Hash>;
     cancelRecoveryRequest: <TTransport extends Transport>(
         args: Parameters<
-            typeof cancelRecoveryRequest<
-                entryPoint,
-                TTransport,
-                TChain,
-                TAccount
-            >
+            typeof cancelRecoveryRequest<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Hash>;
     isRecoveryActive: <TTransport extends Transport>(
         args: Parameters<
-            typeof isRecoveryActive<entryPoint, TTransport, TChain, TAccount>
+            typeof isRecoveryActive<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<IsRecoveryActiveReturnType>;
     getRecoveryRequest: <TTransport extends Transport>(
         args: Parameters<
-            typeof getRecoveryRequest<entryPoint, TTransport, TChain, TAccount>
+            typeof getRecoveryRequest<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<RecoveryParamsResponse | undefined>;
     verifySignature: <TTransport extends Transport>(
         args: Parameters<
-            typeof verifySignature<entryPoint, TTransport, TChain, TAccount>
+            typeof verifySignature<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<boolean>;
-    estimateGas: (args: { userOperation: UserOperation<"v0.7"> }) => Promise<{
+    estimateGas: (args: EstimateUserOperationGasParameters) => Promise<{
         callGasLimit: bigint;
         verificationGasLimit: bigint;
         preVerificationGas: bigint;
@@ -113,166 +88,100 @@ export type ComethClientActions<
         paymasterVerificationGasLimit?: bigint;
         paymasterPostOpGasLimit?: bigint;
     }>;
-    estimateUserOperationGas: (
-        args: Prettify<
-            Omit<EstimateUserOperationGasParameters<entryPoint>, "entryPoint">
-        >,
-        stateOverrides?: StateOverrides
-    ) => Promise<Prettify<EstimateUserOperationGasReturnType<entryPoint>>>;
-
     getDelayModuleAddress: <TTransport extends Transport>(
         args: Parameters<
-            typeof getDelayModuleAddress<
-                entryPoint,
-                TTransport,
-                TChain,
-                TAccount
-            >
+            typeof getDelayModuleAddress<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Address>;
     getGuardianAddress: <TTransport extends Transport>(
         args: Parameters<
-            typeof getGuardianAddress<entryPoint, TTransport, TChain, TAccount>
+            typeof getGuardianAddress<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Address>;
     addGuardian: <TTransport extends Transport>(
         args: Parameters<
-            typeof addGuardian<entryPoint, TTransport, TChain, TAccount>
+            typeof addGuardian<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Hex>;
     disableGuardian: <TTransport extends Transport>(
         args: Parameters<
-            typeof disableGuardian<entryPoint, TTransport, TChain, TAccount>
+            typeof disableGuardian<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Hex>;
     setupCustomDelayModule: <TTransport extends Transport>(
         args: Parameters<
-            typeof setupCustomDelayModule<
-                entryPoint,
-                TTransport,
-                TChain,
-                TAccount
-            >
+            typeof setupCustomDelayModule<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Hex>;
 };
 
-export type ComethClientActionsParams<entryPoint extends EntryPoint> =
-    Middleware<entryPoint> & {
-        publicClient?: PublicClient;
-    };
-
-export function comethAccountClientActions<entryPoint extends EntryPoint>({
-    middleware,
-    publicClient,
-}: ComethClientActionsParams<entryPoint>) {
+export function comethAccountClientActions() {
     return <
         TTransport extends Transport,
         TChain extends Chain | undefined = Chain | undefined,
-        TAccount extends
-            | SafeSmartAccount<entryPoint, Transport, Chain>
-            | undefined =
-            | SafeSmartAccount<entryPoint, Transport, Chain>
-            | undefined,
+        TSmartAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
+        | undefined,
     >(
-        client: Client<TTransport, TChain, TAccount>
-    ): ComethClientActions<entryPoint, TChain, TAccount> => ({
-        ...smartAccountActions({ middleware })(client),
-        estimateUserOperationGas: (
-            args: Omit<
-                EstimateUserOperationGasParameters<entryPoint>,
-                "entryPoint"
-            >,
-            stateOverrides?: StateOverrides
-        ) =>
-            estimateUserOperationGas<entryPoint>(
-                client,
-                { ...args, entryPoint: ENTRYPOINT_ADDRESS_V07 as entryPoint },
-                stateOverrides
-            ),
-        validateAddDevice: (args) =>
-            validateAddDevice<entryPoint, TTransport, TChain, TAccount>(
-                client,
-                {
+        client: Client<TTransport, TChain, TSmartAccount>
+    ): ComethClientActions<TChain, TSmartAccount> => {
+        return {
+            ...smartAccountActions(client),
+            validateAddDevice: (args) =>
+                validateAddDevice<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
-                    middleware,
-                } as ValidateAddDevice<entryPoint>
-            ),
-        setUpRecoveryModule: (args) =>
-            setUpRecoveryModule<entryPoint, TTransport, TChain, TAccount>(
-                client,
-                {
+                } as ValidateAddDevice),
+            setUpRecoveryModule: (args) =>
+                setUpRecoveryModule<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
-                    middleware,
-                    publicClient,
-                } as SetUpRecoveryModuleParams<entryPoint>
-            ),
-        isRecoveryActive: (args) =>
-            isRecoveryActive<entryPoint, TTransport, TChain, TAccount>(client, {
-                ...args,
-                middleware,
-                publicClient,
-            } as IsRecoveryActiveParams),
-        getRecoveryRequest: (args) =>
-            getRecoveryRequest<entryPoint, TTransport, TChain, TAccount>(
-                client,
-                {
+                } as SetUpRecoveryModuleParams),
+            isRecoveryActive: (args) =>
+                isRecoveryActive<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
-                    middleware,
-                    publicClient,
-                } as GetRecoveryRequestParams
-            ),
-        cancelRecoveryRequest: (args) =>
-            cancelRecoveryRequest<entryPoint, TTransport, TChain, TAccount>(
-                client,
-                {
+                } as IsRecoveryActiveParams),
+            getRecoveryRequest: (args) =>
+                getRecoveryRequest<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
-                    middleware,
-                    publicClient,
-                } as CancelRecoveryRequestParams<entryPoint>
-            ),
+                } as GetRecoveryRequestParams),
+            cancelRecoveryRequest: (args) =>
+                cancelRecoveryRequest<TTransport, TChain, TSmartAccount>(
+                    client,
+                    {
+                        ...args,
+                    } as CancelRecoveryRequestParams
+                ),
 
-        verifySignature: (args) =>
-            verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {
-                ...args,
-            } as VerifySignatureParams),
-        estimateGas: async (args) => estimateGas(client, args),
-        getDelayModuleAddress: (args) =>
-            getDelayModuleAddress<entryPoint, TTransport, TChain, TAccount>(
-                client,
-                {
+            verifySignature: (args) =>
+                verifySignature<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
-                    publicClient,
-                } as GetDelayModuleAddressParams
-            ),
-        getGuardianAddress: (args) =>
-            getGuardianAddress<entryPoint, TTransport, TChain, TAccount>(
-                client,
-                {
+                } as VerifySignatureParams),
+            estimateGas: async (args) => estimateGas(client, args),
+            getDelayModuleAddress: (args) =>
+                getDelayModuleAddress<TTransport, TChain, TSmartAccount>(
+                    client,
+                    {
+                        ...args,
+                    } as GetDelayModuleAddressParams
+                ),
+            getGuardianAddress: (args) =>
+                getGuardianAddress<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
-                    publicClient,
-                } as GetGuardianAddressParams
-            ),
-        addGuardian: (args) =>
-            addGuardian<entryPoint, TTransport, TChain, TAccount>(client, {
-                ...args,
-                middleware,
-                publicClient,
-            } as AddGuardianParams<entryPoint>),
-        disableGuardian: (args) =>
-            disableGuardian<entryPoint, TTransport, TChain, TAccount>(client, {
-                ...args,
-                middleware,
-                publicClient,
-            } as DisableGuardianParams<entryPoint>),
-        setupCustomDelayModule: (args) =>
-            setupCustomDelayModule<entryPoint, TTransport, TChain, TAccount>(
-                client,
-                {
+                } as GetGuardianAddressParams),
+            addGuardian: (args) =>
+                addGuardian<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
-                    middleware,
-                    publicClient,
-                } as SetupCustomDelayModuleParams<entryPoint>
-            ),
-    });
+                } as AddGuardianParams),
+            disableGuardian: (args) =>
+                disableGuardian<TTransport, TChain, TSmartAccount>(client, {
+                    ...args,
+                } as DisableGuardianParams),
+            setupCustomDelayModule: (args) =>
+                setupCustomDelayModule<TTransport, TChain, TSmartAccount>(
+                    client,
+                    {
+                        ...args,
+                    } as SetupCustomDelayModuleParams
+                ),
+        } as ComethClientActions<TChain, TSmartAccount>;
+    };
 }

@@ -1,7 +1,6 @@
 import { ENTRYPOINT_ADDRESS_V07, customChains } from "./constants";
 
 import {
-    type SafeSmartAccount,
     createSafeSmartAccount,
     type createSafeSmartAccountParameters,
 } from "./core/accounts/safe/createSafeSmartAccount";
@@ -58,7 +57,6 @@ export {
 };
 
 export type {
-    SafeSmartAccount,
     ComethSmartAccountClient,
     createSafeSmartAccountParameters,
     Signer,

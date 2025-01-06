@@ -1,13 +1,8 @@
-import { gasPrice } from "@/core/actions/paymaster/gasPrice";
+import { getUserOperationGasPrice } from "@/core/actions/paymaster/getUserOperationGasPrice";
 import {
     type SponsorUserOperationReturnType,
     sponsorUserOperation,
 } from "@/core/actions/paymaster/sponsorUserOperation";
-import type { UserOperation } from "permissionless";
-import type {
-    EntryPoint,
-    GetEntryPointVersion,
-} from "permissionless/types/entrypoint";
 import {
     type Account,
     type Chain,
@@ -17,67 +12,65 @@ import {
     type Transport,
     createClient,
 } from "viem";
+import {
+    type PaymasterActions,
+    type UserOperation,
+    paymasterActions,
+} from "viem/account-abstraction";
 import type { ComethPaymasterRpcSchema } from "../types";
 
-export type ComethPaymasterClient<entryPoint extends EntryPoint> = Client<
+export type ComethPaymasterClient = Client<
     Transport,
     Chain | undefined,
     Account | undefined,
-    ComethPaymasterRpcSchema<entryPoint>,
-    ComethPaymasterClientActions
+    ComethPaymasterRpcSchema,
+    ComethPaymasterClientActions & PaymasterActions
 >;
 
 export type ComethPaymasterClientActions = {
     /**
      * Returns paymasterAndData & updated gas parameters required to sponsor a userOperation.
      */
-    sponsorUserOperation: <entryPoint extends EntryPoint>(args: {
-        userOperation: UserOperation<GetEntryPointVersion<entryPoint>>;
+    sponsorUserOperation: (args: {
+        userOperation: UserOperation<"0.7">;
     }) => Promise<SponsorUserOperationReturnType>;
     /**
      * Returns maxFeePerGas & maxPriorityFeePerGas required to sponsor a userOperation.
      */
-    gasPrice: () => Promise<{
+    getUserOperationGasPrice: () => Promise<{
         maxFeePerGas: bigint;
         maxPriorityFeePerGas: bigint;
     }>;
 };
 
 const comethPaymasterActions =
-    <entryPoint extends EntryPoint>(
-        entryPointAddress: entryPoint,
-        publicClient?: PublicClient
-    ) =>
-    (client: Client): ComethPaymasterClientActions => ({
-        sponsorUserOperation: async <entryPoint extends EntryPoint>(args: {
-            userOperation: UserOperation<GetEntryPointVersion<entryPoint>>;
-        }) =>
-            sponsorUserOperation(client as ComethPaymasterClient<entryPoint>, {
-                ...args,
-                entryPoint: entryPointAddress,
-            }),
-        gasPrice: async () =>
-            gasPrice(client as ComethPaymasterClient<entryPoint>, publicClient),
-    });
+    (publicClient?: PublicClient) =>
+        (client: Client): ComethPaymasterClientActions => ({
+            sponsorUserOperation: async (args: {
+                userOperation: UserOperation<"0.7">;
+            }) =>
+                sponsorUserOperation(client as ComethPaymasterClient, {
+                    ...args,
+                }),
+            getUserOperationGasPrice: async () =>
+                getUserOperationGasPrice(client as ComethPaymasterClient, publicClient),
+        });
 
 export const createComethPaymasterClient = <
-    entryPoint extends EntryPoint,
     transport extends Transport = Transport,
     chain extends Chain | undefined = undefined,
 >(
     parameters: PublicClientConfig<transport, chain> & {
-        entryPoint: entryPoint;
         publicClient?: PublicClient;
     }
-): ComethPaymasterClient<entryPoint> => {
+): ComethPaymasterClient => {
     const { key = "public", name = "Cometh Paymaster Client" } = parameters;
-    const client = createClient({
+    return createClient({
         ...parameters,
         key,
         name,
         type: "comethPaymasterClient",
-    });
-    return client.extend(
-        comethPaymasterActions(parameters.entryPoint, parameters.publicClient)
-    );
+    })
+        .extend(paymasterActions)
+        .extend(comethPaymasterActions(parameters.publicClient));
 };

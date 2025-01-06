@@ -8,7 +8,7 @@ import {
     createPublicClient,
 } from "viem";
 
-export const gasPrice = async <
+export const getUserOperationGasPrice = async <
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends Account | undefined = Account | undefined,
@@ -29,7 +29,7 @@ export const gasPrice = async <
     };
 
     return {
-        maxFeePerGas: maxFeePerGas * 3n,
+        maxFeePerGas: maxFeePerGas * 2n,
         maxPriorityFeePerGas: maxFeePerGas * 2n,
     };
 };

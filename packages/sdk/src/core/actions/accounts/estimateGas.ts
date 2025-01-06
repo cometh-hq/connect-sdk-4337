@@ -1,16 +1,10 @@
-import {
-    ENTRYPOINT_ADDRESS_V07,
-    type UserOperation,
-    estimateUserOperationGas,
-} from "permissionless";
-import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
-import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types";
 import type { Account, Chain, Client, Transport } from "viem";
+import {
+    type EstimateUserOperationGasParameters,
+    estimateUserOperationGas,
+} from "viem/account-abstraction";
+import { estimateFeesPerGas } from "viem/actions";
 import { getAction } from "viem/utils";
-
-export type EstimateGasParams = {
-    userOperation: UserOperation<"v0.7">;
-};
 
 export const estimateGas = async <
     TTransport extends Transport = Transport,
@@ -18,7 +12,7 @@ export const estimateGas = async <
     TAccount extends Account | undefined = Account | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: EstimateGasParams
+    args: EstimateUserOperationGasParameters
 ): Promise<{
     callGasLimit: bigint;
     verificationGasLimit: bigint;
@@ -28,22 +22,22 @@ export const estimateGas = async <
     paymasterVerificationGasLimit?: bigint;
     paymasterPostOpGasLimit?: bigint;
 }> => {
-    const { userOperation } = args;
-
     const estimateGas = await getAction(
         client,
-        estimateUserOperationGas<ENTRYPOINT_ADDRESS_V07_TYPE>,
+        estimateUserOperationGas,
         "estimateUserOperationGas"
     )({
-        userOperation,
-        entryPoint: ENTRYPOINT_ADDRESS_V07,
+        ...args,
     });
 
     const maxGasPriceResult = await getAction(
         client,
-        getUserOperationGasPrice,
-        "getUserOperationGasPrice"
-    )({});
+        estimateFeesPerGas,
+        "estimateFeesPerGas"
+    )({
+        chain: client.chain,
+        type: "eip1559",
+    });
 
     return {
         callGasLimit: estimateGas.callGasLimit,
@@ -52,7 +46,7 @@ export const estimateGas = async <
         paymasterVerificationGasLimit:
             estimateGas.paymasterVerificationGasLimit,
         paymasterPostOpGasLimit: estimateGas.paymasterPostOpGasLimit,
-        maxFeePerGas: maxGasPriceResult.fast.maxFeePerGas,
-        maxPriorityFeePerGas: maxGasPriceResult.fast.maxPriorityFeePerGas,
+        maxFeePerGas: maxGasPriceResult.maxFeePerGas,
+        maxPriorityFeePerGas: maxGasPriceResult.maxPriorityFeePerGas,
     };
 };
