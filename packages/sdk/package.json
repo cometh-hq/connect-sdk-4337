@@ -46,7 +46,7 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2",
+    "viem": "^2.22.2",
     "wagmi": "^2"
   },
   "devDependencies": {
