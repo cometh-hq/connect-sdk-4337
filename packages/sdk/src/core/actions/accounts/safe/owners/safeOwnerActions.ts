@@ -1,19 +1,17 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { SAFE_SENTINEL_OWNERS } from "@/core/accounts/safe/types";
+import type { SmartAccountClient } from "@/core/clients/accounts/safe/createClient";
 import type { DeviceData, WebAuthnSigner } from "@/core/types";
-import {
-    type SmartAccountClient,
-    isSmartAccountDeployed,
-} from "permissionless";
-import type { EntryPoint } from "permissionless/_types/types";
-import type { SmartAccount } from "permissionless/accounts";
+import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
     type Address,
     type Chain,
+    type Client,
     type Hash,
     type PublicClient,
+    type SendTransactionParameters,
     type Transport,
     createPublicClient,
     encodeFunctionData,
@@ -25,7 +23,7 @@ export type EnrichedOwner = {
     address: Address;
     deviceData?: DeviceData;
     creationDate?: Date;
-    isSmartContract: boolean;
+    isSmartContract?:boolean
 };
 
 export type SafeOwnerPluginActions = {
@@ -38,40 +36,34 @@ export type SafeOwnerPluginActions = {
 export const safeOwnerPluginActions =
     (publicClient?: PublicClient) =>
     <
-        TSmartAccount extends SafeSmartAccount<TEntryPoint> | undefined,
-        TTransport extends Transport = Transport,
-        TChain extends Chain | undefined = undefined,
-        TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<
-            infer U
-        >
-            ? U
-            : never,
+        transport extends Transport,
+        chain extends Chain | undefined = undefined,
+        account extends ComethSafeSmartAccount | undefined = undefined,
+        client extends Client | undefined = undefined,
     >(
-        client: SmartAccountClient<
-            TEntryPoint,
-            TTransport,
-            TChain,
-            TSmartAccount
+        smartAccountClient: SmartAccountClient<
+            transport,
+            chain,
+            account,
+            client
         >
     ): SafeOwnerPluginActions => ({
         async addOwner(args: { ownerToAdd: Address }) {
-            return await client.sendTransaction({
-                to: client.account?.address as Address,
+            return await smartAccountClient.sendTransaction({
+                to: smartAccountClient.account?.address as Address,
                 data: encodeFunctionData({
                     abi: SafeAbi,
                     functionName: "addOwnerWithThreshold",
-                    args: [args.ownerToAdd, 1],
+                    args: [args.ownerToAdd, 1n],
                 }),
-                maxFeePerBlobGas: 0n,
-                blobs: [],
-            });
+            } as SendTransactionParameters);
         },
 
         async removeOwner(args: { ownerToRemove: Address }) {
             const rpcClient =
                 publicClient ??
                 createPublicClient({
-                    chain: client.chain,
+                    chain: smartAccountClient.chain,
                     transport: http(),
                     cacheTime: 60_000,
                     batch: {
@@ -81,14 +73,14 @@ export const safeOwnerPluginActions =
 
             const isDeployed = await isSmartAccountDeployed(
                 rpcClient,
-                client.account?.address as Address
+                smartAccountClient.account?.address as Address
             );
 
             if (!isDeployed)
                 throw new Error("Can't remove owner on an undeployed safe");
 
             const owners = (await rpcClient.readContract({
-                address: client.account?.address as Address,
+                address: smartAccountClient.account?.address as Address,
                 abi: SafeAbi,
                 functionName: "getOwners",
             })) as Address[];
@@ -108,23 +100,21 @@ export const safeOwnerPluginActions =
                 prevOwner = getAddress(pad(SAFE_SENTINEL_OWNERS, { size: 20 }));
             }
 
-            return await client.sendTransaction({
-                to: client.account?.address as Address,
+            return await smartAccountClient.sendTransaction({
+                to: smartAccountClient.account?.address as Address,
                 data: encodeFunctionData({
                     abi: SafeAbi,
                     functionName: "removeOwner",
                     args: [prevOwner, args.ownerToRemove, 1],
                 }),
-                maxFeePerBlobGas: 0n,
-                blobs: [],
-            });
+            } as SendTransactionParameters);
         },
 
         async getOwners() {
             const rpcClient =
                 publicClient ??
                 createPublicClient({
-                    chain: client.chain,
+                    chain: smartAccountClient.chain,
                     transport: http(),
                     cacheTime: 60_000,
                     batch: {
@@ -134,14 +124,14 @@ export const safeOwnerPluginActions =
 
             const isDeployed = await isSmartAccountDeployed(
                 rpcClient,
-                client.account?.address as Address
+                smartAccountClient.account?.address as Address
             );
 
             if (!isDeployed)
-                return [client.account?.signerAddress] as Address[];
+                return [smartAccountClient.account?.signerAddress] as Address[];
 
             return (await rpcClient.readContract({
-                address: client.account?.address as Address,
+                address: smartAccountClient.account?.address as Address,
                 abi: SafeAbi,
                 functionName: "getOwners",
             })) as Address[];
@@ -151,7 +141,7 @@ export const safeOwnerPluginActions =
             const rpcClient =
                 publicClient ??
                 createPublicClient({
-                    chain: client.chain,
+                    chain: smartAccountClient.chain,
                     transport: http(),
                     cacheTime: 60_000,
                     batch: {
@@ -161,42 +151,33 @@ export const safeOwnerPluginActions =
 
             const isDeployed = await isSmartAccountDeployed(
                 rpcClient,
-                client.account?.address as Address
+                smartAccountClient.account?.address as Address
             );
 
-            const api = client?.account?.getConnectApi();
+            const api = smartAccountClient?.account?.connectApiInstance;
 
             const webAuthnSigners =
                 (await api?.getWebAuthnSignersByWalletAddressAndChain(
-                    client.account?.address as Address,
+                    smartAccountClient.account?.address as Address,
                     rpcClient.chain?.id as number
                 )) as WebAuthnSigner[];
 
-            if (!isDeployed) {
-                if (webAuthnSigners.length === 0) {
-                    return [
-                        {
-                            address: client.account?.signerAddress as Address,
-                            isSmartContract: false,
-                        },
-                    ];
-                }
+            if (!isDeployed)
                 return [
                     {
                         address: webAuthnSigners[0].signerAddress as Address,
                         deviceData: webAuthnSigners[0].deviceData,
                         creationDate: webAuthnSigners[0].creationDate,
-                        isSmartContract: true,
                     },
                 ];
-            }
 
             const owners = (await rpcClient.readContract({
-                address: client.account?.address as Address,
+                address: smartAccountClient.account?.address as Address,
                 abi: SafeAbi,
                 functionName: "getOwners",
             })) as Address[];
 
+           
             const enrichedOwners: EnrichedOwner[] = owners.map((owner) => {
                 const webauthSigner = webAuthnSigners.find(
                     (webauthnSigner) => webauthnSigner.signerAddress === owner
@@ -233,3 +214,6 @@ export const safeOwnerPluginActions =
             return enrichedOwners;
         },
     });
+
+
+

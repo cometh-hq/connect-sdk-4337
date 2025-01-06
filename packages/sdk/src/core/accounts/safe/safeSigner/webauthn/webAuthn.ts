@@ -1,4 +1,3 @@
-import { SignTransactionNotSupportedBySmartAccount } from "permissionless/accounts";
 import {
     type Address,
     type Chain,
@@ -93,10 +92,10 @@ export async function safeWebAuthnSigner<
             ]) as Hex;
         },
         async signTransaction(_, __) {
-            throw new SignTransactionNotSupportedBySmartAccount();
+            throw new Error("not supported");
         },
         async signTypedData() {
-            throw new SignTransactionNotSupportedBySmartAccount();
+            throw new Error("not supported");
         },
     });
 
@@ -105,7 +104,9 @@ export async function safeWebAuthnSigner<
         address: smartAccountAddress,
         source: "safeWebAuthnSigner",
         // Sign a user operation
-        async signUserOperation(userOperation) {
+        async signUserOperation(parameters) {
+            const { ...userOperation } = parameters;
+
             const hash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,
@@ -166,7 +167,7 @@ export async function safeWebAuthnSigner<
         /**
          * Get a dummy signature for this smart account
          */
-        async getDummySignature() {
+        async getStubSignature() {
             return encodePacked(
                 ["uint48", "uint48", "bytes"],
                 [

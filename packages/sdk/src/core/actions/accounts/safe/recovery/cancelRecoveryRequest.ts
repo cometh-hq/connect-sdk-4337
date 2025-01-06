@@ -1,12 +1,6 @@
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import delayModuleService from "@/core/services/delayModuleService";
-import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
-import {
-    type Middleware,
-    sendTransactions,
-} from "permissionless/actions/smartAccount";
-
-import type { EntryPoint, Prettify } from "permissionless/types";
+import { sendTransaction } from "permissionless/actions/smartAccount";
 
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import { NoRecoveryRequestFoundError } from "@/errors";
@@ -16,32 +10,31 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type Prettify,
     type PublicClient,
+    type SendTransactionParameters,
     type Transport,
     createPublicClient,
     zeroHash,
 } from "viem";
 import { getAction } from "viem/utils";
 
-export type CancelRecoveryRequestParams<entryPoint extends EntryPoint> = {
+export type CancelRecoveryRequestParams = {
     effectiveDelayAddress?: Address;
     publicClient?: PublicClient;
-} & Middleware<entryPoint>;
+};
 
 export async function cancelRecoveryRequest<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined,
+    TAccount extends ComethSafeSmartAccount | undefined =
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<CancelRecoveryRequestParams<entryPoint>>
+    args: Prettify<CancelRecoveryRequestParams>
 ): Promise<Hex> {
-    const { effectiveDelayAddress, publicClient, middleware } = args;
+    const { effectiveDelayAddress, publicClient } = args;
 
     const smartAccountAddress = client.account?.address as Address;
 
@@ -61,7 +54,7 @@ export async function cancelRecoveryRequest<
     if (effectiveDelayAddress) {
         delayAddress = effectiveDelayAddress;
     } else {
-        const api = client?.account?.getConnectApi();
+        const api = client?.account?.connectApiInstance;
 
         if (!api) throw new Error("No api found");
 
@@ -114,15 +107,11 @@ export async function cancelRecoveryRequest<
 
     const hash = await getAction(
         client,
-        sendTransactions<TChain, TAccount, entryPoint>,
-        "sendTransactions"
+        sendTransaction,
+        "sendTransaction"
     )({
-        transactions: [updateNonceTx],
-        middleware,
-    } as unknown as SendTransactionsWithPaymasterParameters<
-        entryPoint,
-        TAccount
-    >);
+        calls: updateNonceTx,
+    } as unknown as SendTransactionParameters);
 
     return hash;
 }

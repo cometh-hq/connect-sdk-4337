@@ -1,17 +1,16 @@
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService from "@/core/services/delayModuleService";
-
-import type { EntryPoint, Prettify } from "permissionless/types";
 
 import {
     http,
     type Address,
     type Chain,
     type Client,
-    type PublicClient,
+    type Prettify,
     type Transport,
     createPublicClient,
+    type PublicClient,
 } from "viem";
 
 export type IsRecoveryActiveParams = {
@@ -25,14 +24,11 @@ export type IsRecoveryActiveReturnType = {
 };
 
 export async function isRecoveryActive<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined,
+    TAccount extends ComethSafeSmartAccount | undefined =
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<IsRecoveryActiveParams> = {}
@@ -56,7 +52,7 @@ export async function isRecoveryActive<
     if (effectiveDelayAddress) {
         delayAddress = effectiveDelayAddress;
     } else {
-        const api = client?.account?.getConnectApi();
+        const api = client?.account?.connectApiInstance;
 
         if (!api) throw new Error("No api found");
 

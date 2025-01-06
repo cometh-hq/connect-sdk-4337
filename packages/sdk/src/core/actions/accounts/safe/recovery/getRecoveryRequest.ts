@@ -1,19 +1,18 @@
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService, {
     type RecoveryParamsResponse,
 } from "@/core/services/delayModuleService";
-
-import type { EntryPoint, Prettify } from "permissionless/types";
 
 import {
     http,
     type Address,
     type Chain,
     type Client,
-    type PublicClient,
+    type Prettify,
     type Transport,
     createPublicClient,
+    type PublicClient,
 } from "viem";
 
 export type GetRecoveryRequestParams = {
@@ -22,14 +21,11 @@ export type GetRecoveryRequestParams = {
 };
 
 export async function getRecoveryRequest<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined,
+    TAccount extends ComethSafeSmartAccount | undefined =
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetRecoveryRequestParams> = {}
@@ -37,6 +33,7 @@ export async function getRecoveryRequest<
     const { effectiveDelayAddress, publicClient } = args;
 
     const smartAccounAddress = client.account?.address as Address;
+
     const rpcClient =
         publicClient ??
         createPublicClient({
@@ -47,12 +44,13 @@ export async function getRecoveryRequest<
                 multicall: { wait: 50 },
             },
         });
+
     let delayAddress: Address;
 
     if (effectiveDelayAddress) {
         delayAddress = effectiveDelayAddress;
     } else {
-        const api = client?.account?.getConnectApi();
+        const api = client?.account?.connectApiInstance;
 
         if (!api) throw new Error("No api found");
 

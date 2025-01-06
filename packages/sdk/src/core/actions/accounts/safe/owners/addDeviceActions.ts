@@ -1,40 +1,38 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { safeWebauthnSignerFactory } from "@/core/accounts/safe/abi/safeWebauthnSignerFactory";
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type { SafeContractParams } from "@/core/accounts/safe/types";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import type { Signer } from "@/core/types";
-import type { SendTransactionsWithPaymasterParameters } from "permissionless/_types/actions/smartAccount/sendTransactions";
-import {
-    type Middleware,
-    sendTransactions,
-} from "permissionless/actions/smartAccount";
 
-import type { EntryPoint, Prettify } from "permissionless/types";
-
-import type { Chain, Client, Hash, Transport } from "viem";
+import { sendTransaction } from "permissionless/actions/smartAccount";
+import type {
+    Chain,
+    Client,
+    Hash,
+    Prettify,
+    SendTransactionParameters,
+    Transport,
+} from "viem";
 import { encodeFunctionData, getAction } from "viem/utils";
 
-export type ValidateAddDevice<entryPoint extends EntryPoint> = {
+export type ValidateAddDevice = {
     signer: Signer;
-} & Middleware<entryPoint>;
+};
 
 export async function validateAddDevice<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<ValidateAddDevice<entryPoint>>
+    args: Prettify<ValidateAddDevice>
 ): Promise<Hash> {
-    const { signer, middleware } = args;
+    const { signer } = args;
 
-    const api = client?.account?.getConnectApi();
+    const api = client?.account?.connectApiInstance;
 
     if (!api) throw new Error("No api found");
 
@@ -83,15 +81,11 @@ export async function validateAddDevice<
 
     const hash = await getAction(
         client,
-        sendTransactions<TChain, TAccount, entryPoint>,
-        "sendTransactions"
+        sendTransaction,
+        "sendTransaction"
     )({
-        transactions: txs,
-        middleware,
-    } as unknown as SendTransactionsWithPaymasterParameters<
-        entryPoint,
-        TAccount
-    >);
+        calls: txs,
+    } as unknown as SendTransactionParameters);
 
     if (signer.publicKeyX && signer.publicKeyY && signer.publicKeyId) {
         await api.createWebAuthnSigner({
