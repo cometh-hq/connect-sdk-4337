@@ -182,7 +182,7 @@ export async function createSafeSmartAccount<
         safe4337ModuleAddress: safe4337Module,
         safeWebAuthnSignerFactory,
     } = safeContractConfig ??
-    (contractParams.safeContractParams as SafeContractParams);
+        (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337Module) {
         throw new Error("Network is not supported");
@@ -317,7 +317,6 @@ export async function createSafeSmartAccount<
         },
 
         async encodeCalls(calls) {
-            console.log({ calls });
             const hasMultipleCalls = calls.length > 1;
 
             if (hasMultipleCalls) {
