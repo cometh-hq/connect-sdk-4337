@@ -101,15 +101,15 @@ export function useSmartAccount() {
                 publicClient,
             });
 
-            console.log("yo")
+            console.log("yo");
 
             const bundlerClient = createBundlerClient({
                 account: smartAccount,
                 client: smartAccountClient,
-                transport: http(smartAccountClient.transport.url)
-            })
+                transport: http(smartAccountClient.transport.url),
+            });
 
-            console.log({ bundlerClient })
+            console.log({ bundlerClient });
 
             try {
                 const test = await bundlerClient.estimateUserOperationGas({
@@ -117,18 +117,14 @@ export function useSmartAccount() {
                         {
                             to: "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
                             value: parseEther("0"),
-                            data: "0x00"
-                        }
+                            data: "0x00",
+                        },
                     ],
                 });
-                console.log({ test })
-
+                console.log({ test });
             } catch (e) {
-                console.log(e)
+                console.log(e);
             }
-
-
-
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);

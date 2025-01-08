@@ -1,0 +1,102 @@
+import { SafeAbi } from "@/core/accounts/safe/abi/safe";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import {
+    RHINESTONE_ATTESTER_ADDRESS,
+    getSmartSessionsValidator,
+} from "@rhinestone/module-sdk";
+
+import { sendTransaction } from "permissionless/actions/smartAccount";
+import {
+    http,
+    type Address,
+    type Chain,
+    type Client,
+    type Hash,
+    type SendTransactionParameters,
+    type Transport,
+    createPublicClient,
+} from "viem";
+import { encodeFunctionData, getAction, parseAbi } from "viem/utils";
+
+const SAFE_7579_ADDRESS: Address = "0x7579EE8307284F293B1927136486880611F20002";
+const LAUNCHPAD_ADDRESS: Address = "0x7579011aB74c46090561ea277Ba79D510c6C00ff";
+
+export async function set7579Fallback<
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = Chain | undefined,
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
+        | undefined,
+>(client: Client<TTransport, TChain, TAccount>): Promise<Hash> {
+    const api = client?.account?.connectApiInstance;
+
+    if (!api) throw new Error("No api found");
+
+    const smartAccountAddress = client.account?.address;
+
+    const rpcClient = createPublicClient({
+        chain: client.chain,
+        transport: http(),
+        cacheTime: 60_000,
+        batch: {
+            multicall: { wait: 50 },
+        },
+    }) as any;
+
+    const isFallbackSet = await rpcClient.readContract({
+        address: smartAccountAddress,
+        abi: SafeAbi,
+        functionName: "isModuleEnabled",
+        args: [SAFE_7579_ADDRESS as Address],
+    });
+
+    if(!isFallbackSet) throw new Error("Fallback already set");
+
+    if (!smartAccountAddress) throw new Error("No smart account address found");
+
+    const smartSessions = getSmartSessionsValidator({});
+
+    const txs = [
+        {
+            to: LAUNCHPAD_ADDRESS,
+            value: BigInt(0),
+            data: encodeFunctionData({
+                abi: parseAbi([
+                    "struct ModuleInit {address module;bytes initData;}",
+                    "function addSafe7579(address safe7579,ModuleInit[] calldata validators,ModuleInit[] calldata executors,ModuleInit[] calldata fallbacks, ModuleInit[] calldata hooks,address[] calldata attesters,uint8 threshold) external",
+                ]),
+                functionName: "addSafe7579",
+                args: [
+                    SAFE_7579_ADDRESS,
+                    [
+                        /*   {
+                      module: ownableValidator.address,
+                      initData: ownableValidator.initData,
+                    }, */
+                        {
+                            module: smartSessions.address,
+                            initData: smartSessions.initData,
+                        },
+                    ],
+                    [],
+                    [],
+                    [],
+                    [
+                        RHINESTONE_ATTESTER_ADDRESS, // Rhinestone Attester
+                    ],
+                    1,
+                ],
+            }),
+        },
+    ];
+
+    const hash = await getAction(
+        client,
+        sendTransaction,
+        "sendTransaction"
+    )({
+        calls: txs,
+    } as unknown as SendTransactionParameters);
+
+    return hash;
+}

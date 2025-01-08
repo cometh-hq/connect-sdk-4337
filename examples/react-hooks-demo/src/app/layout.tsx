@@ -26,7 +26,6 @@ const networksConfig = [
     },
 ];
 
-
 if (!apiKey) throw new Error("API key not found");
 if (!bundlerUrl) throw new Error("Bundler Url not found");
 
