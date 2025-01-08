@@ -132,8 +132,12 @@ export function createSmartAccountClient<
     )
         .extend(bundlerActions)
         // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+<<<<<<< HEAD
         .extend(comethAccountClientActions() as any) as any;
 >>>>>>> f0f331d (update: rebase)
+=======
+        .extend(comethAccountClientActions()) as any;
+>>>>>>> 12937d4 (alpha: version)
 
     return client.extend(safeOwnerPluginActions(parameters?.publicClient));
 }
