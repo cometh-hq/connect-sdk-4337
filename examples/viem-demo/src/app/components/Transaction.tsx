@@ -5,10 +5,14 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> cd05974 (add: setFallback7579)
     http,
     createPublicClient,
     encodeFunctionData,
     getContract,
+<<<<<<< HEAD
 =======
   http,
   createPublicClient,
@@ -19,6 +23,8 @@ import {
 >>>>>>> b24c65f (fix: packages)
 =======
 >>>>>>> a3d712e (up: package)
+=======
+>>>>>>> cd05974 (add: setFallback7579)
 } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
@@ -30,12 +36,16 @@ export const COUNTER_CONTRACT_ADDRESS =
 
 const publicClient = createPublicClient({
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> cd05974 (add: setFallback7579)
     chain: arbitrumSepolia,
     transport: http(),
     cacheTime: 60_000,
     batch: {
         multicall: { wait: 50 },
     },
+<<<<<<< HEAD
 =======
   chain: arbitrumSepolia,
   transport: http(),
@@ -44,6 +54,8 @@ const publicClient = createPublicClient({
     multicall: { wait: 50 },
   },
 >>>>>>> b24c65f (fix: packages)
+=======
+>>>>>>> cd05974 (add: setFallback7579)
 });
 
 const counterContract = getContract({
@@ -116,6 +128,7 @@ function Transaction({
         setIsTransactionLoading(true);
         try {
             if (!smartAccount) throw new Error("No wallet instance");
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -138,6 +151,10 @@ function Transaction({
                   data: calldata,
                 });
 >>>>>>> b24c65f (fix: packages)
+=======
+
+            await action();
+>>>>>>> cd05974 (add: setFallback7579)
 
             const balance = await counterContract.read.counters([
                 smartAccount.account.address,
