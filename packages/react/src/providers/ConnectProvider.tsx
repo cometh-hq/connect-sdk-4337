@@ -14,7 +14,7 @@ import React, {
     useEffect,
     useCallback,
 } from "react";
-import type { Address, Chain, Transport } from "viem";
+import type { Address, Chain, PublicClient, Transport } from "viem";
 
 const CHAIN_STORAGE_KEY = "currentChain";
 
@@ -22,12 +22,12 @@ export type NetworkParams = {
     chain?: Chain;
     bundlerUrl?: string;
     paymasterUrl?: string;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 };
 
 type OmitConfig<T> = Omit<
     T,
-    "chain" | "paymasterUrl" | "bundlerUrl" | "rpcUrl"
+    "chain" | "paymasterUrl" | "bundlerUrl" | "publicClient"
 > & {
     networksConfig: NetworkParams[];
 };
@@ -91,9 +91,9 @@ export const ConnectProvider = <
             const paymasterUrl = config.networksConfig.find(
                 (network) => network.chain?.id === chain.id
             )?.paymasterUrl;
-            const rpcUrl = config.networksConfig.find(
+            const publicClient = config.networksConfig.find(
                 (network) => network.chain?.id === chain.id
-            )?.rpcUrl;
+            )?.publicClient;
 
             if (!bundlerUrl) throw new Error("Bundler url not found");
 
@@ -104,7 +104,7 @@ export const ConnectProvider = <
                         chain,
                         bundlerUrl,
                         paymasterUrl,
-                        rpcUrl,
+                        publicClient,
                         smartAccountAddress: params.address,
                         comethSignerConfig: {
                             ...config.comethSignerConfig,
