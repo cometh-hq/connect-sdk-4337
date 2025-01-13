@@ -84,16 +84,13 @@ export async function safeWebAuthnSigner<
                 fullDomainSelected,
             });
 
-            return adjustVInSignature(
-                "eth_sign",
-                buildSignatureBytes([
-                    {
-                        signer: passkeySignerAddress,
-                        data: passkeySignature.signature,
-                        dynamic: true,
-                    },
-                ]) as Hex
-            );
+            return buildSignatureBytes([
+                {
+                    signer: passkeySignerAddress,
+                    data: passkeySignature.signature,
+                    dynamic: true,
+                },
+            ]) as Hex;
         },
         async signTransaction(_, __) {
             throw new SignTransactionNotSupportedBySmartAccount();
