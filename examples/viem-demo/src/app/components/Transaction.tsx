@@ -13,6 +13,7 @@ import {
     encodeFunctionData,
     getContract,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   http,
   createPublicClient,
@@ -25,11 +26,20 @@ import {
 >>>>>>> a3d712e (up: package)
 =======
 >>>>>>> cd05974 (add: setFallback7579)
+=======
+    parseAbi,
+>>>>>>> e4491e0 (update: session key)
 } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
+
+import {
+    MOCK_ATTESTER_ADDRESS,
+    RHINESTONE_ATTESTER_ADDRESS,
+    getSmartSessionsValidator,
+} from "@rhinestone/module-sdk";
 
 export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
@@ -185,11 +195,40 @@ function Transaction({
                                     functionName: "count",
                                 });
 
+                                const smartSessions = getSmartSessionsValidator({});
+
                                 const txHash =
                                     await smartAccount.sendTransaction({
-                                        to: COUNTER_CONTRACT_ADDRESS,
-                                        data: calldata,
+                                        to: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
+                                        data: encodeFunctionData({
+                                            abi: parseAbi([
+                                                "struct ModuleInit {address module;bytes initData;}",
+                                                "function addSafe7579(address safe7579,ModuleInit[] calldata validators,ModuleInit[] calldata executors,ModuleInit[] calldata fallbacks, ModuleInit[] calldata hooks,address[] calldata attesters,uint8 threshold) external",
+                                            ]),
+                                            functionName: "addSafe7579",
+                                            args: [
+                                                "0x7579EE8307284F293B1927136486880611F20002",
+                                                [
+                                                    {
+                                                        module: smartSessions.address,
+                                                        initData: smartSessions.initData,
+                                                    },
+                                                ],
+                                                [],
+                                                [],
+                                                [],
+                                                [
+                                                    "0x000000333034E9f539ce08819E12c1b8Cb29084d", // Rhinestone Attester
+                                                    MOCK_ATTESTER_ADDRESS
+                                                ],
+                                                1,
+                                            ],
+                                        }),
                                     });
+
+                                    console.log({txHash})
+
+                                    //await smartAccount.setFallbackTo7579()
 
                                 setTransactionSended(txHash);
                             })

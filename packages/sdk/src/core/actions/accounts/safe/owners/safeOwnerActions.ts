@@ -177,10 +177,7 @@ export const safeOwnerPluginActions =
                 functionName: "getOwners",
             })) as Address[];
 
-<<<<<<< HEAD
            
-=======
->>>>>>> 0ca4575 (fix: packages)
             const enrichedOwners: EnrichedOwner[] = owners.map((owner) => {
                 const webauthSigner = webAuthnSigners.find(
                     (webauthnSigner) => webauthnSigner.signerAddress === owner
@@ -191,7 +188,6 @@ export const safeOwnerPluginActions =
                         address: owner,
                         deviceData: webauthSigner.deviceData,
                         creationDate: webauthSigner.creationDate,
-<<<<<<< HEAD
                         isSmartContract: true,
                     };
                 }
@@ -213,19 +209,11 @@ export const safeOwnerPluginActions =
                 ) {
                     enrichedOwner.isSmartContract = true;
                 }
-=======
-                    };
-                }
-                return { address: owner };
->>>>>>> 0ca4575 (fix: packages)
             });
 
             return enrichedOwners;
         },
     });
-<<<<<<< HEAD
 
 
 
-=======
->>>>>>> 0ca4575 (fix: packages)

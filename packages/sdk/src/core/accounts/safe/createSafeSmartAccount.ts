@@ -35,8 +35,10 @@ import {
     getSafeInitializer,
 } from "./services/safe";
 
+import { add7579FunctionSelector } from "@/constants";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
+import type { SafeSigner } from "./safeSigner/types";
 import type { SafeContractParams } from "./types";
 
 export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
@@ -44,6 +46,7 @@ export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
     signerAddress: Address;
     safeContractParams: SafeContractParams;
     comethSignerConfig?: ComethSignerConfig;
+    publicClient?: PublicClient;
 };
 
 export type createSafeSmartAccountParameters = Prettify<{
@@ -55,6 +58,8 @@ export type createSafeSmartAccountParameters = Prettify<{
     comethSignerConfig?: ComethSignerConfig;
     safeContractConfig?: SafeContractParams;
     signer?: Signer;
+    clientTimeout?: number;
+    smartSessionSigner?: SafeSigner;
 }>;
 
 /**
@@ -161,6 +166,7 @@ export async function createSafeSmartAccount<
     safeContractConfig,
     signer,
     clientTimeout,
+    smartSessionSigner,
 }: createSafeSmartAccountParameters): Promise<ComethSafeSmartAccount> {
     const api = new API(apiKey, baseUrl);
     const [client, contractParams] = await Promise.all([
@@ -182,7 +188,7 @@ export async function createSafeSmartAccount<
         safe4337ModuleAddress: safe4337Module,
         safeWebAuthnSignerFactory,
     } = safeContractConfig ??
-    (contractParams.safeContractParams as SafeContractParams);
+        (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337Module) {
         throw new Error("Network is not supported");
@@ -253,15 +259,14 @@ export async function createSafeSmartAccount<
         await saveSigner(accountSigner, smartAccountAddress);
     }
 
-    const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
-        client,
-        {
+    const safeSigner =
+        smartSessionSigner ??
+        (await comethSignerToSafeSigner<TTransport, TChain>(client, {
             accountSigner,
             safe4337Module,
             smartAccountAddress,
             fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
-        }
-    );
+        }));
 
     return toSmartAccount({
         client,
@@ -276,6 +281,7 @@ export async function createSafeSmartAccount<
             safeContractConfig ??
             (contractParams.safeContractParams as SafeContractParams),
         comethSignerConfig: comethSignerConfig,
+        publicClient,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
         },
@@ -319,6 +325,8 @@ export async function createSafeSmartAccount<
         async encodeCalls(calls) {
             const hasMultipleCalls = calls.length > 1;
 
+            let operationType = 0;
+
             if (hasMultipleCalls) {
                 const userOpCalldata = encodeFunctionData({
                     abi: MultiSendContractABI,
@@ -326,7 +334,7 @@ export async function createSafeSmartAccount<
                     args: [
                         encodeMultiSendTransactions(
                             calls.map((call) => ({
-                                op: 0,
+                                op: operationType,
                                 to: call.to,
                                 data: call.data ?? "0x",
                                 value: call.value ?? BigInt(0),
@@ -342,10 +350,20 @@ export async function createSafeSmartAccount<
                 });
             }
 
+            // set fallback 7579 in delegateCall
+            if (calls[0].data?.slice(0, 10) === add7579FunctionSelector) {
+                operationType = 1;
+            }
+
             return encodeFunctionData({
                 abi: safe4337ModuleAbi,
                 functionName: "executeUserOpWithErrorString",
-                args: [calls[0].to, calls[0].value, calls[0].data, 0],
+                args: [
+                    calls[0].to,
+                    calls[0].value,
+                    calls[0].data,
+                    operationType,
+                ],
             });
         },
 

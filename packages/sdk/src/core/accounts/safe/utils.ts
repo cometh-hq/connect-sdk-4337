@@ -4,6 +4,7 @@ import { type Abi, parseAbi } from "abitype";
 import {
     type Address,
     type Prettify,
+    type PublicClient,
     createNonceManager,
     serializeErc6492Signature,
 } from "viem";
@@ -39,7 +40,7 @@ export async function toSmartAccount<
         safeContractParams: SafeContractParams;
         comethSignerConfig?: ComethSignerConfig;
         signerAddress: Address;
-        rpcUrl?: string;
+        publicClient?: PublicClient;
     },
 >(
     comethImplementation: implementation
@@ -49,7 +50,7 @@ export async function toSmartAccount<
         safeContractParams: SafeContractParams;
         comethSignerConfig?: ComethSignerConfig;
         signerAddress: Address;
-        rpcUrl?: string;
+        publicClient?: PublicClient;
     }
 > {
     const {
@@ -70,7 +71,7 @@ export async function toSmartAccount<
     const address = await comethImplementation.getAddress();
     const signerAddress = comethImplementation.signerAddress;
     const connectApiInstance = comethImplementation.connectApiInstance;
-    const rpcUrl = comethImplementation.rpcUrl;
+    const publicClient = comethImplementation.publicClient;
 
     return {
         ...extend,
@@ -78,7 +79,7 @@ export async function toSmartAccount<
         address,
         signerAddress,
         connectApiInstance,
-        rpcUrl,
+        publicClient,
         async getFactoryArgs() {
             if ("isDeployed" in this && (await this.isDeployed()))
                 return { factory: undefined, factoryData: undefined };

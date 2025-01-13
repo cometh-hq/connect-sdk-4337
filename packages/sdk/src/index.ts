@@ -1,3 +1,4 @@
+import { erc7579Actions } from "permissionless/actions/erc7579";
 import { ENTRYPOINT_ADDRESS_V07, customChains } from "./constants";
 
 import {
@@ -25,11 +26,15 @@ import type {
     IsRecoveryActiveReturnType,
 } from "./core/actions/accounts/safe/recovery/isRecoveryActive";
 import type { SetUpRecoveryModuleParams } from "./core/actions/accounts/safe/recovery/setUpRecoveryModule";
+
+import type { CreateSessionDataParams } from "@biconomy/sdk";
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
 } from "./core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
+import { smartSessionActions } from "./core/modules/sessionKey/decorators";
+import { toSmartSessionsSigner } from "./core/modules/sessionKey/toSmartSessionsSigner";
 import type { RecoveryParamsResponse } from "./core/services/delayModuleService";
 import { createSigner } from "./core/signers/createSigner";
 import type { webAuthnOptions } from "./core/signers/passkeys/types";
@@ -51,6 +56,9 @@ export {
     createLegacySafeSmartAccount,
     retrieveLegacyWalletAddress,
     importSafeActions,
+    erc7579Actions,
+    smartSessionActions,
+    toSmartSessionsSigner,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
 };
@@ -69,4 +77,5 @@ export type {
     CancelRecoveryRequestParams,
     IsRecoveryActiveParams,
     IsRecoveryActiveReturnType,
+    CreateSessionDataParams,
 };
