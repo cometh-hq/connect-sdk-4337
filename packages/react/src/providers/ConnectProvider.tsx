@@ -50,7 +50,7 @@ export type ConnectContextPayload = {
     queryClient?: QueryClient;
     smartAccountClient: ContextComethSmartAccountClient | null;
     smartAccountAddress: Address | undefined;
-    updateSmartAccountClient: (params?: UpdateClientPayload) => Promise<void>;
+    updateSmartAccountClient: (params?: UpdateClientPayload) => Promise<ContextComethSmartAccountClient | null>;
     disconnectSmartAccount: () => Promise<void>;
     networksConfig: NetworkParams[] | undefined;
 };
@@ -59,7 +59,7 @@ export const ConnectContext = createContext<ConnectContextPayload>({
     queryClient: undefined,
     smartAccountClient: null,
     smartAccountAddress: undefined,
-    updateSmartAccountClient: async () => {},
+    updateSmartAccountClient: async () => null,
     disconnectSmartAccount: async () => {},
     networksConfig: undefined,
 });
@@ -102,6 +102,7 @@ export const ConnectProvider = <
             if (!bundlerUrl) throw new Error("Bundler url not found");
 
             try {
+
                 const { client, address: newAddress } =
                     await createSmartAccount({
                         ...config,
@@ -120,8 +121,11 @@ export const ConnectProvider = <
                 setSmartAccountAddress(newAddress);
 
                 localStorage.setItem(CHAIN_STORAGE_KEY, JSON.stringify(chain));
+
+                return client;
             } catch (e) {
                 console.log(e);
+                return smartAccountClient;
             }
         },
         [config]
