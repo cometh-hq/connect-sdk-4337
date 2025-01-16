@@ -26,8 +26,8 @@ export async function setFallbackTo7579<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 >(client: Client<TTransport, TChain, TAccount>): Promise<Hash> {
     const api = client?.account?.connectApiInstance;
 
@@ -69,7 +69,6 @@ export async function setFallbackTo7579<
     const txs = [
         {
             to: LAUNCHPAD_ADDRESS,
-            value: BigInt(0),
             data: encodeFunctionData({
                 abi: parseAbi([
                     "struct ModuleInit {address module;bytes initData;}",
@@ -93,6 +92,7 @@ export async function setFallbackTo7579<
                     1,
                 ],
             }),
+            value: BigInt(0),
         },
     ];
 

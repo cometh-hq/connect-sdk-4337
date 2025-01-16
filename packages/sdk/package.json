@@ -55,9 +55,9 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@biconomy/sdk": "^0.0.8",
+    "@biconomy/sdk": "^0.0.24",
     "@noble/curves": "^1.6.0",
-    "@rhinestone/module-sdk": "^0.1.27",
+    "@rhinestone/module-sdk": "^0.2.1",
     "@simplewebauthn/server": "^7.2.0",
     "@types/cbor-js": "^0.1.1",
     "@types/elliptic": "^6.4.18",

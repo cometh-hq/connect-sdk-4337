@@ -1,5 +1,9 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
-import type { Execution, GrantPermissionResponse } from "@biconomy/sdk";
+import type {
+    Execution,
+    GrantPermissionResponse,
+    PreparePermissionResponse,
+} from "@biconomy/sdk";
 import type { Chain, Client, Hash, Transport } from "viem";
 import {
     type GrantPermissionParameters,
@@ -9,6 +13,10 @@ import {
     type IsPermissionInstalledParameters,
     isPermissionInstalled,
 } from "./isPermissionInstalled";
+import {
+    type PreparePermissionParameters,
+    preparePermission,
+} from "./preparePermission";
 import {
     type TrustAttestersParameters,
     trustAttesters,
@@ -31,7 +39,7 @@ export type UsePermissionParameters = {
 /**
  * Defines the shape of actions available for creating smart sessions.
  *
- * @template TModularSmartAccount - Type of the modular smart account, extending ModularSmartAccount or undefined.
+ * @template TAccount - Type of the modular smart account, extending ModularSmartAccount or undefined.
  */
 export type SmartSessionCreateActions<
     TAccount extends ComethSafeSmartAccount | undefined =
@@ -45,8 +53,18 @@ export type SmartSessionCreateActions<
      * @returns A promise that resolves to the creation response.
      */
     grantPermission: (
-        args: GrantPermissionParameters
+        args: GrantPermissionParameters<TAccount>
     ) => Promise<GrantPermissionResponse>;
+
+    /**
+     * Prepares permission for a modular smart account.
+     *
+     * @param args - Parameters for preparing permission.
+     * @returns A promise that resolves to the transaction hash.
+     */
+    preparePermission: (
+        args: PreparePermissionParameters<TAccount>
+    ) => Promise<PreparePermissionResponse>;
 
     /**
      * Creates multiple sessions for a modular smart account.
@@ -92,6 +110,7 @@ export function smartSessionActions() {
     ): SmartSessionCreateActions<TAccount> => {
         return {
             grantPermission: (args) => grantPermission(client, args),
+            preparePermission: (args) => preparePermission(client, args),
             isPermissionInstalled: (args) =>
                 isPermissionInstalled(client, args),
             trustAttesters: () => trustAttesters(client),

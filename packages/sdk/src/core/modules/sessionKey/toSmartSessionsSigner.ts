@@ -56,12 +56,17 @@ export const isPermissionEnabledAbi = [
     },
 ] as const;
 
+export type UsePermissionModuleParameters = {
+    moduleData?: UsePermissionModuleData;
+    signer: PrivateKeyAccount
+};
+
 export async function toSmartSessionsSigner<
     transport extends Transport,
     chain extends Chain | undefined = undefined,
     account extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
     client extends Client | undefined = undefined,
 >(
     smartAccountClient: ComethSmartAccountClient<
@@ -70,12 +75,16 @@ export async function toSmartSessionsSigner<
         account,
         client
     >,
-    parameters: UsePermissionModuleData & { signer: PrivateKeyAccount }
+    parameters: UsePermissionModuleParameters
 ): Promise<SafeSigner<"safeSmartSessionsSigner">> {
     const {
         signer,
-        permissionId = "0x",
-        mode = SmartSessionMode.USE,
+        moduleData: {
+            permissionIdIndex = 0,
+            permissionIds = [],
+            mode = SmartSessionMode.USE,
+            enableSessionData,
+        } = {},
     } = parameters;
 
     const publicClient = createPublicClient({
@@ -87,7 +96,10 @@ export async function toSmartSessionsSigner<
         address: SMART_SESSIONS_ADDRESS,
         abi: isPermissionEnabledAbi,
         functionName: "isPermissionEnabled",
-        args: [permissionId, smartAccountClient?.account?.address as Address],
+        args: [
+            permissionIds[permissionIdIndex],
+            smartAccountClient?.account?.address as Address,
+        ],
     });
 
     if (!isPermissionInstalled)
@@ -113,7 +125,8 @@ export async function toSmartSessionsSigner<
         getStubSignature: async () =>
             encodeSmartSessionSignature({
                 mode,
-                permissionId,
+                permissionId: permissionIds[permissionIdIndex],
+                enableSessionData,
                 signature: getOwnableValidatorMockSignature({
                     threshold: 1,
                 }),
@@ -145,7 +158,8 @@ export async function toSmartSessionsSigner<
 
             return encodeSmartSessionSignature({
                 mode,
-                permissionId,
+                permissionId: permissionIds[permissionIdIndex],
+                enableSessionData,
                 signature: await signer.signMessage({
                     message: { raw: userOpHash as Hex },
                 }),
