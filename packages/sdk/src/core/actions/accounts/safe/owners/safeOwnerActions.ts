@@ -37,199 +37,199 @@ export type SafeOwnerPluginActions = {
 
 export const safeOwnerPluginActions =
     (publicClient?: PublicClient) =>
-        <
-            TSmartAccount extends SafeSmartAccount<TEntryPoint> | undefined,
-            TTransport extends Transport = Transport,
-            TChain extends Chain | undefined = undefined,
-            TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<
-                infer U
-            >
+    <
+        TSmartAccount extends SafeSmartAccount<TEntryPoint> | undefined,
+        TTransport extends Transport = Transport,
+        TChain extends Chain | undefined = undefined,
+        TEntryPoint extends EntryPoint = TSmartAccount extends SmartAccount<
+            infer U
+        >
             ? U
             : never,
-        >(
-            client: SmartAccountClient<
-                TEntryPoint,
-                TTransport,
-                TChain,
-                TSmartAccount
-            >
-        ): SafeOwnerPluginActions => ({
-            async addOwner(args: { ownerToAdd: Address }) {
-                return await client.sendTransaction({
-                    to: client.account?.address as Address,
-                    data: encodeFunctionData({
-                        abi: SafeAbi,
-                        functionName: "addOwnerWithThreshold",
-                        args: [args.ownerToAdd, 1],
-                    }),
-                    maxFeePerBlobGas: 0n,
-                    blobs: [],
-                });
-            },
-
-            async removeOwner(args: { ownerToRemove: Address }) {
-                const rpcClient =
-                    publicClient ??
-                    createPublicClient({
-                        chain: client.chain,
-                        transport: http(),
-                        cacheTime: 60_000,
-                        batch: {
-                            multicall: { wait: 50 },
-                        },
-                    });
-
-                const isDeployed = await isSmartAccountDeployed(
-                    rpcClient,
-                    client.account?.address as Address
-                );
-
-                if (!isDeployed)
-                    throw new Error("Can't remove owner on an undeployed safe");
-
-                const owners = (await rpcClient.readContract({
-                    address: client.account?.address as Address,
+    >(
+        client: SmartAccountClient<
+            TEntryPoint,
+            TTransport,
+            TChain,
+            TSmartAccount
+        >
+    ): SafeOwnerPluginActions => ({
+        async addOwner(args: { ownerToAdd: Address }) {
+            return await client.sendTransaction({
+                to: client.account?.address as Address,
+                data: encodeFunctionData({
                     abi: SafeAbi,
-                    functionName: "getOwners",
-                })) as Address[];
+                    functionName: "addOwnerWithThreshold",
+                    args: [args.ownerToAdd, 1],
+                }),
+                maxFeePerBlobGas: 0n,
+                blobs: [],
+            });
+        },
 
-                const index = owners.findIndex(
-                    (ownerToFind) => ownerToFind === args.ownerToRemove
-                );
-
-                if (index === -1)
-                    throw new Error(`${args.ownerToRemove} is not a safe owner`);
-
-                let prevOwner: Address;
-
-                if (index !== 0) {
-                    prevOwner = getAddress(owners[index - 1]);
-                } else {
-                    prevOwner = getAddress(pad(SAFE_SENTINEL_OWNERS, { size: 20 }));
-                }
-
-                return await client.sendTransaction({
-                    to: client.account?.address as Address,
-                    data: encodeFunctionData({
-                        abi: SafeAbi,
-                        functionName: "removeOwner",
-                        args: [prevOwner, args.ownerToRemove, 1],
-                    }),
-                    maxFeePerBlobGas: 0n,
-                    blobs: [],
+        async removeOwner(args: { ownerToRemove: Address }) {
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
                 });
-            },
 
-            async getOwners() {
-                const rpcClient =
-                    publicClient ??
-                    createPublicClient({
-                        chain: client.chain,
-                        transport: http(),
-                        cacheTime: 60_000,
-                        batch: {
-                            multicall: { wait: 50 },
-                        },
-                    });
+            const isDeployed = await isSmartAccountDeployed(
+                rpcClient,
+                client.account?.address as Address
+            );
 
-                const isDeployed = await isSmartAccountDeployed(
-                    rpcClient,
-                    client.account?.address as Address
-                );
+            if (!isDeployed)
+                throw new Error("Can't remove owner on an undeployed safe");
 
-                if (!isDeployed)
-                    return [client.account?.signerAddress] as Address[];
+            const owners = (await rpcClient.readContract({
+                address: client.account?.address as Address,
+                abi: SafeAbi,
+                functionName: "getOwners",
+            })) as Address[];
 
-                return (await rpcClient.readContract({
-                    address: client.account?.address as Address,
+            const index = owners.findIndex(
+                (ownerToFind) => ownerToFind === args.ownerToRemove
+            );
+
+            if (index === -1)
+                throw new Error(`${args.ownerToRemove} is not a safe owner`);
+
+            let prevOwner: Address;
+
+            if (index !== 0) {
+                prevOwner = getAddress(owners[index - 1]);
+            } else {
+                prevOwner = getAddress(pad(SAFE_SENTINEL_OWNERS, { size: 20 }));
+            }
+
+            return await client.sendTransaction({
+                to: client.account?.address as Address,
+                data: encodeFunctionData({
                     abi: SafeAbi,
-                    functionName: "getOwners",
-                })) as Address[];
-            },
+                    functionName: "removeOwner",
+                    args: [prevOwner, args.ownerToRemove, 1],
+                }),
+                maxFeePerBlobGas: 0n,
+                blobs: [],
+            });
+        },
 
-            async getEnrichedOwners() {
-                const rpcClient =
-                    publicClient ??
-                    createPublicClient({
-                        chain: client.chain,
-                        transport: http(),
-                        cacheTime: 60_000,
-                        batch: {
-                            multicall: { wait: 50 },
-                        },
-                    });
+        async getOwners() {
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
 
-                const isDeployed = await isSmartAccountDeployed(
-                    rpcClient,
-                    client.account?.address as Address
-                );
+            const isDeployed = await isSmartAccountDeployed(
+                rpcClient,
+                client.account?.address as Address
+            );
 
-                const api = client?.account?.getConnectApi();
+            if (!isDeployed)
+                return [client.account?.signerAddress] as Address[];
 
-                const webAuthnSigners =
-                    (await api?.getWebAuthnSignersByWalletAddressAndChain(
-                        client.account?.address as Address,
-                        rpcClient.chain?.id as number
-                    )) as WebAuthnSigner[];
+            return (await rpcClient.readContract({
+                address: client.account?.address as Address,
+                abi: SafeAbi,
+                functionName: "getOwners",
+            })) as Address[];
+        },
 
-                if (!isDeployed) {
-                    if (webAuthnSigners.length === 0) {
-                        return [
-                            {
-                                address: client.account?.signerAddress as Address,
-                                isSmartContract: false,
-                            },
-                        ];
-                    }
+        async getEnrichedOwners() {
+            const rpcClient =
+                publicClient ??
+                createPublicClient({
+                    chain: client.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
+                });
+
+            const isDeployed = await isSmartAccountDeployed(
+                rpcClient,
+                client.account?.address as Address
+            );
+
+            const api = client?.account?.getConnectApi();
+
+            const webAuthnSigners =
+                (await api?.getWebAuthnSignersByWalletAddressAndChain(
+                    client.account?.address as Address,
+                    rpcClient.chain?.id as number
+                )) as WebAuthnSigner[];
+
+            if (!isDeployed) {
+                if (webAuthnSigners.length === 0) {
                     return [
                         {
-                            address: webAuthnSigners[0].signerAddress as Address,
-                            deviceData: webAuthnSigners[0].deviceData,
-                            creationDate: webAuthnSigners[0].creationDate,
-                            isSmartContract: true,
+                            address: client.account?.signerAddress as Address,
+                            isSmartContract: false,
                         },
                     ];
                 }
+                return [
+                    {
+                        address: webAuthnSigners[0].signerAddress as Address,
+                        deviceData: webAuthnSigners[0].deviceData,
+                        creationDate: webAuthnSigners[0].creationDate,
+                        isSmartContract: true,
+                    },
+                ];
+            }
 
-                const owners = (await rpcClient.readContract({
-                    address: client.account?.address as Address,
-                    abi: SafeAbi,
-                    functionName: "getOwners",
-                })) as Address[];
+            const owners = (await rpcClient.readContract({
+                address: client.account?.address as Address,
+                abi: SafeAbi,
+                functionName: "getOwners",
+            })) as Address[];
 
-                const enrichedOwners: EnrichedOwner[] = owners.map((owner) => {
-                    const webauthSigner = webAuthnSigners.find(
-                        (webauthnSigner) => webauthnSigner.signerAddress === owner
-                    );
-
-                    if (webauthSigner) {
-                        return {
-                            address: owner,
-                            deviceData: webauthSigner.deviceData,
-                            creationDate: webauthSigner.creationDate,
-                            isSmartContract: true,
-                        };
-                    }
-                    return { address: owner, isSmartContract: false };
-                });
-
-                const bytecodes = await Promise.all(
-                    enrichedOwners.map((owner) =>
-                        rpcClient.getCode({
-                            address: owner.address,
-                        })
-                    )
+            const enrichedOwners: EnrichedOwner[] = owners.map((owner) => {
+                const webauthSigner = webAuthnSigners.find(
+                    (webauthnSigner) => webauthnSigner.signerAddress === owner
                 );
 
-                enrichedOwners.forEach((enrichedOwner, index) => {
-                    if (
-                        !enrichedOwner.isSmartContract &&
-                        bytecodes[index] !== undefined
-                    ) {
-                        enrichedOwner.isSmartContract = true;
-                    }
-                });
+                if (webauthSigner) {
+                    return {
+                        address: owner,
+                        deviceData: webauthSigner.deviceData,
+                        creationDate: webauthSigner.creationDate,
+                        isSmartContract: true,
+                    };
+                }
+                return { address: owner, isSmartContract: false };
+            });
 
-                return enrichedOwners;
-            },
-        });
+            const bytecodes = await Promise.all(
+                enrichedOwners.map((owner) =>
+                    rpcClient.getCode({
+                        address: owner.address,
+                    })
+                )
+            );
+
+            enrichedOwners.forEach((enrichedOwner, index) => {
+                if (
+                    !enrichedOwner.isSmartContract &&
+                    bytecodes[index] !== undefined
+                ) {
+                    enrichedOwner.isSmartContract = true;
+                }
+            });
+
+            return enrichedOwners;
+        },
+    });

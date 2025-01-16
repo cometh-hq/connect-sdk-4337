@@ -139,6 +139,7 @@ const storeWalletInComethApi = async ({
     initializer,
     signer,
     api,
+    rpcUrl,
 }: {
     chain: Chain;
     singletonAddress: Address;
@@ -147,6 +148,7 @@ const storeWalletInComethApi = async ({
     initializer: Hex;
     signer: Signer;
     api: API;
+    rpcUrl?: string;
 }): Promise<{ smartAccountAddress: Address; isNewWallet: boolean }> => {
     const smartAccountAddress = await getAccountAddress({
         chain,
@@ -154,6 +156,7 @@ const storeWalletInComethApi = async ({
         safeProxyFactoryAddress,
         saltNonce,
         initializer,
+        rpcUrl,
     });
 
     const isNewWallet = await createNewWalletInDb({
@@ -175,12 +178,14 @@ export const getAccountAddress = async ({
     safeProxyFactoryAddress,
     saltNonce = zeroHash,
     initializer,
+    rpcUrl,
 }: {
     chain: Chain;
     singletonAddress: Address;
     safeProxyFactoryAddress: Address;
     saltNonce?: Hex;
     initializer: Hex;
+    rpcUrl?: string;
 }): Promise<Address> => {
     return getSafeAddressFromInitializer({
         chain,
@@ -188,6 +193,7 @@ export const getAccountAddress = async ({
         saltNonce: hexToBigInt(saltNonce),
         safeProxyFactoryAddress,
         safeSingletonAddress: singletonAddress,
+        rpcUrl,
     });
 };
 
@@ -289,6 +295,7 @@ export async function createSafeSmartAccount<
             safeProxyFactoryAddress,
             saltNonce: zeroHash,
             initializer,
+            rpcUrl: client?.transport.url,
         });
     }
 
@@ -312,6 +319,7 @@ export async function createSafeSmartAccount<
         initializer,
         signer: accountSigner,
         api,
+        rpcUrl: client?.transport.url,
     });
 
     if (res.isNewWallet) {
