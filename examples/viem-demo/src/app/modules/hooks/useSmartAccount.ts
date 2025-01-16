@@ -15,6 +15,7 @@ export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
 
+
     const [connectionError, setConnectionError] = useState<string | null>(null);
 
     const [newSigner, setNewSigner] = useState<any | null>(null);
@@ -104,9 +105,10 @@ export function useSmartAccount() {
 
             console.log("done")
 
-         
 
-          
+
+
+
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);
