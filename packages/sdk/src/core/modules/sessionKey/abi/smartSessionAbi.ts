@@ -11,12 +11,12 @@ export const SmartSessionAbi = [
                     {
                         name: "sessionValidator",
                         type: "address",
-                        internalType: "contract ISessionValidator"
+                        internalType: "contract ISessionValidator",
                     },
                     {
                         name: "sessionValidatorInitData",
                         type: "bytes",
-                        internalType: "bytes"
+                        internalType: "bytes",
                     },
                     { name: "salt", type: "bytes32", internalType: "bytes32" },
                     {
@@ -24,9 +24,17 @@ export const SmartSessionAbi = [
                         type: "tuple[]",
                         internalType: "struct PolicyData[]",
                         components: [
-                            { name: "policy", type: "address", internalType: "address" },
-                            { name: "initData", type: "bytes", internalType: "bytes" }
-                        ]
+                            {
+                                name: "policy",
+                                type: "address",
+                                internalType: "address",
+                            },
+                            {
+                                name: "initData",
+                                type: "bytes",
+                                internalType: "bytes",
+                            },
+                        ],
                     },
                     {
                         name: "erc7739Policies",
@@ -36,18 +44,26 @@ export const SmartSessionAbi = [
                             {
                                 name: "allowedERC7739Content",
                                 type: "string[]",
-                                internalType: "string[]"
+                                internalType: "string[]",
                             },
                             {
                                 name: "erc1271Policies",
                                 type: "tuple[]",
                                 internalType: "struct PolicyData[]",
                                 components: [
-                                    { name: "policy", type: "address", internalType: "address" },
-                                    { name: "initData", type: "bytes", internalType: "bytes" }
-                                ]
-                            }
-                        ]
+                                    {
+                                        name: "policy",
+                                        type: "address",
+                                        internalType: "address",
+                                    },
+                                    {
+                                        name: "initData",
+                                        type: "bytes",
+                                        internalType: "bytes",
+                                    },
+                                ],
+                            },
+                        ],
                     },
                     {
                         name: "actions",
@@ -57,35 +73,43 @@ export const SmartSessionAbi = [
                             {
                                 name: "actionTargetSelector",
                                 type: "bytes4",
-                                internalType: "bytes4"
+                                internalType: "bytes4",
                             },
                             {
                                 name: "actionTarget",
                                 type: "address",
-                                internalType: "address"
+                                internalType: "address",
                             },
                             {
                                 name: "actionPolicies",
                                 type: "tuple[]",
                                 internalType: "struct PolicyData[]",
                                 components: [
-                                    { name: "policy", type: "address", internalType: "address" },
-                                    { name: "initData", type: "bytes", internalType: "bytes" }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    {
+                                        name: "policy",
+                                        type: "address",
+                                        internalType: "address",
+                                    },
+                                    {
+                                        name: "initData",
+                                        type: "bytes",
+                                        internalType: "bytes",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
         outputs: [
             {
                 name: "permissionIds",
                 type: "bytes32[]",
-                internalType: "PermissionId[]"
-            }
+                internalType: "PermissionId[]",
+            },
         ],
-        stateMutability: "nonpayable"
+        stateMutability: "nonpayable",
     },
     {
         type: "function",
@@ -99,12 +123,12 @@ export const SmartSessionAbi = [
                     {
                         name: "sessionValidator",
                         type: "address",
-                        internalType: "contract ISessionValidator"
+                        internalType: "contract ISessionValidator",
                     },
                     {
                         name: "sessionValidatorInitData",
                         type: "bytes",
-                        internalType: "bytes"
+                        internalType: "bytes",
                     },
                     { name: "salt", type: "bytes32", internalType: "bytes32" },
                     {
@@ -112,9 +136,17 @@ export const SmartSessionAbi = [
                         type: "tuple[]",
                         internalType: "struct PolicyData[]",
                         components: [
-                            { name: "policy", type: "address", internalType: "address" },
-                            { name: "initData", type: "bytes", internalType: "bytes" }
-                        ]
+                            {
+                                name: "policy",
+                                type: "address",
+                                internalType: "address",
+                            },
+                            {
+                                name: "initData",
+                                type: "bytes",
+                                internalType: "bytes",
+                            },
+                        ],
                     },
                     {
                         name: "erc7739Policies",
@@ -124,18 +156,26 @@ export const SmartSessionAbi = [
                             {
                                 name: "allowedERC7739Content",
                                 type: "string[]",
-                                internalType: "string[]"
+                                internalType: "string[]",
                             },
                             {
                                 name: "erc1271Policies",
                                 type: "tuple[]",
                                 internalType: "struct PolicyData[]",
                                 components: [
-                                    { name: "policy", type: "address", internalType: "address" },
-                                    { name: "initData", type: "bytes", internalType: "bytes" }
-                                ]
-                            }
-                        ]
+                                    {
+                                        name: "policy",
+                                        type: "address",
+                                        internalType: "address",
+                                    },
+                                    {
+                                        name: "initData",
+                                        type: "bytes",
+                                        internalType: "bytes",
+                                    },
+                                ],
+                            },
+                        ],
                     },
                     {
                         name: "actions",
@@ -145,40 +185,56 @@ export const SmartSessionAbi = [
                             {
                                 name: "actionTargetSelector",
                                 type: "bytes4",
-                                internalType: "bytes4"
+                                internalType: "bytes4",
                             },
                             {
                                 name: "actionTarget",
                                 type: "address",
-                                internalType: "address"
+                                internalType: "address",
                             },
                             {
                                 name: "actionPolicies",
                                 type: "tuple[]",
                                 internalType: "struct PolicyData[]",
                                 components: [
-                                    { name: "policy", type: "address", internalType: "address" },
-                                    { name: "initData", type: "bytes", internalType: "bytes" }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
+                                    {
+                                        name: "policy",
+                                        type: "address",
+                                        internalType: "address",
+                                    },
+                                    {
+                                        name: "initData",
+                                        type: "bytes",
+                                        internalType: "bytes",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
         outputs: [
-            { name: "permissionId", type: "bytes32", internalType: "PermissionId" }
+            {
+                name: "permissionId",
+                type: "bytes32",
+                internalType: "PermissionId",
+            },
         ],
-        stateMutability: "pure"
+        stateMutability: "pure",
     },
     {
         type: "function",
         name: "isPermissionEnabled",
         inputs: [
-            { name: "permissionId", type: "bytes32", internalType: "PermissionId" },
-            { name: "account", type: "address", internalType: "address" }
+            {
+                name: "permissionId",
+                type: "bytes32",
+                internalType: "PermissionId",
+            },
+            { name: "account", type: "address", internalType: "address" },
         ],
         outputs: [{ name: "", type: "bool", internalType: "bool" }],
-        stateMutability: "view"
-    }
-]
+        stateMutability: "view",
+    },
+];

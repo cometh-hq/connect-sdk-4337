@@ -7,9 +7,9 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Hex, createPublicClient, parseEther } from "viem";
+import { http, type Hex, createPublicClient, parseEther, type PublicClient } from "viem";
 import { createBundlerClient } from "viem/account-abstraction";
-import { arbitrumSepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -41,13 +41,13 @@ export function useSmartAccount() {
             ) as Hex;
 
             const publicClient = createPublicClient({
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 transport: http(),
                 cacheTime: 60_000,
                 batch: {
                     multicall: { wait: 50 },
                 },
-            });
+            }) as PublicClient;
 
             let smartAccount;
 
@@ -59,7 +59,7 @@ export function useSmartAccount() {
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: baseSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -68,7 +68,7 @@ export function useSmartAccount() {
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: baseSepolia,
                     publicClient,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                     comethSignerConfig,
@@ -81,13 +81,13 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 publicClient,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,

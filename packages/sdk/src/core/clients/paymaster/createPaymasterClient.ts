@@ -1,9 +1,5 @@
 import { getUserOperationGasPrice } from "@/core/actions/paymaster/getUserOperationGasPrice";
 import {
-    type SponsorUserOperationReturnType,
-    sponsorUserOperation,
-} from "@/core/actions/paymaster/sponsorUserOperation";
-import {
     type Account,
     type Chain,
     type Client,
@@ -14,7 +10,6 @@ import {
 } from "viem";
 import {
     type PaymasterActions,
-    type UserOperation,
     paymasterActions,
 } from "viem/account-abstraction";
 import type { ComethPaymasterRpcSchema } from "../types";
@@ -29,12 +24,6 @@ export type ComethPaymasterClient = Client<
 
 export type ComethPaymasterClientActions = {
     /**
-     * Returns paymasterAndData & updated gas parameters required to sponsor a userOperation.
-     */
-    sponsorUserOperation: (args: {
-        userOperation: UserOperation<"0.7">;
-    }) => Promise<SponsorUserOperationReturnType>;
-    /**
      * Returns maxFeePerGas & maxPriorityFeePerGas required to sponsor a userOperation.
      */
     getUserOperationGasPrice: () => Promise<{
@@ -46,12 +35,6 @@ export type ComethPaymasterClientActions = {
 const comethPaymasterActions =
     (publicClient?: PublicClient) =>
     (client: Client): ComethPaymasterClientActions => ({
-        sponsorUserOperation: async (args: {
-            userOperation: UserOperation<"0.7">;
-        }) =>
-            sponsorUserOperation(client as ComethPaymasterClient, {
-                ...args,
-            }),
         getUserOperationGasPrice: async () =>
             getUserOperationGasPrice(
                 client as ComethPaymasterClient,

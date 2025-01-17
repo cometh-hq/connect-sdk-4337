@@ -37,7 +37,7 @@ import {
   parseAbi,
 >>>>>>> 5b6160b (update: test)
 } from "viem";
-import { arbitrumSepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
@@ -56,6 +56,7 @@ const publicClient = createPublicClient({
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> cd05974 (add: setFallback7579)
     chain: arbitrumSepolia,
@@ -69,6 +70,9 @@ const publicClient = createPublicClient({
 =======
 >>>>>>> 5b6160b (update: test)
   chain: arbitrumSepolia,
+=======
+  chain: baseSepolia,
+>>>>>>> 279846b (fix: session)
   transport: http(),
   cacheTime: 60_000,
   batch: {
@@ -179,6 +183,7 @@ function Transaction({
                 if (!smartAccount) throw new Error("No wallet instance");
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         setIsTransactionLoading(true);
         try {
             if (!smartAccount) throw new Error("No wallet instance");
@@ -274,10 +279,34 @@ function Transaction({
                                     });
 
                                     console.log({txHash}) */
+=======
+   
+>>>>>>> 279846b (fix: session)
 
                 //await smartAccount.setFallbackTo7579();
 
-                //setTransactionSended(txHash);
+
+               /*      const calldata = encodeFunctionData({
+                                    abi: countContractAbi,
+                                    functionName: "count",
+                                });
+                                
+
+
+                                const txHash =
+                                    await smartAccount.sendTransaction({
+                                        to:   COUNTER_CONTRACT_ADDRESS,
+                                        data: calldata,
+                                      
+                                    });
+
+                                    console.log({txHash}) 
+
+
+                setTransactionSended(txHash); */
+
+
+            
 
                 await getSessionKey({ smartAccountClient: smartAccount });
               })
