@@ -48,15 +48,15 @@ export async function safeWebAuthnSigner<
     {
         passkey,
         passkeySignerAddress,
-        safe4337Module,
         smartAccountAddress,
         fullDomainSelected,
+        userOpVerifyingContract,
     }: {
         passkey: PasskeyLocalStorageFormat;
         passkeySignerAddress: Address;
-        safe4337Module: Address;
         smartAccountAddress: Address;
         fullDomainSelected: boolean;
+        userOpVerifyingContract: Address;
     }
 ): Promise<SafeSigner<"safeWebAuthnSigner">> {
     const publicKeyCredential: PublicKeyCredentialDescriptor = {
@@ -107,10 +107,14 @@ export async function safeWebAuthnSigner<
         async signUserOperation(parameters) {
             const { ...userOperation } = parameters;
 
+            console.log(userOperation.sender);
+
+            console.log({ userOpVerifyingContract });
+
             const hash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,
-                    verifyingContract: safe4337Module,
+                    verifyingContract: userOpVerifyingContract,
                 },
                 types: EIP712_SAFE_OPERATION_TYPE,
                 primaryType: "SafeOp" as const,

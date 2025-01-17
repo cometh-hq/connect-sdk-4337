@@ -15,7 +15,7 @@ import {
 import { toAccount } from "viem/accounts";
 import { signTypedData } from "viem/actions";
 
-import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
+import { ENTRYPOINT_ADDRESS_V07, SAFE_7579_ADDRESS } from "@/constants";
 import {
     ECDSA_DUMMY_SIGNATURE,
     buildSignatureBytes,
@@ -47,11 +47,11 @@ export async function safeECDSASigner<
     client: Client<TTransport, TChain, undefined>,
     {
         signer,
-        safe4337Module,
+        userOpVerifyingContract,
         smartAccountAddress,
     }: {
         signer: PrivateKeyAccount;
-        safe4337Module: Address;
+        userOpVerifyingContract: Address;
         smartAccountAddress: Address;
     }
 ): Promise<SafeSigner<"safeECDSASigner">> {
@@ -120,7 +120,7 @@ export async function safeECDSASigner<
             const payload = {
                 domain: {
                     chainId: client.chain?.id,
-                    verifyingContract: safe4337Module,
+                    verifyingContract: userOpVerifyingContract,
                 },
                 types: EIP712_SAFE_OPERATION_TYPE,
                 primaryType: "SafeOp" as const,

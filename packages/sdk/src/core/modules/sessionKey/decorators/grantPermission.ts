@@ -16,8 +16,8 @@ import { preparePermission } from "./preparePermission";
  */
 export type GrantPermissionParameters<
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 > = {
     /** Array of session data parameters for creating multiple sessions. */
     sessionRequestedInfo: CreateSessionDataParams[];
@@ -83,8 +83,8 @@ export type GrantPermissionParameters<
  */
 export async function grantPermission<
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: GrantPermissionParameters<TAccount>
@@ -101,6 +101,7 @@ export async function grantPermission<
         "preparePermission"
     )(parameters);
 
+    console.log({ preparedPermission });
 
     const userOpHash = await getAction(
         client,
@@ -111,7 +112,7 @@ export async function grantPermission<
             {
                 to: preparedPermission.action.target,
                 data: preparedPermission.action.callData,
-                value: BigInt(0)
+                value: BigInt(0),
             },
             ...(calls_ || []),
         ],

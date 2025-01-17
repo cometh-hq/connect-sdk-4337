@@ -13,12 +13,14 @@ import { getAccountNonce } from "permissionless/actions";
 import { toSmartAccount } from "./utils";
 
 import {
+    http,
     type Address,
     type Chain,
     type Client,
     type Hex,
     type PublicClient,
     type Transport,
+    createPublicClient,
     encodeFunctionData,
     hexToBigInt,
     zeroHash,
@@ -35,10 +37,13 @@ import {
     getSafeInitializer,
 } from "./services/safe";
 
-import { add7579FunctionSelector } from "@/constants";
+import { SAFE_7579_ADDRESS, add7579FunctionSelector } from "@/constants";
+import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
+import { SafeAbi } from "./abi/safe";
 import type { SafeSigner } from "./safeSigner/types";
+import { encode7579Calls } from "./services/7579";
 import type { SafeContractParams } from "./types";
 
 export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
@@ -178,6 +183,17 @@ export async function createSafeSmartAccount<
         getProjectParamsByChain({ api, chain }),
     ]);
 
+    publicClient =
+        publicClient ??
+        (createPublicClient({
+            chain: chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        }) as PublicClient);
+
     const {
         safeWebAuthnSharedSignerContractAddress,
         setUpContractAddress,
@@ -259,11 +275,38 @@ export async function createSafeSmartAccount<
         await saveSigner(accountSigner, smartAccountAddress);
     }
 
+    let userOpVerifyingContract = safe4337Module;
+    console.log({ userOpVerifyingContract });
+
+    console.log({ smartAccountAddress });
+
+    const isDeployed = await isSmartAccountDeployed(
+        client,
+        smartAccountAddress
+    );
+
+    console.log({ isDeployed });
+
+    if (isDeployed) {
+        const is7579Enabled = await publicClient.readContract({
+            address: smartAccountAddress,
+            abi: SafeAbi,
+            functionName: "isModuleEnabled",
+            args: [SAFE_7579_ADDRESS as Address],
+        });
+
+        console.log({ is7579Enabled });
+
+        if (is7579Enabled) {
+            userOpVerifyingContract = SAFE_7579_ADDRESS;
+        }
+    }
+
     const safeSigner =
         smartSessionSigner ??
         (await comethSignerToSafeSigner<TTransport, TChain>(client, {
             accountSigner,
-            safe4337Module,
+            userOpVerifyingContract,
             smartAccountAddress,
             fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
         }));
@@ -327,6 +370,20 @@ export async function createSafeSmartAccount<
 
             let operationType = 0;
 
+            if (userOpVerifyingContract == SAFE_7579_ADDRESS) {
+                console.log("encode 7579");
+
+                return encode7579Calls({
+                    mode: {
+                        type: hasMultipleCalls ? "batchcall" : "call",
+                        revertOnError: false,
+                        selector: "0x",
+                        context: "0x",
+                    },
+                    callData: calls,
+                });
+            }
+
             if (hasMultipleCalls) {
                 const userOpCalldata = encodeFunctionData({
                     abi: MultiSendContractABI,
@@ -354,6 +411,8 @@ export async function createSafeSmartAccount<
             if (calls[0].data?.slice(0, 10) === add7579FunctionSelector) {
                 operationType = 1;
             }
+
+            console.log("encode normal");
 
             return encodeFunctionData({
                 abi: safe4337ModuleAbi,

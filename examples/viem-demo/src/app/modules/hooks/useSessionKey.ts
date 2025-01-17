@@ -62,9 +62,7 @@ export function useSessionKey() {
 
         console.log({ extendedAccount })
 
-        const isModuleInstalled = await extendedAccount.isModuleInstalled({ type: "executor", address: "0x00000000002B0eCfbD0496EE71e01257dA0E37DE" as Address, context: "0x" })
 
-        console.log({ isModuleInstalled })
 
         const privateKey = generatePrivateKey();
         const sessionOwner = privateKeyToAccount(privateKey);
@@ -72,6 +70,8 @@ export function useSessionKey() {
         let sessionKeySigner
 
         const usersSessionData = parse(stringifiedSessionData) as any
+
+        console.log({usersSessionData})
 
         if (!usersSessionData) {
 

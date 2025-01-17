@@ -14,7 +14,14 @@ import {
     encodeValidationData,
     getPermissionId,
 } from "@rhinestone/module-sdk";
-import type { Address, Chain, Client, Hex, PublicClient, Transport } from "viem";
+import type {
+    Address,
+    Chain,
+    Client,
+    Hex,
+    PublicClient,
+    Transport,
+} from "viem";
 import { encodeFunctionData, toFunctionSelector } from "viem/utils";
 import { SmartSessionAbi } from "../abi/smartSessionAbi";
 
@@ -27,8 +34,8 @@ export const ONE_YEAR_FROM_NOW_IN_SECONDS = Date.now() + 60 * 60 * 24 * 365;
  */
 export type PreparePermissionParameters<
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 > = {
     /** Array of session data parameters for creating multiple sessions. */
     sessionRequestedInfo: CreateSessionDataParams[];
@@ -52,9 +59,8 @@ export type PreparePermissionParameters<
  * @returns A promise that resolves to the action data and permission IDs, or an Error.
  */
 export const getPermissionAction = async ({
-
     sessionRequestedInfo,
-
+    
 }: {
     sessionRequestedInfo: FullCreateSessionDataParams[];
     client: PublicClient;
@@ -62,44 +68,44 @@ export const getPermissionAction = async ({
     const sessions: Session[] = [];
     const permissionIds: Hex[] = [];
 
-
-
-    console.log({ sessionRequestedInfo })
+    console.log({ sessionRequestedInfo });
 
     // Start populating the session for each param provided
     for (const sessionInfo of sessionRequestedInfo) {
-
-
-
-
+       
 
         const session = {
-            //chainId: BigInt(chainId),
+            //chainId: BigInt(client!.chain?.id),
             sessionValidator: OWNABLE_VALIDATOR_ADDRESS,
             sessionValidatorInitData: encodeValidationData({
-                threshold: 1,
-                owners: [sessionInfo.sessionKeyData],
+              threshold: 1,
+              owners: [sessionInfo.sessionKeyData]
             }),
             salt: sessionInfo.salt ?? generateSalt(),
             userOpPolicies: [],
-            actions: [{
-                actionTarget: "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F" as Address,
-                actionTargetSelector: toFunctionSelector(
-                    "function count()"
-                ) as Hex,
-                actionPolicies: [{
-                    policy: "0x0000003111cD8e92337C100F22B7A9dbf8DEE301",
-                    initData: '0x',
-                }],
-            }],
-
+            actions: [
+                {
+                    actionTarget:
+                        "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F" as Address,
+                    actionTargetSelector: toFunctionSelector(
+                        "function count()"
+                    ) as Hex,
+                    actionPolicies: [
+                        {
+                            policy: "0x0000003111cD8e92337C100F22B7A9dbf8DEE301",
+                            initData: "0x",
+                        },
+                    ],
+                },
+            ],
             erc7739Policies: {
-                allowedERC7739Content: [],
-                erc1271Policies: [],
-            },
-        };
+              allowedERC7739Content: [],
+              erc1271Policies: []
+            }
+            // permitERC4337Paymaster: true
+          }
 
-        console.log({ session })
+        console.log({ session });
 
         const permissionId = await getPermissionId({
             session: session as any,
@@ -111,25 +117,22 @@ export const getPermissionAction = async ({
         sessions.push(session as any);
     }
 
-    console.log({ permissionIds })
-    console.log(sessions)
+    console.log({ permissionIds });
+    console.log(sessions);
 
-
-    const callData = encodeFunctionData({
+    const preparePermissionData = encodeFunctionData({
         abi: SmartSessionAbi,
         functionName: "enableSessions",
         args: [sessions],
     });
 
-
-
-
+    console.log({ preparePermissionData });
 
     return {
         action: {
             target: SMART_SESSIONS_ADDRESS,
             value: BigInt(0),
-            callData: callData,
+            callData: preparePermissionData,
         },
         permissionIds: permissionIds,
         sessions,
@@ -182,14 +185,15 @@ export const getPermissionAction = async ({
  */
 export async function preparePermission<
     TAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 >(
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: PreparePermissionParameters<TAccount>
 ): Promise<PreparePermissionResponse> {
     const {
-        publicClient: publicClient_ = client.account?.publicClient as PublicClient,
+        publicClient: publicClient_ = client.account
+            ?.publicClient as PublicClient,
         account = client.account,
         sessionRequestedInfo,
     } = parameters;
@@ -207,10 +211,9 @@ export async function preparePermission<
     const defaultedSessionRequestedInfo =
         sessionRequestedInfo.map(applyDefaults);
 
-    console.log({ defaultedSessionRequestedInfo })
+    console.log({ defaultedSessionRequestedInfo });
 
     const actionResponse = await getPermissionAction({
-
         client: publicClient_,
         sessionRequestedInfo: defaultedSessionRequestedInfo,
     });

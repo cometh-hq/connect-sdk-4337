@@ -58,15 +58,15 @@ export const isPermissionEnabledAbi = [
 
 export type UsePermissionModuleParameters = {
     moduleData?: UsePermissionModuleData;
-    signer: PrivateKeyAccount
+    signer: PrivateKeyAccount;
 };
 
 export async function toSmartSessionsSigner<
     transport extends Transport,
     chain extends Chain | undefined = undefined,
     account extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
     client extends Client | undefined = undefined,
 >(
     smartAccountClient: ComethSmartAccountClient<
