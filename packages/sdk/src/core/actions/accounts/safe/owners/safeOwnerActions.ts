@@ -23,7 +23,7 @@ export type EnrichedOwner = {
     address: Address;
     deviceData?: DeviceData;
     creationDate?: Date;
-    isSmartContract?:boolean
+    isSmartContract?: boolean;
 };
 
 export type SafeOwnerPluginActions = {
@@ -177,7 +177,6 @@ export const safeOwnerPluginActions =
                 functionName: "getOwners",
             })) as Address[];
 
-           
             const enrichedOwners: EnrichedOwner[] = owners.map((owner) => {
                 const webauthSigner = webAuthnSigners.find(
                     (webauthnSigner) => webauthnSigner.signerAddress === owner
@@ -214,6 +213,3 @@ export const safeOwnerPluginActions =
             return enrichedOwners;
         },
     });
-
-
-
