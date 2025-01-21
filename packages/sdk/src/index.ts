@@ -28,6 +28,7 @@ import type {
 import type { SetUpRecoveryModuleParams } from "./core/actions/accounts/safe/recovery/setUpRecoveryModule";
 
 import type { CreateSessionDataParams } from "@biconomy/sdk";
+import type { SafeSigner } from "./core/accounts/safe/safeSigner/types";
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
@@ -78,4 +79,5 @@ export type {
     IsRecoveryActiveParams,
     IsRecoveryActiveReturnType,
     CreateSessionDataParams,
+    SafeSigner,
 };

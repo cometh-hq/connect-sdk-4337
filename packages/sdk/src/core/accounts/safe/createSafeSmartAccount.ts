@@ -276,16 +276,11 @@ export async function createSafeSmartAccount<
     }
 
     let userOpVerifyingContract = safe4337Module;
-    console.log({ userOpVerifyingContract });
-
-    console.log({ smartAccountAddress });
 
     const isDeployed = await isSmartAccountDeployed(
         client,
         smartAccountAddress
     );
-
-    console.log({ isDeployed });
 
     if (isDeployed) {
         const is7579Enabled = await publicClient.readContract({
@@ -294,8 +289,6 @@ export async function createSafeSmartAccount<
             functionName: "isModuleEnabled",
             args: [SAFE_7579_ADDRESS as Address],
         });
-
-        console.log({ is7579Enabled });
 
         if (is7579Enabled) {
             userOpVerifyingContract = SAFE_7579_ADDRESS;
@@ -370,9 +363,7 @@ export async function createSafeSmartAccount<
 
             let operationType = 0;
 
-            if (userOpVerifyingContract == SAFE_7579_ADDRESS) {
-                console.log("encode 7579");
-
+            if (userOpVerifyingContract === SAFE_7579_ADDRESS) {
                 return encode7579Calls({
                     mode: {
                         type: hasMultipleCalls ? "batchcall" : "call",
@@ -411,8 +402,6 @@ export async function createSafeSmartAccount<
             if (calls[0].data?.slice(0, 10) === add7579FunctionSelector) {
                 operationType = 1;
             }
-
-            console.log("encode normal");
 
             return encodeFunctionData({
                 abi: safe4337ModuleAbi,

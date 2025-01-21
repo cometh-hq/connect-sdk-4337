@@ -4,15 +4,20 @@ import {
     ERROR_MESSAGES,
     type FullCreateSessionDataParams,
     type PreparePermissionResponse,
+    type ResolvedActionPolicyInfo,
     type Session,
+    abiToPoliciesInfo,
     applyDefaults,
+    createActionData,
     generateSalt,
 } from "@biconomy/sdk";
 import {
-    OWNABLE_VALIDATOR_ADDRESS,
+    type ActionData,
+    type PolicyData,
     SMART_SESSIONS_ADDRESS,
     encodeValidationData,
     getPermissionId,
+    getSudoPolicy,
 } from "@rhinestone/module-sdk";
 import type {
     Address,
@@ -22,16 +27,9 @@ import type {
     PublicClient,
     Transport,
 } from "viem";
-import { encodeFunctionData, toFunctionSelector } from "viem/utils";
+import { encodeFunctionData } from "viem/utils";
 import { SmartSessionAbi } from "../abi/smartSessionAbi";
 
-export const ONE_YEAR_FROM_NOW_IN_SECONDS = Date.now() + 60 * 60 * 24 * 365;
-
-/**
- * Parameters for creating sessions in a modular smart account.
- *
- * @template TModularSmartAccount - Type of the modular smart account, extending ModularSmartAccount or undefined.
- */
 export type PreparePermissionParameters<
     TAccount extends ComethSafeSmartAccount | undefined =
         | ComethSafeSmartAccount
@@ -51,16 +49,9 @@ export type PreparePermissionParameters<
     account?: TAccount;
 };
 
-/**
- * Generates the action data for creating sessions in the SmartSessionValidator.
- *
- * @param sessionRequestedInfo - Array of session data parameters.
- * @param client - The public client for blockchain interactions.
- * @returns A promise that resolves to the action data and permission IDs, or an Error.
- */
 export const getPermissionAction = async ({
+    client,
     sessionRequestedInfo,
-    
 }: {
     sessionRequestedInfo: FullCreateSessionDataParams[];
     client: PublicClient;
@@ -68,65 +59,76 @@ export const getPermissionAction = async ({
     const sessions: Session[] = [];
     const permissionIds: Hex[] = [];
 
-    console.log({ sessionRequestedInfo });
+    const resolvedPolicyInfo2ActionData = (
+        actionPolicyInfo: ResolvedActionPolicyInfo
+    ) => {
+        const policyData: PolicyData[] = [];
+
+        // create sudo policy here..
+        const sudoPolicy = getSudoPolicy();
+        policyData.push(sudoPolicy);
+
+        // Create ActionData
+        const actionPolicy = createActionData(
+            actionPolicyInfo.contractAddress,
+            actionPolicyInfo.functionSelector,
+            policyData
+        );
+
+        return actionPolicy;
+    };
 
     // Start populating the session for each param provided
     for (const sessionInfo of sessionRequestedInfo) {
-       
+        const actionPolicies: ActionData[] = [];
+
+        for (const actionPolicyInfo of sessionInfo.actionPoliciesInfo ?? []) {
+            if (actionPolicyInfo.abi) {
+                // Resolve the abi to multiple function selectors...
+                const resolvedPolicyInfos = abiToPoliciesInfo(actionPolicyInfo);
+                const actionPolicies_ = resolvedPolicyInfos.map(
+                    resolvedPolicyInfo2ActionData
+                );
+                actionPolicies.push(...actionPolicies_);
+            } else {
+                const actionPolicy =
+                    resolvedPolicyInfo2ActionData(actionPolicyInfo);
+                actionPolicies.push(actionPolicy);
+            }
+        }
 
         const session = {
-            //chainId: BigInt(client!.chain?.id),
-            sessionValidator: OWNABLE_VALIDATOR_ADDRESS,
+            chainId: BigInt(client?.chain?.id as number),
+            sessionValidator: sessionInfo.sessionValidator as Address,
             sessionValidatorInitData: encodeValidationData({
-              threshold: 1,
-              owners: [sessionInfo.sessionKeyData]
+                threshold: 1,
+                owners: [sessionInfo.sessionKeyData],
             }),
             salt: sessionInfo.salt ?? generateSalt(),
-            userOpPolicies: [],
-            actions: [
-                {
-                    actionTarget:
-                        "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F" as Address,
-                    actionTargetSelector: toFunctionSelector(
-                        "function count()"
-                    ) as Hex,
-                    actionPolicies: [
-                        {
-                            policy: "0x0000003111cD8e92337C100F22B7A9dbf8DEE301",
-                            initData: "0x",
-                        },
-                    ],
-                },
-            ],
+            userOpPolicies: [getSudoPolicy()],
+            actions: actionPolicies,
             erc7739Policies: {
-              allowedERC7739Content: [],
-              erc1271Policies: []
-            }
-            // permitERC4337Paymaster: true
-          }
-
-        console.log({ session });
+                allowedERC7739Content: [],
+                erc1271Policies: [],
+            },
+            permitERC4337Paymaster: true,
+        };
 
         const permissionId = await getPermissionId({
-            session: session as any,
+            session,
         });
         // push permissionId to the array
         permissionIds.push(permissionId);
 
         // Push to sessions array
-        sessions.push(session as any);
+        sessions.push(session);
     }
-
-    console.log({ permissionIds });
-    console.log(sessions);
 
     const preparePermissionData = encodeFunctionData({
         abi: SmartSessionAbi,
         functionName: "enableSessions",
         args: [sessions],
     });
-
-    console.log({ preparePermissionData });
 
     return {
         action: {
@@ -139,50 +141,6 @@ export const getPermissionAction = async ({
     };
 };
 
-/**
- * Adds multiple sessions to the SmartSessionValidator module of a given smart account.
- *
- * This function prepares and sends a user operation to create multiple sessions
- * for the specified modular smart account. Each session can have its own policies
- * and permissions.
- *
- * @template TModularSmartAccount - Type of the modular smart account, extending ModularSmartAccount or undefined.
- * @param client - The client used to interact with the blockchain.
- * @param parameters - Parameters including the smart account, required session specific policies info, and optional gas settings.
- * @returns A promise that resolves to an object containing the user operation hash and an array of permission IDs.
- *
- * @throws {AccountNotFoundError} If the account is not found.
- * @throws {Error} If there's an error getting the enable sessions action.
- *
- * @example
- * ```typescript
- * import { preparePermission } from '@biconomy/sdk'
- *
- * const result = await preparePermission(nexusClient, {
- *   sessionRequestedInfo: [
- *     {
- *       sessionKeyData: '0x...',
- *       actionPoliciesInfo: [
- *         {
- *           contractAddress: '0x...',
- *           functionSelector: '0x...',
- *           rules: [...],
- *           valueLimit: 1000000000000000000n
- *         }
- *       ],
- *       sessionValidUntil: 1234567890
- *     }
- *   ]
- * });
- * console.log(result.userOpHash); // '0x...'
- * console.log(result.permissionIds); // ['0x...', '0x...']
- * ```
- *
- * @remarks
- * - Ensure that the client has sufficient gas to cover the transaction.
- * - The number of sessions created is determined by the length of the `sessionRequestedInfo` array.
- * - Each session's policies and permissions are determined by the `actionPoliciesInfo` provided.
- */
 export async function preparePermission<
     TAccount extends ComethSafeSmartAccount | undefined =
         | ComethSafeSmartAccount
@@ -198,7 +156,7 @@ export async function preparePermission<
         sessionRequestedInfo,
     } = parameters;
 
-    if (!account || !account.address) {
+    if (!(account && !account.address)) {
         throw new Error("Account not found");
     }
 
@@ -210,8 +168,6 @@ export async function preparePermission<
 
     const defaultedSessionRequestedInfo =
         sessionRequestedInfo.map(applyDefaults);
-
-    console.log({ defaultedSessionRequestedInfo });
 
     const actionResponse = await getPermissionAction({
         client: publicClient_,

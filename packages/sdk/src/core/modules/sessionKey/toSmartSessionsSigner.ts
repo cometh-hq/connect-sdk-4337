@@ -28,33 +28,7 @@ import {
     getUserOperationHash,
 } from "viem/account-abstraction";
 import { toAccount } from "viem/accounts";
-
-export const isPermissionEnabledAbi = [
-    {
-        type: "function",
-        name: "isPermissionEnabled",
-        inputs: [
-            {
-                name: "permissionId",
-                type: "bytes32",
-                internalType: "PermissionId",
-            },
-            {
-                name: "account",
-                type: "address",
-                internalType: "address",
-            },
-        ],
-        outputs: [
-            {
-                name: "",
-                type: "bool",
-                internalType: "bool",
-            },
-        ],
-        stateMutability: "view",
-    },
-] as const;
+import { isPermissionEnabledAbi } from "./decorators/isPermissionInstalled";
 
 export type UsePermissionModuleParameters = {
     moduleData?: UsePermissionModuleData;
@@ -87,10 +61,12 @@ export async function toSmartSessionsSigner<
         } = {},
     } = parameters;
 
-    const publicClient = createPublicClient({
-        transport: http(),
-        chain: smartAccountClient?.chain,
-    });
+    const publicClient =
+        smartAccountClient.account?.publicClient ??
+        createPublicClient({
+            chain: smartAccountClient?.chain,
+            transport: http(),
+        });
 
     const isPermissionInstalled = await publicClient.readContract({
         address: SMART_SESSIONS_ADDRESS,

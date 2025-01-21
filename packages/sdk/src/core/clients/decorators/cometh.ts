@@ -1,6 +1,7 @@
 import type { Address, Chain, Client, Hash, Hex, Transport } from "viem";
 
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { is7579Installed } from "@/core/actions/accounts/7579/is7579Installed";
 import { setFallbackTo7579 } from "@/core/actions/accounts/7579/setFallbackTo7579";
 import {
     type ValidateAddDevice,
@@ -104,6 +105,7 @@ export type ComethClientActions<
         >[1]
     ) => Promise<Hex>;
     setFallbackTo7579: () => Promise<Hex>;
+    is7579Installed: () => Promise<boolean>;
 };
 
 export function comethAccountClientActions() {
@@ -174,6 +176,8 @@ export function comethAccountClientActions() {
                 ),
             setFallbackTo7579: () =>
                 setFallbackTo7579<TTransport, TChain, TSmartAccount>(client),
+            is7579Installed: () =>
+                is7579Installed<TTransport, TChain, TSmartAccount>(client),
         } as ComethClientActions<TChain, TSmartAccount>;
     };
 }

@@ -15,7 +15,7 @@ import {
 import { toAccount } from "viem/accounts";
 import { signTypedData } from "viem/actions";
 
-import { ENTRYPOINT_ADDRESS_V07, SAFE_7579_ADDRESS } from "@/constants";
+import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
 import {
     ECDSA_DUMMY_SIGNATURE,
     buildSignatureBytes,

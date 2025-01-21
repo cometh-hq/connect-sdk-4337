@@ -10,13 +10,34 @@ import {
     type Transport,
     createPublicClient,
 } from "viem";
-import { isPermissionEnabledAbi } from "../toSmartSessionsSigner";
 
-/**
- * Parameters for creating sessions in a modular smart account.
- *
- * @template TAccount - Type of the modular smart account, extending ModularSmartAccount or undefined.
- */
+export const isPermissionEnabledAbi = [
+    {
+        type: "function",
+        name: "isPermissionEnabled",
+        inputs: [
+            {
+                name: "permissionId",
+                type: "bytes32",
+                internalType: "PermissionId",
+            },
+            {
+                name: "account",
+                type: "address",
+                internalType: "address",
+            },
+        ],
+        outputs: [
+            {
+                name: "",
+                type: "bool",
+                internalType: "bool",
+            },
+        ],
+        stateMutability: "view",
+    },
+] as const;
+
 export type IsPermissionInstalledParameters = {
     session: Session;
 };
@@ -49,12 +70,10 @@ export async function isPermissionInstalled<
         session: session,
     })) as Hex;
 
-    const isPermissionInstalled = await publicClient.readContract({
+    return await publicClient.readContract({
         address: SMART_SESSIONS_ADDRESS,
         abi: isPermissionEnabledAbi,
         functionName: "isPermissionEnabled",
         args: [permissionId, client?.account?.address as Address],
     });
-
-    return isPermissionInstalled;
 }
