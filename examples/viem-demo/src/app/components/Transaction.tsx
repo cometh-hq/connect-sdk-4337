@@ -7,12 +7,16 @@ import {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> cd05974 (add: setFallback7579)
+=======
+>>>>>>> 29ab55c (update: session key)
     http,
     createPublicClient,
     encodeFunctionData,
     getContract,
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -36,6 +40,9 @@ import {
 =======
   parseAbi,
 >>>>>>> 5b6160b (update: test)
+=======
+    parseAbi,
+>>>>>>> 29ab55c (update: session key)
 } from "viem";
 import { baseSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
@@ -43,16 +50,17 @@ import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
 
 import {
-  MOCK_ATTESTER_ADDRESS,
-  RHINESTONE_ATTESTER_ADDRESS,
-  getSmartSessionsValidator,
+    MOCK_ATTESTER_ADDRESS,
+    RHINESTONE_ATTESTER_ADDRESS,
+    getSmartSessionsValidator,
 } from "@rhinestone/module-sdk";
 import { useSessionKey } from "../modules/hooks/useSessionKey";
 
 export const COUNTER_CONTRACT_ADDRESS =
-  "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
+    "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -60,11 +68,15 @@ const publicClient = createPublicClient({
 =======
 >>>>>>> cd05974 (add: setFallback7579)
     chain: arbitrumSepolia,
+=======
+    chain: baseSepolia,
+>>>>>>> 29ab55c (update: session key)
     transport: http(),
     cacheTime: 60_000,
     batch: {
         multicall: { wait: 50 },
     },
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 =======
@@ -84,104 +96,78 @@ const publicClient = createPublicClient({
 >>>>>>> cd05974 (add: setFallback7579)
 =======
 >>>>>>> 5b6160b (update: test)
+=======
+>>>>>>> 29ab55c (update: session key)
 });
 
 const counterContract = getContract({
-  address: COUNTER_CONTRACT_ADDRESS,
-  abi: countContractAbi,
-  client: publicClient,
+    address: COUNTER_CONTRACT_ADDRESS,
+    abi: countContractAbi,
+    client: publicClient,
 });
 
 interface TransactionProps {
-  smartAccount: any;
-  transactionSuccess: boolean;
-  setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
+    smartAccount: any;
+    transactionSuccess: boolean;
+    setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function Transaction({
-  smartAccount,
-  transactionSuccess,
-  setTransactionSuccess,
+    smartAccount,
+    transactionSuccess,
+    setTransactionSuccess,
 }: TransactionProps) {
-  const [isTransactionLoading, setIsTransactionLoading] =
-    useState<boolean>(false);
-  const [transactionSended, setTransactionSended] = useState<any | null>(null);
-  const [transactionFailure, setTransactionFailure] = useState(false);
-  const [nftBalance, setNftBalance] = useState<number>(0);
-
-  const { getSessionKey } = useSessionKey();
-
-  function TransactionButton({
-    sendTestTransaction,
-    isTransactionLoading,
-    label,
-  }: {
-    sendTestTransaction: () => Promise<void>;
-    isTransactionLoading: boolean;
-    label: string;
-  }) {
-    return (
-      <button
-        className="mt-1 flex h-11 py-2 px-4 gap-2 flex-none items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200"
-        onClick={sendTestTransaction}
-      >
-        {isTransactionLoading ? (
-          <Icons.spinner className="h-4 w-4 animate-spin" />
-        ) : (
-          <>
-            <PlusIcon width={16} height={16} />
-          </>
-        )}{" "}
-        {label}
-      </button>
+    const [isTransactionLoading, setIsTransactionLoading] =
+        useState<boolean>(false);
+    const [transactionSended, setTransactionSended] = useState<any | null>(
+        null
     );
-  }
+    const [transactionFailure, setTransactionFailure] = useState(false);
+    const [nftBalance, setNftBalance] = useState<number>(0);
 
-  useEffect(() => {
-    if (smartAccount) {
-      (async () => {
-        const balance = await counterContract.read.counters([
-          smartAccount.account.address,
-        ]);
-        setNftBalance(Number(balance));
-      })();
-    }
-  }, []);
-
-  const sendTestTransaction = async (action: () => Promise<void>) => {
-    setTransactionSended(null);
-    setTransactionFailure(false);
-    setTransactionSuccess(false);
-
-    setIsTransactionLoading(true);
-    try {
-      if (!smartAccount) throw new Error("No wallet instance");
-
-      await action();
-
-      const balance = await counterContract.read.counters([
-        smartAccount.account.address,
-      ]);
-      setNftBalance(Number(balance));
-
-      setTransactionSuccess(true);
-    } catch (e) {
-      console.log("Error:", e);
-      setTransactionFailure(true);
+    function TransactionButton({
+        sendTestTransaction,
+        isTransactionLoading,
+        label,
+    }: {
+        sendTestTransaction: () => Promise<void>;
+        isTransactionLoading: boolean;
+        label: string;
+    }) {
+        return (
+            <button
+                className="mt-1 flex h-11 py-2 px-4 gap-2 flex-none items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200"
+                onClick={sendTestTransaction}
+            >
+                {isTransactionLoading ? (
+                    <Icons.spinner className="h-4 w-4 animate-spin" />
+                ) : (
+                    <>
+                        <PlusIcon width={16} height={16} />
+                    </>
+                )}{" "}
+                {label}
+            </button>
+        );
     }
 
-    setIsTransactionLoading(false);
-  };
+    useEffect(() => {
+        if (smartAccount) {
+            (async () => {
+                const balance = await counterContract.read.counters([
+                    smartAccount.account.address,
+                ]);
+                setNftBalance(Number(balance));
+            })();
+        }
+    }, []);
 
-  return (
-    <main>
-      <div className="p-4">
-        <div className="relative flex flex-col items-center gap-y-6 rounded-lg p-4">
-          <TransactionButton
-            sendTestTransaction={() =>
-              sendTestTransaction(async () => {
-                if (!smartAccount) throw new Error("No wallet instance");
+    const sendTestTransaction = async (action: () => Promise<void>) => {
+        setTransactionSended(null);
+        setTransactionFailure(false);
+        setTransactionSuccess(false);
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         setIsTransactionLoading(true);
@@ -282,58 +268,80 @@ function Transaction({
 =======
    
 >>>>>>> 279846b (fix: session)
+=======
+        setIsTransactionLoading(true);
+        try {
+            if (!smartAccount) throw new Error("No wallet instance");
+>>>>>>> 29ab55c (update: session key)
 
-                //await smartAccount.setFallbackTo7579();
+            await action();
 
+            const balance = await counterContract.read.counters([
+                smartAccount.account.address,
+            ]);
+            setNftBalance(Number(balance));
 
-               /*      const calldata = encodeFunctionData({
+            setTransactionSuccess(true);
+        } catch (e) {
+            console.log("Error:", e);
+            setTransactionFailure(true);
+        }
+
+        setIsTransactionLoading(false);
+    };
+
+    return (
+        <main>
+            <div className="p-4">
+                <div className="relative flex flex-col items-center gap-y-6 rounded-lg p-4">
+                    <TransactionButton
+                        sendTestTransaction={() =>
+                            sendTestTransaction(async () => {
+                                if (!smartAccount)
+                                    throw new Error("No wallet instance");
+
+                                const calldata = encodeFunctionData({
                                     abi: countContractAbi,
                                     functionName: "count",
                                 });
-                                
-
 
                                 const txHash =
-                                    await smartAccount.sendTransaction({
-                                        to:   COUNTER_CONTRACT_ADDRESS,
-                                        data: calldata,
-                                      
+                                    await smartAccount.sendUserOperation({
+                                        calls: [
+                                            {
+                                                to: COUNTER_CONTRACT_ADDRESS,
+                                                data: calldata,
+                                            },
+                                        ],
+                                        verificationGasLimit: 400000n,
                                     });
 
-                                    console.log({txHash}) 
+                                setTransactionSended(txHash);
+                            })
+                        }
+                        isTransactionLoading={isTransactionLoading}
+                        label="Send tx"
+                    />
 
+                    <p className=" text-gray-600">{nftBalance}</p>
+                </div>
+            </div>
 
-                setTransactionSended(txHash); */
-
-
-            
-
-                await getSessionKey({ smartAccountClient: smartAccount });
-              })
-            }
-            isTransactionLoading={isTransactionLoading}
-            label="Send tx"
-          />
-
-          <p className=" text-gray-600">{nftBalance}</p>
-        </div>
-      </div>
-
-      {transactionSuccess && (
-        <Alert
-          state="success"
-          content="Transaction confirmed !"
-          link={{
-            content: "Go see your transaction",
-            url: `https://jiffyscan.xyz/bundle/${transactionSended}?network=arbitrum-sepolia&pageNo=0&pageSize=10`,
-          }}
-        />
-      )}
-      {transactionFailure && (
-        <Alert state="error" content="Transaction Failed !" />
-      )}
-    </main>
-  );
+            {transactionSuccess && (
+                <Alert
+                    state="success"
+                    content="Transaction confirmed !"
+                    link={{
+                        content: "Go see your transaction",
+                        url: `https://jiffyscan.xyz/bundle/${transactionSended}?network=arbitrum-sepolia&pageNo=0&pageSize=10`,
+                    }}
+                />
+            )}
+            {transactionFailure && (
+                <Alert state="error" content="Transaction Failed !" />
+            )}
+        </main>
+    );
 }
 
 export default Transaction;

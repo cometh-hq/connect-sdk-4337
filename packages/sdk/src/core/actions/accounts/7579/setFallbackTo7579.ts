@@ -35,14 +35,14 @@ export async function setFallbackTo7579<
 
     const publicClient =
         client?.account?.publicClient ??
-        (createPublicClient({
+        createPublicClient({
             chain: client.chain,
             transport: http(),
             cacheTime: 60_000,
             batch: {
                 multicall: { wait: 50 },
             },
-        }) as any);
+        });
 
     const isDeployed = await isSmartAccountDeployed(
         publicClient,
@@ -55,7 +55,8 @@ export async function setFallbackTo7579<
             abi: SafeAbi,
             functionName: "isModuleEnabled",
             args: [SAFE_7579_ADDRESS as Address],
-        });
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        } as any);
 
         if (!isFallbackSet) throw new Error("Fallback already set");
     }
@@ -84,9 +85,7 @@ export async function setFallbackTo7579<
                     [],
                     [],
                     [],
-                    [
-                        RHINESTONE_ATTESTER_ADDRESS, // Rhinestone Attester
-                    ],
+                    [RHINESTONE_ATTESTER_ADDRESS],
                     1,
                 ],
             }),

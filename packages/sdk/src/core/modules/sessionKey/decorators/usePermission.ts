@@ -1,14 +1,26 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type { Execution } from "@biconomy/sdk";
-import type { Chain, Client, Hex, Transport } from "viem";
-import { sendUserOperation } from "viem/account-abstraction";
+import {
+    encodeValidatorNonce,
+    getAccount,
+    getSmartSessionsValidator,
+} from "@rhinestone/module-sdk";
+import { getAccountNonce } from "permissionless/actions";
+import {
+    http,
+    type Address,
+    type Chain,
+    type Client,
+    type Hex,
+    type Transport,
+    createPublicClient,
+} from "viem";
+import {
+    entryPoint07Address,
+    sendUserOperation,
+} from "viem/account-abstraction";
 import { getAction } from "viem/utils";
 
-/**
- * Parameters for using a smart session to execute actions.
- *
- * @template TAccount - Type of the modular smart account, extending ModularSmartAccount or undefined.
- */
 export type UsePermissionParameters<
     TAccount extends ComethSafeSmartAccount | undefined =
         | ComethSafeSmartAccount
@@ -24,41 +36,10 @@ export type UsePermissionParameters<
     nonce?: bigint;
     /** The modular smart account to use for the session. If not provided, the client's account will be used. */
     account?: TAccount;
+
+    verificationGasLimit?: bigint;
 };
 
-/**
- * Executes actions using a smart session.
- *
- * This function allows for the execution of one or more actions within an enabled smart session.
- * It can handle batch transactions if the session is configured for multiple actions.
- *
- * @template TModularSmartAccount - Type of the modular smart account, extending ModularSmartAccount or undefined.
- * @param client - The client used to interact with the blockchain.
- * @param parameters - Parameters for using the session, including actions to execute and optional gas settings.
- * @returns A promise that resolves to the hash of the sent user operation.
- *
- * @throws {AccountNotFoundError} If no account is provided and the client doesn't have an associated account.
- *
- * @example
- * ```typescript
- * const result = await usePermission(nexusClient, {
- *   actions: [
- *     {
- *       target: '0x1234...',
- *       value: 0n,
- *       callData: '0xabcdef...'
- *     }
- *   ],
- *   maxFeePerGas: 1000000000n
- * });
- * console.log(`Transaction hash: ${result}`);
- * ```
- *
- * @remarks
- * - Ensure that the session is enabled and has the necessary permissions for the actions being executed.
- * - For batch transactions, all actions must be permitted within the same session.
- * - The function uses the `sendUserOperation` method, which is specific to account abstraction implementations.
- */
 export async function usePermission<
     TAccount extends ComethSafeSmartAccount | undefined =
         | ComethSafeSmartAccount
@@ -67,7 +48,33 @@ export async function usePermission<
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: UsePermissionParameters<TAccount>
 ): Promise<Hex> {
-    const { maxFeePerGas, maxPriorityFeePerGas, actions } = parameters;
+    const {
+        maxFeePerGas,
+        maxPriorityFeePerGas,
+        actions,
+        verificationGasLimit,
+    } = parameters;
+
+    const smartSessions = getSmartSessionsValidator({});
+
+    const publicClient =
+        client.account?.publicClient ??
+        createPublicClient({
+            chain: client?.chain,
+            transport: http(),
+        });
+
+    const nonce = await getAccountNonce(publicClient, {
+        address: client?.account?.address as Address,
+        entryPointAddress: entryPoint07Address,
+        key: encodeValidatorNonce({
+            account: getAccount({
+                address: client?.account?.address as Address,
+                type: "safe",
+            }),
+            validator: smartSessions,
+        }),
+    });
 
     return await getAction(
         client,
@@ -79,6 +86,8 @@ export async function usePermission<
             value: BigInt(action.value.toString()),
             data: action.callData,
         })),
+        nonce,
+        verificationGasLimit,
         maxFeePerGas,
         maxPriorityFeePerGas,
     });

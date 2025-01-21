@@ -34,20 +34,16 @@ export type UsePermissionParameters = {
     maxFeePerGas?: bigint;
     /** The maximum priority fee per gas unit the transaction is willing to pay. */
     maxPriorityFeePerGas?: bigint;
+    verificationGasLimit?: bigint;
 };
 
-/**
- * Defines the shape of actions available for creating smart sessions.
- *
- * @template TAccount - Type of the modular smart account, extending ModularSmartAccount or undefined.
- */
 export type SmartSessionCreateActions<
     TAccount extends ComethSafeSmartAccount | undefined =
         | ComethSafeSmartAccount
         | undefined,
 > = {
     /**
-     * Creates multiple sessions for a modular smart account.
+     * Creates multiple sessions for a  smart account.
      *
      * @param args - Parameters for creating sessions.
      * @returns A promise that resolves to the creation response.
@@ -57,7 +53,7 @@ export type SmartSessionCreateActions<
     ) => Promise<GrantPermissionResponse>;
 
     /**
-     * Prepares permission for a modular smart account.
+     * Prepares permission for a  smart account.
      *
      * @param args - Parameters for preparing permission.
      * @returns A promise that resolves to the transaction hash.
@@ -67,7 +63,7 @@ export type SmartSessionCreateActions<
     ) => Promise<PreparePermissionResponse>;
 
     /**
-     * Creates multiple sessions for a modular smart account.
+     * Creates multiple sessions for a  smart account.
      *
      * @param args - Parameters for creating sessions.
      * @returns A promise that resolves to the creation response.
@@ -77,7 +73,7 @@ export type SmartSessionCreateActions<
     ) => Promise<boolean>;
 
     /**
-     * Trusts attesters for a modular smart account.
+     * Trusts attesters for a  smart account.
      *
      * @param args - Parameters for trusting attesters.
      * @returns A promise that resolves to the transaction hash.

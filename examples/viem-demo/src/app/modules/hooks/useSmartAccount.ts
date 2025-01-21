@@ -7,14 +7,19 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Hex, createPublicClient, parseEther, type PublicClient } from "viem";
-import { createBundlerClient } from "viem/account-abstraction";
+import {
+    http,
+    type Hex,
+    type PublicClient,
+    createPublicClient,
+    hexToBigInt,
+    parseEther,
+} from "viem";
 import { baseSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
-
 
     const [connectionError, setConnectionError] = useState<string | null>(null);
 
@@ -85,6 +90,8 @@ export function useSmartAccount() {
                 publicClient,
             });
 
+            console.log(hexToBigInt("0x1c62a"));
+
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 chain: baseSepolia,
@@ -102,13 +109,7 @@ export function useSmartAccount() {
                 publicClient,
             });
 
-
-            console.log("done")
-
-
-
-
-
+            console.log("done");
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);

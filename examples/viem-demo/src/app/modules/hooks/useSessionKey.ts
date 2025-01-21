@@ -1,87 +1,53 @@
 "use client";
 
 import {
-    createComethPaymasterClient,
-    createSafeSmartAccount,
-    createSmartAccountClient,
-    toSmartSessionsSigner,
     type ComethSmartAccountClient,
-    type CreateSessionDataParams,
+    type SafeSigner,
+    erc7579Actions,
     smartSessionActions,
-    erc7579Actions
+    toSmartSessionsSigner,
 } from "@cometh/connect-sdk-4337";
-import {
-    OWNABLE_VALIDATOR_ADDRESS,
-    SMART_SESSIONS_ADDRESS,
-    SmartSessionMode,
-    encodeValidationData,
-} from "@rhinestone/module-sdk";
+import { SmartSessionMode } from "@rhinestone/module-sdk";
 import { useState } from "react";
-import { type Address, encodeFunctionData, type Hex, http, stringify, toFunctionSelector } from "viem";
+import { type Address, type Hex, stringify, toFunctionSelector } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
-import countContractAbi from "../../contract/counterABI.json";
-
 
 export function parse(data: string): Record<string, any> {
     return JSON.parse(data, (_, value) => {
         if (value && typeof value === "object" && value.__type === "bigint") {
-            return BigInt(value.value)
+            return BigInt(value.value);
         }
-        return value
-    })
+        return value;
+    });
 }
 
 export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 export function useSessionKey() {
-    const [isConnecting, setIsConnecting] = useState(false);
-    const [isConnected, setIsConnected] = useState(false);
-
     const [connectionError, setConnectionError] = useState<string | null>(null);
 
     const [newSigner, setNewSigner] = useState<any | null>(null);
 
-    const [sessionKeyClient, setSessionKeyClient] = useState<any | null>(null);
-
-    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY;
-    const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
-    const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
-
-    const getSessionKey = async ({
+    const getSessionKeySigner = async ({
         smartAccountClient,
     }: {
         smartAccountClient: ComethSmartAccountClient;
-    }) => {
-        const stringifiedSessionData = (localStorage.getItem(
+    }): Promise<SafeSigner> => {
+        const stringifiedSessionData = localStorage.getItem(
             `session-key-${smartAccountClient?.account?.address}`
-        )!);
+        );
 
-        const extendedAccount = smartAccountClient.extend(smartSessionActions()).extend(erc7579Actions())
-
-        console.log({ extendedAccount })
-
-
+        const safe7559Account = smartAccountClient
+            .extend(smartSessionActions())
+            .extend(erc7579Actions());
 
         const privateKey = generatePrivateKey();
         const sessionOwner = privateKeyToAccount(privateKey);
 
-        let sessionKeySigner
-
-        const usersSessionData = parse(stringifiedSessionData) as any
-
-        console.log({usersSessionData})
-
-        if (!usersSessionData) {
-
-
-            console.log({ sessionOwner });
-
-
-
+        if (!stringifiedSessionData) {
             const createSessionsResponse =
-                await extendedAccount.grantPermission({
+                await safe7559Account.grantPermission({
                     sessionRequestedInfo: [
                         {
                             sessionPublicKey: sessionOwner.address,
@@ -97,15 +63,9 @@ export function useSessionKey() {
                     ],
                 });
 
-            console.log({ createSessionsResponse })
-
-
-            const { success: sessionCreateSuccess } = await extendedAccount.waitForUserOperationReceipt({
+            await safe7559Account.waitForUserOperationReceipt({
                 hash: createSessionsResponse.userOpHash,
             });
-
-
-            console.log({ sessionCreateSuccess })
 
             const sessionData = {
                 granter: smartAccountClient?.account?.address as Address,
@@ -116,13 +76,9 @@ export function useSessionKey() {
                     permissionIds: createSessionsResponse.permissionIds,
                     action: createSessionsResponse.action,
                     mode: SmartSessionMode.USE,
-                    sessions: createSessionsResponse.sessions
-                }
-            }
-
-            const permissionId = createSessionsResponse.permissionIds[0];
-
-            console.log({ permissionId })
+                    sessions: createSessionsResponse.sessions,
+                },
+            };
 
             const sessionParams = stringify(sessionData);
 
@@ -131,56 +87,22 @@ export function useSessionKey() {
                 sessionParams
             );
 
-            sessionKeySigner = await toSmartSessionsSigner(
-                extendedAccount,
-                { moduleData: sessionData.moduleData, signer: privateKeyToAccount(usersSessionData.privateKey) }
-            )
+            return await toSmartSessionsSigner(safe7559Account, {
+                moduleData: sessionData.moduleData,
+                signer: privateKeyToAccount(sessionData.privateKey),
+            });
+        } else {
+            const usersSessionData = parse(stringifiedSessionData);
+
+            return await toSmartSessionsSigner(safe7559Account, {
+                moduleData: usersSessionData.moduleData,
+                signer: privateKeyToAccount(usersSessionData.privateKey),
+            });
         }
-
-
-
-        console.log({ sessionKeySigner })
-
-        const sessionKeyAccount = await createSafeSmartAccount({
-            apiKey,
-            chain: baseSepolia,
-            smartAccountAddress: smartAccountClient?.account?.address,
-            sessionKeySigner,
-        });
-
-        const paymasterClient = await createComethPaymasterClient({
-            transport: http(paymasterUrl),
-            chain: baseSepolia,
-        });
-
-        const sessionKeyClient = createSmartAccountClient({
-            account: sessionKeyAccount,
-            chain: baseSepolia,
-            bundlerTransport: http(bundlerUrl),
-            paymaster: paymasterClient,
-            userOperation: {
-                estimateFeesPerGas: async () => {
-                    return await paymasterClient.getUserOperationGasPrice();
-                },
-            },
-        });
-
-
-        const calldata = encodeFunctionData({
-            abi: countContractAbi,
-            functionName: "count",
-        });
-
-        const hash = await sessionKeyClient.sendTransaction({ to: COUNTER_CONTRACT_ADDRESS, data: calldata })
-
-
     };
 
     return {
-        sessionKeyClient,
-        getSessionKey,
-        isConnected,
-        isConnecting,
+        getSessionKeySigner,
         connectionError,
         newSigner,
         setNewSigner,
