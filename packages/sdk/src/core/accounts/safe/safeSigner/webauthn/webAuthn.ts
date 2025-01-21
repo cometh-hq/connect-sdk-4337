@@ -107,10 +107,6 @@ export async function safeWebAuthnSigner<
         async signUserOperation(parameters) {
             const { ...userOperation } = parameters;
 
-            console.log(userOperation.sender);
-
-            console.log({ userOpVerifyingContract });
-
             const hash = hashTypedData({
                 domain: {
                     chainId: client.chain?.id,

@@ -277,7 +277,6 @@ export function encode7579Calls<callType extends CallType>({
     mode,
     callData,
 }: EncodeCallDataParams<callType>): Hex {
-    console.log({ callData });
     if (callData.length > 1 && mode?.type !== "batchcall") {
         throw new Error(
             `mode ${JSON.stringify(
