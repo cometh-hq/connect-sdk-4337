@@ -37,11 +37,19 @@ import {
     setUpRecoveryModule,
 } from "@/core/actions/accounts/safe/recovery/setUpRecoveryModule";
 import {
+    type SmartAccountActions,
+    smartAccountActions,
+} from "@/core/actions/accounts/safe/smartAccountActions";
+import {
     type VerifySignatureParams,
     verifySignature,
 } from "@/core/actions/accounts/safe/verifySignature";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
-import { type SmartAccountActions, smartAccountActions } from "permissionless";
+import type {
+    EstimateUserOperationGasParameters,
+    EstimateUserOperationGasReturnType,
+    SmartAccount,
+} from "viem/account-abstraction";
 
 export type ComethClientActions<
     TChain extends Chain | undefined = Chain | undefined,
@@ -106,6 +114,18 @@ export type ComethClientActions<
     ) => Promise<Hex>;
     setFallbackTo7579: () => Promise<Hex>;
     is7579Installed: () => Promise<boolean>;
+    estimateUserOperationGas: <
+        const calls extends readonly unknown[],
+        accountOverride extends SmartAccount | undefined = undefined,
+    >(
+        parameters: EstimateUserOperationGasParameters<
+            TSmartAccount,
+            accountOverride,
+            calls
+        >
+    ) => Promise<
+        EstimateUserOperationGasReturnType<TSmartAccount, accountOverride>
+    >;
 };
 
 export function comethAccountClientActions() {

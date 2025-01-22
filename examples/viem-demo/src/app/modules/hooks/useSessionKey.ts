@@ -46,22 +46,21 @@ export function useSessionKey() {
         const sessionOwner = privateKeyToAccount(privateKey);
 
         if (!stringifiedSessionData) {
-            const createSessionsResponse =
-                await safe7559Account.grantPermission({
-                    sessionRequestedInfo: [
-                        {
-                            sessionPublicKey: sessionOwner.address,
-                            actionPoliciesInfo: [
-                                {
-                                    contractAddress: COUNTER_CONTRACT_ADDRESS,
-                                    functionSelector: toFunctionSelector(
-                                        "function count()"
-                                    ) as Hex,
-                                },
-                            ],
-                        },
-                    ],
-                });
+            const createSessionsResponse = await safe7559Account.grantPermission({
+                sessionRequestedInfo: [
+                    {
+                        sessionPublicKey: sessionOwner.address,
+                        actionPoliciesInfo: [
+                            {
+                                contractAddress: COUNTER_CONTRACT_ADDRESS,
+                                functionSelector: toFunctionSelector(
+                                    "function count()"
+                                ) as Hex,
+                            },
+                        ],
+                    },
+                ],
+            });
 
             await safe7559Account.waitForUserOperationReceipt({
                 hash: createSessionsResponse.userOpHash,
