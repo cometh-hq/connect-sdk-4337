@@ -152,13 +152,8 @@ export async function preparePermission<
     const {
         publicClient: publicClient_ = client.account
             ?.publicClient as PublicClient,
-        account = client.account,
         sessionRequestedInfo,
     } = parameters;
-
-    if (!(account && !account.address)) {
-        throw new Error("Account not found");
-    }
 
     const chainId = publicClient_?.chain?.id;
 
