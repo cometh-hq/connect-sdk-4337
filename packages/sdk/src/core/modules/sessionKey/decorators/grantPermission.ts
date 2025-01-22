@@ -40,11 +40,7 @@ export async function grantPermission<
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: GrantPermissionParameters<TAccount>
 ): Promise<GrantPermissionResponse> {
-    const { account = client.account, calls: calls_ } = parameters;
-
-    if (!(account && !account.address)) {
-        throw new Error("Account not found");
-    }
+    const { calls: calls_ } = parameters;
 
     const preparedPermission = await getAction(
         client,
@@ -65,7 +61,7 @@ export async function grantPermission<
             },
             ...(calls_ || []),
         ],
-        verificationGasLimit: 400000n,
+        verificationGasLimit: 1000000n,
     });
 
     return {

@@ -48,12 +48,7 @@ export async function usePermission<
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: UsePermissionParameters<TAccount>
 ): Promise<Hex> {
-    const {
-        maxFeePerGas,
-        maxPriorityFeePerGas,
-        actions,
-        verificationGasLimit,
-    } = parameters;
+    const { maxFeePerGas, maxPriorityFeePerGas, actions } = parameters;
 
     const smartSessions = getSmartSessionsValidator({});
 
@@ -87,7 +82,7 @@ export async function usePermission<
             data: call.callData,
         })),
         nonce,
-        verificationGasLimit,
+        verificationGasLimit: 1000000n,
         maxFeePerGas,
         maxPriorityFeePerGas,
     });
