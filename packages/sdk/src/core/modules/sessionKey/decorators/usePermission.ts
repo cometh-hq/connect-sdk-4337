@@ -81,10 +81,10 @@ export async function usePermission<
         sendUserOperation,
         "sendUserOperation"
     )({
-        calls: actions.map((action) => ({
-            to: action.target,
-            value: BigInt(action.value.toString()),
-            data: action.callData,
+        calls: actions.map((call) => ({
+            to: call.target,
+            value: BigInt(call.value ? call.value.toString() : 0),
+            data: call.callData,
         })),
         nonce,
         verificationGasLimit,
