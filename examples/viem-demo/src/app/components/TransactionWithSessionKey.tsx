@@ -134,13 +134,6 @@ function TransactionWithSessionKey({
               sendTestTransaction(async () => {
                 if (!smartAccount) throw new Error("No wallet instance");
 
-                const is7559 = await smartAccount.is7579Installed();
-
-                if (!is7559) {
-                  await smartAccount.setFallbackTo7579();
-                  return;
-                }
-
                 const sessionKeySigner = await getSessionKeySigner({
                   smartAccountClient: smartAccount,
                 });

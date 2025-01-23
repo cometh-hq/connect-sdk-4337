@@ -1,3 +1,4 @@
+import { hardcodeVerificationGasLimit7579 } from "@/constants";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type { Execution } from "@biconomy/sdk";
 import {
@@ -82,7 +83,7 @@ export async function usePermission<
             data: call.callData,
         })),
         nonce,
-        verificationGasLimit: 1000000n,
+        verificationGasLimit: hardcodeVerificationGasLimit7579,
         maxFeePerGas,
         maxPriorityFeePerGas,
     });
