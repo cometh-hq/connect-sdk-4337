@@ -1,12 +1,22 @@
+import {
+    LAUNCHPAD_ADDRESS,
+    SAFE_7579_ADDRESS,
+    hardcodeVerificationGasLimit7579,
+} from "@/constants";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { is7579Installed } from "@/core/actions/accounts/7579/is7579Installed";
 import type {
     Call,
     CreateSessionDataParams,
     GrantPermissionResponse,
 } from "@biconomy/sdk";
+import {
+    RHINESTONE_ATTESTER_ADDRESS,
+    getSmartSessionsValidator,
+} from "@rhinestone/module-sdk";
 import type { Chain, Client, Hex, PublicClient, Transport } from "viem";
 import { sendUserOperation } from "viem/account-abstraction";
-import { getAction } from "viem/utils";
+import { encodeFunctionData, getAction, parseAbi } from "viem/utils";
 import { preparePermission } from "./preparePermission";
 
 export type GrantPermissionParameters<
@@ -40,28 +50,63 @@ export async function grantPermission<
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: GrantPermissionParameters<TAccount>
 ): Promise<GrantPermissionResponse> {
-    const { calls: calls_ } = parameters;
-
     const preparedPermission = await getAction(
         client,
         preparePermission,
         "preparePermission"
     )(parameters);
 
+    const calls = [
+        {
+            to: preparedPermission.action.target,
+            data: preparedPermission.action.callData,
+            value: BigInt(0),
+        },
+    ];
+
+    const is7579FallbackSet = await getAction(
+        client,
+        is7579Installed,
+        "is7579Installed"
+    )(client);
+
+    if (!is7579FallbackSet) {
+        const smartSessions = getSmartSessionsValidator({});
+
+        calls.unshift({
+            to: LAUNCHPAD_ADDRESS,
+            data: encodeFunctionData({
+                abi: parseAbi([
+                    "struct ModuleInit {address module;bytes initData;}",
+                    "function addSafe7579(address safe7579,ModuleInit[] calldata validators,ModuleInit[] calldata executors,ModuleInit[] calldata fallbacks, ModuleInit[] calldata hooks,address[] calldata attesters,uint8 threshold) external",
+                ]),
+                functionName: "addSafe7579",
+                args: [
+                    SAFE_7579_ADDRESS,
+                    [
+                        {
+                            module: smartSessions.address,
+                            initData: smartSessions.initData,
+                        },
+                    ],
+                    [],
+                    [],
+                    [],
+                    [RHINESTONE_ATTESTER_ADDRESS],
+                    1,
+                ],
+            }),
+            value: BigInt(0),
+        });
+    }
+
     const userOpHash = await getAction(
         client,
         sendUserOperation,
         "sendUserOperation"
     )({
-        calls: [
-            {
-                to: preparedPermission.action.target,
-                data: preparedPermission.action.callData,
-                value: BigInt(0),
-            },
-            ...(calls_ || []),
-        ],
-        verificationGasLimit: 1000000n,
+        calls,
+        verificationGasLimit: hardcodeVerificationGasLimit7579,
     });
 
     return {

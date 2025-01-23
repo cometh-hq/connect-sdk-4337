@@ -1,3 +1,4 @@
+import { hardcodeVerificationGasLimit7579 } from "@/constants";
 import { AccountNotFoundError } from "permissionless";
 import type {
     Chain,
@@ -111,7 +112,7 @@ export async function sendTransaction<
             maxFeePerGas,
             maxPriorityFeePerGas,
             nonce: nonce ? BigInt(nonce) : undefined,
-            verificationGasLimit: 1000000n,
+            verificationGasLimit: hardcodeVerificationGasLimit7579,
         });
     } else {
         userOpHash = await getAction(
@@ -120,7 +121,7 @@ export async function sendTransaction<
             "sendUserOperation"
         )({
             ...args,
-            verificationGasLimit: 1000000n,
+            verificationGasLimit: hardcodeVerificationGasLimit7579,
         } as SendUserOperationParameters<account, accountOverride>);
     }
 

@@ -361,8 +361,6 @@ export async function createSafeSmartAccount<
         async encodeCalls(calls) {
             const hasMultipleCalls = calls.length > 1;
 
-            let operationType = 0;
-
             if (userOpVerifyingContract === SAFE_7579_ADDRESS) {
                 return encode7579Calls({
                     mode: {
@@ -375,21 +373,34 @@ export async function createSafeSmartAccount<
                 });
             }
 
+            // set fallback 7579 in delegateCall
+            const modifiedCalls = calls.map((call) => ({
+                ...call,
+                data: call.data ?? "0x",
+                value: call.value ?? BigInt(0),
+                operation:
+                    call.data?.slice(0, 10) === add7579FunctionSelector ? 1 : 0,
+            }));
+
+
+
             if (hasMultipleCalls) {
                 const userOpCalldata = encodeFunctionData({
                     abi: MultiSendContractABI,
                     functionName: "multiSend",
                     args: [
                         encodeMultiSendTransactions(
-                            calls.map((call) => ({
-                                op: operationType,
+                            modifiedCalls.map((call) => ({
+                                op: call.operation,
                                 to: call.to,
-                                data: call.data ?? "0x",
-                                value: call.value ?? BigInt(0),
+                                data: call.data,
+                                value: call.value,
                             }))
                         ) as `0x${string}`,
                     ],
                 });
+
+
 
                 return encodeFunctionData({
                     abi: safe4337ModuleAbi,
@@ -398,19 +409,14 @@ export async function createSafeSmartAccount<
                 });
             }
 
-            // set fallback 7579 in delegateCall
-            if (calls[0].data?.slice(0, 10) === add7579FunctionSelector) {
-                operationType = 1;
-            }
-
             return encodeFunctionData({
                 abi: safe4337ModuleAbi,
                 functionName: "executeUserOpWithErrorString",
                 args: [
-                    calls[0].to,
-                    calls[0].value,
-                    calls[0].data,
-                    operationType,
+                    modifiedCalls[0].to,
+                    modifiedCalls[0].value,
+                    modifiedCalls[0].data,
+                    modifiedCalls[0].operation,
                 ],
             });
         },

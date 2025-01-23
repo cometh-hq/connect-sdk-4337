@@ -12,8 +12,6 @@ import {
     type Hex,
     type PublicClient,
     createPublicClient,
-    hexToBigInt,
-    parseEther,
 } from "viem";
 import { baseSepolia } from "viem/chains";
 
@@ -56,10 +54,7 @@ export function useSmartAccount() {
 
             let smartAccount;
 
-            const comethSignerConfig = {
-                fullDomainSelected: true,
-                passKeyName: "oiqvefor",
-            };
+
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
@@ -68,7 +63,6 @@ export function useSmartAccount() {
                     publicClient,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
@@ -76,7 +70,7 @@ export function useSmartAccount() {
                     chain: baseSepolia,
                     publicClient,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig,
+
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -89,8 +83,6 @@ export function useSmartAccount() {
                 chain: baseSepolia,
                 publicClient,
             });
-
-            console.log(hexToBigInt("0x1c62a"));
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
@@ -109,7 +101,6 @@ export function useSmartAccount() {
                 publicClient,
             });
 
-            console.log("done");
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);
