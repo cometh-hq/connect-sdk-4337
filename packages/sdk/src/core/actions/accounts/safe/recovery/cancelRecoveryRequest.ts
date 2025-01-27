@@ -43,7 +43,7 @@ export async function cancelRecoveryRequest<
 ): Promise<Hex> {
     const { effectiveDelayAddress, publicClient, middleware } = args;
 
-    const smartAccounAddress = client.account?.address as Address;
+    const smartAccountAddress = client.account?.address as Address;
 
     const rpcClient =
         publicClient ??
@@ -80,7 +80,7 @@ export async function cancelRecoveryRequest<
         } = projectParams.recoveryParams;
 
         delayAddress = await delayModuleService.getDelayAddress(
-            smartAccounAddress,
+            smartAccountAddress,
             {
                 moduleFactoryAddress: moduleFactoryAddress as Address,
                 delayModuleAddress: delayModuleAddress as Address,

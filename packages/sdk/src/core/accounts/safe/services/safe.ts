@@ -324,6 +324,7 @@ export const isSafeOwner = async ({
             multisendAddress,
             threshold: 1,
             sharedWebAuthnSignerContractAddress,
+            rpcUrl,
         });
 
         if (predictedWalletAddress !== safeAddress) return false;

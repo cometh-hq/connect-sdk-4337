@@ -27,7 +27,7 @@ import {
     EIP712_SAFE_OPERATION_TYPE,
 } from "../../types";
 import type { SafeSigner } from "../types";
-import { adjustVInSignature, generateSafeMessageMessage } from "../utils";
+import { generateSafeMessageMessage } from "../utils";
 
 /**
  * Creates a SafeSigner using WebAuthn for authentication
