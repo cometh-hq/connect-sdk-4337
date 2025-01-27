@@ -6,10 +6,7 @@ import {
     estimateUserOperationGas,
     smartAccountActions,
 } from "permissionless";
-import type {
-    Middleware,
-    SendTransactionWithPaymasterParameters,
-} from "permissionless/actions/smartAccount";
+import type { Middleware } from "permissionless/actions/smartAccount";
 import type { EntryPoint, Prettify, UserOperation } from "permissionless/types";
 import type { Address, Chain, Client, Hash, Hex, Transport } from "viem";
 
@@ -48,11 +45,6 @@ import {
     type SetUpRecoveryModuleParams,
     setUpRecoveryModule,
 } from "@/core/actions/accounts/safe/recovery/setUpRecoveryModule";
-import { sendTransactionWithSessionKey } from "@/core/actions/accounts/safe/sessionKeys/sendTransactionWithSessionKey";
-import {
-    type SendTransactionsWithPaymasterParameters,
-    sendTransactionsWithSessionKey,
-} from "@/core/actions/accounts/safe/sessionKeys/sendTransactionsWithSessionKey";
 import {
     type VerifySignatureParams,
     verifySignature,
@@ -104,26 +96,6 @@ export type ComethClientActions<
             typeof verifySignature<entryPoint, TTransport, TChain, TAccount>
         >[1]
     ) => Promise<boolean>;
-    sendTransactionWithSessionKey: <TTransport extends Transport>(
-        args: Parameters<
-            typeof sendTransactionWithSessionKey<
-                entryPoint,
-                TTransport,
-                TChain,
-                TAccount
-            >
-        >[1]
-    ) => Promise<Hash>;
-    sendTransactionsWithSessionKey: <TTransport extends Transport>(
-        args: Parameters<
-            typeof sendTransactionsWithSessionKey<
-                entryPoint,
-                TTransport,
-                TChain,
-                TAccount
-            >
-        >[1]
-    ) => Promise<Hash>;
     estimateGas: (args: { userOperation: UserOperation<"v0.7"> }) => Promise<{
         callGasLimit: bigint;
         verificationGasLimit: bigint;
@@ -246,30 +218,6 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
             verifySignature<entryPoint, TTransport, TChain, TAccount>(client, {
                 ...args,
             } as VerifySignatureParams),
-        sendTransactionWithSessionKey: (args) =>
-            sendTransactionWithSessionKey<
-                entryPoint,
-                TTransport,
-                TChain,
-                TAccount
-            >(client, {
-                ...args,
-                middleware,
-            } as SendTransactionWithPaymasterParameters<
-                entryPoint,
-                TChain,
-                TAccount
-            >),
-        sendTransactionsWithSessionKey: (args) =>
-            sendTransactionsWithSessionKey<
-                entryPoint,
-                TTransport,
-                TChain,
-                TAccount
-            >(client, {
-                ...args,
-                middleware,
-            } as SendTransactionsWithPaymasterParameters<entryPoint, TAccount>),
         estimateGas: async (args) => estimateGas(client, args),
         getDelayModuleAddress: (args) =>
             getDelayModuleAddress<entryPoint, TTransport, TChain, TAccount>(

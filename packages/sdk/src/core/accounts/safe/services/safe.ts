@@ -10,6 +10,7 @@ import {
     type Chain,
     type Hex,
     type PrivateKeyAccount,
+    type PublicClient,
     concat,
     createPublicClient,
     decodeFunctionData,
@@ -273,7 +274,7 @@ export const isSafeOwner = async ({
     sharedWebAuthnSignerContractAddress,
     p256Verifier,
     multisendAddress,
-    rpcUrl,
+    publicClient,
 }: {
     safeAddress: Address;
     accountSigner: Signer;
@@ -286,24 +287,26 @@ export const isSafeOwner = async ({
     sharedWebAuthnSignerContractAddress: Address;
     p256Verifier: Address;
     multisendAddress: Address;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 }): Promise<boolean> => {
     const signerAddress = getSignerAddress(accountSigner);
 
     try {
-        const publicClient = createPublicClient({
-            chain: chain,
-            transport: http(rpcUrl),
-        });
+        const publicClient_ =
+            publicClient ??
+            createPublicClient({
+                chain: chain,
+                transport: http(),
+            });
 
         const safe = getContract({
             address: safeAddress,
             abi: SafeAbi,
-            client: publicClient,
+            client: publicClient_,
         });
 
         const isDeployed = await isSmartAccountDeployed(
-            publicClient,
+            publicClient_,
             safeAddress
         );
 
@@ -324,7 +327,7 @@ export const isSafeOwner = async ({
             multisendAddress,
             threshold: 1,
             sharedWebAuthnSignerContractAddress,
-            rpcUrl,
+            publicClient,
         });
 
         if (predictedWalletAddress !== safeAddress) return false;
@@ -363,7 +366,7 @@ export const predictSafeAddress = async ({
     p256Verifier,
     multisendAddress,
     threshold = 1,
-    rpcUrl,
+    publicClient,
 }: {
     saltNonce: bigint;
     chain: Chain;
@@ -377,7 +380,7 @@ export const predictSafeAddress = async ({
     p256Verifier: Address;
     modules: Address[];
     multisendAddress: Address;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 }): Promise<Address> => {
     const initializer = getSafeInitializer({
         accountSigner,
@@ -393,7 +396,7 @@ export const predictSafeAddress = async ({
 
     return getSafeAddressFromInitializer({
         chain,
-        rpcUrl,
+        publicClient,
         safeProxyFactoryAddress,
         safeSingletonAddress,
         initializer,
@@ -413,25 +416,27 @@ export const predictSafeAddress = async ({
  */
 export const getSafeAddressFromInitializer = async ({
     chain,
-    rpcUrl,
+    publicClient,
     safeProxyFactoryAddress,
     safeSingletonAddress,
     initializer,
     saltNonce,
 }: {
     chain: Chain;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
     safeProxyFactoryAddress: Address;
     safeSingletonAddress: Address;
     initializer: Hex;
     saltNonce: bigint;
 }) => {
-    const publicClient = createPublicClient({
-        chain,
-        transport: http(rpcUrl),
-    });
+    const publicClient_ =
+        publicClient ??
+        createPublicClient({
+            chain,
+            transport: http(),
+        });
 
-    const proxyCreationCode = (await publicClient.readContract({
+    const proxyCreationCode = (await publicClient_.readContract({
         address: safeProxyFactoryAddress,
         abi: SafeProxyContractFactoryABI,
         functionName: "proxyCreationCode",

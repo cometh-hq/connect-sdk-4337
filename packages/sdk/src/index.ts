@@ -25,10 +25,6 @@ import type {
     IsRecoveryActiveReturnType,
 } from "./core/actions/accounts/safe/recovery/isRecoveryActive";
 import type { SetUpRecoveryModuleParams } from "./core/actions/accounts/safe/recovery/setUpRecoveryModule";
-import type {
-    AddSessionKeyParams,
-    Session,
-} from "./core/actions/accounts/safe/sessionKeys/utils";
 import {
     type ComethSmartAccountClient,
     createSmartAccountClient,
@@ -67,8 +63,6 @@ export type {
     createSafeSmartAccountParameters,
     Signer,
     EnrichedOwner,
-    AddSessionKeyParams,
-    Session,
     QRCodeOptions,
     webAuthnOptions,
     SetUpRecoveryModuleParams,

@@ -9,6 +9,7 @@ import {
     type Address,
     type Chain,
     type Hex,
+    type PublicClient,
     encodeAbiParameters,
     hashMessage,
     keccak256,
@@ -273,7 +274,7 @@ const getPasskeySigner = async ({
     api,
     smartAccountAddress,
     chain,
-    rpcUrl,
+    publicClient,
     safeProxyFactoryAddress,
     safeSingletonAddress,
     safeModuleSetUpAddress,
@@ -286,7 +287,7 @@ const getPasskeySigner = async ({
     api: API;
     smartAccountAddress: Address;
     chain: Chain;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
     safeProxyFactoryAddress: Address;
     safeSingletonAddress: Address;
     safeModuleSetUpAddress: Address;
@@ -317,7 +318,7 @@ const getPasskeySigner = async ({
             safeAddress: smartAccountAddress,
             accountSigner: signer,
             chain,
-            rpcUrl,
+            publicClient,
             safeProxyFactoryAddress,
             safeSingletonAddress,
             safeModuleSetUpAddress,

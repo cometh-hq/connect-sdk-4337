@@ -1,23 +1,16 @@
-import { http, type Chain, createClient } from "viem";
+import { http, type Chain, type PublicClient, createClient } from "viem";
 
-export const getViemClient = (
-    chain: Chain,
-    rpcUrl?: string,
-    clientTimeout?: number
-) => {
-    const rpcTransport = http(rpcUrl, {
-        batch: { wait: 50 },
-        retryCount: 5,
-        retryDelay: 200,
-        timeout: clientTimeout ?? 20_000,
-    });
+export const getViemClient = (chain: Chain, publicClient?: PublicClient) => {
+    const client =
+        publicClient ??
+        createClient({
+            chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        });
 
-    return createClient({
-        chain,
-        transport: rpcTransport,
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
+    return client;
 };
