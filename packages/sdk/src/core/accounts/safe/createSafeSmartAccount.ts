@@ -1,8 +1,3 @@
-import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
-import {
-    getSessionKeySigner,
-    isUserOpWhitelisted,
-} from "@/core/actions/accounts/safe/sessionKeys/utils";
 import { API } from "@/core/services/API";
 import {
     createNewWalletInDb,
@@ -49,12 +44,7 @@ import {
     getSafeAddressFromInitializer,
     getSafeInitializer,
 } from "./services/safe";
-import {
-    buildSignatureBytes,
-    packInitCode,
-    packPaymasterData,
-} from "./services/utils";
-import { EIP712_SAFE_OPERATION_TYPE, type SafeContractParams } from "./types";
+import type { SafeContractParams } from "./types";
 
 export type SafeSmartAccount<
     entryPoint extends EntryPoint,
@@ -74,9 +64,6 @@ export type SafeSmartAccount<
                   data: Hex;
               }[]
     ): Promise<UserOperation<"v0.7">>;
-    signUserOperationWithSessionKey(
-        userOp: UserOperation<GetEntryPointVersion<entryPoint>>
-    ): Promise<Hex>;
     getConnectApi(): API;
     safe4337SessionKeysModule: Address;
     sessionKeysEnabled: boolean;
@@ -98,7 +85,6 @@ export type createSafeSmartAccountParameters<
     safeContractConfig?: SafeContractParams;
     sessionKeysEnabled?: boolean;
     signer?: Signer;
-    clientTimeout?: number;
 }>;
 
 /**
@@ -139,7 +125,7 @@ const storeWalletInComethApi = async ({
     initializer,
     signer,
     api,
-    rpcUrl,
+    publicClient,
 }: {
     chain: Chain;
     singletonAddress: Address;
@@ -148,7 +134,7 @@ const storeWalletInComethApi = async ({
     initializer: Hex;
     signer: Signer;
     api: API;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 }): Promise<{ smartAccountAddress: Address; isNewWallet: boolean }> => {
     const smartAccountAddress = await getAccountAddress({
         chain,
@@ -156,7 +142,7 @@ const storeWalletInComethApi = async ({
         safeProxyFactoryAddress,
         saltNonce,
         initializer,
-        rpcUrl,
+        publicClient,
     });
 
     const isNewWallet = await createNewWalletInDb({
@@ -178,14 +164,14 @@ export const getAccountAddress = async ({
     safeProxyFactoryAddress,
     saltNonce = zeroHash,
     initializer,
-    rpcUrl,
+    publicClient,
 }: {
     chain: Chain;
     singletonAddress: Address;
     safeProxyFactoryAddress: Address;
     saltNonce?: Hex;
     initializer: Hex;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 }): Promise<Address> => {
     return getSafeAddressFromInitializer({
         chain,
@@ -193,7 +179,7 @@ export const getAccountAddress = async ({
         saltNonce: hexToBigInt(saltNonce),
         safeProxyFactoryAddress,
         safeSingletonAddress: singletonAddress,
-        rpcUrl,
+        publicClient,
     });
 };
 
@@ -215,17 +201,16 @@ export async function createSafeSmartAccount<
     safeContractConfig,
     sessionKeysEnabled = false,
     signer,
-    clientTimeout,
 }: createSafeSmartAccountParameters<entryPoint>): Promise<
     SafeSmartAccount<entryPoint, TTransport, TChain>
 > {
     const api = new API(apiKey, baseUrl);
     const [client, contractParams] = await Promise.all([
-        getViemClient(
-            chain,
-            publicClient?.transport.url,
-            clientTimeout
-        ) as Client<TTransport, TChain, undefined>,
+        getViemClient(chain, publicClient) as Client<
+            TTransport,
+            TChain,
+            undefined
+        >,
         getProjectParamsByChain({ api, chain }),
     ]);
 
@@ -261,7 +246,7 @@ export async function createSafeSmartAccount<
             chain,
             smartAccountAddress,
             ...comethSignerConfig,
-            rpcUrl: publicClient?.transport.url,
+            publicClient,
             baseUrl,
             safeContractParams: {
                 safeWebAuthnSharedSignerContractAddress,
@@ -295,7 +280,7 @@ export async function createSafeSmartAccount<
             safeProxyFactoryAddress,
             saltNonce: zeroHash,
             initializer,
-            rpcUrl: client?.transport.url,
+            publicClient,
         });
     }
 
@@ -319,7 +304,7 @@ export async function createSafeSmartAccount<
         initializer,
         signer: accountSigner,
         api,
-        rpcUrl: client?.transport.url,
+        publicClient,
     });
 
     if (res.isNewWallet) {
@@ -488,81 +473,6 @@ export async function createSafeSmartAccount<
                 userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
             );
             return userOperation;
-        },
-        async signUserOperationWithSessionKey(
-            userOp: UserOperation<GetEntryPointVersion<entryPoint>>
-        ) {
-            const sessionKeySigner = await getSessionKeySigner({
-                chain: client?.chain as Chain,
-                smartAccountAddress,
-                rpcUrl: publicClient?.transport.url,
-                safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
-            });
-
-            if (!sessionKeySigner) throw new Error("Session key not found");
-
-            const signer = sessionKeySigner?.eoaFallback.signer;
-
-            const isWhitelisted = await isUserOpWhitelisted({
-                chain: client?.chain as Chain,
-                safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
-                sessionKey: signer?.address as Address,
-                userOperation: userOp,
-                multisend: multisendAddress,
-                smartAccountAddress,
-            });
-
-            if (!isWhitelisted)
-                throw new Error("Transactions are not whitelisted");
-
-            const payload = {
-                domain: {
-                    chainId: client.chain?.id,
-                    verifyingContract: safe4337SessionKeysModule,
-                },
-                types: EIP712_SAFE_OPERATION_TYPE,
-                primaryType: "SafeOp" as const,
-                message: {
-                    callData: userOp.callData,
-                    nonce: userOp.nonce,
-                    initCode: packInitCode({
-                        factory: userOp.factory,
-                        factoryData: userOp.factoryData,
-                    }),
-                    paymasterAndData: packPaymasterData({
-                        paymaster: userOp.paymaster as Address,
-                        paymasterVerificationGasLimit:
-                            userOp.paymasterVerificationGasLimit as bigint,
-                        paymasterPostOpGasLimit:
-                            userOp.paymasterPostOpGasLimit as bigint,
-                        paymasterData: userOp.paymasterData as Hex,
-                    }),
-                    preVerificationGas: userOp.preVerificationGas,
-                    entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    validAfter: 0,
-                    validUntil: 0,
-                    safe: userOp.sender,
-                    verificationGasLimit: userOp.verificationGasLimit,
-                    callGasLimit: userOp.callGasLimit,
-                    maxPriorityFeePerGas: userOp.maxPriorityFeePerGas,
-                    maxFeePerGas: userOp.maxFeePerGas,
-                },
-            };
-
-            return encodePacked(
-                ["uint48", "uint48", "bytes"],
-                [
-                    0,
-                    0,
-                    buildSignatureBytes([
-                        {
-                            signer: sessionKeySigner?.eoaFallback.signer
-                                .address as Address,
-                            data: (await signer?.signTypedData(payload)) as Hex,
-                        },
-                    ]) as Hex,
-                ]
-            );
         },
         getConnectApi(): API {
             return api;

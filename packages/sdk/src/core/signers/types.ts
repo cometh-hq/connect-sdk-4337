@@ -1,5 +1,5 @@
 import type { SmartAccountSigner } from "permissionless/accounts";
-import type { Address, Chain } from "viem";
+import type { Address, Chain, PublicClient } from "viem";
 import type { SafeContractParams } from "../accounts/safe/types";
 import type { eoaFallback } from "./ecdsa/fallbackEoa/types";
 import type {
@@ -37,7 +37,7 @@ export type CreateSignerParams = {
     smartAccountAddress?: Address;
     safeContractParams: SafeContractParams;
     baseUrl?: string;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 } & ComethSignerConfig;
 
 export type Signer = ComethSigner | SmartAccountSigner<"custom", Address>;
