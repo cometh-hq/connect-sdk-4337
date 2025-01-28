@@ -37,16 +37,22 @@ export async function getRecoveryRequest<
     const { effectiveDelayAddress, publicClient } = args;
 
     const smartAccounAddress = client.account?.address as Address;
+
+    console.log({ publicClient });
+
     const rpcClient =
         publicClient ??
-        createPublicClient({
+        (createPublicClient({
             chain: client.chain,
             transport: http(),
             cacheTime: 60_000,
             batch: {
                 multicall: { wait: 50 },
             },
-        });
+        }) as PublicClient);
+
+    console.log({ rpcClient });
+
     let delayAddress: Address;
 
     if (effectiveDelayAddress) {
@@ -90,15 +96,13 @@ export async function getRecoveryRequest<
 
     const isRecoveryQueueEmpty = await delayModuleService.isQueueEmpty(
         delayAddress,
-        client.chain as Chain,
-        rpcClient.transport.url
+        rpcClient
     );
 
     if (isRecoveryQueueEmpty) return undefined;
 
     return await delayModuleService.getCurrentRecoveryParams(
         delayAddress,
-        client.chain as Chain,
-        rpcClient.transport.url
+        rpcClient
     );
 }

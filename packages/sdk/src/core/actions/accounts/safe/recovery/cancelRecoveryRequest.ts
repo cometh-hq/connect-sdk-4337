@@ -47,14 +47,14 @@ export async function cancelRecoveryRequest<
 
     const rpcClient =
         publicClient ??
-        createPublicClient({
+        (createPublicClient({
             chain: client.chain,
             transport: http(),
             cacheTime: 60_000,
             batch: {
                 multicall: { wait: 50 },
             },
-        });
+        }) as PublicClient);
 
     let delayAddress: Address;
 
@@ -99,8 +99,7 @@ export async function cancelRecoveryRequest<
 
     const recoveryRequest = await delayModuleService.getCurrentRecoveryParams(
         delayAddress,
-        client.chain as Chain,
-        rpcClient.transport.url
+        rpcClient
     );
 
     if (!recoveryRequest) throw new NoRecoveryRequestFoundError();
@@ -109,7 +108,7 @@ export async function cancelRecoveryRequest<
 
     const updateNonceTx = await delayModuleService.createSetTxNonceFunction(
         delayAddress,
-        publicClient as PublicClient
+        rpcClient
     );
 
     const hash = await getAction(

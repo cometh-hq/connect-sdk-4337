@@ -71,20 +71,20 @@ const connectToLegacySigner = async ({
     isWebAuthnCompatible,
     legacyApi,
     smartAccountAddress,
-    chain,
+    client,
     encryptionSalt,
 }: {
     isWebAuthnCompatible: boolean;
     legacyApi: LEGACY_API;
     smartAccountAddress: Address;
-    chain: Chain;
+    client: PublicClient;
     encryptionSalt?: string;
 }): Promise<ComethSigner> => {
     if (isWebAuthnCompatible) {
         const passkey = await getLegacySigner({
             API: legacyApi,
             walletAddress: smartAccountAddress,
-            chain,
+            client,
         });
 
         return {
@@ -159,7 +159,7 @@ export async function createLegacySafeSmartAccount<
 
     const [client, projectParams, legacyProjectParams, isWebAuthnCompatible] =
         await Promise.all([
-            getViemClient(chain, publicClient.transport.url) as Client<
+            getViemClient(chain, publicClient) as Client<
                 TTransport,
                 TChain,
                 undefined
@@ -202,7 +202,7 @@ export async function createLegacySafeSmartAccount<
             isWebAuthnCompatible,
             legacyApi,
             smartAccountAddress,
-            chain,
+            client: publicClient,
             encryptionSalt: comethSignerConfig?.encryptionSalt,
         });
     }

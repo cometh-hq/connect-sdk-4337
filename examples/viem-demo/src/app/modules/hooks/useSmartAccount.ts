@@ -100,7 +100,6 @@ export function useSmartAccount() {
                 publicClient,
             });
 
-
             setSmartAccount(smartAccountClient);
             setIsConnected(true);
         } catch (e) {

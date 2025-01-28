@@ -8,7 +8,15 @@ import {
 } from "permissionless";
 import type { Middleware } from "permissionless/actions/smartAccount";
 import type { EntryPoint, Prettify, UserOperation } from "permissionless/types";
-import type { Address, Chain, Client, Hash, Hex, Transport } from "viem";
+import type {
+    Address,
+    Chain,
+    Client,
+    Hash,
+    Hex,
+    PublicClient,
+    Transport,
+} from "viem";
 
 import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { estimateGas } from "@/core/actions/accounts/estimateGas";
@@ -149,9 +157,15 @@ export type ComethClientActions<
     ) => Promise<Hex>;
 };
 
+export type ComethClientActionsParams<entryPoint extends EntryPoint> =
+    Middleware<entryPoint> & {
+        publicClient?: PublicClient;
+    };
+
 export function comethAccountClientActions<entryPoint extends EntryPoint>({
     middleware,
-}: Middleware<entryPoint>) {
+    publicClient,
+}: ComethClientActionsParams<entryPoint>) {
     return <
         TTransport extends Transport,
         TChain extends Chain | undefined = Chain | undefined,
@@ -190,12 +204,14 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware,
+                    publicClient,
                 } as SetUpRecoveryModuleParams<entryPoint>
             ),
         isRecoveryActive: (args) =>
             isRecoveryActive<entryPoint, TTransport, TChain, TAccount>(client, {
                 ...args,
                 middleware,
+                publicClient,
             } as IsRecoveryActiveParams),
         getRecoveryRequest: (args) =>
             getRecoveryRequest<entryPoint, TTransport, TChain, TAccount>(
@@ -203,6 +219,7 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware,
+                    publicClient,
                 } as GetRecoveryRequestParams
             ),
         cancelRecoveryRequest: (args) =>
@@ -211,6 +228,7 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware,
+                    publicClient,
                 } as CancelRecoveryRequestParams<entryPoint>
             ),
 
@@ -224,6 +242,7 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 client,
                 {
                     ...args,
+                    publicClient,
                 } as GetDelayModuleAddressParams
             ),
         getGuardianAddress: (args) =>
@@ -231,17 +250,20 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 client,
                 {
                     ...args,
+                    publicClient,
                 } as GetGuardianAddressParams
             ),
         addGuardian: (args) =>
             addGuardian<entryPoint, TTransport, TChain, TAccount>(client, {
                 ...args,
                 middleware,
+                publicClient,
             } as AddGuardianParams<entryPoint>),
         disableGuardian: (args) =>
             disableGuardian<entryPoint, TTransport, TChain, TAccount>(client, {
                 ...args,
                 middleware,
+                publicClient,
             } as DisableGuardianParams<entryPoint>),
         setupCustomDelayModule: (args) =>
             setupCustomDelayModule<entryPoint, TTransport, TChain, TAccount>(
@@ -249,6 +271,7 @@ export function comethAccountClientActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware,
+                    publicClient,
                 } as SetupCustomDelayModuleParams<entryPoint>
             ),
     });

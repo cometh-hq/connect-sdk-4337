@@ -1,7 +1,7 @@
 import { http, type Chain, type PublicClient, createClient } from "viem";
 
 export const getViemClient = (chain: Chain, publicClient?: PublicClient) => {
-    const client =
+    return (
         publicClient ??
         createClient({
             chain,
@@ -10,7 +10,6 @@ export const getViemClient = (chain: Chain, publicClient?: PublicClient) => {
             batch: {
                 multicall: { wait: 50 },
             },
-        });
-
-    return client;
+        })
+    );
 };
