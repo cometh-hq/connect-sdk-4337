@@ -8,6 +8,7 @@ import {
 import type { API } from "@/core/services/API";
 import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
 
+import { defaultClientConfig } from "@/constants";
 import type { SafeContractParams } from "@/core/accounts/safe/types";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import type { SafeTransactionDataPartial } from "@/migrationKit/types";
@@ -21,7 +22,6 @@ import {
     type Chain,
     type Hex,
     type PrivateKeyAccount,
-    type PublicClient,
     type Transport,
     createPublicClient,
     zeroAddress,
@@ -68,7 +68,7 @@ export type SafeImportActions = {
 };
 
 export const importSafeActions =
-    (publicClient?: PublicClient) =>
+    () =>
     <
         transport extends Transport,
         chain extends Chain | undefined = undefined,
@@ -78,14 +78,11 @@ export const importSafeActions =
     ): SafeImportActions => ({
         prepareImportSafe1_3Tx: async () => {
             const rpcClient =
-                publicClient ??
+                client.account?.publicClient ??
                 createPublicClient({
                     chain: client.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(
@@ -193,14 +190,11 @@ export const importSafeActions =
         },
         prepareImportSafe1_4Tx: async () => {
             const rpcClient =
-                publicClient ??
+                client.account?.publicClient ??
                 createPublicClient({
                     chain: client.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(
@@ -339,14 +333,11 @@ export const importSafeActions =
             const { signer, tx } = args;
 
             const rpcClient =
-                publicClient ??
+                client.account?.publicClient ??
                 createPublicClient({
                     chain: client.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(

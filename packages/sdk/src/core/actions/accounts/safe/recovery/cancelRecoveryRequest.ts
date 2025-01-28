@@ -2,6 +2,7 @@ import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmar
 import delayModuleService from "@/core/services/delayModuleService";
 import { sendTransaction } from "permissionless/actions/smartAccount";
 
+import { defaultClientConfig } from "@/constants";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import { NoRecoveryRequestFoundError } from "@/errors";
 import {
@@ -21,7 +22,6 @@ import { getAction } from "viem/utils";
 
 export type CancelRecoveryRequestParams = {
     effectiveDelayAddress?: Address;
-    publicClient?: PublicClient;
 };
 
 export async function cancelRecoveryRequest<
@@ -34,19 +34,16 @@ export async function cancelRecoveryRequest<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<CancelRecoveryRequestParams>
 ): Promise<Hex> {
-    const { effectiveDelayAddress, publicClient } = args;
+    const { effectiveDelayAddress } = args;
 
     const smartAccountAddress = client.account?.address as Address;
 
     const rpcClient =
-        publicClient ??
+        client.account?.publicClient ??
         (createPublicClient({
             chain: client.chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         }) as PublicClient);
 
     let delayAddress: Address;

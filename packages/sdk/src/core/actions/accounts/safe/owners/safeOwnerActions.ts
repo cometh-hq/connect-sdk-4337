@@ -1,3 +1,4 @@
+import { defaultClientConfig } from "@/constants";
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { SAFE_SENTINEL_OWNERS } from "@/core/accounts/safe/types";
@@ -10,7 +11,6 @@ import {
     type Chain,
     type Client,
     type Hash,
-    type PublicClient,
     type SendTransactionParameters,
     type Transport,
     createPublicClient,
@@ -34,7 +34,7 @@ export type SafeOwnerPluginActions = {
 };
 
 export const safeOwnerPluginActions =
-    (publicClient?: PublicClient) =>
+    () =>
     <
         transport extends Transport,
         chain extends Chain | undefined = undefined,
@@ -61,14 +61,11 @@ export const safeOwnerPluginActions =
 
         async removeOwner(args: { ownerToRemove: Address }) {
             const rpcClient =
-                publicClient ??
+                smartAccountClient.account?.publicClient ??
                 createPublicClient({
                     chain: smartAccountClient.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(
@@ -112,14 +109,11 @@ export const safeOwnerPluginActions =
 
         async getOwners() {
             const rpcClient =
-                publicClient ??
+                smartAccountClient.account?.publicClient ??
                 createPublicClient({
                     chain: smartAccountClient.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(
@@ -139,14 +133,11 @@ export const safeOwnerPluginActions =
 
         async getEnrichedOwners() {
             const rpcClient =
-                publicClient ??
+                smartAccountClient.account?.publicClient ??
                 createPublicClient({
                     chain: smartAccountClient.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(

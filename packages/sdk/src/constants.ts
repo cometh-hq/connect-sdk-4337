@@ -15,6 +15,12 @@ const add7579FunctionSelector = "0xd78343d9";
 const hardcodeVerificationGasLimit7579 = 1000000n;
 
 const customChains = [muster];
+const defaultClientConfig = {
+    cacheTime: 60_000,
+    batch: {
+        multicall: { wait: 50 },
+    },
+};
 
 export {
     API_URL,
@@ -25,4 +31,5 @@ export {
     customChains,
     add7579FunctionSelector,
     hardcodeVerificationGasLimit7579,
+    defaultClientConfig,
 };

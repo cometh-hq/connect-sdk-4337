@@ -104,21 +104,6 @@ export function createSmartAccountClient<
         userOperation,
     } = parameters;
 
-<<<<<<< HEAD
-    const client = createClient({
-        ...parameters,
-        key,
-        name,
-        transport: bundlerTransport,
-        type: "smartAccountClient",
-    }).extend(
-        comethAccountClientActions({
-            middleware: parameters.middleware,
-            publicClient: parameters?.publicClient,
-            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-        }) as any
-    ) as SmartAccountClient<TEntryPoint, TTransport, TChain, TSmartAccount>;
-=======
     const client = Object.assign(
         createClient({
             ...parameters,
@@ -131,13 +116,10 @@ export function createSmartAccountClient<
         { client: client_, paymaster, paymasterContext, userOperation }
     )
         .extend(bundlerActions)
-        // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-<<<<<<< HEAD
-        .extend(comethAccountClientActions() as any) as any;
->>>>>>> f0f331d (update: rebase)
-=======
-        .extend(comethAccountClientActions()) as any;
->>>>>>> 12937d4 (alpha: version)
+        .extend(
+            comethAccountClientActions()
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        ) as any;
 
-    return client.extend(safeOwnerPluginActions(parameters?.publicClient));
+    return client.extend(safeOwnerPluginActions());
 }

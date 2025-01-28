@@ -32,10 +32,7 @@ import {
     type IsRecoveryActiveReturnType,
     isRecoveryActive,
 } from "@/core/actions/accounts/safe/recovery/isRecoveryActive";
-import {
-    type SetUpRecoveryModuleParams,
-    setUpRecoveryModule,
-} from "@/core/actions/accounts/safe/recovery/setUpRecoveryModule";
+import { setUpRecoveryModule } from "@/core/actions/accounts/safe/recovery/setUpRecoveryModule";
 import {
     type SmartAccountActions,
     smartAccountActions,
@@ -45,28 +42,19 @@ import {
     verifySignature,
 } from "@/core/actions/accounts/safe/verifySignature";
 import type { RecoveryParamsResponse } from "@/core/services/delayModuleService";
-import type {
-    EstimateUserOperationGasParameters,
-    EstimateUserOperationGasReturnType,
-    SmartAccount,
-} from "viem/account-abstraction";
 
 export type ComethClientActions<
     TChain extends Chain | undefined = Chain | undefined,
     TSmartAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 > = SmartAccountActions<TChain, TSmartAccount> & {
     validateAddDevice: <TTransport extends Transport>(
         args: Parameters<
             typeof validateAddDevice<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<Hash>;
-    setUpRecoveryModule: <TTransport extends Transport>(
-        args: Parameters<
-            typeof setUpRecoveryModule<TTransport, TChain, TSmartAccount>
-        >[1]
-    ) => Promise<Hash>;
+    setUpRecoveryModule: () => Promise<Hash>;
     cancelRecoveryRequest: <TTransport extends Transport>(
         args: Parameters<
             typeof cancelRecoveryRequest<TTransport, TChain, TSmartAccount>
@@ -87,37 +75,6 @@ export type ComethClientActions<
             typeof verifySignature<TTransport, TChain, TSmartAccount>
         >[1]
     ) => Promise<boolean>;
-<<<<<<< HEAD
-<<<<<<< HEAD
-    /*    estimateGas: (args: EstimateUserOperationGasParameters) => Promise<{
-           callGasLimit: bigint;
-           verificationGasLimit: bigint;
-           preVerificationGas: bigint;
-           maxFeePerGas: bigint;
-           maxPriorityFeePerGas: bigint;
-           paymasterVerificationGasLimit?: bigint;
-           paymasterPostOpGasLimit?: bigint;
-       }>; */
-=======
-    estimateGas: (args: EstimateUserOperationGasParameters) => Promise<{
-        callGasLimit: bigint;
-        verificationGasLimit: bigint;
-        preVerificationGas: bigint;
-        maxFeePerGas: bigint;
-        maxPriorityFeePerGas: bigint;
-        paymasterVerificationGasLimit?: bigint;
-        paymasterPostOpGasLimit?: bigint;
-    }>;
->>>>>>> 4247bec (wip)
-    /*  estimateUserOperationGas: (
-         args: Prettify<
-             Omit<EstimateUserOperationGasParameters<entryPoint>, "entryPoint">
-         >,
-         stateOverrides?: StateOverrides
-     ) => Promise<Prettify<EstimateUserOperationGasReturnType<entryPoint>>>; */
-
-=======
->>>>>>> 5b59eb4 (fix: packages)
     getDelayModuleAddress: <TTransport extends Transport>(
         args: Parameters<
             typeof getDelayModuleAddress<TTransport, TChain, TSmartAccount>
@@ -145,18 +102,6 @@ export type ComethClientActions<
     ) => Promise<Hex>;
     setFallbackTo7579: () => Promise<Hex>;
     is7579Installed: () => Promise<boolean>;
-    estimateUserOperationGas: <
-        const calls extends readonly unknown[],
-        accountOverride extends SmartAccount | undefined = undefined,
-    >(
-        parameters: EstimateUserOperationGasParameters<
-            TSmartAccount,
-            accountOverride,
-            calls
-        >
-    ) => Promise<
-        EstimateUserOperationGasReturnType<TSmartAccount, accountOverride>
-    >;
 };
 
 export function comethAccountClientActions() {
@@ -164,8 +109,8 @@ export function comethAccountClientActions() {
         TTransport extends Transport,
         TChain extends Chain | undefined = Chain | undefined,
         TSmartAccount extends ComethSafeSmartAccount | undefined =
-            | ComethSafeSmartAccount
-            | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
     >(
         client: Client<TTransport, TChain, TSmartAccount>
     ): ComethClientActions<TChain, TSmartAccount> => {
@@ -175,10 +120,8 @@ export function comethAccountClientActions() {
                 validateAddDevice<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
                 } as ValidateAddDevice),
-            setUpRecoveryModule: (args) =>
-                setUpRecoveryModule<TTransport, TChain, TSmartAccount>(client, {
-                    ...args,
-                } as SetUpRecoveryModuleParams),
+            setUpRecoveryModule: () =>
+                setUpRecoveryModule<TTransport, TChain, TSmartAccount>(client),
             isRecoveryActive: (args) =>
                 isRecoveryActive<TTransport, TChain, TSmartAccount>(client, {
                     ...args,
@@ -194,7 +137,6 @@ export function comethAccountClientActions() {
                         ...args,
                     } as CancelRecoveryRequestParams
                 ),
-
             verifySignature: (args) =>
                 verifySignature<TTransport, TChain, TSmartAccount>(client, {
                     ...args,

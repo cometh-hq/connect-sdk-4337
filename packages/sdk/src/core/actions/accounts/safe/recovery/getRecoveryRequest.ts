@@ -1,3 +1,4 @@
+import { defaultClientConfig } from "@/constants";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService, {
@@ -17,7 +18,6 @@ import {
 
 export type GetRecoveryRequestParams = {
     effectiveDelayAddress?: Address;
-    publicClient?: PublicClient;
 };
 
 export async function getRecoveryRequest<
@@ -30,19 +30,16 @@ export async function getRecoveryRequest<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetRecoveryRequestParams> = {}
 ): Promise<RecoveryParamsResponse | undefined> {
-    const { effectiveDelayAddress, publicClient } = args;
+    const { effectiveDelayAddress } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
     const rpcClient =
-        publicClient ??
+        client.account?.publicClient ??
         (createPublicClient({
             chain: client.chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         }) as PublicClient);
 
     let delayAddress: Address;

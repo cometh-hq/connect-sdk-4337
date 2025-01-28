@@ -1,3 +1,4 @@
+import { defaultClientConfig } from "@/constants";
 import { delayModuleABI } from "@/core/accounts/safe/abi/delayModule";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { isModuleEnabled } from "@/core/accounts/safe/services/safe";
@@ -60,7 +61,6 @@ export async function getDelayModuleAddress<
 
 export type GetGuardianAddressParams = {
     delayModuleAddress: Address;
-    publicClient?: PublicClient;
 };
 
 export async function getGuardianAddress<
@@ -73,18 +73,15 @@ export async function getGuardianAddress<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetGuardianAddressParams>
 ): Promise<Address> {
-    const { delayModuleAddress, publicClient } = args;
+    const { delayModuleAddress } = args;
     const smartAccountAddress = client.account?.address as Address;
 
     const rpcClient =
-        publicClient ??
+        client.account?.publicClient ??
         (createPublicClient({
             chain: client.chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         }) as PublicClient);
 
     const isEnabled = await isModuleEnabled({
@@ -106,7 +103,6 @@ export async function getGuardianAddress<
 export type AddGuardianParams = {
     delayModuleAddress: Address;
     guardianAddress: Address;
-    publicClient?: PublicClient;
 };
 
 export async function addGuardian<
@@ -119,18 +115,15 @@ export async function addGuardian<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<AddGuardianParams>
 ): Promise<Hex> {
-    const { delayModuleAddress, guardianAddress, publicClient } = args;
+    const { delayModuleAddress, guardianAddress } = args;
     const smartAccountAddress = client.account?.address as Address;
 
     const rpcClient =
-        publicClient ??
+        client.account?.publicClient ??
         (createPublicClient({
             chain: client.chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         }) as PublicClient);
 
     const isEnabled = await isModuleEnabled({
@@ -177,7 +170,6 @@ export type DisableGuardianParams = {
     guardianAddress: Address;
     expiration?: number;
     cooldown?: number;
-    publicClient?: PublicClient;
 };
 
 export async function disableGuardian<
@@ -190,18 +182,15 @@ export async function disableGuardian<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<DisableGuardianParams>
 ): Promise<Hex> {
-    const { guardianAddress, expiration, cooldown, publicClient } = args;
+    const { guardianAddress, expiration, cooldown } = args;
     const smartAccountAddress = client.account?.address as Address;
 
     const rpcClient =
-        publicClient ??
+        client.account?.publicClient ??
         (createPublicClient({
             chain: client.chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         }) as PublicClient);
 
     const api = client?.account?.connectApiInstance;
@@ -273,7 +262,6 @@ export type SetupCustomDelayModuleParams = {
     guardianAddress: Address;
     expiration?: number;
     cooldown?: number;
-    publicClient?: PublicClient;
 };
 
 export async function setupCustomDelayModule<
@@ -286,18 +274,15 @@ export async function setupCustomDelayModule<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<SetupCustomDelayModuleParams>
 ): Promise<Hex> {
-    const { guardianAddress, expiration, cooldown, publicClient } = args;
+    const { guardianAddress, expiration, cooldown } = args;
     const smartAccountAddress = client.account?.address as Address;
 
     const rpcClient =
-        publicClient ??
+        client.account?.publicClient ??
         (createPublicClient({
             chain: client.chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         }) as PublicClient);
 
     const api = client?.account?.connectApiInstance;

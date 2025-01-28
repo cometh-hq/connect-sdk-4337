@@ -1,8 +1,8 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import delayModuleService from "@/core/services/delayModuleService";
 
+import { defaultClientConfig } from "@/constants";
 import { getProjectParamsByChain } from "@/core/services/comethService";
-import type { webAuthnOptions } from "@/core/signers/passkeys/types";
 import { sendTransaction } from "permissionless/actions/smartAccount";
 import {
     http,
@@ -10,8 +10,6 @@ import {
     type Chain,
     type Client,
     type Hex,
-    type Prettify,
-    type PublicClient,
     type SendTransactionParameters,
     type Transport,
     createPublicClient,
@@ -20,35 +18,21 @@ import {
 } from "viem";
 import { getAction } from "viem/utils";
 
-export type SetUpRecoveryModuleParams = {
-    passKeyName?: string;
-    webAuthnOptions?: webAuthnOptions;
-    publicClient?: PublicClient;
-};
-
 export async function setUpRecoveryModule<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
         | ComethSafeSmartAccount
         | undefined,
->(
-    client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<SetUpRecoveryModuleParams>
-): Promise<Hex> {
-    const { publicClient } = args;
-
+>(client: Client<TTransport, TChain, TAccount>): Promise<Hex> {
     const smartAccounAddress = client.account?.address as Address;
 
     const rpcClient =
-        publicClient ??
+        client.account?.publicClient ??
         createPublicClient({
             chain: client.chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         });
 
     const api = client?.account?.connectApiInstance;
