@@ -1,12 +1,11 @@
 import { createSmartAccount } from "@/actions/createSmartAccount";
 import type { ConnectParameters } from "@/hooks/useConnect";
 import type {
+    ComethSafeSmartAccount,
     ComethSmartAccountClient,
-    SafeSmartAccount,
     createSafeSmartAccountParameters,
 } from "@cometh/connect-sdk-4337";
 import type { QueryClient } from "@tanstack/react-query";
-import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
 import React, {
     type ReactNode,
     createContext,
@@ -15,7 +14,7 @@ import React, {
     useEffect,
     useCallback,
 } from "react";
-import type { Address, Chain, Transport } from "viem";
+import type { Address, Chain, PublicClient, Transport } from "viem";
 
 const CHAIN_STORAGE_KEY = "currentChain";
 
@@ -23,25 +22,22 @@ export type NetworkParams = {
     chain?: Chain;
     bundlerUrl?: string;
     paymasterUrl?: string;
-    rpcUrl?: string;
+    publicClient?: PublicClient;
 };
 
 type OmitConfig<T> = Omit<
     T,
-    "chain" | "paymasterUrl" | "bundlerUrl" | "rpcUrl"
+    "chain" | "paymasterUrl" | "bundlerUrl" | "publicClient"
 > & {
     networksConfig: NetworkParams[];
 };
 
-type ConnectConfig = OmitConfig<
-    createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE>
->;
+type ConnectConfig = OmitConfig<createSafeSmartAccountParameters>;
 
 export type ContextComethSmartAccountClient = ComethSmartAccountClient<
-    SafeSmartAccount<ENTRYPOINT_ADDRESS_V07_TYPE, Transport, Chain>,
     Transport,
     Chain,
-    ENTRYPOINT_ADDRESS_V07_TYPE
+    ComethSafeSmartAccount
 >;
 
 export type UpdateClientPayload = ConnectParameters & { chain?: Chain };
@@ -95,9 +91,9 @@ export const ConnectProvider = <
             const paymasterUrl = config.networksConfig.find(
                 (network) => network.chain?.id === chain.id
             )?.paymasterUrl;
-            const rpcUrl = config.networksConfig.find(
+            const publicClient = config.networksConfig.find(
                 (network) => network.chain?.id === chain.id
-            )?.rpcUrl;
+            )?.publicClient;
 
             if (!bundlerUrl) throw new Error("Bundler url not found");
 
@@ -108,7 +104,7 @@ export const ConnectProvider = <
                         chain,
                         bundlerUrl,
                         paymasterUrl,
-                        rpcUrl,
+                        publicClient,
                         smartAccountAddress: params.address,
                         comethSignerConfig: {
                             ...config.comethSignerConfig,
@@ -124,7 +120,7 @@ export const ConnectProvider = <
                 console.log(e);
             }
         },
-        [config]
+        [config, config.networksConfig[0].chain]
     );
 
     const disconnectSmartAccount = useCallback(async () => {

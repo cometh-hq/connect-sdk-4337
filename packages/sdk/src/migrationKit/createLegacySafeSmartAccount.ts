@@ -16,6 +16,7 @@ import { API } from "@/core/services/API";
 
 import type { ComethSigner, ComethSignerConfig } from "@/core/signers/types";
 
+import { defaultClientConfig } from "@/constants";
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { prepareLegacyMigrationCalldata } from "@/core/accounts/safe/services/safe";
 import { getViemClient } from "@/core/accounts/utils";
@@ -49,12 +50,9 @@ const legacyAddress = {
         "0xf48f2B2d2a534e402487b3ee7C18c33Aec0Fe5e4" as Address,
 };
 
-export type LegacySafeSmartAccount<
-    transport extends Transport = Transport,
-    chain extends Chain | undefined = Chain | undefined,
-> = {
+export type LegacySafeSmartAccount = {
     address: Address;
-    client: Client<transport, chain>;
+    publicClient: PublicClient;
     migrate: () => Promise<Hex | undefined>;
     hasMigrated: () => Promise<boolean>;
     legacySignTransaction: ({
@@ -138,9 +136,7 @@ export async function createLegacySafeSmartAccount<
     isImport = false,
     baseUrl,
     publicClient,
-}: createSafeSmartAccountParameters): Promise<
-    LegacySafeSmartAccount<TTransport, TChain>
-> {
+}: createSafeSmartAccountParameters): Promise<LegacySafeSmartAccount> {
     if (!smartAccountAddress) throw new Error("Account address not found");
 
     const legacyApi = new LEGACY_API(apiKeyLegacy);
@@ -151,10 +147,7 @@ export async function createLegacySafeSmartAccount<
         createPublicClient({
             chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         });
 
     const [client, projectParams, legacyProjectParams, isWebAuthnCompatible] =
@@ -409,6 +402,6 @@ export async function createLegacySafeSmartAccount<
 
             return true;
         },
-        client: client,
+        publicClient: publicClient,
     };
 }

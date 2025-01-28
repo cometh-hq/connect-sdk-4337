@@ -1,19 +1,17 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import type { CancelRecoveryRequestParams } from "@cometh/connect-sdk-4337";
 import { useMutation } from "@tanstack/react-query";
-import type { EntryPoint } from "permissionless/types/entrypoint";
 import type { Hex } from "viem";
 import type { QueryResultType } from "../types";
 
-export type UseCancelRecoveryRequestProps<entryPoint extends EntryPoint> =
-    CancelRecoveryRequestParams<entryPoint>;
+export type UseCancelRecoveryRequestProps = CancelRecoveryRequestParams;
 
 export type CancelRecoveryRequestMutate = (
-    variables: UseCancelRecoveryRequestProps<EntryPoint>
+    variables: UseCancelRecoveryRequestProps
 ) => void;
 
 export type CancelRecoveryRequestMutateAsync = (
-    variables: UseCancelRecoveryRequestProps<EntryPoint>
+    variables: UseCancelRecoveryRequestProps
 ) => Promise<Hex>;
 
 export type UseCancelRecoveryRequestReturn = QueryResultType & {
@@ -48,7 +46,7 @@ export type UseCancelRecoveryRequestReturn = QueryResultType & {
  *   const handleCancel = async () => {
  *     try {
  *       const result = await cancelRecoveryRequestAsync({
- *         rpcUrl: 'https://my-rpc-url.com',
+ *          publicClient,
  *         // other necessary parameters
  *       });
  *       console.log('Recovery request canceled successfully:', result);
@@ -85,16 +83,14 @@ export function useCancelRecoveryRequest(): UseCancelRecoveryRequestReturn {
     const { mutate, mutateAsync, ...result } = useMutation(
         {
             mutationFn: async (
-                variables: UseCancelRecoveryRequestProps<EntryPoint>
+                variables: UseCancelRecoveryRequestProps
             ): Promise<Hex> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
 
                 return smartAccountClient.cancelRecoveryRequest({
-                    rpcUrl: variables.rpcUrl,
-                    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-                    middleware: variables.middleware as any,
+                    publicClient: variables.publicClient,
                 });
             },
         },

@@ -1,14 +1,14 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
-import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
-
-/**
- * Props for the useEstimateGas hook.
- * @property {Transaction | Transaction[]} transactions - A single transaction or an array of transactions to estimate gas for.
- */
-export type UseEstimateGasProps = {
-    transactions: Transaction | Transaction[];
-};
+import { http, createPublicClient } from "viem";
+import {
+    type EstimateUserOperationGasParameters,
+    type EstimateUserOperationGasReturnType,
+    createBundlerClient,
+} from "viem/account-abstraction";
+import { estimateFeesPerGas } from "viem/actions";
+import { getAction } from "viem/utils";
+import type { MutationOptionsWithoutMutationFn } from "./types";
 
 /**
  * Gas estimation result type
@@ -27,19 +27,21 @@ export type GasEstimationResult = {
  * Type for the estimateGas function.
  * This function doesn't return a promise, suitable for fire-and-forget usage.
  */
-export type EstimateGasMutate = (variables: UseEstimateGasProps) => void;
+export type EstimateGasMutate = (
+    variables: EstimateUserOperationGasParameters
+) => void;
 
 /**
  * Type for the estimateGasAsync function.
  * This function returns a promise that resolves to the detailed gas estimation.
  */
 export type EstimateGasMutateAsync = (
-    variables: UseEstimateGasProps
-) => Promise<GasEstimationResult>;
+    variables: EstimateUserOperationGasParameters
+) => Promise<EstimateUserOperationGasReturnType>;
 
 // Return type of the hook
 export type UseEstimateGasReturn = {
-    data?: GasEstimationResult;
+    data?: EstimateUserOperationGasReturnType;
     error: unknown;
     isPending: boolean;
     isSuccess: boolean;
@@ -137,23 +139,52 @@ export const useEstimateGas = (
 
     const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (variables: UseEstimateGasProps) => {
+            mutationFn: async (
+                variables: EstimateUserOperationGasParameters
+            ) => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
 
-                const { transactions } = variables;
-
-                const userOperation =
-                    await smartAccountClient.account.buildUserOperation(
-                        transactions
-                    );
-
-                const estimateGas = await smartAccountClient.estimateGas({
-                    userOperation,
+                const publicClient = createPublicClient({
+                    chain: smartAccountClient.chain,
+                    transport: http(),
+                    cacheTime: 60_000,
+                    batch: {
+                        multicall: { wait: 50 },
+                    },
                 });
 
-                return estimateGas;
+                const maxGasPriceResult = await getAction(
+                    publicClient,
+                    estimateFeesPerGas,
+                    "estimateFeesPerGas"
+                )({
+                    chain: smartAccountClient.chain,
+                    type: "eip1559",
+                });
+
+                const bundlerClient = createBundlerClient({
+                    account: smartAccountClient.account,
+                    client: smartAccountClient,
+                    transport: http(smartAccountClient.transport.url),
+                });
+
+                const estimateGas =
+                    await bundlerClient.estimateUserOperationGas(variables);
+
+                return {
+                    callGasLimit: estimateGas.callGasLimit,
+                    verificationGasLimit: estimateGas.verificationGasLimit,
+                    preVerificationGas: estimateGas.preVerificationGas,
+                    paymasterVerificationGasLimit:
+                        estimateGas.paymasterVerificationGasLimit,
+                    paymasterPostOpGasLimit:
+                        estimateGas.paymasterPostOpGasLimit,
+                    maxFeePerGas: maxGasPriceResult.maxFeePerGas,
+                    maxPriorityFeePerGas:
+                        maxGasPriceResult.maxPriorityFeePerGas,
+                };
             },
             ...mutationProps,
         },

@@ -1,5 +1,6 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+
 import {
     prepareImportCalldata,
     prepareLegacyMigrationCalldata,
@@ -7,6 +8,7 @@ import {
 import type { API } from "@/core/services/API";
 import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
 
+import { defaultClientConfig } from "@/constants";
 import type { SafeContractParams } from "@/core/accounts/safe/types";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import type { SafeTransactionDataPartial } from "@/migrationKit/types";
@@ -14,14 +16,12 @@ import {
     type SmartAccountClient,
     isSmartAccountDeployed,
 } from "permissionless";
-import type { EntryPoint } from "permissionless/_types/types";
 import {
     http,
     type Address,
     type Chain,
     type Hex,
     type PrivateKeyAccount,
-    type PublicClient,
     type Transport,
     createPublicClient,
     zeroAddress,
@@ -68,30 +68,21 @@ export type SafeImportActions = {
 };
 
 export const importSafeActions =
-    (publicClient?: PublicClient) =>
+    () =>
     <
-        TEntryPoint extends EntryPoint,
-        TSmartAccount extends SafeSmartAccount<TEntryPoint> | undefined,
-        TChain extends Chain | undefined = undefined,
-        TTransport extends Transport = Transport,
+        transport extends Transport,
+        chain extends Chain | undefined = undefined,
+        account extends ComethSafeSmartAccount | undefined = undefined,
     >(
-        client: SmartAccountClient<
-            TEntryPoint,
-            TTransport,
-            TChain,
-            TSmartAccount
-        >
+        client: SmartAccountClient<transport, chain, account>
     ): SafeImportActions => ({
         prepareImportSafe1_3Tx: async () => {
             const rpcClient =
-                publicClient ??
+                client.account?.publicClient ??
                 createPublicClient({
                     chain: client.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(
@@ -102,7 +93,7 @@ export const importSafeActions =
             if (!isDeployed)
                 throw new Error("Import can only be done on deployed safe");
 
-            const api = client?.account?.getConnectApi() as API;
+            const api = client?.account?.connectApiInstance as API;
             const comethSignerConfig = client?.account?.comethSignerConfig;
             const contractParams = client?.account?.safeContractParams;
 
@@ -199,14 +190,11 @@ export const importSafeActions =
         },
         prepareImportSafe1_4Tx: async () => {
             const rpcClient =
-                publicClient ??
+                client.account?.publicClient ??
                 createPublicClient({
                     chain: client.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(
@@ -217,7 +205,7 @@ export const importSafeActions =
             if (!isDeployed)
                 throw new Error("Import can only be done on deployed safe");
 
-            const api = client?.account?.getConnectApi() as API;
+            const api = client?.account?.connectApiInstance as API;
             const comethSignerConfig = client?.account?.comethSignerConfig;
             const contractParams = client?.account?.safeContractParams;
 
@@ -318,7 +306,7 @@ export const importSafeActions =
             };
         },
         importSafe: async (args) => {
-            const api = client?.account?.getConnectApi() as API;
+            const api = client?.account?.connectApiInstance as API;
             const contractParams = client?.account
                 ?.safeContractParams as SafeContractParams;
 
@@ -345,14 +333,11 @@ export const importSafeActions =
             const { signer, tx } = args;
 
             const rpcClient =
-                publicClient ??
+                client.account?.publicClient ??
                 createPublicClient({
                     chain: client.chain,
                     transport: http(),
-                    cacheTime: 60_000,
-                    batch: {
-                        multicall: { wait: 50 },
-                    },
+                    ...defaultClientConfig,
                 });
 
             const isDeployed = await isSmartAccountDeployed(

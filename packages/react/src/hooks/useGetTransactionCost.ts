@@ -1,21 +1,18 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
-import type { MutationOptionsWithoutMutationFn, Transaction } from "./types";
-
-/**
- * Props for the useGetTransactionCost hook.
- * @property {Transaction | Transaction[]} transactions - A single transaction or an array of transactions to get cost for.
- */
-export type UseGetTransactionCostProps = {
-    transactions: Transaction | Transaction[];
-};
+import { http } from "viem";
+import {
+    type EstimateUserOperationGasParameters,
+    createBundlerClient,
+} from "viem/account-abstraction";
+import type { MutationOptionsWithoutMutationFn } from "./types";
 
 /**
  * Type for the getTransactionCost function.
  * This function doesn't return a promise, suitable for fire-and-forget usage.
  */
 export type UseGetTransactionCostMutate = (
-    variables: UseGetTransactionCostProps
+    variables: EstimateUserOperationGasParameters
 ) => void;
 
 /**
@@ -23,7 +20,7 @@ export type UseGetTransactionCostMutate = (
  * This function returns a promise that resolves to the transaction cost in wei.
  */
 export type UseGetTransactionCostMutateAsync = (
-    variables: UseGetTransactionCostProps
+    variables: EstimateUserOperationGasParameters
 ) => Promise<{
     totalGasCost: bigint;
 }>;
@@ -116,28 +113,28 @@ export const useGetTransactionCost = (
 
     const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (variables: UseGetTransactionCostProps) => {
+            mutationFn: async (
+                variables: EstimateUserOperationGasParameters
+            ) => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
 
-                const { transactions } = variables;
-
-                const userOperation =
-                    await smartAccountClient.account.buildUserOperation(
-                        transactions
-                    );
-
-                const estimateGas = await smartAccountClient.estimateGas({
-                    userOperation,
+                const bundlerClient = createBundlerClient({
+                    account: smartAccountClient.account,
+                    client: smartAccountClient,
+                    transport: http(smartAccountClient.transport.url),
                 });
+
+                const estimateGas =
+                    await bundlerClient.estimateUserOperationGas(variables);
 
                 const totalGas =
                     estimateGas.preVerificationGas +
                     estimateGas.verificationGasLimit +
                     estimateGas.callGasLimit;
 
-                return { totalGasCost: totalGas * estimateGas.maxFeePerGas };
+                return { totalGasCost: totalGas };
             },
             ...mutationProps,
         },

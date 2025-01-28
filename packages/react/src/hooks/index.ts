@@ -4,17 +4,11 @@ export * from "@/hooks/useSendTransaction";
 
 export * from "@/hooks/useWriteContract";
 
-export * from "@/hooks/sessionKeys/useSendTransactionWithSessionKey";
-
-export * from "@/hooks/sessionKeys/useWriteContractWithSessionKey";
-
 export * from "@/hooks/useConnect";
 
 export * from "@/hooks/useDisconnect";
 
 export * from "@/hooks/owners/useOwners";
-
-export * from "@/hooks/sessionKeys/useSessionKeys";
 
 export * from "@/hooks/owners/useValidateAddDevice";
 
