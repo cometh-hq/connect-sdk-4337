@@ -1,11 +1,10 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import type { SetUpRecoveryModuleParams } from "@cometh/connect-sdk-4337";
 import { useMutation } from "@tanstack/react-query";
-import type { EntryPoint } from "permissionless/types/entrypoint";
 import type { Hex } from "viem";
 import type { QueryResultType } from "../types";
 
-export type UseSetUpRecoveryModuleProps = SetUpRecoveryModuleParams<EntryPoint>;
+export type UseSetUpRecoveryModuleProps = SetUpRecoveryModuleParams;
 
 export type SetUpRecoveryModuleMutate = (
     variables: UseSetUpRecoveryModuleProps
@@ -48,7 +47,7 @@ export type UseSetUpRecoveryModuleReturn = QueryResultType & {
  *     try {
  *       const result = await setUpRecoveryModuleAsync({
  *         passKeyName: 'myPassKey',
- *         rpcUrl: 'https://my-rpc-url.com',
+ *         publicClient,
  *         // other necessary parameters
  *       });
  *       console.log('Recovery module set up successfully:', result);
@@ -93,10 +92,8 @@ export function useSetUpRecovery(): UseSetUpRecoveryModuleReturn {
 
                 return smartAccountClient.setUpRecoveryModule({
                     passKeyName: variables.passKeyName,
-                    rpcUrl: variables.rpcUrl,
+                    publicClient: variables.publicClient,
                     webAuthnOptions: variables.webAuthnOptions,
-                    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-                    middleware: variables.middleware as any,
                 });
             },
         },

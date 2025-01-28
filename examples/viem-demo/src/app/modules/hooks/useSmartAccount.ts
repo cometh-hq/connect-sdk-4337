@@ -7,8 +7,8 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import { http, type Hex, createPublicClient } from "viem";
-import { arbitrumSepolia } from "viem/chains";
+import { http, type Hex, type PublicClient, createPublicClient } from "viem";
+import { baseSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -39,37 +39,30 @@ export function useSmartAccount() {
             ) as Hex;
 
             const publicClient = createPublicClient({
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 transport: http(),
                 cacheTime: 60_000,
                 batch: {
                     multicall: { wait: 50 },
                 },
-            });
+            }) as PublicClient;
 
             let smartAccount;
-
-            const comethSignerConfig = {
-                fullDomainSelected: true,
-                passKeyName: "oiqvefor",
-            };
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: baseSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: baseSepolia,
                     publicClient,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-                    comethSignerConfig,
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -79,23 +72,23 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
-                entryPoint: ENTRYPOINT_ADDRESS_V07,
+                chain: baseSepolia,
                 publicClient,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                entryPoint: ENTRYPOINT_ADDRESS_V07,
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,
                     timeout: 20_000,
                 }),
-                middleware: {
-                    sponsorUserOperation: paymasterClient.sponsorUserOperation,
-                    gasPrice: paymasterClient.gasPrice,
+                paymaster: paymasterClient,
+                userOperation: {
+                    estimateFeesPerGas: async () => {
+                        return await paymasterClient.getUserOperationGasPrice();
+                    },
                 },
                 publicClient,
             });

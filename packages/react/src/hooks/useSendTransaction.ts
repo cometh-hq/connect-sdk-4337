@@ -12,7 +12,7 @@ import type {
  * @property {Transaction | Transaction[]} transactions - A single transaction or an array of transactions to send.
  */
 export type UseSendTransactionProps = {
-    transactions: Transaction | Transaction[];
+    calls: Transaction | Transaction[];
 };
 
 /**
@@ -59,11 +59,9 @@ export type UseSendTransactionReturn = QueryResultType & {
  *   const handleSendTransaction = () => {
  *     if (recipient) {
  *       sendTransaction({
- *         transactions: {
  *           to: recipient,
  *           value: parseEther(amount),
  *           data: "0x",
- *         }
  *       });
  *     }
  *   };
@@ -72,7 +70,7 @@ export type UseSendTransactionReturn = QueryResultType & {
  *     if (recipient) {
  *       try {
  *         const hash = await sendTransactionAsync({
- *           transactions: [
+ *           calls: [
  *             {
  *               to: recipient,
  *               value: parseEther(amount),
@@ -136,15 +134,15 @@ export const useSendTransaction = (
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
-                const { transactions } = variables;
+                const { calls } = variables;
 
                 // If transactions is not an array, it's a single transaction
-                if (!Array.isArray(transactions)) {
-                    return smartAccountClient.sendTransaction(transactions);
+                if (!Array.isArray(calls)) {
+                    return smartAccountClient.sendTransaction(calls);
                 }
                 // If it's an array, send multiple transactions
-                return smartAccountClient.sendTransactions({
-                    transactions: transactions,
+                return smartAccountClient.sendTransaction({
+                    calls,
                 });
             },
             // Spread any additional mutation options provided

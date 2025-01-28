@@ -9,7 +9,7 @@ import { safeWebAuthnSigner } from "./webauthn/webAuthn.js";
 
 type SafeSignerParams = {
     accountSigner: Signer;
-    safe4337Module: Address;
+    userOpVerifyingContract: Address;
     smartAccountAddress: Address;
     fullDomainSelected: boolean;
 };
@@ -35,7 +35,7 @@ export async function comethSignerToSafeSigner<
     client: Client<TTransport, TChain, undefined>,
     {
         accountSigner,
-        safe4337Module,
+        userOpVerifyingContract,
         smartAccountAddress,
         fullDomainSelected,
     }: SafeSignerParams
@@ -45,7 +45,7 @@ export async function comethSignerToSafeSigner<
             ...(await safeWebAuthnSigner(client, {
                 passkey: accountSigner.passkey,
                 passkeySignerAddress: accountSigner.passkey.signerAddress,
-                safe4337Module,
+                userOpVerifyingContract,
                 smartAccountAddress,
                 fullDomainSelected,
             })),
@@ -55,8 +55,8 @@ export async function comethSignerToSafeSigner<
     return {
         ...(await safeECDSASigner(client, {
             signer: getSigner(accountSigner),
-            safe4337Module,
             smartAccountAddress,
+            userOpVerifyingContract,
         })),
     };
 }

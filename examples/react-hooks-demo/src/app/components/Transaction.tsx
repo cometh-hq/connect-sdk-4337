@@ -108,7 +108,7 @@ function Transaction({
             });
 
             const txHash = await sendTransaction({
-                transactions: {
+                calls: {
                     to: COUNTER_CONTRACT_ADDRESS,
                     value: 0,
                     data: calldata,

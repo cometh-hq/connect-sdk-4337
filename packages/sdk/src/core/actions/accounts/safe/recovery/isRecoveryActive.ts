@@ -1,14 +1,14 @@
-import type { SafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { defaultClientConfig } from "@/constants";
+import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService from "@/core/services/delayModuleService";
-
-import type { EntryPoint, Prettify } from "permissionless/types";
 
 import {
     http,
     type Address,
     type Chain,
     type Client,
+    type Prettify,
     type PublicClient,
     type Transport,
     createPublicClient,
@@ -16,7 +16,6 @@ import {
 
 export type IsRecoveryActiveParams = {
     effectiveDelayAddress?: Address;
-    publicClient?: PublicClient;
 };
 
 export type IsRecoveryActiveReturnType = {
@@ -25,38 +24,32 @@ export type IsRecoveryActiveReturnType = {
 };
 
 export async function isRecoveryActive<
-    entryPoint extends EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends
-        | SafeSmartAccount<entryPoint, Transport, Chain>
-        | undefined =
-        | SafeSmartAccount<entryPoint, Transport, Chain>
+    TAccount extends ComethSafeSmartAccount | undefined =
+        | ComethSafeSmartAccount
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<IsRecoveryActiveParams> = {}
 ): Promise<IsRecoveryActiveReturnType> {
-    const { effectiveDelayAddress, publicClient } = args;
+    const { effectiveDelayAddress } = args;
 
     const smartAccounAddress = client.account?.address as Address;
 
     const rpcClient =
-        publicClient ??
+        client.account?.publicClient ??
         (createPublicClient({
             chain: client.chain,
             transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
+            ...defaultClientConfig,
         }) as PublicClient);
     let delayAddress: Address;
 
     if (effectiveDelayAddress) {
         delayAddress = effectiveDelayAddress;
     } else {
-        const api = client?.account?.getConnectApi();
+        const api = client?.account?.connectApiInstance;
 
         if (!api) throw new Error("No api found");
 

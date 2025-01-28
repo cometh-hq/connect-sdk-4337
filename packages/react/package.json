@@ -7,7 +7,7 @@
       "url": "https://twitter.com/slovaye"
     }
   ],
-  "version": "0.0.12",
+  "version": "0.1.0-dev.1",
   "description": "React hooks Connect 4337",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
@@ -48,7 +48,7 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2.0.0",
+    "viem": "^2.21.22",
     "react": ">=18",
     "wagmi": "^2"
   },
@@ -58,7 +58,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@cometh/connect-sdk-4337": "^0.1.14",
-    "permissionless": "0.1.31"
+    "@cometh/connect-sdk-4337": "^0.3.0-dev.1",
+    "permissionless": "^0.2.23"
   }
 }

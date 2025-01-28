@@ -11,7 +11,7 @@ bun add viem @cometh/connect-sdk-4337
 ## Setup
 
 ```ts
-import { ENTRYPOINT_ADDRESS_V07, createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
+import { createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-4337";
 import { arbitrumSepolia } from "viem/chains";
 import { http } from "viem";
 
@@ -24,21 +24,21 @@ const smartAccount = await createSafeSmartAccount({
 })
 
 const paymasterClient = await createComethPaymasterClient({
-    transport: http(bundlerUrl),
-    chain: arbitrumSepolia,
-    entryPoint: ENTRYPOINT_ADDRESS_V07,
+    transport: http(paymasterUrl),
+    chain,
 })
 
-const smartAccountClient = createSmartAccountClient({
+ const smartAccountClient = createSmartAccountClient({
     account: smartAccount,
-    entryPoint: ENTRYPOINT_ADDRESS_V07,
-    chain: arbitrumSepolia,
+    chain,
     bundlerTransport: http(bundlerUrl),
-    middleware: {
-        sponsorUserOperation: paymasterClient.sponsorUserOperation,
-        gasPrice: paymasterClient.gasPrice,
+    paymaster: paymasterClient,
+    userOperation: {
+        estimateFeesPerGas: async () => {
+            return await paymasterClient.getUserOperationGasPrice();
+        },
     }
-}) 
+})
 
 ```
 
@@ -72,7 +72,7 @@ const calldata = encodeFunctionData({
 });
   
 const txHash =  await smartAccount.sendTransactions({
-    transactions: [
+    calls: [
         {
         to: COUNTER_CONTRACT_ADDRESS,
         data: calldata,

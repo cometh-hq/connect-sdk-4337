@@ -1,25 +1,22 @@
 import {
+    type ComethSafeSmartAccount,
     type ComethSmartAccountClient,
-    ENTRYPOINT_ADDRESS_V07,
-    type SafeSmartAccount,
     createComethPaymasterClient,
     createSafeSmartAccount,
     type createSafeSmartAccountParameters,
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
-import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
 import type { Chain, Hex, Transport } from "viem";
 import { http } from "wagmi";
 
 type ContextComethSmartAccountClient = ComethSmartAccountClient<
-    SafeSmartAccount<ENTRYPOINT_ADDRESS_V07_TYPE, Transport, Chain>,
     Transport,
     Chain,
-    ENTRYPOINT_ADDRESS_V07_TYPE
+    ComethSafeSmartAccount
 >;
 
 export async function createSmartAccount(
-    config: createSafeSmartAccountParameters<ENTRYPOINT_ADDRESS_V07_TYPE> & {
+    config: createSafeSmartAccountParameters & {
         bundlerUrl: string;
         paymasterUrl?: string;
     }
@@ -29,7 +26,7 @@ export async function createSmartAccount(
         paymasterUrl,
         apiKey,
         chain,
-        rpcUrl,
+        publicClient,
         baseUrl,
         comethSignerConfig,
         safeContractConfig,
@@ -39,10 +36,9 @@ export async function createSmartAccount(
     const account = await createSafeSmartAccount({
         apiKey,
         chain,
-        rpcUrl,
+        publicClient,
         baseUrl,
         smartAccountAddress,
-        entryPoint: ENTRYPOINT_ADDRESS_V07,
         comethSignerConfig,
         safeContractConfig,
     });
@@ -53,36 +49,27 @@ export async function createSmartAccount(
         const paymasterClient = await createComethPaymasterClient({
             transport: http(paymasterUrl),
             chain,
-            entryPoint: ENTRYPOINT_ADDRESS_V07,
-            rpcUrl,
+            publicClient,
         });
 
         client = createSmartAccountClient({
-            account: account as SafeSmartAccount<
-                ENTRYPOINT_ADDRESS_V07_TYPE,
-                Transport,
-                Chain
-            >,
-            entryPoint: ENTRYPOINT_ADDRESS_V07,
+            account: account as ComethSafeSmartAccount,
             chain,
             bundlerTransport: http(bundlerUrl),
-            middleware: {
-                sponsorUserOperation: paymasterClient.sponsorUserOperation,
-                gasPrice: paymasterClient.gasPrice,
+            paymaster: paymasterClient,
+            userOperation: {
+                estimateFeesPerGas: async () => {
+                    return await paymasterClient.getUserOperationGasPrice();
+                },
             },
-            rpcUrl,
+            publicClient,
         }) as ContextComethSmartAccountClient;
     } else {
         client = createSmartAccountClient({
-            account: account as SafeSmartAccount<
-                ENTRYPOINT_ADDRESS_V07_TYPE,
-                Transport,
-                Chain
-            >,
-            entryPoint: ENTRYPOINT_ADDRESS_V07,
+            account: account as ComethSafeSmartAccount,
             chain,
             bundlerTransport: http(bundlerUrl),
-            rpcUrl,
+            publicClient,
         }) as ContextComethSmartAccountClient;
     }
 

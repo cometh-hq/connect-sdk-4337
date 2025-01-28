@@ -9,27 +9,19 @@ import {
     saveSigner,
 } from "@/core/signers/createSigner";
 import type { ComethSignerConfig, Signer } from "@/core/signers/types";
-import { getAccountNonce, isSmartAccountDeployed } from "permissionless";
-import type {
-    EntryPoint,
-    GetEntryPointVersion,
-    UserOperation,
-} from "permissionless/_types/types";
-import type { SmartAccount } from "permissionless/accounts";
+import { getAccountNonce } from "permissionless/actions";
+import { toSmartAccount } from "./utils";
+
 import {
-    SignTransactionNotSupportedBySmartAccount,
-    toSmartAccount,
-} from "permissionless/accounts";
-import type { ENTRYPOINT_ADDRESS_V07_TYPE } from "permissionless/types/entrypoint";
-import {
+    http,
     type Address,
     type Chain,
     type Client,
     type Hex,
     type PublicClient,
     type Transport,
+    createPublicClient,
     encodeFunctionData,
-    encodePacked,
     hexToBigInt,
     zeroHash,
 } from "viem";
@@ -44,47 +36,34 @@ import {
     getSafeAddressFromInitializer,
     getSafeInitializer,
 } from "./services/safe";
+
+import { SAFE_7579_ADDRESS, add7579FunctionSelector } from "@/constants";
+import { isSmartAccountDeployed } from "permissionless";
+import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
+import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
+import { SafeAbi } from "./abi/safe";
+import type { SafeSigner } from "./safeSigner/types";
+import { encode7579Calls } from "./services/7579";
 import type { SafeContractParams } from "./types";
 
-export type SafeSmartAccount<
-    entryPoint extends EntryPoint,
-    transport extends Transport = Transport,
-    chain extends Chain | undefined = Chain | undefined,
-> = SmartAccount<entryPoint, "safeSmartAccount", transport, chain> & {
-    buildUserOperation(
-        _txs:
-            | {
-                  to: Address;
-                  value: bigint;
-                  data: Hex;
-              }
-            | {
-                  to: Address;
-                  value: bigint;
-                  data: Hex;
-              }[]
-    ): Promise<UserOperation<"v0.7">>;
-    getConnectApi(): API;
-    safe4337SessionKeysModule: Address;
-    sessionKeysEnabled: boolean;
+export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
+    connectApiInstance: API;
     signerAddress: Address;
     safeContractParams: SafeContractParams;
     comethSignerConfig?: ComethSignerConfig;
+    publicClient?: PublicClient;
 };
 
-export type createSafeSmartAccountParameters<
-    TEntryPoint extends EntryPoint = ENTRYPOINT_ADDRESS_V07_TYPE,
-> = Prettify<{
+export type createSafeSmartAccountParameters = Prettify<{
     apiKey: string;
     chain: Chain;
     publicClient?: PublicClient;
     baseUrl?: string;
     smartAccountAddress?: Address;
-    entryPoint: TEntryPoint;
     comethSignerConfig?: ComethSignerConfig;
     safeContractConfig?: SafeContractParams;
-    sessionKeysEnabled?: boolean;
     signer?: Signer;
+    smartSessionSigner?: SafeSigner;
 }>;
 
 /**
@@ -93,25 +72,17 @@ export type createSafeSmartAccountParameters<
 const getAccountInitCode = async ({
     initializer,
     singletonAddress,
-    safeFactoryAddress,
     saltNonce = zeroHash,
 }: {
     initializer: Hex;
     singletonAddress: Address;
-    safeFactoryAddress: Address;
     saltNonce?: Hex;
 }): Promise<Hex> => {
-    return encodePacked(
-        ["address", "bytes"],
-        [
-            safeFactoryAddress,
-            encodeFunctionData({
-                abi: SafeProxyContractFactoryABI,
-                functionName: "createProxyWithNonce",
-                args: [singletonAddress, initializer, hexToBigInt(saltNonce)],
-            }),
-        ]
-    );
+    return encodeFunctionData({
+        abi: SafeProxyContractFactoryABI,
+        functionName: "createProxyWithNonce",
+        args: [singletonAddress, initializer, hexToBigInt(saltNonce)],
+    });
 };
 
 /**
@@ -187,7 +158,6 @@ export const getAccountAddress = async ({
  * Create a Safe smart account
  */
 export async function createSafeSmartAccount<
-    entryPoint extends ENTRYPOINT_ADDRESS_V07_TYPE,
     TTransport extends Transport = Transport,
     TChain extends Chain = Chain,
 >({
@@ -196,14 +166,11 @@ export async function createSafeSmartAccount<
     publicClient,
     baseUrl,
     smartAccountAddress,
-    entryPoint: entryPointAddress,
     comethSignerConfig,
     safeContractConfig,
-    sessionKeysEnabled = false,
     signer,
-}: createSafeSmartAccountParameters<entryPoint>): Promise<
-    SafeSmartAccount<entryPoint, TTransport, TChain>
-> {
+    smartSessionSigner,
+}: createSafeSmartAccountParameters): Promise<ComethSafeSmartAccount> {
     const api = new API(apiKey, baseUrl);
     const [client, contractParams] = await Promise.all([
         getViemClient(chain, publicClient) as Client<
@@ -214,6 +181,17 @@ export async function createSafeSmartAccount<
         getProjectParamsByChain({ api, chain }),
     ]);
 
+    publicClient =
+        publicClient ??
+        (createPublicClient({
+            chain: chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        }) as PublicClient);
+
     const {
         safeWebAuthnSharedSignerContractAddress,
         setUpContractAddress,
@@ -221,24 +199,14 @@ export async function createSafeSmartAccount<
         safeProxyFactoryAddress,
         safeSingletonAddress,
         multisendAddress,
-        safe4337ModuleAddress,
-        safe4337SessionKeysModule,
+        safe4337ModuleAddress: safe4337Module,
         safeWebAuthnSignerFactory,
-    } =
-        safeContractConfig ??
-        (contractParams.safeContractParams as SafeContractParams);
+    } = safeContractConfig ??
+    (contractParams.safeContractParams as SafeContractParams);
 
-    if (!safe4337ModuleAddress) {
+    if (!safe4337Module) {
         throw new Error("Network is not supported");
     }
-
-    if (sessionKeysEnabled && !safe4337SessionKeysModule) {
-        throw new Error("Session keys not enabled for this network");
-    }
-
-    const safe4337Module = (
-        sessionKeysEnabled ? safe4337SessionKeysModule : safe4337ModuleAddress
-    ) as Address;
 
     const accountSigner = await (signer ??
         createSigner({
@@ -260,7 +228,7 @@ export async function createSafeSmartAccount<
             },
         }));
 
-    const signerAddress = getSignerAddress(accountSigner);
+    const signerAddress: Address = getSignerAddress(accountSigner);
 
     const initializer = getSafeInitializer({
         accountSigner,
@@ -284,16 +252,10 @@ export async function createSafeSmartAccount<
         });
     }
 
-    let smartAccountDeployed = await isSmartAccountDeployed(
-        client,
-        smartAccountAddress
-    );
-
     const generateInitCode = () =>
         getAccountInitCode({
             initializer,
             singletonAddress: safeSingletonAddress,
-            safeFactoryAddress: safeProxyFactoryAddress,
         });
 
     const res = await storeWalletInComethApi({
@@ -311,99 +273,124 @@ export async function createSafeSmartAccount<
         await saveSigner(accountSigner, smartAccountAddress);
     }
 
-    const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
+    let userOpVerifyingContract = safe4337Module;
+
+    const isDeployed = await isSmartAccountDeployed(
         client,
-        {
-            accountSigner,
-            safe4337Module,
-            smartAccountAddress,
-            fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
-        }
+        smartAccountAddress
     );
 
-    const smartAccount = toSmartAccount({
-        address: smartAccountAddress,
+    if (isDeployed) {
+        const is7579Enabled = await publicClient.readContract({
+            address: smartAccountAddress,
+            abi: SafeAbi,
+            functionName: "isModuleEnabled",
+            args: [SAFE_7579_ADDRESS as Address],
+        });
+
+        if (is7579Enabled) {
+            userOpVerifyingContract = SAFE_7579_ADDRESS;
+        }
+    }
+
+    const safeSigner =
+        smartSessionSigner ??
+        (await comethSignerToSafeSigner<TTransport, TChain>(client, {
+            accountSigner,
+            userOpVerifyingContract,
+            smartAccountAddress,
+            fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
+        }));
+
+    return toSmartAccount({
+        client,
+        signerAddress,
+        entryPoint: {
+            abi: entryPoint07Abi,
+            address: entryPoint07Address,
+            version: "0.7",
+        },
+        connectApiInstance: api,
+        safeContractParams:
+            safeContractConfig ??
+            (contractParams.safeContractParams as SafeContractParams),
+        comethSignerConfig: comethSignerConfig,
+        publicClient,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
         },
-        async signTransaction(_, __) {
-            throw new SignTransactionNotSupportedBySmartAccount();
-        },
+
         async signTypedData() {
-            throw new SignTransactionNotSupportedBySmartAccount();
+            throw new Error("method not supported");
         },
-        client: client,
-        entryPoint: entryPointAddress,
-        source: "safeSmartAccount",
+
+        async getFactoryArgs() {
+            return {
+                factory: safeProxyFactoryAddress as Address,
+                factoryData: await generateInitCode(),
+            };
+        },
+
+        async getAddress() {
+            if (smartAccountAddress) return smartAccountAddress;
+
+            smartAccountAddress = await getAccountAddress({
+                chain,
+                singletonAddress: safeSingletonAddress,
+                safeProxyFactoryAddress,
+                saltNonce: "0" as Hex,
+                initializer,
+            });
+
+            return smartAccountAddress;
+        },
 
         async getNonce() {
             return getAccountNonce(client, {
-                sender: smartAccountAddress,
-                entryPoint: entryPointAddress,
+                address: smartAccountAddress as Address,
+                entryPointAddress: entryPoint07Address,
             });
         },
 
-        async signUserOperation(userOp) {
-            return safeSigner.signUserOperation(userOp);
+        async signUserOperation(parameters) {
+            return safeSigner.signUserOperation(parameters);
         },
 
-        async getInitCode() {
-            if (smartAccountDeployed) return "0x";
+        async encodeCalls(calls) {
+            const hasMultipleCalls = calls.length > 1;
 
-            smartAccountDeployed = await isSmartAccountDeployed(
-                client,
-                smartAccountAddress
-            );
+            if (userOpVerifyingContract === SAFE_7579_ADDRESS) {
+                return encode7579Calls({
+                    mode: {
+                        type: hasMultipleCalls ? "batchcall" : "call",
+                        revertOnError: false,
+                        selector: "0x",
+                        context: "0x",
+                    },
+                    callData: calls,
+                });
+            }
 
-            if (smartAccountDeployed) return "0x";
+            // set fallback 7579 in delegateCall
+            const modifiedCalls = calls.map((call) => ({
+                ...call,
+                data: call.data ?? "0x",
+                value: call.value ?? BigInt(0),
+                operation:
+                    call.data?.slice(0, 10) === add7579FunctionSelector ? 1 : 0,
+            }));
 
-            return await generateInitCode();
-        },
-
-        async getFactory() {
-            if (smartAccountDeployed) return undefined;
-
-            smartAccountDeployed = await isSmartAccountDeployed(
-                client,
-                smartAccountAddress
-            );
-
-            if (smartAccountDeployed) return undefined;
-
-            return safeProxyFactoryAddress;
-        },
-
-        async getFactoryData() {
-            if (smartAccountDeployed) return undefined;
-
-            smartAccountDeployed = await isSmartAccountDeployed(
-                client,
-                smartAccountAddress
-            );
-
-            if (smartAccountDeployed) return undefined;
-
-            const initCode = await generateInitCode();
-
-            return `0x${initCode.slice(safeProxyFactoryAddress.length)}`;
-        },
-
-        async encodeDeployCallData(_) {
-            throw new Error("Safe account doesn't support account deployment");
-        },
-
-        async encodeCallData(_tx) {
-            if (Array.isArray(_tx)) {
+            if (hasMultipleCalls) {
                 const userOpCalldata = encodeFunctionData({
                     abi: MultiSendContractABI,
                     functionName: "multiSend",
                     args: [
                         encodeMultiSendTransactions(
-                            _tx.map((tx) => ({
-                                op: 0,
-                                to: tx.to,
-                                data: tx.data,
-                                value: tx.value ?? BigInt(0),
+                            modifiedCalls.map((call) => ({
+                                op: call.operation,
+                                to: call.to,
+                                data: call.data,
+                                value: call.value,
                             }))
                         ) as `0x${string}`,
                     ],
@@ -419,63 +406,17 @@ export async function createSafeSmartAccount<
             return encodeFunctionData({
                 abi: safe4337ModuleAbi,
                 functionName: "executeUserOpWithErrorString",
-                args: [_tx.to, _tx.value, _tx.data, 0],
+                args: [
+                    modifiedCalls[0].to,
+                    modifiedCalls[0].value,
+                    modifiedCalls[0].data,
+                    modifiedCalls[0].operation,
+                ],
             });
         },
 
-        async getDummySignature(userOp) {
-            return safeSigner.getDummySignature(userOp);
+        async getStubSignature() {
+            return safeSigner.getStubSignature();
         },
-    });
-
-    return {
-        ...smartAccount,
-        signerAddress,
-        safe4337SessionKeysModule: safe4337SessionKeysModule as Address,
-        sessionKeysEnabled,
-        safeContractParams:
-            safeContractConfig ?? contractParams.safeContractParams,
-        comethSignerConfig,
-        async buildUserOperation(
-            _txs:
-                | {
-                      to: Address;
-                      value: bigint;
-                      data: Hex;
-                  }
-                | {
-                      to: Address;
-                      value: bigint;
-                      data: Hex;
-                  }[]
-        ) {
-            const sender = smartAccountAddress;
-            const nonce = await smartAccount.getNonce();
-            const callData = await smartAccount.encodeCallData(_txs);
-            const factory = await smartAccount.getFactory();
-            const factoryData = await smartAccount.getFactoryData();
-
-            const userOperation: UserOperation<"v0.7"> = {
-                sender,
-                nonce,
-                factory,
-                factoryData,
-                callData,
-                callGasLimit: 1n,
-                verificationGasLimit: 1n,
-                preVerificationGas: 1n,
-                maxFeePerGas: 1n,
-                maxPriorityFeePerGas: 1n,
-                signature: "0x",
-            };
-
-            userOperation.signature = await smartAccount.getDummySignature(
-                userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
-            );
-            return userOperation;
-        },
-        getConnectApi(): API {
-            return api;
-        },
-    };
+    }) as unknown as ComethSafeSmartAccount;
 }
