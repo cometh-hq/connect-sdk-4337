@@ -1,4 +1,4 @@
-import type { Address, Chain, PrivateKeyAccount } from "viem";
+import type { Address, Chain, PrivateKeyAccount, PublicClient } from "viem";
 import type { SafeContractParams } from "../accounts/safe/types";
 import type { eoaFallback } from "./ecdsa/fallbackEoa/types";
 import type {

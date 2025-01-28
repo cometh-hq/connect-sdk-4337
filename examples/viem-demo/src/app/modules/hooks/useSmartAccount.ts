@@ -7,12 +7,7 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
-import {
-    http,
-    type Hex,
-    type PublicClient,
-    createPublicClient,
-} from "viem";
+import { http, type Hex, type PublicClient, createPublicClient } from "viem";
 import { baseSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -54,8 +49,6 @@ export function useSmartAccount() {
 
             let smartAccount;
 
-
-
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
@@ -70,7 +63,6 @@ export function useSmartAccount() {
                     chain: baseSepolia,
                     publicClient,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
-
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -100,7 +92,6 @@ export function useSmartAccount() {
                 },
                 publicClient,
             });
-
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);

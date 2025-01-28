@@ -63,7 +63,6 @@ export type createSafeSmartAccountParameters = Prettify<{
     comethSignerConfig?: ComethSignerConfig;
     safeContractConfig?: SafeContractParams;
     signer?: Signer;
-    clientTimeout?: number;
     smartSessionSigner?: SafeSigner;
 }>;
 
@@ -170,7 +169,6 @@ export async function createSafeSmartAccount<
     comethSignerConfig,
     safeContractConfig,
     signer,
-    clientTimeout,
     smartSessionSigner,
 }: createSafeSmartAccountParameters): Promise<ComethSafeSmartAccount> {
     const api = new API(apiKey, baseUrl);
@@ -204,7 +202,7 @@ export async function createSafeSmartAccount<
         safe4337ModuleAddress: safe4337Module,
         safeWebAuthnSignerFactory,
     } = safeContractConfig ??
-        (contractParams.safeContractParams as SafeContractParams);
+    (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337Module) {
         throw new Error("Network is not supported");
@@ -382,8 +380,6 @@ export async function createSafeSmartAccount<
                     call.data?.slice(0, 10) === add7579FunctionSelector ? 1 : 0,
             }));
 
-
-
             if (hasMultipleCalls) {
                 const userOpCalldata = encodeFunctionData({
                     abi: MultiSendContractABI,
@@ -399,8 +395,6 @@ export async function createSafeSmartAccount<
                         ) as `0x${string}`,
                     ],
                 });
-
-
 
                 return encodeFunctionData({
                     abi: safe4337ModuleAbi,

@@ -54,8 +54,8 @@ import type {
 export type ComethClientActions<
     TChain extends Chain | undefined = Chain | undefined,
     TSmartAccount extends ComethSafeSmartAccount | undefined =
-    | ComethSafeSmartAccount
-    | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
 > = SmartAccountActions<TChain, TSmartAccount> & {
     validateAddDevice: <TTransport extends Transport>(
         args: Parameters<
@@ -164,8 +164,8 @@ export function comethAccountClientActions() {
         TTransport extends Transport,
         TChain extends Chain | undefined = Chain | undefined,
         TSmartAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+            | ComethSafeSmartAccount
+            | undefined,
     >(
         client: Client<TTransport, TChain, TSmartAccount>
     ): ComethClientActions<TChain, TSmartAccount> => {
