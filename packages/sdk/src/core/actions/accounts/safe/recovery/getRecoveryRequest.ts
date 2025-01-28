@@ -38,8 +38,6 @@ export async function getRecoveryRequest<
 
     const smartAccounAddress = client.account?.address as Address;
 
-    console.log({ publicClient });
-
     const rpcClient =
         publicClient ??
         (createPublicClient({
@@ -50,8 +48,6 @@ export async function getRecoveryRequest<
                 multicall: { wait: 50 },
             },
         }) as PublicClient);
-
-    console.log({ rpcClient });
 
     let delayAddress: Address;
 
