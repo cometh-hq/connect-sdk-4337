@@ -8,7 +8,6 @@ import {
     type BundlerRpcSchema,
     type Chain,
     type Client,
-    type PublicClient,
     type RpcSchema,
     type Transport,
     createClient,
@@ -92,7 +91,7 @@ export function createSmartAccountClient<
         account,
         client,
         rpcSchema
-    > & { publicClient?: PublicClient }
+    >
 ): ComethSmartAccountClient<transport, chain, account, client> {
     const {
         client: client_,
