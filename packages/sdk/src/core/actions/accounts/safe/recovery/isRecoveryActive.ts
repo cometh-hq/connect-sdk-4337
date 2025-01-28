@@ -43,14 +43,14 @@ export async function isRecoveryActive<
 
     const rpcClient =
         publicClient ??
-        createPublicClient({
+        (createPublicClient({
             chain: client.chain,
             transport: http(),
             cacheTime: 60_000,
             batch: {
                 multicall: { wait: 50 },
             },
-        });
+        }) as PublicClient);
     let delayAddress: Address;
 
     if (effectiveDelayAddress) {
@@ -95,8 +95,7 @@ export async function isRecoveryActive<
     if (isDelayModuleDeployed) {
         contractGuardian = await delayModuleService.getGuardianAddress({
             delayAddress,
-            chain: client.chain as Chain,
-            rpcUrl: rpcClient.transport.url,
+            client: rpcClient,
         });
     }
 

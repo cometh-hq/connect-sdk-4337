@@ -501,28 +501,21 @@ export const getSafeSetUpData = ({
 };
 
 export const isModuleEnabled = async ({
-    chain,
-    rpcUrl,
+    client,
     safeAddress,
     moduleAddress,
 }: {
-    chain: Chain;
-    rpcUrl?: string;
+    client: PublicClient;
     safeAddress: Address;
     moduleAddress: Address;
 }) => {
-    const publicClient = createPublicClient({
-        chain,
-        transport: http(rpcUrl),
-    });
-
     const safe = getContract({
         address: safeAddress,
         abi: SafeAbi,
-        client: publicClient,
+        client,
     });
 
-    const isDeployed = await isSmartAccountDeployed(publicClient, safeAddress);
+    const isDeployed = await isSmartAccountDeployed(client, safeAddress);
 
     if (!isDeployed) throw new Error("Safe not deployed");
 

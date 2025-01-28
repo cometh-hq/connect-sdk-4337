@@ -4,8 +4,8 @@ import psl from "psl";
 import type { ParsedDomain } from "psl";
 import {
     type Address,
-    type Chain,
     type Hex,
+    type PublicClient,
     encodeAbiParameters,
     hexToBigInt,
     hexToBytes,
@@ -117,11 +117,11 @@ const formatToSafeContractSignature = (
 const getLegacySigner = async ({
     API,
     walletAddress,
-    chain,
+    client,
 }: {
     API: LEGACY_API;
     walletAddress: string;
-    chain: Chain;
+    client: PublicClient;
 }): Promise<WebAuthnSigner> => {
     const webAuthnSigners =
         await API.getWebAuthnSignersByWalletAddress(walletAddress);
@@ -143,7 +143,7 @@ const getLegacySigner = async ({
     const isOwner = await isSigner(
         registeredWebauthnSigner.signerAddress as Address,
         walletAddress as Address,
-        chain,
+        client,
         API
     );
 

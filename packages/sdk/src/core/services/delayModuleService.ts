@@ -1,13 +1,10 @@
 import { SENTINEL_MODULES } from "@/constants";
 import {
-    http,
     type Address,
-    type Chain,
     type Client,
     type Hex,
     type PublicClient,
     concat,
-    createPublicClient,
     encodeAbiParameters,
     encodeFunctionData,
     getAddress,
@@ -118,18 +115,8 @@ const createSetTxNonceFunction = async (
 
 const getCurrentRecoveryParams = async (
     delayModuleAddress: Address,
-    chain: Chain,
-    rpcUrl?: string
+    client: PublicClient
 ): Promise<RecoveryParamsResponse> => {
-    const client = createPublicClient({
-        chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
-
     const txNonce = await client.readContract({
         address: delayModuleAddress,
         abi: delayModuleABI,
@@ -156,25 +143,15 @@ const getCurrentRecoveryParams = async (
 
 const isQueueEmpty = async (
     moduleAddress: Address,
-    chain: Chain,
-    rpcUrl?: string
+    client: PublicClient
 ): Promise<boolean> => {
-    const publicClient = createPublicClient({
-        chain,
-        transport: http(rpcUrl),
-        cacheTime: 60_000,
-        batch: {
-            multicall: { wait: 50 },
-        },
-    });
-
     const [txNonce, queueNonce] = await Promise.all([
-        publicClient.readContract({
+        client.readContract({
             address: moduleAddress,
             abi: delayModuleABI,
             functionName: "txNonce",
         }),
-        publicClient.readContract({
+        client.readContract({
             address: moduleAddress,
             abi: delayModuleABI,
             functionName: "queueNonce",
@@ -229,18 +206,11 @@ const encodeDeployDelayModule = ({
 
 const getGuardianAddress = async ({
     delayAddress,
-    chain,
-    rpcUrl,
+    client,
 }: {
     delayAddress: Address;
-    chain: Chain;
-    rpcUrl?: string;
+    client: PublicClient;
 }): Promise<Address> => {
-    const client = createPublicClient({
-        chain: chain,
-        transport: http(rpcUrl),
-    });
-
     const modulesPaginated = await client.readContract({
         address: delayAddress,
         abi: delayModuleABI,
@@ -254,19 +224,12 @@ const getGuardianAddress = async ({
 const findPrevModule = async ({
     delayAddress,
     targetModule,
-    chain,
-    rpcUrl,
+    client,
 }: {
     delayAddress: Address;
     targetModule: Address;
-    chain: Chain;
-    rpcUrl?: string;
+    client: PublicClient;
 }): Promise<Address> => {
-    const client = createPublicClient({
-        chain,
-        transport: http(rpcUrl),
-    });
-
     const moduleList = await client.readContract({
         address: delayAddress,
         abi: delayModuleABI,

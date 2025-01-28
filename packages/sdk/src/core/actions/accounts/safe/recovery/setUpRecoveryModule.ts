@@ -24,11 +24,13 @@ import {
 } from "viem";
 import { getAction } from "viem/utils";
 
-export type SetUpRecoveryModuleParams<entryPoint extends EntryPoint> = {
-    passKeyName?: string;
-    webAuthnOptions?: webAuthnOptions;
-    publicClient?: PublicClient;
-} & Middleware<entryPoint>;
+export type SetUpRecoveryModuleParams<entryPoint extends EntryPoint> = Partial<
+    {
+        passKeyName?: string;
+        webAuthnOptions?: webAuthnOptions;
+        publicClient?: PublicClient;
+    } & Middleware<entryPoint>
+>;
 
 export async function setUpRecoveryModule<
     entryPoint extends EntryPoint,
@@ -41,7 +43,7 @@ export async function setUpRecoveryModule<
         | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<SetUpRecoveryModuleParams<entryPoint>>
+    args: Prettify<SetUpRecoveryModuleParams<entryPoint>> = {}
 ): Promise<Hex> {
     const { publicClient, middleware } = args;
 

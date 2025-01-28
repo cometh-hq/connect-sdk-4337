@@ -26,7 +26,6 @@ import { getAction } from "viem/utils";
 export type GetDelayModuleAddressParams = {
     expiration: number;
     cooldown: number;
-    publicClient?: PublicClient;
 };
 
 export async function getDelayModuleAddress<
@@ -85,10 +84,20 @@ export async function getGuardianAddress<
     const { delayModuleAddress, publicClient } = args;
     const smartAccountAddress = client.account?.address as Address;
 
+    const rpcClient =
+        publicClient ??
+        (createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        }) as PublicClient);
+
     const isEnabled = await isModuleEnabled({
         safeAddress: smartAccountAddress,
-        chain: client.chain as Chain,
-        rpcUrl: publicClient?.transport.url,
+        client: rpcClient,
         moduleAddress: delayModuleAddress,
     });
 
@@ -98,8 +107,7 @@ export async function getGuardianAddress<
 
     return await delayModuleService.getGuardianAddress({
         delayAddress: delayModuleAddress,
-        chain: client.chain as Chain,
-        rpcUrl: publicClient?.transport.url,
+        client: rpcClient,
     });
 }
 
@@ -126,10 +134,20 @@ export async function addGuardian<
         args;
     const smartAccountAddress = client.account?.address as Address;
 
+    const rpcClient =
+        publicClient ??
+        (createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        }) as PublicClient);
+
     const isEnabled = await isModuleEnabled({
         safeAddress: smartAccountAddress,
-        chain: client.chain as Chain,
-        rpcUrl: publicClient?.transport.url,
+        client: rpcClient,
         moduleAddress: delayModuleAddress,
     });
 
@@ -139,8 +157,7 @@ export async function addGuardian<
 
     const existingGuardian = await delayModuleService.getGuardianAddress({
         delayAddress: delayModuleAddress,
-        chain: client.chain as Chain,
-        rpcUrl: publicClient?.transport.url,
+        client: rpcClient,
     });
 
     if (existingGuardian) {
@@ -196,6 +213,17 @@ export async function disableGuardian<
         args;
     const smartAccountAddress = client.account?.address as Address;
 
+    const rpcClient =
+        publicClient ??
+        (createPublicClient({
+            chain: client.chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        }) as PublicClient);
+
     const api = client?.account?.getConnectApi();
     if (!api) throw new Error("No API found");
 
@@ -224,8 +252,7 @@ export async function disableGuardian<
 
     const isEnabled = await isModuleEnabled({
         safeAddress: smartAccountAddress,
-        chain: client.chain as Chain,
-        rpcUrl: publicClient?.transport.url,
+        client: rpcClient,
         moduleAddress: delayAddress,
     });
 
@@ -236,8 +263,7 @@ export async function disableGuardian<
     const prevModuleAddress = await delayModuleService.findPrevModule({
         delayAddress,
         targetModule: guardianAddress,
-        chain: client.chain as Chain,
-        rpcUrl: publicClient?.transport.url,
+        client: rpcClient,
     });
 
     if (!prevModuleAddress) {
@@ -293,12 +319,14 @@ export async function setupCustomDelayModule<
 
     const rpcClient =
         publicClient ??
-        createPublicClient({
+        (createPublicClient({
             chain: client.chain,
             transport: http(),
             cacheTime: 60_000,
-            batch: { multicall: { wait: 50 } },
-        });
+            batch: {
+                multicall: { wait: 50 },
+            },
+        }) as PublicClient);
 
     const api = client?.account?.getConnectApi();
     if (!api) throw new Error("No API found");

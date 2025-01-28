@@ -3,10 +3,8 @@ import { SafeProxyContractFactoryABI } from "@/core/accounts/safe/abi/safeProxyF
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import { isSmartAccountDeployed } from "permissionless";
 import {
-    http,
     type Address,
-    type Chain,
-    createPublicClient,
+    type PublicClient,
     encodeFunctionData,
     getContract,
     hexToBigInt,
@@ -22,26 +20,19 @@ export const WEBAUTHN_DEFAULT_BASE_GAS = 300000;
 export const isSafeOwner = async ({
     safeAddress,
     signerAddress,
-    chain,
-    rpcUrl,
+    client,
 }: {
     safeAddress: Address;
     signerAddress: Address;
-    chain: Chain;
-    rpcUrl?: string;
+    client: PublicClient;
 }): Promise<boolean> => {
-    const publicClient = createPublicClient({
-        chain: chain,
-        transport: http(rpcUrl),
-    });
-
     const safe = getContract({
         address: safeAddress,
         abi: SafeLegacyAbi,
-        client: publicClient,
+        client,
     });
 
-    const isDeployed = await isSmartAccountDeployed(publicClient, safeAddress);
+    const isDeployed = await isSmartAccountDeployed(client, safeAddress);
 
     if (!isDeployed) throw new Error("Safe not deployed");
 
@@ -51,13 +42,13 @@ export const isSafeOwner = async ({
 export const isSigner = async (
     signerAddress: Address,
     walletAddress: Address,
-    chain: Chain,
+    client: PublicClient,
     API: LEGACY_API
 ): Promise<boolean> => {
     try {
         const owner = await isSafeOwner({
             safeAddress: walletAddress,
-            chain,
+            client,
             signerAddress,
         });
 
