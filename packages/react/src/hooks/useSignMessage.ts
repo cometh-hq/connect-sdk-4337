@@ -1,50 +1,50 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
-import type { Hex, SignableMessage } from "viem";
+import type { Hash, Hex, SignableMessage } from "viem";
 import type { QueryResultType } from "./types";
 
 type SignMessageArgs = {
-    message: SignableMessage;
+  message: SignableMessage;
 };
 
 type SignMessageMutate = (variables: SignMessageArgs) => void;
 type SignMessageMutateAsync = (variables: SignMessageArgs) => Promise<Hex>;
 
-export type UseSignMessageReturn = QueryResultType & {
-    signMessage: SignMessageMutate;
-    signMessageAsync: SignMessageMutateAsync;
+export type UseSignMessageReturn = QueryResultType<Hash> & {
+  signMessage: SignMessageMutate;
+  signMessageAsync: SignMessageMutateAsync;
 };
 
 export function useSignMessage(): UseSignMessageReturn {
-    const { smartAccountClient, queryClient } = useSmartAccount();
+  const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const { mutate, mutateAsync, ...result } = useMutation<
-        Hex,
-        Error,
-        SignMessageArgs
-    >(
-        {
-            mutationFn: async ({ message }: SignMessageArgs): Promise<Hex> => {
-                if (!smartAccountClient) {
-                    throw new Error("No smart account found");
-                }
+  const { mutate, mutateAsync, ...result } = useMutation<
+    Hex,
+    Error,
+    SignMessageArgs
+  >(
+    {
+      mutationFn: async ({ message }: SignMessageArgs): Promise<Hex> => {
+        if (!smartAccountClient) {
+          throw new Error("No smart account found");
+        }
 
-                const signature = await smartAccountClient.account.signMessage({
-                    message,
-                });
-                return signature;
-            },
-        },
-        queryClient
-    );
+        const signature = await smartAccountClient.account.signMessage({
+          message,
+        });
+        return signature;
+      },
+    },
+    queryClient
+  );
 
-    return {
-        signMessage: mutate,
-        signMessageAsync: mutateAsync,
-        data: result.data,
-        error: result.error,
-        isPending: result.isPending,
-        isSuccess: result.isSuccess,
-        isError: result.isError,
-    };
+  return {
+    signMessage: mutate,
+    signMessageAsync: mutateAsync,
+    data: result.data,
+    error: result.error,
+    isPending: result.isPending,
+    isSuccess: result.isSuccess,
+    isError: result.isError,
+  };
 }
