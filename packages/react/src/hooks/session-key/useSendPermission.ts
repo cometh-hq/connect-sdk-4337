@@ -11,6 +11,8 @@ import { type Hash, type Hex } from "viem";
 import { useSessionKeySigner } from "./useSessionKeySigner";
 import { useSmartAccount } from "../useSmartAccount";
 import { createSessionSmartAccountClient } from "@/actions/createSessionSmartAccount";
+import { useContext } from "react";
+import { ConnectContext } from "@/providers/ConnectProvider";
 
 export type SendPermissionMutate = (variables: UsePermissionParameters) => void;
 
@@ -24,16 +26,20 @@ export type UseSendPermissionReturn = QueryResultType<Hash> & {
 };
 
 export function useSendPermission({
-  apiKey,
   sessionData,
   privateKey,
   mutationProps,
 }: {
-  apiKey: string;
   sessionData: GrantPermissionResponse;
   privateKey: Hex;
   mutationProps?: MutationOptionsWithoutMutationFn;
 }): UseSendPermissionReturn {
+  const context = useContext(ConnectContext);
+
+  if (context === undefined) {
+    throw new Error("useSendPermission must be used within a ConnectProvider");
+  }
+
   const { smartAccountClient } = useSmartAccount();
   const { data: sessionKeySigner } = useSessionKeySigner({
     sessionData,
@@ -49,15 +55,21 @@ export function useSendPermission({
     mutationFn: async (args: UsePermissionParameters): Promise<Hash> => {
       if (!smartAccountClient) throw new Error("No smart account found");
       if (!sessionKeySigner) throw new Error("No signer found");
+      if (!context.apikey) throw new Error("No apikey found");
 
       const sessionKeyClient = await createSessionSmartAccountClient(
-        apiKey,
+        context.apikey,
         smartAccountClient,
         sessionKeySigner
       );
 
-      const hash = await sessionKeyClient.usePermission(args);
-      return hash;
+      const userOpHash = await sessionKeyClient.usePermission(args);
+
+      const userOp = await sessionKeyClient.waitForUserOperationReceipt({
+        hash: userOpHash,
+      });
+
+      return userOp.receipt.transactionHash;
     },
     ...mutationProps,
   });

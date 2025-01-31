@@ -23,7 +23,6 @@ export default function SessionKeyTransaction({
 
   const { sendPermissionAsync, data, isPending, error, isSuccess } =
     useSendPermission({
-      apiKey: process.env.NEXT_PUBLIC_COMETH_API_KEY!,
       sessionData: permission.createSessionsResponse,
       privateKey,
     });
@@ -34,7 +33,7 @@ export default function SessionKeyTransaction({
     address: COUNTER_CONTRACT_ADDRESS,
     chainId: arbitrumSepolia.id,
     query: {
-      refetchInterval: 5000,
+      refetchInterval: 2000,
     },
   });
 
