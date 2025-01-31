@@ -37,7 +37,6 @@ export const useSwitchChain = () => {
                     chain: selectedNetwork.chain,
                 });
 
-
                 queryClient?.invalidateQueries({
                     queryKey: ["switchChain"],
                 });
@@ -84,7 +83,7 @@ export const useSwitchChain = () => {
             setError(null);
             try {
                 const client = await switchChainInternal(params);
-                return client
+                return client;
             } catch (e) {
                 const err =
                     e instanceof Error
