@@ -1,22 +1,11 @@
 import { useSmartAccount } from "@/hooks/useSmartAccount";
-import type { SetUpRecoveryModuleParams } from "@cometh/connect-sdk-4337";
 import { useMutation } from "@tanstack/react-query";
-import type { Hex } from "viem";
+import type { Hash, Hex } from "viem";
 import type { QueryResultType } from "../types";
 
-export type UseSetUpRecoveryModuleProps = SetUpRecoveryModuleParams;
-
-export type SetUpRecoveryModuleMutate = (
-    variables: UseSetUpRecoveryModuleProps
-) => void;
-
-export type SetUpRecoveryModuleMutateAsync = (
-    variables: UseSetUpRecoveryModuleProps
-) => Promise<Hex>;
-
 export type UseSetUpRecoveryModuleReturn = QueryResultType & {
-    setUpRecoveryModule: SetUpRecoveryModuleMutate;
-    setUpRecoveryModuleAsync: SetUpRecoveryModuleMutateAsync;
+    setUpRecoveryModule: () => void;
+    setUpRecoveryModuleAsync: () => Promise<Hash>;
 };
 
 /**
@@ -45,11 +34,7 @@ export type UseSetUpRecoveryModuleReturn = QueryResultType & {
  *
  *   const handleSetUp = async () => {
  *     try {
- *       const result = await setUpRecoveryModuleAsync({
- *         passKeyName: 'myPassKey',
- *         publicClient,
- *         // other necessary parameters
- *       });
+ *       const result = await setUpRecoveryModuleAsync();
  *       console.log('Recovery module set up successfully:', result);
  *     } catch (error) {
  *       console.error('Error setting up recovery module:', error);
@@ -83,18 +68,12 @@ export function useSetUpRecovery(): UseSetUpRecoveryModuleReturn {
 
     const { mutate, mutateAsync, ...result } = useMutation(
         {
-            mutationFn: async (
-                variables: UseSetUpRecoveryModuleProps
-            ): Promise<Hex> => {
+            mutationFn: async (): Promise<Hex> => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
                 }
 
-                return smartAccountClient.setUpRecoveryModule({
-                    passKeyName: variables.passKeyName,
-                    publicClient: variables.publicClient,
-                    webAuthnOptions: variables.webAuthnOptions,
-                });
+                return smartAccountClient.setUpRecoveryModule();
             },
         },
         queryClient

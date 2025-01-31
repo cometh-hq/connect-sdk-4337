@@ -30,9 +30,7 @@ export type UseGetRecoveryRequestReturn = {
  * import { useGetRecoveryRequest } from "@/hooks/useGetRecoveryRequest";
  *
  * export const RecoveryRequestStatus = () => {
- *   const { data, isLoading, isError, error } = useGetRecoveryRequest({
- *     publicClient
- *   });
+ *   const { data, isLoading, isError, error } = useGetRecoveryRequest();
  *
  *   if (isLoading) return <p>Loading recovery request status...</p>;
  *   if (isError) return <p>Error: {error?.message}</p>;
@@ -74,7 +72,7 @@ export function useGetRecoveryRequest(
         Error
     >(
         {
-            queryKey: ["getRecoveryRequest", props.publicClient],
+            queryKey: ["getRecoveryRequest"],
             queryFn: async () => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");

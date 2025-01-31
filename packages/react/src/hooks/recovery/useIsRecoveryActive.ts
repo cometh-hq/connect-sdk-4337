@@ -28,9 +28,7 @@ export type UseIsRecoveryActiveReturn = {
  * import { useIsRecoveryActive } from "@/hooks/useIsRecoveryActive";
  *
  * export const RecoveryStatus = () => {
- *   const { data, isLoading, isError, error } = useIsRecoveryActive({
- *     publicClient,
- *   });
+ *   const { data, isLoading, isError, error } = useIsRecoveryActive();
  *
  *   if (isLoading) return <p>Loading recovery status...</p>;
  *   if (isError) return <p>Error: {error?.message}</p>;
@@ -57,7 +55,7 @@ export function useIsRecoveryActive(
 
     return useQuery<IsRecoveryActiveReturnType, Error>(
         {
-            queryKey: ["isRecoveryActive", props.publicClient],
+            queryKey: ["isRecoveryActive"],
             queryFn: async () => {
                 if (!smartAccountClient) {
                     throw new Error("No smart account found");
