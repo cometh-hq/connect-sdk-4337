@@ -35,3 +35,11 @@ export * from "@/hooks/useSwitchChain";
 export * from "@/hooks/useGetTransactionCost";
 
 export * from "@/hooks/useEstimateGas";
+
+export * from "@/hooks/session-key/useGrantPermission";
+
+export * from "@/hooks/session-key/useSendPermission";
+
+export * from "@/hooks/session-key/useSessionKeySigner";
+
+export * from "@/hooks/session-key/useSessionKeyClient";
