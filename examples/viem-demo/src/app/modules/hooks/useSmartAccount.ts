@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
-import { baseSepolia } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -39,7 +39,7 @@ export function useSmartAccount() {
             ) as Hex;
 
             const publicClient = createPublicClient({
-                chain: baseSepolia,
+                chain: arbitrumSepolia,
                 transport: http(),
                 cacheTime: 60_000,
                 batch: {
@@ -52,7 +52,7 @@ export function useSmartAccount() {
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: baseSepolia,
+                    chain: arbitrumSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
@@ -60,25 +60,22 @@ export function useSmartAccount() {
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: baseSepolia,
+                    chain: arbitrumSepolia,
                     publicClient,
                     entryPoint: ENTRYPOINT_ADDRESS_V07,
                 });
-                window.localStorage.setItem(
-                    "walletAddress",
-                    smartAccount.address
-                );
+                window.localStorage.setItem("walletAddress", smartAccount.address);
             }
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: baseSepolia,
+                chain: arbitrumSepolia,
                 publicClient,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                chain: baseSepolia,
+                chain: arbitrumSepolia,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,
@@ -90,7 +87,6 @@ export function useSmartAccount() {
                         return await paymasterClient.getUserOperationGasPrice();
                     },
                 },
-                publicClient,
             });
 
             setSmartAccount(smartAccountClient);

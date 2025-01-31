@@ -3,9 +3,9 @@ import { useMutation } from "@tanstack/react-query";
 import type { Hash, Hex } from "viem";
 import type { QueryResultType } from "../types";
 
-export type UseSetUpRecoveryModuleReturn = QueryResultType & {
-    setUpRecoveryModule: () => void;
-    setUpRecoveryModuleAsync: () => Promise<Hash>;
+export type UseSetUpRecoveryModuleReturn = QueryResultType<Hash> & {
+  setUpRecoveryModule: () => void;
+  setUpRecoveryModuleAsync: () => Promise<Hash>;
 };
 
 /**
@@ -64,28 +64,28 @@ export type UseSetUpRecoveryModuleReturn = QueryResultType & {
  * - `data`: The transaction hash (Hex) returned after successful setup.
  */
 export function useSetUpRecovery(): UseSetUpRecoveryModuleReturn {
-    const { smartAccountClient, queryClient } = useSmartAccount();
+  const { smartAccountClient, queryClient } = useSmartAccount();
 
-    const { mutate, mutateAsync, ...result } = useMutation(
-        {
-            mutationFn: async (): Promise<Hex> => {
-                if (!smartAccountClient) {
-                    throw new Error("No smart account found");
-                }
+  const { mutate, mutateAsync, ...result } = useMutation(
+    {
+      mutationFn: async (): Promise<Hex> => {
+        if (!smartAccountClient) {
+          throw new Error("No smart account found");
+        }
 
-                return smartAccountClient.setUpRecoveryModule();
-            },
-        },
-        queryClient
-    );
+        return smartAccountClient.setUpRecoveryModule();
+      },
+    },
+    queryClient
+  );
 
-    return {
-        setUpRecoveryModule: mutate,
-        setUpRecoveryModuleAsync: mutateAsync,
-        isPending: result.isPending,
-        isError: result.isError,
-        error: result.error,
-        isSuccess: result.isSuccess,
-        data: result.data,
-    };
+  return {
+    setUpRecoveryModule: mutate,
+    setUpRecoveryModuleAsync: mutateAsync,
+    isPending: result.isPending,
+    isError: result.isError,
+    error: result.error,
+    isSuccess: result.isSuccess,
+    data: result.data,
+  };
 }
