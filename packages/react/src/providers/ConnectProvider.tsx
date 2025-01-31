@@ -46,7 +46,9 @@ export type ConnectContextPayload = {
     queryClient?: QueryClient;
     smartAccountClient: ContextComethSmartAccountClient | null;
     smartAccountAddress: Address | undefined;
-    updateSmartAccountClient: (params?: UpdateClientPayload) => Promise<ContextComethSmartAccountClient | null>;
+    updateSmartAccountClient: (
+        params?: UpdateClientPayload
+    ) => Promise<ContextComethSmartAccountClient | null>;
     disconnectSmartAccount: () => Promise<void>;
     networksConfig: NetworkParams[] | undefined;
 };
@@ -98,7 +100,6 @@ export const ConnectProvider = <
             if (!bundlerUrl) throw new Error("Bundler url not found");
 
             try {
-
                 const { client, address: newAddress } =
                     await createSmartAccount({
                         ...config,

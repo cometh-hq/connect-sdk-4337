@@ -90,7 +90,7 @@ export function useCancelRecoveryRequest(): UseCancelRecoveryRequestReturn {
                 }
 
                 return smartAccountClient.cancelRecoveryRequest({
-                    publicClient: variables.publicClient,
+                    effectiveDelayAddress: variables.effectiveDelayAddress,
                 });
             },
         },
