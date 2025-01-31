@@ -58,7 +58,7 @@ export default function App() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              {address && <SessionKeyPermission />}
+              {!permission && address && <SessionKeyPermission />}
               {permission && privateKey && (
                 <SessionKeyTransaction
                   permission={permission}

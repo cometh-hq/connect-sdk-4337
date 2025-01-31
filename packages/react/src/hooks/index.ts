@@ -22,13 +22,13 @@ export * from "@/hooks/useCreatePasskeySigner";
 
 export * from "@/hooks/useSignMessage";
 
-// export * from "@/hooks/recovery/useSetUpRecovery";
+export * from "@/hooks/recovery/useSetUpRecovery";
 
-// export * from "@/hooks/recovery/useIsRecoveryActive";
+export * from "@/hooks/recovery/useIsRecoveryActive";
 
-// export * from "@/hooks/recovery/useGetRecoveryRequest";
+export * from "@/hooks/recovery/useGetRecoveryRequest";
 
-// export * from "@/hooks/recovery/useCancelRecoveryRequest";
+export * from "@/hooks/recovery/useCancelRecoveryRequest";
 
 export * from "@/hooks/useSwitchChain";
 
