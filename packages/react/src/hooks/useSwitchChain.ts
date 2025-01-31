@@ -32,14 +32,17 @@ export const useSwitchChain = () => {
                 throw new Error("No current configuration found");
 
             try {
-                await updateSmartAccountClient({
+                const client = await updateSmartAccountClient({
                     address: smartAccountClient?.account.address,
                     chain: selectedNetwork.chain,
                 });
 
+
                 queryClient?.invalidateQueries({
                     queryKey: ["switchChain"],
                 });
+
+                return client;
             } catch (e) {
                 throw e instanceof Error
                     ? e
@@ -58,7 +61,7 @@ export const useSwitchChain = () => {
         (params: { chainId: number }) => {
             setIsPending(true);
             setError(null);
-            switchChainInternal(params)
+            return switchChainInternal(params)
                 .catch((e) => {
                     const err =
                         e instanceof Error
@@ -80,7 +83,8 @@ export const useSwitchChain = () => {
             setIsPending(true);
             setError(null);
             try {
-                await switchChainInternal(params);
+                const client = await switchChainInternal(params);
+                return client
             } catch (e) {
                 const err =
                     e instanceof Error
