@@ -1,6 +1,5 @@
 import { hardcodeVerificationGasLimit7579 } from "@/constants";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
-import type { Execution } from "@biconomy/sdk";
 import {
     encodeValidatorNonce,
     getAccount,
@@ -21,6 +20,7 @@ import {
     sendUserOperation,
 } from "viem/account-abstraction";
 import { getAction } from "viem/utils";
+import type { Execution } from "../types";
 
 export type UsePermissionParameters<
     TAccount extends ComethSafeSmartAccount | undefined =

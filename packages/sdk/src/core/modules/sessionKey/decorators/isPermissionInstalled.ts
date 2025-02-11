@@ -1,6 +1,9 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
-import { getPermissionId } from "@biconomy/sdk";
-import { SMART_SESSIONS_ADDRESS, type Session } from "@rhinestone/module-sdk";
+import {
+    SMART_SESSIONS_ADDRESS,
+    type Session,
+    getPermissionId,
+} from "@rhinestone/module-sdk";
 import {
     http,
     type Address,
@@ -66,7 +69,6 @@ export async function isPermissionInstalled<
     }
 
     const permissionId = (await getPermissionId({
-        client: publicClient,
         session: session,
     })) as Hex;
 

@@ -1,7 +1,6 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type { SafeSigner } from "@/core/accounts/safe/safeSigner/types";
 import type { ComethSmartAccountClient } from "@/core/clients/accounts/safe/createClient";
-import type { UsePermissionModuleData } from "@biconomy/sdk";
 import {
     SMART_SESSIONS_ADDRESS,
     SmartSessionMode,
@@ -29,6 +28,7 @@ import {
 } from "viem/account-abstraction";
 import { toAccount } from "viem/accounts";
 import { isPermissionEnabledAbi } from "./decorators/isPermissionInstalled";
+import type { UsePermissionModuleData } from "./types";
 
 export type UsePermissionModuleParameters = {
     moduleData?: UsePermissionModuleData;
