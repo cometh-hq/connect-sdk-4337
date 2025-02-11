@@ -1,10 +1,8 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
-import type {
-    Execution,
-    GrantPermissionResponse,
-    PreparePermissionResponse,
-} from "@biconomy/sdk";
+
+import type { GrantPermissionResponse } from "@/index";
 import type { Chain, Client, Hash, Transport } from "viem";
+import type { Execution, PreparePermissionResponse } from "../types";
 import {
     type GrantPermissionParameters,
     grantPermission,

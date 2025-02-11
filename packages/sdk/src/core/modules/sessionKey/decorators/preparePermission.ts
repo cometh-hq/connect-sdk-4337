@@ -1,20 +1,10 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
-import {
-    type CreateSessionDataParams,
-    ERROR_MESSAGES,
-    type FullCreateSessionDataParams,
-    type PreparePermissionResponse,
-    type ResolvedActionPolicyInfo,
-    type Session,
-    abiToPoliciesInfo,
-    applyDefaults,
-    createActionData,
-    generateSalt,
-} from "@biconomy/sdk";
+
 import {
     type ActionData,
     type PolicyData,
     SMART_SESSIONS_ADDRESS,
+    type Session,
     encodeValidationData,
     getPermissionId,
     getSudoPolicy,
@@ -29,6 +19,18 @@ import type {
 } from "viem";
 import { encodeFunctionData } from "viem/utils";
 import { SmartSessionAbi } from "../abi/smartSessionAbi";
+import type {
+    CreateSessionDataParams,
+    FullCreateSessionDataParams,
+    PreparePermissionResponse,
+    ResolvedActionPolicyInfo,
+} from "../types";
+import {
+    abiToPoliciesInfo,
+    applyDefaults,
+    createActionData,
+    generateSalt,
+} from "../utils";
 
 export type PreparePermissionParameters<
     TAccount extends ComethSafeSmartAccount | undefined =
@@ -114,6 +116,8 @@ export const getPermissionAction = async ({
             permitERC4337Paymaster: true,
         };
 
+        console.log({ session });
+
         const permissionId = await getPermissionId({
             session,
         });
@@ -158,7 +162,7 @@ export async function preparePermission<
     const chainId = publicClient_?.chain?.id;
 
     if (!chainId) {
-        throw new Error(ERROR_MESSAGES.CHAIN_NOT_FOUND);
+        throw new Error("Chain not found");
     }
 
     const defaultedSessionRequestedInfo =

@@ -2,35 +2,34 @@ import { erc7579Actions } from "permissionless/actions/erc7579";
 import { ENTRYPOINT_ADDRESS_V07, customChains } from "./constants";
 
 import {
-  type ComethSafeSmartAccount,
-  createSafeSmartAccount,
-  type createSafeSmartAccountParameters,
+    type ComethSafeSmartAccount,
+    createSafeSmartAccount,
+    type createSafeSmartAccountParameters,
 } from "./core/accounts/safe/createSafeSmartAccount";
 import {
-  type QRCodeOptions,
-  createNewSigner,
-  createNewSignerWithAccountAddress,
-  generateQRCodeUrl,
-  serializeUrlWithSignerPayload,
+    type QRCodeOptions,
+    createNewSigner,
+    createNewSignerWithAccountAddress,
+    generateQRCodeUrl,
+    serializeUrlWithSignerPayload,
 } from "./core/actions/accounts/addNewDevice";
 import {
-  retrieveAccountAddressFromPasskeyId,
-  retrieveAccountAddressFromPasskeys,
+    retrieveAccountAddressFromPasskeyId,
+    retrieveAccountAddressFromPasskeys,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import { importSafeActions } from "./core/actions/accounts/safe/importSafe/importSafeActions";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
 import type { CancelRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/cancelRecoveryRequest";
 import type { GetRecoveryRequestParams } from "./core/actions/accounts/safe/recovery/getRecoveryRequest";
 import type {
-  IsRecoveryActiveParams,
-  IsRecoveryActiveReturnType,
+    IsRecoveryActiveParams,
+    IsRecoveryActiveReturnType,
 } from "./core/actions/accounts/safe/recovery/isRecoveryActive";
 
-import type { CreateSessionDataParams } from "@biconomy/sdk";
 import type { SafeSigner } from "./core/accounts/safe/safeSigner/types";
 import {
-  type ComethSmartAccountClient,
-  createSmartAccountClient,
+    type ComethSmartAccountClient,
+    createSmartAccountClient,
 } from "./core/clients/accounts/safe/createClient";
 import { createComethPaymasterClient } from "./core/clients/paymaster/createPaymasterClient";
 import { smartSessionActions } from "./core/modules/sessionKey/decorators";
@@ -43,47 +42,52 @@ import { createLegacySafeSmartAccount } from "./migrationKit/createLegacySafeSma
 import { retrieveLegacyWalletAddress } from "./migrationKit/retrieveLegacyWalletAddress";
 
 import type { GrantPermissionParameters } from "./core/modules/sessionKey/decorators/grantPermission";
-import type { GrantPermissionResponse } from "@biconomy/sdk";
 
 import type { UsePermissionParameters } from "./core/modules/sessionKey/decorators/usePermission";
+import type {
+    CreateSessionDataParams,
+    GrantPermissionResponse,
+} from "./core/modules/sessionKey/types";
+import { SmartSessionMode } from "@rhinestone/module-sdk";
 
 export {
-  createSigner,
-  createSafeSmartAccount,
-  createSmartAccountClient,
-  retrieveAccountAddressFromPasskeys,
-  retrieveAccountAddressFromPasskeyId,
-  createNewSigner,
-  createNewSignerWithAccountAddress,
-  serializeUrlWithSignerPayload,
-  generateQRCodeUrl,
-  createComethPaymasterClient,
-  createLegacySafeSmartAccount,
-  retrieveLegacyWalletAddress,
-  importSafeActions,
-  erc7579Actions,
-  smartSessionActions,
-  toSmartSessionsSigner,
-  ENTRYPOINT_ADDRESS_V07,
-  customChains,
+    createSigner,
+    createSafeSmartAccount,
+    createSmartAccountClient,
+    retrieveAccountAddressFromPasskeys,
+    retrieveAccountAddressFromPasskeyId,
+    createNewSigner,
+    createNewSignerWithAccountAddress,
+    serializeUrlWithSignerPayload,
+    generateQRCodeUrl,
+    createComethPaymasterClient,
+    createLegacySafeSmartAccount,
+    retrieveLegacyWalletAddress,
+    importSafeActions,
+    erc7579Actions,
+    smartSessionActions,
+    toSmartSessionsSigner,
+    ENTRYPOINT_ADDRESS_V07,
+    customChains,
+    SmartSessionMode
 };
 
 export type {
-  ComethSafeSmartAccount,
-  ComethSmartAccountClient,
-  createSafeSmartAccountParameters,
-  Signer,
-  EnrichedOwner,
-  QRCodeOptions,
-  webAuthnOptions,
-  GetRecoveryRequestParams,
-  RecoveryParamsResponse,
-  CancelRecoveryRequestParams,
-  IsRecoveryActiveParams,
-  IsRecoveryActiveReturnType,
-  CreateSessionDataParams,
-  SafeSigner,
-  GrantPermissionParameters,
-  GrantPermissionResponse,
-  UsePermissionParameters,
+    ComethSafeSmartAccount,
+    ComethSmartAccountClient,
+    createSafeSmartAccountParameters,
+    Signer,
+    EnrichedOwner,
+    QRCodeOptions,
+    webAuthnOptions,
+    GetRecoveryRequestParams,
+    RecoveryParamsResponse,
+    CancelRecoveryRequestParams,
+    IsRecoveryActiveParams,
+    IsRecoveryActiveReturnType,
+    CreateSessionDataParams,
+    SafeSigner,
+    GrantPermissionParameters,
+    GrantPermissionResponse,
+    UsePermissionParameters,
 };

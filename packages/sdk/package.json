@@ -6,7 +6,7 @@
       "name": "yoanslvy"
     }
   ],
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "SDK Cometh Connect 4337",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
@@ -54,9 +54,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@biconomy/sdk": "^0.0.24",
     "@noble/curves": "^1.6.0",
-    "@rhinestone/module-sdk": "^0.2.0",
+    "@rhinestone/module-sdk": "^0.2.3",
     "@simplewebauthn/server": "^7.2.0",
     "@types/cbor-js": "^0.1.1",
     "@types/elliptic": "^6.4.18",

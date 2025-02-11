@@ -5,11 +5,8 @@ import {
 } from "@/constants";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import { is7579Installed } from "@/core/actions/accounts/7579/is7579Installed";
-import type {
-    Call,
-    CreateSessionDataParams,
-    GrantPermissionResponse,
-} from "@biconomy/sdk";
+
+import type { CreateSessionDataParams, GrantPermissionResponse } from "@/index";
 import {
     RHINESTONE_ATTESTER_ADDRESS,
     getSmartSessionsValidator,
@@ -17,6 +14,7 @@ import {
 import type { Chain, Client, Hex, PublicClient, Transport } from "viem";
 import { sendUserOperation } from "viem/account-abstraction";
 import { encodeFunctionData, getAction, parseAbi } from "viem/utils";
+import type { Call } from "../types";
 import { preparePermission } from "./preparePermission";
 
 export type GrantPermissionParameters<
