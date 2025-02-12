@@ -1,6 +1,10 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 
 import {
+    FALLBACK_TARGET_FLAG,
+    FALLBACK_TARGET_SELECTOR_FLAG_PERMITTED_TO_CALL_SMARTSESSION,
+} from "@/constants";
+import {
     type ActionData,
     type PolicyData,
     SMART_SESSIONS_ADDRESS,
@@ -84,7 +88,48 @@ export const getPermissionAction = async ({
     for (const sessionInfo of sessionRequestedInfo) {
         const actionPolicies: ActionData[] = [];
 
-        for (const actionPolicyInfo of sessionInfo.actionPoliciesInfo ?? []) {
+        if (
+            !sessionInfo.actionPoliciesInfo ||
+            sessionInfo.actionPoliciesInfo.length === 0
+        ) {
+            // If no action policies provided, use sudo action
+            const session = {
+                chainId: BigInt(client?.chain?.id as number),
+                sessionValidator: sessionInfo.sessionValidator as Address,
+                sessionValidatorInitData: encodeValidationData({
+                    threshold: 1,
+                    owners: [sessionInfo.sessionKeyData],
+                }),
+                salt: sessionInfo.salt ?? generateSalt(),
+                userOpPolicies: [getSudoPolicy()],
+                actions: [
+                    {
+                        actionTarget: FALLBACK_TARGET_FLAG,
+                        actionTargetSelector:
+                            FALLBACK_TARGET_SELECTOR_FLAG_PERMITTED_TO_CALL_SMARTSESSION,
+                        actionPolicies: [
+                            {
+                                policy: getSudoPolicy().policy,
+                                initData: "0x" as Hex,
+                            },
+                        ],
+                    },
+                ],
+                erc7739Policies: {
+                    allowedERC7739Content: [],
+                    erc1271Policies: [],
+                },
+                permitERC4337Paymaster: true,
+            };
+
+            const permissionId = await getPermissionId({ session });
+            permissionIds.push(permissionId);
+            sessions.push(session);
+            continue;
+        }
+
+        // Existing logic for when actionPoliciesInfo is not empty
+        for (const actionPolicyInfo of sessionInfo.actionPoliciesInfo) {
             if (actionPolicyInfo.abi) {
                 // Resolve the abi to multiple function selectors...
                 const resolvedPolicyInfos = abiToPoliciesInfo(actionPolicyInfo);
@@ -115,8 +160,6 @@ export const getPermissionAction = async ({
             },
             permitERC4337Paymaster: true,
         };
-
-        console.log({ session });
 
         const permissionId = await getPermissionId({
             session,
