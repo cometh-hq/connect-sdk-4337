@@ -1,3 +1,4 @@
+import { NoCurrentConfigurationError, NotWithinConnectProviderError, UseSwitchChainError } from "@/errors";
 import { ConnectContext } from "@/providers/ConnectProvider";
 import { useCallback, useContext, useState } from "react";
 
@@ -5,7 +6,7 @@ export const useSwitchChain = () => {
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
-        throw new Error("useSwitchChain must be used within a ConnectProvider");
+        throw new NotWithinConnectProviderError("useSwitchChain");
     }
 
     const {
@@ -23,13 +24,13 @@ export const useSwitchChain = () => {
             const { chainId } = params;
 
             if (!networksConfig)
-                throw new Error("No current configuration found");
+                throw new NoCurrentConfigurationError();
 
             const selectedNetwork = networksConfig?.find(
                 (network) => network.chain?.id === chainId
             );
             if (!selectedNetwork)
-                throw new Error("No current configuration found");
+                throw new NoCurrentConfigurationError();
 
             try {
                 const client = await updateSmartAccountClient({
@@ -45,7 +46,7 @@ export const useSwitchChain = () => {
             } catch (e) {
                 throw e instanceof Error
                     ? e
-                    : new Error("An error occurred while switching chain");
+                    : new UseSwitchChainError();
             }
         },
         [
@@ -65,9 +66,7 @@ export const useSwitchChain = () => {
                     const err =
                         e instanceof Error
                             ? e
-                            : new Error(
-                                  "An error occurred while switching chain"
-                              );
+                            : new UseSwitchChainError();
                     setError(err);
                 })
                 .finally(() => {
@@ -88,7 +87,7 @@ export const useSwitchChain = () => {
                 const err =
                     e instanceof Error
                         ? e
-                        : new Error("An error occurred while switching chain");
+                        : new UseSwitchChainError();
                 setError(err);
                 throw err;
             } finally {

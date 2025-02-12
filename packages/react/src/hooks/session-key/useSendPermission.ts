@@ -13,6 +13,7 @@ import { useSmartAccount } from "../useSmartAccount";
 import { createSessionSmartAccountClient } from "@/actions/createSessionSmartAccount";
 import { useContext } from "react";
 import { ConnectContext } from "@/providers/ConnectProvider";
+import { ApiKeyNotFoundError, SignerNotFoundError, NotWithinConnectProviderError, SmartAccountNotFoundError } from "@/errors";
 
 export type SendPermissionMutate = (variables: UsePermissionParameters) => void;
 
@@ -37,7 +38,7 @@ export function useSendPermission({
   const context = useContext(ConnectContext);
 
   if (context === undefined) {
-    throw new Error("useSendPermission must be used within a ConnectProvider");
+    throw new NotWithinConnectProviderError("useSendPermission");
   }
 
   const { smartAccountClient } = useSmartAccount();
@@ -53,9 +54,9 @@ export function useSendPermission({
       smartAccountClient,
     ],
     mutationFn: async (args: UsePermissionParameters): Promise<Hash> => {
-      if (!smartAccountClient) throw new Error("No smart account found");
-      if (!sessionKeySigner) throw new Error("No signer found");
-      if (!context.apikey) throw new Error("No apikey found");
+      if (!smartAccountClient) throw new SmartAccountNotFoundError();
+      if (!sessionKeySigner) throw new SignerNotFoundError();
+      if (!context.apikey) throw new ApiKeyNotFoundError();
 
       const sessionKeyClient = await createSessionSmartAccountClient(
         context.apikey,

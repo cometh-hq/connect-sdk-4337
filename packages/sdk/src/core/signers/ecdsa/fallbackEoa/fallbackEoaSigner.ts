@@ -6,6 +6,7 @@ import {
 
 import type { Hex, PrivateKeyAccount } from "viem";
 import { getSignerLocalStorage } from "../services/ecdsaService";
+import { NoPrivateKeyFoundError } from "@/errors";
 
 export const getFallbackEoaSigner = async ({
     smartAccountAddress,
@@ -19,7 +20,7 @@ export const getFallbackEoaSigner = async ({
         encryptionSalt
     );
 
-    if (!privateKey) throw new Error("no account found");
+    if (!privateKey) throw new NoPrivateKeyFoundError();
 
     return { privateKey, signer: privateKeyToAccount(privateKey) };
 };

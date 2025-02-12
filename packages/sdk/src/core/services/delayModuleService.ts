@@ -17,6 +17,7 @@ import { getCode } from "viem/actions";
 import { delayModuleABI } from "../accounts/safe/abi/delayModule";
 import { delayModuleFactoryABI } from "../accounts/safe/abi/delayModuleFactory";
 import type { MultiSendTransaction } from "../types";
+import { AddressIsNotAGuardianError } from "@/errors";
 
 export type RecoveryParamsResponse = {
     txCreatedAt: bigint;
@@ -243,7 +244,7 @@ const findPrevModule = async ({
     );
 
     if (index === -1) {
-        throw new Error("Address is not a guardian");
+        throw new AddressIsNotAGuardianError();
     }
 
     return index !== 0

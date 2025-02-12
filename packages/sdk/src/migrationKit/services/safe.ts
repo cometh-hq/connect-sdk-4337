@@ -14,6 +14,7 @@ import {
 } from "viem";
 import { SafeLegacyAbi } from "../abi/safeLegacy";
 import type { LEGACY_API } from "./LEGACY_API";
+import { SafeNotDeployedError } from "@/errors";
 
 export const WEBAUTHN_DEFAULT_BASE_GAS = 300000;
 
@@ -34,7 +35,7 @@ export const isSafeOwner = async ({
 
     const isDeployed = await isSmartAccountDeployed(client, safeAddress);
 
-    if (!isDeployed) throw new Error("Safe not deployed");
+    if (!isDeployed) throw new SafeNotDeployedError();
 
     return (await safe.read.isOwner([signerAddress])) as boolean;
 };

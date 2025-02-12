@@ -27,6 +27,7 @@ import {
 } from "../../types";
 import type { SafeSigner } from "../types";
 import { generateSafeMessageMessage } from "../utils";
+import { MethodNotSupportedError } from "@/errors";
 
 /**
  * Creates a SafeSigner using WebAuthn for authentication
@@ -92,10 +93,10 @@ export async function safeWebAuthnSigner<
             ]) as Hex;
         },
         async signTransaction(_, __) {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTypedData() {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     });
 

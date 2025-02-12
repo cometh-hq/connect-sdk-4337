@@ -46,6 +46,7 @@ import { SafeAbi } from "./abi/safe";
 import type { SafeSigner } from "./safeSigner/types";
 import { encode7579Calls } from "./services/7579";
 import type { SafeContractParams } from "./types";
+import { NetworkNotSupportedError, MethodNotSupportedError } from "@/errors";
 
 export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
     connectApiInstance: API;
@@ -322,7 +323,7 @@ export async function createSafeSmartAccount<
         },
 
         async signTypedData() {
-            throw new Error("method not supported");
+            throw new MethodNotSupportedError();
         },
 
         async getFactoryArgs() {
