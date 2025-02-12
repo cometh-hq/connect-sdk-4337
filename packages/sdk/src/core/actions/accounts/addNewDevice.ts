@@ -12,7 +12,7 @@ import {
     isWebAuthnCompatible,
 } from "@/core/signers/passkeys/utils";
 import type { Signer } from "@/core/types";
-import { NoFallbackSignerError } from "@/errors";
+import { DeviceNotCompatibleWithPasskeysError, DeviceNotCompatibleWithSECKP256r1PasskeysError, FailedToGenerateQRCodeError, FailedToSerializeUrlError, InvalidSignerDataError, NoFallbackSignerError } from "@/errors";
 import * as QRCode from "qrcode";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -93,7 +93,7 @@ export const createNewSignerWithAccountAddress = async ({
         const { publicKeyId, publicKeyX, publicKeyY, signerAddress } = signer;
 
         if (!(publicKeyId && publicKeyX && publicKeyY && signerAddress))
-            throw new Error("Invalid signer data");
+            throw new InvalidSignerDataError();
 
         setPasskeyInStorage(
             smartAccountAddress,
@@ -154,7 +154,7 @@ export const serializeUrlWithSignerPayload = async (
 
         return url;
     } catch (error) {
-        throw new Error(`Failed to serialize url: ${error}`);
+        throw new FailedToSerializeUrlError(error as Error);
     }
 };
 
@@ -181,7 +181,7 @@ export const generateQRCodeUrl = async (
         );
         return qrCodeImageUrl;
     } catch (error) {
-        throw new Error(`Failed to generate QR Code: ${error}`);
+        throw new FailedToGenerateQRCodeError(error as Error);
     }
 };
 
@@ -203,7 +203,7 @@ const _createNewPasskeySigner = async (
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
     if (!webAuthnCompatible || isFallbackSigner())
-        throw new Error("Device not compatible with passkeys");
+        throw new DeviceNotCompatibleWithPasskeysError();
 
     const passkeyWithCoordinates = await createPasskeySigner({
         api,
@@ -213,7 +213,7 @@ const _createNewPasskeySigner = async (
     });
 
     if (passkeyWithCoordinates.publicKeyAlgorithm !== -7)
-        throw new Error("Device not compatible with SECKP256r1 passkeys");
+        throw new DeviceNotCompatibleWithSECKP256r1PasskeysError();
 
     return {
         signer: {

@@ -29,6 +29,7 @@ import {
     signTypedData,
     waitForTransactionRelayAndImport,
 } from "./utils";
+import { ImportOnUndeployedSafeError, SafeVersionNotSupportedError, WalletAlreadyImportedError } from "@/errors";
 
 const multisendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 
@@ -88,7 +89,7 @@ export function importSafeActions() {
                 );
 
                 if (!isDeployed) {
-                    throw new Error("Import can only be done on deployed safe");
+                    throw new ImportOnUndeployedSafeError();
                 }
 
                 const api = client?.account?.connectApiInstance as API;
@@ -128,16 +129,15 @@ export function importSafeActions() {
                             }),
                         ])) as [string, number, boolean, bigint];
 
-                    if (currentVersion !== "1.3.0") {
-                        throw new Error(
-                            `Safe is not version 1.3.0. Current version: ${currentVersion}`
-                        );
-                    }
-                } else {
-                    threshold = 1;
-                    is4337ModuleEnabled = false;
-                    nonce = 0n;
+                const supportedVersion = "1.3.0";
+                if (currentVersion !== supportedVersion) {
+                    throw new SafeVersionNotSupportedError(supportedVersion, currentVersion);
                 }
+            } else {
+                threshold = 1;
+                is4337ModuleEnabled = false;
+                nonce = 0n;
+            }
 
                 const isWebAuthnCompatible =
                     await isDeviceCompatibleWithPasskeys({
@@ -205,7 +205,7 @@ export function importSafeActions() {
                 );
 
                 if (!isDeployed) {
-                    throw new Error("Import can only be done on deployed safe");
+                    throw new ImportOnUndeployedSafeError();
                 }
 
                 const api = client?.account?.connectApiInstance as API;
@@ -217,7 +217,7 @@ export function importSafeActions() {
                 );
 
                 if (importedWallet?.length > 0) {
-                    throw new Error("Wallet already imported");
+                    throw new WalletAlreadyImportedError();
                 }
 
                 let threshold: number;
@@ -253,16 +253,15 @@ export function importSafeActions() {
                             }),
                         ])) as [string, number, boolean, bigint];
 
-                    if (currentVersion !== "1.4.1") {
-                        throw new Error(
-                            `Safe is not version 1.4.1. Current version: ${currentVersion}`
-                        );
-                    }
-                } else {
-                    threshold = 1;
-                    is4337ModuleEnabled = false;
-                    nonce = 0n;
+                const supportedVersion = "1.4.1";
+                if (currentVersion !== supportedVersion) {
+                    throw new SafeVersionNotSupportedError(supportedVersion, currentVersion);
                 }
+            } else {
+                threshold = 1;
+                is4337ModuleEnabled = false;
+                nonce = 0n;
+            }
 
                 const isWebAuthnCompatible =
                     await isDeviceCompatibleWithPasskeys({
