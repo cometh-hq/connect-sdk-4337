@@ -4,6 +4,7 @@ import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmar
 import { isModuleEnabled } from "@/core/accounts/safe/services/safe";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService from "@/core/services/delayModuleService";
+import { APINotFoundError, DelayModuleAlreadySetUpError, DelayModuleNotEnabledError, FetchingProjectParamsError, GuardianAlreadyEnabledError, PreviousModuleNotFoundError } from "@/errors";
 import { sendTransaction } from "permissionless/actions/smartAccount";
 
 import {
@@ -41,7 +42,7 @@ export async function getDelayModuleAddress<
     const smartAccountAddress = client.account?.address as Address;
 
     const api = client?.account?.connectApiInstance;
-    if (!api) throw new Error("No API found");
+    if (!api) throw new APINotFoundError();
 
     const projectParams = await getProjectParamsByChain({
         api,
@@ -91,7 +92,7 @@ export async function getGuardianAddress<
     });
 
     if (!isEnabled) {
-        throw new Error("Delay module not enabled");
+        throw new DelayModuleNotEnabledError();
     }
 
     return await delayModuleService.getGuardianAddress({
@@ -133,7 +134,7 @@ export async function addGuardian<
     });
 
     if (!isEnabled) {
-        throw new Error("Delay module not enabled");
+        throw new DelayModuleNotEnabledError();
     }
 
     const existingGuardian = await delayModuleService.getGuardianAddress({
@@ -142,7 +143,7 @@ export async function addGuardian<
     });
 
     if (existingGuardian) {
-        throw new Error("Guardian already enabled");
+        throw new GuardianAlreadyEnabledError();
     }
 
     const addGuardianTx = {
@@ -194,7 +195,7 @@ export async function disableGuardian<
         }) as PublicClient);
 
     const api = client?.account?.connectApiInstance;
-    if (!api) throw new Error("No API found");
+    if (!api) throw new APINotFoundError();
 
     const projectParams = await getProjectParamsByChain({
         api,
@@ -226,7 +227,7 @@ export async function disableGuardian<
     });
 
     if (!isEnabled) {
-        throw new Error("Delay module not enabled");
+        throw new DelayModuleNotEnabledError();
     }
 
     const prevModuleAddress = await delayModuleService.findPrevModule({
@@ -236,7 +237,7 @@ export async function disableGuardian<
     });
 
     if (!prevModuleAddress) {
-        throw new Error("Previous module not found");
+        throw new PreviousModuleNotFoundError();
     }
 
     const disableGuardianTx = {
@@ -286,13 +287,13 @@ export async function setupCustomDelayModule<
         }) as PublicClient);
 
     const api = client?.account?.connectApiInstance;
-    if (!api) throw new Error("No API found");
+    if (!api) throw new APINotFoundError();
 
     const projectParams = await getProjectParamsByChain({
         api,
         chain: client.chain as Chain,
     });
-    if (!projectParams) throw new Error("Error fetching project params");
+    if (!projectParams) throw new FetchingProjectParamsError();
 
     const {
         delayModuleAddress,
@@ -320,7 +321,7 @@ export async function setupCustomDelayModule<
     });
 
     if (isDelayModuleDeployed) {
-        throw new Error("Delay module already set up");
+        throw new DelayModuleAlreadySetUpError();
     }
 
     const delayModuleInitializer = await delayModuleService.setUpDelayModule({

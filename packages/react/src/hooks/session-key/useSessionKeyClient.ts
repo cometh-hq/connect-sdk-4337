@@ -8,6 +8,7 @@ import {
   createSessionSmartAccountClient,
   type SmartSessionClient,
 } from "@/actions/createSessionSmartAccount";
+import { SignerNotFoundError, SmartAccountNotFoundError } from "@/errors";
 
 export type UseSessionKeyClientReturn = QueryResultType<SmartSessionClient>;
 
@@ -29,8 +30,8 @@ export function useSessionKeyClient({
   const query = useQuery<unknown, unknown, SmartSessionClient, unknown[]>({
     queryKey: ["session-key-get-client", sessionKeySigner, smartAccountClient],
     queryFn: async (): Promise<SmartSessionClient> => {
-      if (!smartAccountClient) throw new Error("No smart account found");
-      if (!sessionKeySigner) throw new Error("No signer found");
+      if (!smartAccountClient) throw new SmartAccountNotFoundError();
+      if (!sessionKeySigner) throw new SignerNotFoundError();
 
       return createSessionSmartAccountClient(
         apiKey,

@@ -2,6 +2,7 @@ import * as psl from "psl";
 import { maxUint256, toBytes, toHex } from "viem";
 
 import type { webAuthnOptions } from "./types";
+import { ChallengeNotFoundError, InvalidSignatureEncodingError } from "@/errors";
 
 export const challengePrefix = "226368616c6c656e6765223a";
 
@@ -180,7 +181,7 @@ export function extractClientDataFields(
     );
 
     if (!match) {
-        throw new Error("challenge not found in client data JSON");
+        throw new ChallengeNotFoundError();
     }
 
     const [, fields] = match;
@@ -199,7 +200,7 @@ export function extractSignature(
 ): [bigint, bigint] {
     const check = (x: boolean): void => {
         if (!x) {
-            throw new Error("invalid signature encoding");
+            throw new InvalidSignatureEncodingError();
         }
     };
 

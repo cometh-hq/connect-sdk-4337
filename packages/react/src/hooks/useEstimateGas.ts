@@ -9,6 +9,7 @@ import {
 import { estimateFeesPerGas } from "viem/actions";
 import { getAction } from "viem/utils";
 import type { MutationOptionsWithoutMutationFn } from "./types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * Gas estimation result type
@@ -143,7 +144,7 @@ export const useEstimateGas = (
                 variables: EstimateUserOperationGasParameters
             ) => {
                 if (!smartAccountClient) {
-                    throw new Error("No smart account found");
+                    throw new SmartAccountNotFoundError();
                 }
 
                 const publicClient = createPublicClient({

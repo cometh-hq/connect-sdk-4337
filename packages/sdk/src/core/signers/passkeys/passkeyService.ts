@@ -17,9 +17,12 @@ import {
     toHex,
 } from "viem";
 import {
+    FailedToGeneratePasskeyError,
     NoPasskeySignerFoundForGivenChain,
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
+    PasskeyCreationError,
+    PasskeySignatureFailedError,
     RetrieveWalletFromPasskeyError,
     SignerNotOwnerError,
 } from "../../../errors";
@@ -107,9 +110,7 @@ const createPasskeySigner = async ({
         })) as PasskeyCredential;
 
         if (!passkeyCredential) {
-            throw new Error(
-                "Failed to generate passkey. Received null as a credential"
-            );
+            throw new FailedToGeneratePasskeyError();
         }
 
         const publicKeyAlgorithm =
@@ -163,7 +164,7 @@ const createPasskeySigner = async ({
         return passkeyWithCoordinates;
     } catch (e) {
         console.log({ e });
-        throw new Error("Error in the passkey creation");
+        throw new PasskeyCreationError();
     }
 };
 
@@ -186,7 +187,7 @@ const sign = async ({
         },
     })) as Assertion | null;
 
-    if (!assertion) throw new Error("Passkey signature failed");
+    if (!assertion) throw new PasskeySignatureFailedError();
 
     const signature = encodeAbiParameters(
         [

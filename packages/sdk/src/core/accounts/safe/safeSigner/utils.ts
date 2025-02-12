@@ -7,6 +7,8 @@ import {
     hashTypedData,
 } from "viem";
 
+import { InvalidSignatureError } from "@/errors";
+
 export const adjustVInSignature = (
     signingMethod: "eth_sign" | "eth_signTypedData",
     signature: string
@@ -15,7 +17,7 @@ export const adjustVInSignature = (
     const MIN_VALID_V_VALUE_FOR_SAFE_ECDSA = 27;
     let signatureV = Number.parseInt(signature.slice(-2), 16);
     if (!ETHEREUM_V_VALUES.includes(signatureV)) {
-        throw new Error("Invalid signature");
+        throw new InvalidSignatureError();
     }
     if (signingMethod === "eth_sign") {
         if (signatureV < MIN_VALID_V_VALUE_FOR_SAFE_ECDSA) {

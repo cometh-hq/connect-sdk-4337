@@ -1,6 +1,7 @@
 import { SAFE_7579_ADDRESS } from "@/constants";
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { APINotFoundError } from "@/errors";
 
 import { isSmartAccountDeployed } from "permissionless";
 
@@ -22,7 +23,7 @@ export async function is7579Installed<
 >(client: Client<TTransport, TChain, TAccount>): Promise<boolean> {
     const api = client?.account?.connectApiInstance;
 
-    if (!api) throw new Error("No api found");
+    if (!api) throw new APINotFoundError();
 
     const smartAccountAddress = client.account?.address;
 

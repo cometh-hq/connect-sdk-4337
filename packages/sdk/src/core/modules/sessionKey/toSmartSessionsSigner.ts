@@ -29,6 +29,7 @@ import {
 import { toAccount } from "viem/accounts";
 import { isPermissionEnabledAbi } from "./decorators/isPermissionInstalled";
 import type { UsePermissionModuleData } from "./types";
+import { MethodNotSupportedError, PermissionNotInstalledError } from "@/errors";
 
 export type UsePermissionModuleParameters = {
     moduleData?: UsePermissionModuleData;
@@ -79,18 +80,18 @@ export async function toSmartSessionsSigner<
     });
 
     if (!isPermissionInstalled)
-        throw new Error("Permission not installed for this wallet");
+        throw new PermissionNotInstalledError();
 
     const account = toAccount({
         address: signer.address,
         async signMessage() {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTransaction(_, __) {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTypedData() {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     });
 

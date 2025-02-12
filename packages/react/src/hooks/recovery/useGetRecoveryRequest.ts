@@ -1,3 +1,4 @@
+import { SmartAccountNotFoundError } from "@/errors";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import type {
     GetRecoveryRequestParams,
@@ -75,7 +76,7 @@ export function useGetRecoveryRequest(
             queryKey: ["getRecoveryRequest"],
             queryFn: async () => {
                 if (!smartAccountClient) {
-                    throw new Error("No smart account found");
+                    throw new SmartAccountNotFoundError();
                 }
 
                 return smartAccountClient.getRecoveryRequest(props);

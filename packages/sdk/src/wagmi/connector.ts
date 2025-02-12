@@ -20,6 +20,7 @@ import {
     type ProviderRpcError,
     type Transport,
     UserRejectedRequestError,
+    InvalidChainIdError,
 } from "viem";
 import { type CreateConnectorFn, createConnector } from "wagmi";
 
@@ -82,7 +83,7 @@ export function smartAccountConnector<
         }> {
             try {
                 if (chainId && chainId !== (await this.getChainId())) {
-                    throw new Error(`Invalid chainId ${chainId} requested`);
+                    throw new InvalidChainIdError({chainId});
                 }
 
                 const account = await createSafeSmartAccount({
@@ -184,7 +185,7 @@ export function smartAccountConnector<
         async getClient({ chainId: requestedChainId }: { chainId: number }) {
             const chainId = await this.getChainId();
             if (requestedChainId !== chainId) {
-                throw new Error(`Invalid chainId ${chainId} requested`);
+                throw new InvalidChainIdError({chainId});
             }
             return client as unknown as ComethSmartAccountClient<
                 TSmartAccount,

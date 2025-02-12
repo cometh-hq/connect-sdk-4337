@@ -1,3 +1,4 @@
+import { NotWithinSmartAccountProviderError } from "@/errors";
 import { ConnectContext } from "@/providers/ConnectProvider";
 import { useContext } from "react";
 
@@ -8,7 +9,7 @@ export const useSmartAccount = () => {
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
-        throw new Error("Hooks must be used within a SmartAccountProvider");
+        throw new NotWithinSmartAccountProviderError();
     }
 
     return context;

@@ -1,3 +1,4 @@
+import { NotWithinConnectProviderError } from "@/errors";
 import { ConnectContext } from "@/providers/ConnectProvider";
 import { useCallback, useContext, useState } from "react";
 import type { Address } from "viem";
@@ -11,7 +12,7 @@ export const useConnect = () => {
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
-        throw new Error("useConnect must be used within a ConnectProvider");
+        throw new NotWithinConnectProviderError("useConnect");
     }
 
     const { queryClient, updateSmartAccountClient } = context;

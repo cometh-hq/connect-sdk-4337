@@ -6,6 +6,7 @@ import {
     createBundlerClient,
 } from "viem/account-abstraction";
 import type { MutationOptionsWithoutMutationFn } from "./types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * Type for the getTransactionCost function.
@@ -117,7 +118,7 @@ export const useGetTransactionCost = (
                 variables: EstimateUserOperationGasParameters
             ) => {
                 if (!smartAccountClient) {
-                    throw new Error("No smart account found");
+                    throw new SmartAccountNotFoundError();
                 }
 
                 const bundlerClient = createBundlerClient({
