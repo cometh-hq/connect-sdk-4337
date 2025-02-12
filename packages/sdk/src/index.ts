@@ -43,12 +43,12 @@ import { retrieveLegacyWalletAddress } from "./migrationKit/retrieveLegacyWallet
 
 import type { GrantPermissionParameters } from "./core/modules/sessionKey/decorators/grantPermission";
 
+import { SmartSessionMode } from "@rhinestone/module-sdk";
 import type { UsePermissionParameters } from "./core/modules/sessionKey/decorators/usePermission";
 import type {
     CreateSessionDataParams,
     GrantPermissionResponse,
 } from "./core/modules/sessionKey/types";
-import { SmartSessionMode } from "@rhinestone/module-sdk";
 
 export {
     createSigner,
@@ -69,7 +69,7 @@ export {
     toSmartSessionsSigner,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
-    SmartSessionMode
+    SmartSessionMode,
 };
 
 export type {
