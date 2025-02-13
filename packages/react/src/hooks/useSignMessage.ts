@@ -2,6 +2,7 @@ import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash, Hex, SignableMessage } from "viem";
 import type { QueryResultType } from "./types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 type SignMessageArgs = {
   message: SignableMessage;
@@ -26,7 +27,7 @@ export function useSignMessage(): UseSignMessageReturn {
     {
       mutationFn: async ({ message }: SignMessageArgs): Promise<Hex> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
 
         const signature = await smartAccountClient.account.signMessage({

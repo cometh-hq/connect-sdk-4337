@@ -31,6 +31,7 @@ import { safe4337SessionKeyModuleAbi } from "../abi/safe4337SessionKeyModuleAbi"
 import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
 import type { MultiSendTransaction } from "../types";
+import { InvalidCallDataError, SafeNotDeployedError } from "@/errors";
 
 /**
  * Encodes multiple transactions into a single byte string for multi-send functionality
@@ -68,7 +69,7 @@ export const decodeUserOp = ({
         data: userOperation.callData as `0x${string}`,
     });
 
-    if (!args) throw new Error("Invalid callData for Safe Account");
+    if (!args) throw new InvalidCallDataError();
 
     const txs: MultiSendTransaction[] = [];
 
@@ -310,7 +311,7 @@ export const isSafeOwner = async ({
             safeAddress
         );
 
-        if (!isDeployed) throw new Error("Safe not deployed");
+        if (!isDeployed) throw new SafeNotDeployedError();
 
         return (await safe.read.isOwner([signerAddress])) as boolean;
     } catch {
@@ -517,7 +518,7 @@ export const isModuleEnabled = async ({
 
     const isDeployed = await isSmartAccountDeployed(client, safeAddress);
 
-    if (!isDeployed) throw new Error("Safe not deployed");
+    if (!isDeployed) throw new SafeNotDeployedError();
 
     return await safe.read.isModuleEnabled([moduleAddress]);
 };

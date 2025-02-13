@@ -16,6 +16,7 @@ import type {
 import { getCode, readContract } from "viem/actions";
 import { getAction } from "viem/utils";
 import type { SafeContractParams } from "./types";
+import { MethodNotSupportedError } from "@/errors";
 
 export type ToSmartAccountParameters<
     entryPointAbi extends Abi | readonly unknown[] = Abi,
@@ -134,9 +135,7 @@ export async function toSmartAccount<
                               comethImplementation.sign
                                   ? comethImplementation.sign(parameters)
                                   : Promise.reject(
-                                          new Error(
-                                              "sign method is not defined"
-                                          )
+                                          new MethodNotSupportedError()
                                       ),
                           ]);
                       if (factory && factoryData)

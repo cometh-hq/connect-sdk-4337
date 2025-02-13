@@ -7,6 +7,7 @@ import type {
 } from "@tanstack/react-query";
 import type { Address, Hash } from "viem";
 import type { QueryResultType } from "../types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 type AddOwnerParameters = {
   ownerToAdd: Address;
@@ -45,7 +46,7 @@ export const useAddOwner = (
     {
       mutationFn: async ({ ownerToAdd }: AddOwnerParameters): Promise<Hash> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
         return await smartAccountClient.addOwner({ ownerToAdd });
       },
@@ -85,7 +86,7 @@ export const useRemoveOwner = (
         ownerToRemove,
       }: RemoveOwnerParameters): Promise<Hash> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
         return await smartAccountClient.removeOwner({ ownerToRemove });
       },
@@ -124,7 +125,7 @@ export const useGetOwners = (
       queryKey: ["getOwners"],
       queryFn: async (): Promise<readonly Address[]> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
         return await smartAccountClient.getOwners();
       },
@@ -153,7 +154,7 @@ export const useGetEnrichedOwners = (
       queryKey: ["getEnrichedOwners"],
       queryFn: async (): Promise<EnrichedOwner[]> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
         return await smartAccountClient.getEnrichedOwners();
       },

@@ -19,6 +19,7 @@ import {
 import { parseHex } from "@/migrationKit/signers/utils";
 import { EIP712_SAFE_TX_TYPES } from "@/migrationKit/types";
 import type { SafeSigner } from "../types";
+import { MethodNotSupportedError } from "@/errors";
 
 /**
  * Creates a SafeSigner using ECDSA for signing
@@ -117,7 +118,7 @@ export async function safeLegacyWebAuthnSigner<
             ) as Hex;
         },
         async signTypedData() {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     });
 

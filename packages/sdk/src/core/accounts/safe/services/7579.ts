@@ -23,6 +23,7 @@ import {
 } from "@rhinestone/module-sdk";
 import { LaunchpadAbi } from "../abi/7579/Launchpad";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
+import { NoCallsToEncodeError, BatchCallModeNotSupportedError } from "@/errors";
 
 export type CallType = "call" | "delegatecall" | "batchcall";
 
@@ -278,11 +279,7 @@ export function encode7579Calls<callType extends CallType>({
     callData,
 }: EncodeCallDataParams<callType>): Hex {
     if (callData.length > 1 && mode?.type !== "batchcall") {
-        throw new Error(
-            `mode ${JSON.stringify(
-                mode
-            )} does not supported for batchcall calldata`
-        );
+        throw new BatchCallModeNotSupportedError(mode);
     }
 
     const executeAbi = [
@@ -350,7 +347,7 @@ export function encode7579Calls<callType extends CallType>({
     const call = callData.length === 0 ? undefined : callData[0];
 
     if (!call) {
-        throw new Error("No calls to encode");
+        throw new NoCallsToEncodeError();
     }
 
     return encodeFunctionData({

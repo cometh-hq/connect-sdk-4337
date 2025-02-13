@@ -4,6 +4,7 @@ import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmar
 import type { SafeContractParams } from "@/core/accounts/safe/types";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import type { Signer } from "@/core/types";
+import { APINotFoundError, SmartAccountAddressNotFoundError } from "@/errors";
 
 import { sendTransaction } from "permissionless/actions/smartAccount";
 import type {
@@ -34,7 +35,7 @@ export async function validateAddDevice<
 
     const api = client?.account?.connectApiInstance;
 
-    if (!api) throw new Error("No api found");
+    if (!api) throw new APINotFoundError();
 
     const addOwnerCalldata = encodeFunctionData({
         abi: SafeAbi,
@@ -44,7 +45,7 @@ export async function validateAddDevice<
 
     const smartAccountAddress = client.account?.address;
 
-    if (!smartAccountAddress) throw new Error("No smart account address found");
+    if (!smartAccountAddress) throw new SmartAccountAddressNotFoundError();
 
     const txs = [
         {

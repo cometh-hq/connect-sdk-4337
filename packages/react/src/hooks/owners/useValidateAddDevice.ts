@@ -6,6 +6,7 @@ import type {
   MutationOptionsWithoutMutationFn,
   QueryResultType,
 } from "./../types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * Props for the useValidateAddDevice hook.
@@ -62,7 +63,7 @@ export const useValidateAddDevice = (
     {
       mutationFn: (variables: UseValidateAddDeviceProps): Promise<Hash> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
         const { signer } = variables;
 

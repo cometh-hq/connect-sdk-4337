@@ -1,3 +1,4 @@
+import { NotWithinConnectProviderError } from "@/errors";
 import {
     ConnectContext,
     type ContextComethSmartAccountClient,
@@ -21,7 +22,7 @@ export const useAccount = (): UseAccountResult => {
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
-        throw new Error("useAccount must be used within a ConnectProvider");
+        throw new NotWithinConnectProviderError("useAccount");
     }
 
     const { smartAccountClient, smartAccountAddress } = context;

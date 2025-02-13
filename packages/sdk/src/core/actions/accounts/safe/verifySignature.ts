@@ -1,4 +1,5 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { APINotFoundError } from "@/errors";
 import type { Address, Chain, Client, Hex, Prettify, Transport } from "viem";
 
 export type VerifySignatureParams = {
@@ -21,7 +22,7 @@ export async function verifySignature<
     const api = client?.account?.connectApiInstance;
     const smartAccountAddress = client.account?.address as Address;
 
-    if (!api) throw new Error("No api found");
+    if (!api) throw new APINotFoundError();
 
     const isValidSignature = await api.isValidSignature(
         smartAccountAddress,

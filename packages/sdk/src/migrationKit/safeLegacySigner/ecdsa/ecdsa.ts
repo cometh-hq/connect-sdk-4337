@@ -17,6 +17,7 @@ import { signTypedData } from "viem/actions";
 import { EIP712_SAFE_MESSAGE_TYPE } from "@/core/accounts/safe/types";
 import { EIP712_SAFE_TX_TYPES } from "@/migrationKit/types";
 import type { SafeSigner } from "../types";
+import { MethodNotSupportedError } from "@/errors";
 
 /**
  * Creates a SafeSigner using ECDSA for signing
@@ -45,7 +46,7 @@ export async function safeLegacyECDSASigner<
     const viemSigner: LocalAccount = {
         ...signer,
         signTransaction: (_, __) => {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     } as LocalAccount;
 

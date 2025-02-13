@@ -17,6 +17,7 @@ import {
     parseAbi,
 } from "viem";
 import { getAction } from "viem/utils";
+import { APINotFoundError, FetchingProjectParamsError, RecoveryAlreadySetUpError } from "@/errors";
 
 export async function setUpRecoveryModule<
     TTransport extends Transport = Transport,
@@ -37,14 +38,14 @@ export async function setUpRecoveryModule<
 
     const api = client?.account?.connectApiInstance;
 
-    if (!api) throw new Error("No api found");
+    if (!api) throw new APINotFoundError();
 
     const projectParams = await getProjectParamsByChain({
         api,
         chain: client.chain as Chain,
     });
 
-    if (!projectParams) throw Error("Error fetching project params");
+    if (!projectParams) throw new FetchingProjectParamsError();
 
     const {
         moduleFactoryAddress,
@@ -69,7 +70,7 @@ export async function setUpRecoveryModule<
         client: rpcClient,
     });
 
-    if (isDelayModuleDeployed) throw Error("Recovery already setup");
+    if (isDelayModuleDeployed) throw new RecoveryAlreadySetUpError();
 
     const delayModuleInitializer = await delayModuleService.setUpDelayModule({
         safe: smartAccounAddress,

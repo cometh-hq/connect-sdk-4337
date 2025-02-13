@@ -6,6 +6,7 @@ import type {
   QueryResultType,
   Transaction,
 } from "./types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * Props for the useSendTransaction hook.
@@ -132,7 +133,7 @@ export const useSendTransaction = (
       mutationFn: (variables: UseSendTransactionProps): Promise<Hash> => {
         // Check if the smart account client exists
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
         const { calls } = variables;
 

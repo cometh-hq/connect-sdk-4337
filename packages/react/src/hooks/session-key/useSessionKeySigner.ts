@@ -10,6 +10,7 @@ import type { Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import type { QueryResultType } from "../types";
 import { useSmartAccount } from "../useSmartAccount";
+import { SmartAccountNotFoundError } from "@/errors";
 
 export type UseSessionKeySignerReturn = QueryResultType<
   SafeSigner<"safeSmartSessionsSigner">
@@ -32,7 +33,7 @@ export function useSessionKeySigner({
   >({
     queryKey: ["session-key-signer", smartAccountClient],
     queryFn: async (): Promise<SafeSigner<"safeSmartSessionsSigner">> => {
-      if (!smartAccountClient) throw new Error("No smart account found");
+      if (!smartAccountClient) throw new SmartAccountNotFoundError();
 
       const safe7559Account = smartAccountClient
         .extend(smartSessionActions())
