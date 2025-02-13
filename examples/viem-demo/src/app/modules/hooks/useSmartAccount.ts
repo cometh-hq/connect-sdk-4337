@@ -55,14 +55,12 @@ export function useSmartAccount() {
                     chain: arbitrumSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
-                    entryPoint: ENTRYPOINT_ADDRESS_V07,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
                     chain: arbitrumSepolia,
                     publicClient,
-                    entryPoint: ENTRYPOINT_ADDRESS_V07,
                 });
                 window.localStorage.setItem("walletAddress", smartAccount.address);
             }
