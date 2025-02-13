@@ -16,6 +16,7 @@ import {
     http,
     type Address,
     type Chain,
+    ChainNotFoundError,
     type Client,
     type Hex,
     type PublicClient,
@@ -205,7 +206,7 @@ export async function createSafeSmartAccount<
     (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337Module) {
-        throw new Error("Network is not supported");
+        throw new ChainNotFoundError();
     }
 
     const accountSigner = await (signer ??
