@@ -46,7 +46,7 @@ import { SafeAbi } from "./abi/safe";
 import type { SafeSigner } from "./safeSigner/types";
 import { encode7579Calls } from "./services/7579";
 import type { SafeContractParams } from "./types";
-import { NetworkNotSupportedError, MethodNotSupportedError } from "@/errors";
+import { MethodNotSupportedError } from "@/errors";
 
 export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
     connectApiInstance: API;

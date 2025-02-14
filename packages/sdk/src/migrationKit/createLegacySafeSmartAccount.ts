@@ -282,9 +282,10 @@ export async function createLegacySafeSmartAccount<
                         }),
                     ])) as [string, number, boolean, bigint];
 
-                    const supportedVersion = "1.3.0";
+                const supportedVersion = "1.3.0";
                 if (currentVersion !== supportedVersion) {
                     throw new SafeVersionNotSupportedError(supportedVersion, currentVersion);
+                }
             } else {
                 threshold = 1;
                 is4337ModuleEnabled = false;

@@ -43,12 +43,6 @@ export class NoSignerFoundError extends Error {
     }
 }
 
-export class NetworkNotSupportedError extends Error {
-    constructor() {
-      super('Network is not supported')
-    }
-}
-
 /**
  * Adaptor Errors
  **/
