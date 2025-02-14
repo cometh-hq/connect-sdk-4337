@@ -51,14 +51,14 @@ export function useSessionKey() {
                     sessionRequestedInfo: [
                         {
                             sessionPublicKey: sessionOwner.address,
-                            actionPoliciesInfo: [
-                                {
-                                    contractAddress: COUNTER_CONTRACT_ADDRESS,
-                                    functionSelector: toFunctionSelector(
-                                        "function count()"
-                                    ) as Hex,
-                                },
-                            ],
+                            /*     actionPoliciesInfo: [
+                                    {
+                                        contractAddress: COUNTER_CONTRACT_ADDRESS,
+                                        functionSelector: toFunctionSelector(
+                                            "function count()"
+                                        ) as Hex,
+                                    },
+                                ], */
                         },
                     ],
                 });
