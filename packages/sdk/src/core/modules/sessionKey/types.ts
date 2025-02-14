@@ -125,7 +125,7 @@ export type CreateSessionDataParams = OptionalSessionKeyData & {
     /** Chain IDs where the session should be enabled. Useful for enable mode. */
     chainIds?: bigint[];
     /** Array of action policy data for the session. */
-    actionPoliciesInfo: ActionPolicyInfo[];
+    actionPoliciesInfo?: ActionPolicyInfo[];
 };
 
 export declare enum ParamCondition {
