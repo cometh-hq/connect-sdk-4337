@@ -39,13 +39,14 @@ export function useSmartAccount() {
             ) as Hex;
 
             const publicClient = createPublicClient({
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 transport: http(),
                 cacheTime: 60_000,
                 batch: {
                     multicall: { wait: 50 },
                 },
             }) as PublicClient;
+
 
             const ownerPK = process.env.NEXT_PUBLIC_OWNER_PK;
             const owner = privateKeyToAccount(ownerPK as Hex);
@@ -55,7 +56,7 @@ export function useSmartAccount() {
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: baseSepolia,
                     publicClient,
                     signer: owner,
                     smartAccountAddress: localStorageAddress,
@@ -76,13 +77,13 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 publicClient,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,
