@@ -360,17 +360,36 @@ const getPasskeySigner = async ({
     const webAuthnSignerForGivenChain = signingWebAuthnSigners.find(
         (signer) => +signer.chainId === chain.id
     );
-    if (!webAuthnSignerForGivenChain)
-        throw new NoPasskeySignerFoundForGivenChain();
 
-    const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
-        id: webAuthnSignerForGivenChain.publicKeyId as Hex,
-        pubkeyCoordinates: {
-            x: webAuthnSignerForGivenChain.publicKeyX as Hex,
-            y: webAuthnSignerForGivenChain.publicKeyY as Hex,
-        },
-        signerAddress: webAuthnSignerForGivenChain.signerAddress as Address,
-    };
+    let passkeyWithCoordinates: PasskeyLocalStorageFormat;
+
+    if (
+        signingWebAuthnSigners[0]?.signerAddress !==
+            safeWebAuthnSharedSignerAddress &&
+        !webAuthnSignerForGivenChain
+    ) {
+        throw new NoPasskeySignerFoundForGivenChain();
+    }
+
+    if (webAuthnSignerForGivenChain) {
+        passkeyWithCoordinates = {
+            id: webAuthnSignerForGivenChain.publicKeyId as Hex,
+            pubkeyCoordinates: {
+                x: webAuthnSignerForGivenChain.publicKeyX as Hex,
+                y: webAuthnSignerForGivenChain.publicKeyY as Hex,
+            },
+            signerAddress: webAuthnSignerForGivenChain.signerAddress as Address,
+        };
+    } else {
+        passkeyWithCoordinates = {
+            id: signingWebAuthnSigners[0].publicKeyId as Hex,
+            pubkeyCoordinates: {
+                x: signingWebAuthnSigners[0].publicKeyX as Hex,
+                y: signingWebAuthnSigners[0].publicKeyY as Hex,
+            },
+            signerAddress: signingWebAuthnSigners[0].signerAddress as Address,
+        };
+    }
 
     setPasskeyInStorage(
         smartAccountAddress,
