@@ -54,24 +54,19 @@ export const getProjectParamsByChain = async ({
     return (await api.getProjectParams(chain.id)) as ProjectParams;
 };
 
-export const doesWalletNeedToBeStored = async ({
+export const getWalletByChainId = async ({
     smartAccountAddress,
     chainId,
     api,
 }: {
-    smartAccountAddress?: Address;
+    smartAccountAddress: Address;
     chainId: number;
     api: API;
-}): Promise<boolean> => {
-    if (!smartAccountAddress) return true;
-
+}): Promise<Wallet | undefined> => {
     const walletsByNetworks = await getWalletsByNetworks({
         api,
         smartAccountAddress,
     });
 
-    if (walletsByNetworks.find((wallet) => +wallet.chainId === chainId))
-        return false;
-
-    return true;
+    return walletsByNetworks.find((wallet) => +wallet.chainId === chainId);
 };

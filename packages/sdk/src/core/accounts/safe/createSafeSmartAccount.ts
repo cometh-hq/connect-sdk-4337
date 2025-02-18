@@ -2,12 +2,9 @@ import { API } from "@/core/services/API";
 import {
     createNewWalletInDb,
     getProjectParamsByChain,
+    getWalletByChainId,
 } from "@/core/services/comethService";
-import {
-    createSigner,
-    getSignerAddress,
-    saveSigner,
-} from "@/core/signers/createSigner";
+import { createSigner, saveSigner } from "@/core/signers/createSigner";
 import type { ComethSignerConfig, Signer } from "@/core/signers/types";
 import { getAccountNonce } from "permissionless/actions";
 import { toSmartAccount } from "./utils";
@@ -17,7 +14,6 @@ import {
     type Address,
     type Chain,
     ChainNotFoundError,
-    type Client,
     type Hex,
     type PublicClient,
     type Transport,
@@ -39,6 +35,10 @@ import {
 } from "./services/safe";
 
 import { SAFE_7579_ADDRESS, add7579FunctionSelector } from "@/constants";
+import {
+    SessionKeyModeError,
+    WalletNotStoredForSessionKeyModeError,
+} from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
@@ -67,6 +67,62 @@ export type createSafeSmartAccountParameters = Prettify<{
     smartSessionSigner?: SafeSigner;
 }>;
 
+const initConfig = async ({
+    apiKey,
+    baseUrl,
+    chain,
+    publicClient,
+}: {
+    apiKey: string;
+    baseUrl?: string;
+    chain: Chain;
+    publicClient?: PublicClient;
+}) => {
+    const api = new API(apiKey, baseUrl);
+    const [client, contractParams] = await Promise.all([
+        // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+        getViemClient(chain, publicClient) as any,
+        getProjectParamsByChain({ api, chain }),
+    ]);
+
+    publicClient =
+        publicClient ??
+        (createPublicClient({
+            chain: chain,
+            transport: http(),
+            cacheTime: 60_000,
+            batch: {
+                multicall: { wait: 50 },
+            },
+        }) as PublicClient);
+
+    return { api, client, contractParams, publicClient };
+};
+
+// Check if 7579 module is enabled
+const check7579ModuleStatus = async ({
+    isDeployed,
+    publicClient,
+    smartAccountAddress,
+}: {
+    isDeployed: boolean;
+    publicClient: PublicClient;
+    smartAccountAddress: Address;
+}): Promise<boolean> => {
+    if (!isDeployed) {
+        return false;
+    }
+
+    const is7579Enabled = await publicClient.readContract({
+        address: smartAccountAddress,
+        abi: SafeAbi,
+        functionName: "isModuleEnabled",
+        args: [SAFE_7579_ADDRESS as Address],
+    });
+
+    return is7579Enabled as boolean;
+};
+
 /**
  * Get the account initialization code for a Safe smart account
  */
@@ -91,32 +147,15 @@ const getAccountInitCode = async ({
  */
 const storeWalletInComethApi = async ({
     chain,
-    singletonAddress,
-    safeProxyFactoryAddress,
-    saltNonce,
-    initializer,
     signer,
     api,
-    publicClient,
+    smartAccountAddress,
 }: {
     chain: Chain;
-    singletonAddress: Address;
-    safeProxyFactoryAddress: Address;
-    saltNonce: Hex;
-    initializer: Hex;
     signer: Signer;
     api: API;
-    publicClient?: PublicClient;
+    smartAccountAddress: Address;
 }): Promise<{ smartAccountAddress: Address; isNewWallet: boolean }> => {
-    const smartAccountAddress = await getAccountAddress({
-        chain,
-        singletonAddress,
-        safeProxyFactoryAddress,
-        saltNonce,
-        initializer,
-        publicClient,
-    });
-
     const isNewWallet = await createNewWalletInDb({
         chain,
         api,
@@ -172,26 +211,12 @@ export async function createSafeSmartAccount<
     signer,
     smartSessionSigner,
 }: createSafeSmartAccountParameters): Promise<ComethSafeSmartAccount> {
-    const api = new API(apiKey, baseUrl);
-    const [client, contractParams] = await Promise.all([
-        getViemClient(chain, publicClient) as Client<
-            TTransport,
-            TChain,
-            undefined
-        >,
-        getProjectParamsByChain({ api, chain }),
-    ]);
-
-    publicClient =
-        publicClient ??
-        (createPublicClient({
-            chain: chain,
-            transport: http(),
-            cacheTime: 60_000,
-            batch: {
-                multicall: { wait: 50 },
-            },
-        }) as PublicClient);
+    const {
+        api,
+        client,
+        contractParams,
+        publicClient: publicClient_,
+    } = await initConfig({ apiKey, baseUrl, chain, publicClient });
 
     const {
         safeWebAuthnSharedSignerContractAddress,
@@ -209,95 +234,98 @@ export async function createSafeSmartAccount<
         throw new ChainNotFoundError();
     }
 
-    const accountSigner = await (signer ??
-        createSigner({
-            apiKey,
-            chain,
-            smartAccountAddress,
-            ...comethSignerConfig,
-            publicClient,
-            baseUrl,
-            safeContractParams: {
-                safeWebAuthnSharedSignerContractAddress,
-                setUpContractAddress,
-                p256Verifier,
-                safeProxyFactoryAddress,
-                safeSingletonAddress,
-                multisendAddress,
-                fallbackHandler: safe4337Module,
-                safeWebAuthnSignerFactory,
-            },
-        }));
+    if (smartSessionSigner && !smartAccountAddress) {
+        throw new SessionKeyModeError();
+    }
 
-    const signerAddress: Address = getSignerAddress(accountSigner);
+    let accountSigner: Signer | undefined = undefined;
+    let initializer: Hex | undefined = undefined;
 
-    const initializer = getSafeInitializer({
-        accountSigner,
-        threshold: 1,
-        fallbackHandler: safe4337Module,
-        modules: [safe4337Module],
-        setUpContractAddress,
-        safeWebAuthnSharedSignerContractAddress,
-        p256Verifier,
-        multisendAddress,
-    });
+    if (!smartSessionSigner) {
+        accountSigner = await (signer ??
+            createSigner({
+                apiKey,
+                chain,
+                smartAccountAddress,
+                ...comethSignerConfig,
+                publicClient: publicClient_,
+                baseUrl,
+                safeContractParams: {
+                    safeWebAuthnSharedSignerContractAddress,
+                    setUpContractAddress,
+                    p256Verifier,
+                    safeProxyFactoryAddress,
+                    safeSingletonAddress,
+                    multisendAddress,
+                    fallbackHandler: safe4337Module,
+                    safeWebAuthnSignerFactory,
+                },
+            }));
+
+        initializer = getSafeInitializer({
+            accountSigner,
+            threshold: 1,
+            fallbackHandler: safe4337Module,
+            modules: [safe4337Module],
+            setUpContractAddress,
+            safeWebAuthnSharedSignerContractAddress,
+            p256Verifier,
+            multisendAddress,
+        });
+    }
 
     if (!smartAccountAddress) {
+        if (!initializer) throw new Error("Initializer is required");
+
         smartAccountAddress = await getAccountAddress({
             chain,
             singletonAddress: safeSingletonAddress,
             safeProxyFactoryAddress,
             saltNonce: zeroHash,
             initializer,
-            publicClient,
+            publicClient: publicClient_,
         });
     }
 
-    const generateInitCode = () =>
-        getAccountInitCode({
-            initializer,
-            singletonAddress: safeSingletonAddress,
+    // cometh authentifaction
+    if (smartSessionSigner) {
+        const savedAccount = await getWalletByChainId({
+            smartAccountAddress,
+            chainId: chain.id,
+            api,
+        });
+        if (!savedAccount) throw new WalletNotStoredForSessionKeyModeError();
+    } else {
+        const res = await storeWalletInComethApi({
+            chain,
+            signer: accountSigner as Signer,
+            api,
+            smartAccountAddress,
         });
 
-    const res = await storeWalletInComethApi({
-        chain,
-        singletonAddress: safeSingletonAddress,
-        safeProxyFactoryAddress,
-        saltNonce: zeroHash,
-        initializer,
-        signer: accountSigner,
-        api,
-        publicClient,
-    });
-
-    if (res.isNewWallet) {
-        await saveSigner(accountSigner, smartAccountAddress);
+        if (res.isNewWallet)
+            await saveSigner(accountSigner as Signer, smartAccountAddress);
     }
-
-    let userOpVerifyingContract = safe4337Module;
 
     const isDeployed = await isSmartAccountDeployed(
         client,
         smartAccountAddress
     );
 
-    if (isDeployed) {
-        const is7579Enabled = await publicClient.readContract({
-            address: smartAccountAddress,
-            abi: SafeAbi,
-            functionName: "isModuleEnabled",
-            args: [SAFE_7579_ADDRESS as Address],
-        });
+    const is7579Enabled = await check7579ModuleStatus({
+        isDeployed,
+        publicClient: publicClient_,
+        smartAccountAddress,
+    });
 
-        if (is7579Enabled) {
-            userOpVerifyingContract = SAFE_7579_ADDRESS;
-        }
-    }
+    const userOpVerifyingContract = is7579Enabled
+        ? SAFE_7579_ADDRESS
+        : safe4337Module;
 
     const safeSigner =
         smartSessionSigner ??
         (await comethSignerToSafeSigner<TTransport, TChain>(client, {
-            accountSigner,
+            accountSigner: accountSigner as Signer,
             userOpVerifyingContract,
             smartAccountAddress,
             fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
@@ -305,7 +333,6 @@ export async function createSafeSmartAccount<
 
     return toSmartAccount({
         client,
-        signerAddress,
         entryPoint: {
             abi: entryPoint07Abi,
             address: entryPoint07Address,
@@ -316,7 +343,7 @@ export async function createSafeSmartAccount<
             safeContractConfig ??
             (contractParams.safeContractParams as SafeContractParams),
         comethSignerConfig: comethSignerConfig,
-        publicClient,
+        publicClient: publicClient_,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
         },
@@ -326,23 +353,18 @@ export async function createSafeSmartAccount<
         },
 
         async getFactoryArgs() {
+            if (!initializer) throw new Error("Initializer is required");
+
             return {
                 factory: safeProxyFactoryAddress as Address,
-                factoryData: await generateInitCode(),
+                factoryData: await getAccountInitCode({
+                    initializer,
+                    singletonAddress: safeSingletonAddress,
+                }),
             };
         },
 
         async getAddress() {
-            if (smartAccountAddress) return smartAccountAddress;
-
-            smartAccountAddress = await getAccountAddress({
-                chain,
-                singletonAddress: safeSingletonAddress,
-                safeProxyFactoryAddress,
-                saltNonce: "0" as Hex,
-                initializer,
-            });
-
             return smartAccountAddress;
         },
 
