@@ -49,6 +49,7 @@ import type {
     CreateSessionDataParams,
     GrantPermissionResponse,
 } from "./core/modules/sessionKey/types";
+import { providerToSmartAccountSigner } from "./core/signers/utils";
 import {
     WalletDoesNotExistsError,
     WalletNotConnectedError,
@@ -124,6 +125,7 @@ export {
     erc7579Actions,
     smartSessionActions,
     toSmartSessionsSigner,
+    providerToSmartAccountSigner,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
     SmartSessionMode,
