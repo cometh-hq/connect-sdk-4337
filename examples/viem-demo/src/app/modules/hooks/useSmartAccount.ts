@@ -39,7 +39,7 @@ export function useSmartAccount() {
             ) as Hex;
 
             const publicClient = createPublicClient({
-                chain: baseSepolia,
+                chain: arbitrumSepolia,
                 transport: http(),
                 cacheTime: 60_000,
                 batch: {
@@ -56,7 +56,7 @@ export function useSmartAccount() {
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: baseSepolia,
+                    chain: arbitrumSepolia,
                     publicClient,
                     signer: owner,
                     smartAccountAddress: localStorageAddress,
@@ -77,13 +77,13 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: baseSepolia,
+                chain: arbitrumSepolia,
                 publicClient,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                chain: baseSepolia,
+                chain: arbitrumSepolia,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,
