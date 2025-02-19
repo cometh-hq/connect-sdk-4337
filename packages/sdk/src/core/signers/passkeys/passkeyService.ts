@@ -197,7 +197,7 @@ const sign = async ({
         [
             toHex(new Uint8Array(assertion.response.authenticatorData)),
             extractClientDataFields(assertion.response) as Hex,
-            extractSignature(assertion.response),
+            extractSignature(assertion.response.signature),
         ]
     );
 
