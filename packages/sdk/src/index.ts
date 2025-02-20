@@ -105,7 +105,7 @@ import {
     NoPrivateKeyFoundError,
     ChallengeNotFoundError
 } from "./errors";
-
+import { providerToSmartAccountSigner } from "./core/signers/utils";
 
 export {
     createSigner,
@@ -124,6 +124,7 @@ export {
     erc7579Actions,
     smartSessionActions,
     toSmartSessionsSigner,
+    providerToSmartAccountSigner,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
     SmartSessionMode,
