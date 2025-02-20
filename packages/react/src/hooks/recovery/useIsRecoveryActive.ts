@@ -1,3 +1,4 @@
+import { SmartAccountNotFoundError } from "@/errors";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import type {
     IsRecoveryActiveParams,
@@ -58,7 +59,7 @@ export function useIsRecoveryActive(
             queryKey: ["isRecoveryActive"],
             queryFn: async () => {
                 if (!smartAccountClient) {
-                    throw new Error("No smart account found");
+                    throw new SmartAccountNotFoundError();
                 }
 
                 return smartAccountClient.isRecoveryActive(props);

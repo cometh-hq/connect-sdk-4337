@@ -1,4 +1,5 @@
 import { createSmartAccount } from "@/actions/createSmartAccount";
+import { BundlerUrlNotFoundError } from "@/errors";
 import type { ConnectParameters } from "@/hooks/useConnect";
 import type {
   ComethSafeSmartAccount,
@@ -97,7 +98,7 @@ export const ConnectProvider = <
         (network) => network.chain?.id === chain.id
       )?.publicClient;
 
-      if (!bundlerUrl) throw new Error("Bundler url not found");
+      if (!bundlerUrl) throw new BundlerUrlNotFoundError();
 
       try {
         const { client, address: newAddress } = await createSmartAccount({

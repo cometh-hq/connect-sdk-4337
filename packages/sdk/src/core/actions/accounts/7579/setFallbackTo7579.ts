@@ -1,6 +1,7 @@
 import { LAUNCHPAD_ADDRESS, SAFE_7579_ADDRESS } from "@/constants";
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { APINotFoundError, FallbackAlreadySetError, SmartAccountAddressNotFoundError } from "@/errors";
 import {
     RHINESTONE_ATTESTER_ADDRESS,
     getSmartSessionsValidator,
@@ -29,7 +30,7 @@ export async function setFallbackTo7579<
 >(client: Client<TTransport, TChain, TAccount>): Promise<Hash> {
     const api = client?.account?.connectApiInstance;
 
-    if (!api) throw new Error("No api found");
+    if (!api) throw new APINotFoundError();
 
     const smartAccountAddress = client.account?.address;
 
@@ -58,10 +59,10 @@ export async function setFallbackTo7579<
             // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         } as any);
 
-        if (!isFallbackSet) throw new Error("Fallback already set");
+        if (!isFallbackSet) throw new FallbackAlreadySetError();
     }
 
-    if (!smartAccountAddress) throw new Error("No smart account address found");
+    if (!smartAccountAddress) throw new SmartAccountAddressNotFoundError();
 
     const smartSessions = getSmartSessionsValidator({});
 

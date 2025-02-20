@@ -28,6 +28,7 @@ import {
 } from "../../types";
 import type { SafeSigner } from "../types";
 import { adjustVInSignature, generateSafeMessageMessage } from "../utils";
+import { MethodNotSupportedError } from "@/errors";
 
 /**
  * Creates a SafeSigner using ECDSA for signing
@@ -59,7 +60,7 @@ export async function safeECDSASigner<
     const viemSigner: LocalAccount = {
         ...signer,
         signTransaction: (_, __) => {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     } as LocalAccount;
 
@@ -86,7 +87,7 @@ export async function safeECDSASigner<
             );
         },
         async signTransaction(_, __) {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTypedData<
             const TTypedData extends TypedData | Record<string, unknown>,

@@ -2,6 +2,7 @@ import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash, Hex } from "viem";
 import type { QueryResultType } from "../types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 export type UseSetUpRecoveryModuleReturn = QueryResultType<Hash> & {
   setUpRecoveryModule: () => void;
@@ -70,7 +71,7 @@ export function useSetUpRecovery(): UseSetUpRecoveryModuleReturn {
     {
       mutationFn: async (): Promise<Hex> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
 
         return smartAccountClient.setUpRecoveryModule();
