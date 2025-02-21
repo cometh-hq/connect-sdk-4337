@@ -50,6 +50,8 @@ import type {
     GrantPermissionResponse,
 } from "./core/modules/sessionKey/types";
 
+import { EIP1193Provider } from "./core/clients/accounts/safe/1193Provider";
+
 export {
     createSigner,
     createSafeSmartAccount,
@@ -70,6 +72,7 @@ export {
     ENTRYPOINT_ADDRESS_V07,
     customChains,
     SmartSessionMode,
+    EIP1193Provider,
 };
 
 export type {
