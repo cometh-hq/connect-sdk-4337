@@ -16,6 +16,7 @@ import {
     http,
     type Address,
     type Chain,
+    ChainNotFoundError,
     type Client,
     type Hex,
     type PublicClient,
@@ -45,6 +46,7 @@ import { SafeAbi } from "./abi/safe";
 import type { SafeSigner } from "./safeSigner/types";
 import { encode7579Calls } from "./services/7579";
 import type { SafeContractParams } from "./types";
+import { MethodNotSupportedError } from "@/errors";
 
 export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
     connectApiInstance: API;
@@ -205,7 +207,7 @@ export async function createSafeSmartAccount<
     (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337Module) {
-        throw new Error("Network is not supported");
+        throw new ChainNotFoundError();
     }
 
     const accountSigner = await (signer ??
@@ -321,7 +323,7 @@ export async function createSafeSmartAccount<
         },
 
         async signTypedData() {
-            throw new Error("method not supported");
+            throw new MethodNotSupportedError();
         },
 
         async getFactoryArgs() {

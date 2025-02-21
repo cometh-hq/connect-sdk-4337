@@ -14,6 +14,8 @@ import {
     createPublicClient,
 } from "viem";
 
+import { APINotFoundError, FetchingProjectParamsError } from "@/errors";
+
 export type IsRecoveryActiveParams = {
     effectiveDelayAddress?: Address;
 };
@@ -51,14 +53,14 @@ export async function isRecoveryActive<
     } else {
         const api = client?.account?.connectApiInstance;
 
-        if (!api) throw new Error("No api found");
+        if (!api) throw new APINotFoundError();
 
         const projectParams = await getProjectParamsByChain({
             api,
             chain: client.chain as Chain,
         });
 
-        if (!projectParams) throw Error("Error fetching project params");
+        if (!projectParams) throw new FetchingProjectParamsError();
 
         const {
             moduleFactoryAddress,

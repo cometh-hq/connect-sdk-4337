@@ -1,3 +1,4 @@
+import { NotWithinConnectProviderError, UseDisconnectError } from "@/errors";
 import { ConnectContext } from "@/providers/ConnectProvider";
 import { useCallback, useContext, useState } from "react";
 
@@ -5,7 +6,7 @@ export const useDisconnect = () => {
     const context = useContext(ConnectContext);
 
     if (context === undefined) {
-        throw new Error("useDisconnect must be used within a ConnectProvider");
+        throw new NotWithinConnectProviderError("useDisconnect");
     }
 
     const { queryClient, disconnectSmartAccount } = context;
@@ -26,7 +27,7 @@ export const useDisconnect = () => {
                 const err =
                     e instanceof Error
                         ? e
-                        : new Error("An error occurred during disconnection");
+                        : new UseDisconnectError();
                 setError(err);
             })
             .finally(() => {
@@ -44,7 +45,7 @@ export const useDisconnect = () => {
             const err =
                 e instanceof Error
                     ? e
-                    : new Error("An error occurred during disconnection");
+                    : new UseDisconnectError();
             setError(err);
             throw err;
         } finally {

@@ -3,6 +3,7 @@ import type { CancelRecoveryRequestParams } from "@cometh/connect-sdk-4337";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash, Hex } from "viem";
 import type { QueryResultType } from "../types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 export type UseCancelRecoveryRequestProps = CancelRecoveryRequestParams;
 
@@ -86,7 +87,7 @@ export function useCancelRecoveryRequest(): UseCancelRecoveryRequestReturn {
         variables: UseCancelRecoveryRequestProps
       ): Promise<Hex> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
 
         return smartAccountClient.cancelRecoveryRequest({

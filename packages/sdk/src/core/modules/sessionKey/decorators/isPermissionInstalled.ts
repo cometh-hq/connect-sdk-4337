@@ -1,4 +1,5 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { ChainIdNotFoundError } from "@/errors";
 import {
     SMART_SESSIONS_ADDRESS,
     type Session,
@@ -65,7 +66,7 @@ export async function isPermissionInstalled<
     const chainId = publicClient?.chain?.id;
 
     if (!chainId) {
-        throw new Error("chainId not found");
+        throw new ChainIdNotFoundError();
     }
 
     const permissionId = (await getPermissionId({

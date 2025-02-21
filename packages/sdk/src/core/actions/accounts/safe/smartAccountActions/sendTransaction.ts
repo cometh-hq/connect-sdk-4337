@@ -1,4 +1,5 @@
 import { hardcodeVerificationGasLimit7579 } from "@/constants";
+import { MissingToAddressError } from "@/errors";
 import { AccountNotFoundError } from "permissionless";
 import type {
     Chain,
@@ -94,8 +95,7 @@ export async function sendTransaction<
 
         const account = parseAccount(account_) as SmartAccount;
 
-        if (!to) throw new Error("Missing to address");
-
+        if (!to) throw new MissingToAddressError();
         userOpHash = await getAction(
             client,
             sendUserOperation,
