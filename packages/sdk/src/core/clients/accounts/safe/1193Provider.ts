@@ -24,7 +24,6 @@ import {
 import type {
     ActionPolicyInfo,
     CreateSessionDataParams,
-    SpendingLimitPolicyData,
 } from "@/core/modules/sessionKey/types";
 
 import type { GrantPermissionParameters } from "@/core/modules/sessionKey/decorators/grantPermission";
@@ -80,9 +79,6 @@ export class EIP1193Provider extends EventEmitter {
                     permissionTypes: [
                         "sudo",
                         "contract-call",
-                        "erc20-token-transfer",
-                        "erc721-token-transfer",
-                        "erc1155-token-transfer",
                     ]
                 }
                 : {
@@ -336,13 +332,13 @@ export class EIP1193Provider extends EventEmitter {
             .extend(erc7579Actions());
 
         const capabilities = this.handleWalletCapabilities()[toHex(this.comethSmartAccountClient.chain.id)]
-            .permissions.permissionTypes
+            .permissions
 
-        if (!capabilities.permissions.signerTypes.includes(params[0].signer.data.type)) {
+        if (!capabilities.signerTypes.includes(params[0].signer.type)) {
             throw new Error("Invalid signer type: must be one of the allowed types");
         }
 
-        validatePermissions(params[0], capabilities)
+        validatePermissions(params[0], capabilities.permissionTypes)
         const permissions = params[0].permissions   
 
         const currentTimestamp = Math.floor(Date.now() / 1000);
@@ -359,56 +355,31 @@ export class EIP1193Provider extends EventEmitter {
 
         const sessionRequestedInfo: CreateSessionDataParams[] = permissions.map((permission) => {
             let actionPoliciesInfo: ActionPolicyInfo[] = [];
-            let spendingLimits: SpendingLimitPolicyData[] = [];
-            
+        
             switch (permission.type) {
                 case "sudo":
                     break;
-
+        
                 case "contract-call":
                     actionPoliciesInfo.push({
                         contractAddress: permission.data.contractAddress as Hex,
-                        functionSelector: toFunctionSelector(`function ${permission.data.functionSignature}`) as Hex,
+                        ...(permission.data.validUntil && { validUntil: Number(permission.data.validUntil) }),
+                        ...(permission.data.validAfter && { validAfter: Number(permission.data.validAfter) }),
+                        ...(permission.data.functionSelector && { functionSelector: toFunctionSelector(permission.data.functionSelector) as Hex }),
+                        ...(permission.data.valueLimit && { valueLimit: BigInt(permission.data.valueLimit) }),
+                        ...(permission.data.tokenLimits && {
+                            tokenLimits: permission.data.tokenLimits.map((tokenLimit: { token: string; limit: string }) => ({
+                                token: tokenLimit.token as Hex,
+                                limit: BigInt(tokenLimit.limit),
+                            })),
+                        }),
+                        ...(permission.data.usageLimit && { usageLimit: BigInt(permission.data.usageLimit) }),
+                        ...(permission.data.sudo !== undefined && { sudo: permission.data.sudo }),
+                        ...(permission.data.abi && { abi: permission.data.abi }),
+                        ...(permission.data.rules && { rules: permission.data.rules }),
                     });
                     break;
-
-                case "erc20-token-transfer":
-                    actionPoliciesInfo.push({
-                        contractAddress: permission.data.address as Hex,
-                        functionSelector: toFunctionSelector("function transfer(address,uint256)") as Hex,
-                    });
-                    spendingLimits.push({
-                        token: permission.data.address as Hex,
-                        limit: BigInt(permission.data.allowance),
-                    });
-                    break;
-
-                case "erc721-token-transfer":
-                    permission.data.tokenIds.forEach((tokenId: string) => {
-                        actionPoliciesInfo.push({
-                            contractAddress: permission.data.address as Hex,
-                            functionSelector: toFunctionSelector("function safeTransferFrom(address,address,uint256)") as Hex,
-                        });
-                        spendingLimits.push({
-                            token: permission.data.address as Hex,
-                            limit: BigInt(tokenId),
-                        });
-                    });
-                    break;
-
-                case "erc1155-token-transfer":
-                    Object.entries(permission.data.allowances).forEach(([allowance]) => {
-                        actionPoliciesInfo.push({
-                            contractAddress: permission.data.address as Hex,
-                            functionSelector: toFunctionSelector("function safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)") as Hex,
-                        });
-                        spendingLimits.push({
-                            token: permission.data.address as Hex,
-                            limit: BigInt(allowance as string),
-                        });
-                    });
-                    break;
-
+        
                 default:
                     throw new Error(`Unsupported permission type: ${permission.type}`);
             }
