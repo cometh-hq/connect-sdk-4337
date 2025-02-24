@@ -6,12 +6,12 @@ export type SendCallsParams = {
     chainId: `0x${string}` // Hex chain id
     from: `0x${string}`
     calls: {
-        to?: `0x${string}` | undefined
-        data?: `0x${string}` | undefined
-        value?: `0x${string}` | undefined // Hex value
+        to?: `0x${string}`
+        data?: `0x${string}`
+        value?: `0x${string}` // Hex value
     }[]
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    capabilities?: Record<string, any> | undefined
+    capabilities?: Record<string, any>
 }
 
 export type SendCallsResult = string
@@ -19,8 +19,13 @@ export type SendCallsResult = string
 // wallet_getCallStatus
 export type GetCallsParams = string
 
+export enum CallStatus {
+    PENDING = "PENDING",
+    CONFIRMED = "CONFIRMED",
+}
+
 export type GetCallsResult = {
-    status: "PENDING" | "CONFIRMED"
+    status: CallStatus
     receipts?: {
         logs: {
             address: `0x${string}`

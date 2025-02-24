@@ -1,7 +1,5 @@
 import { EventEmitter } from "events"
 
-import { ENTRYPOINT_ADDRESS_V07 } from "@/constants"
-
 import type {
     Chain,
     EIP1193Parameters,
@@ -10,7 +8,7 @@ import type {
     SendTransactionParameters,
     Hash,
 } from "viem"
-import { toFunctionSelector } from "viem"
+import { InvalidChainIdError, toFunctionSelector } from "viem"
 import { type Hex, isHex, toHex } from "viem"
 import type { ComethSmartAccountClient } from "./createClient"
 import type {
@@ -39,6 +37,8 @@ import type {
 } from "./types"
 
 import { validatePermissions } from "./utils/permissions"
+import { CannotSignForAddressError, ExpiryInPastError, ExpiryRequiredError, InvalidAccountAddressError, InvalidParamsError, InvalidSignerTypeError, InvalidSmartAccountClientError, MethodNotSupportedError, UnsupportedPermissionTypeError, WalletNotConnectedError } from "@/errors"
+import { CallStatus } from "./types/provider"
 
 
 export class EIP1193Provider extends EventEmitter {
@@ -63,7 +63,7 @@ export class EIP1193Provider extends EventEmitter {
             typeof comethSmartAccountClient.account !== "object" ||
             typeof comethSmartAccountClient.chain !== "object"
         ) {
-            throw new Error("invalid Smart Account Client")
+            throw new InvalidSmartAccountClientError()
         }
         this.comethSmartAccountClient = comethSmartAccountClient as ComethSmartAccountClient<
             Transport,
@@ -71,19 +71,14 @@ export class EIP1193Provider extends EventEmitter {
             ComethSafeSmartAccount
         >
 
-        this.permissions =
-            comethSmartAccountClient.account.entryPoint.address === ENTRYPOINT_ADDRESS_V07
-                ? {
-                    supported: true,
-                    signerTypes: ["account"],
-                    permissionTypes: [
-                        "sudo",
-                        "contract-call",
-                    ]
-                }
-                : {
-                    supported: false
-                }
+        this.permissions = {
+            supported: true,
+            signerTypes: ["account"],
+            permissionTypes: [
+                "sudo",
+                "contract-call",
+            ]
+        }
 
         this.capabilities = {
             [comethSmartAccountClient.account.address]: {
@@ -110,34 +105,34 @@ export class EIP1193Provider extends EventEmitter {
         params = []
     }: EIP1193Parameters): ReturnType<EIP1193RequestFn> {
         switch (method) {
-            case "eth_chainId":    //OK
+            case "eth_chainId":
                 return this.handleGetChainId()
-            case "eth_requestAccounts":   //OK
+            case "eth_requestAccounts":
                 return this.handleEthRequestAccounts()
-            case "eth_accounts":  //OK
+            case "eth_accounts":
                 return this.handleEthAccounts()
-            case "eth_sendTransaction":  //OK
+            case "eth_sendTransaction":
                 return this.handleEthSendTransaction(params)
-            case "eth_sign":  //OK
+            case "eth_sign":
                 return this.handleEthSign(params as [string, string])
-            case "personal_sign":  //OK
+            case "personal_sign":
                 return this.handlePersonalSign(params as [string, string])
-            case "eth_signTypedData":  //Error Method not supported
-            case "eth_signTypedData_v4":  //Error Method not supported
+            case "eth_signTypedData":
+            case "eth_signTypedData_v4":
                 return this.handleEthSignTypedDataV4(params as [string, string])
-            case "wallet_getCapabilities":  //OK
+            case "wallet_getCapabilities":
                 return this.handleWalletCapabilities()
-            case "wallet_sendCalls":   //OK
+            case "wallet_sendCalls":
                 return this.handleWalletSendcalls(params as [SendCallsParams])
-            case "wallet_getCallsStatus":  //OK
+            case "wallet_getCallsStatus":
                 return this.handleWalletGetCallStatus(
                     params as [GetCallsParams]
                 )
-            case "wallet_grantPermissions":  //OK
+            case "wallet_grantPermissions":
                 return this.handleWalletGrantPermissions(
                     params as [PermissionRequest]
                 )
-            case "wallet_switchEthereumChain": //OK
+            case "wallet_switchEthereumChain":
                 return this.handleSwitchEthereumChain()
             default:
                 return this.comethSmartAccountClient.transport.request({ method, params })
@@ -169,18 +164,14 @@ export class EIP1193Provider extends EventEmitter {
 
     private async handleEthSign(params: [string, string]): Promise<string> {
         if (!this.comethSmartAccountClient?.account) {
-            throw new Error("account not connected!")
+            throw new WalletNotConnectedError()
         }
         const [address, message] = params
-        console.log("address", address.toLowerCase())
-        console.log("this.address", this.comethSmartAccountClient.account.address.toLowerCase())
         if (
             address.toLowerCase() !==
             this.comethSmartAccountClient.account.address.toLowerCase()
         ) {
-            throw new Error(
-                "cannot sign for address that is not the current account"
-            )
+            throw new CannotSignForAddressError()
         }
 
         return this.comethSmartAccountClient.signMessage({
@@ -194,16 +185,14 @@ export class EIP1193Provider extends EventEmitter {
         params: [string, string]
     ): Promise<string> {
         if (!this.comethSmartAccountClient?.account) {
-            throw new Error("account not connected!")
+            throw new WalletNotConnectedError()
         }
         const [message, address] = params
         if (
             address.toLowerCase() !==
             this.comethSmartAccountClient.account.address.toLowerCase()
         ) {
-            throw new Error(
-                "cannot sign for address that is not the current account"
-            )
+            throw new CannotSignForAddressError()
         }
 
         return this.comethSmartAccountClient.signMessage({
@@ -216,7 +205,7 @@ export class EIP1193Provider extends EventEmitter {
         params: [string, string]
     ): Promise<string> {
         if (!this.comethSmartAccountClient?.account) {
-            throw new Error("account not connected!")
+            throw new WalletNotConnectedError()
         }
         const [address, typedDataJSON] = params
         const typedData = JSON.parse(typedDataJSON)
@@ -224,9 +213,7 @@ export class EIP1193Provider extends EventEmitter {
             address.toLowerCase() !==
             this.comethSmartAccountClient.account.address.toLowerCase()
         ) {
-            throw new Error(
-                "cannot sign for address that is not the current account"
-            )
+            throw new CannotSignForAddressError()
         }
 
         return this.comethSmartAccountClient.signTypedData({
@@ -239,7 +226,7 @@ export class EIP1193Provider extends EventEmitter {
     }
 
     private async handleSwitchEthereumChain() {
-        throw new Error("Not implemented.")
+        throw new MethodNotSupportedError()
     }
 
     private async handleWalletSendcalls(
@@ -248,21 +235,12 @@ export class EIP1193Provider extends EventEmitter {
         const accountAddress = this.comethSmartAccountClient.account.address
         const accountChainId = this.comethSmartAccountClient.chain.id
 
-        console.log("accountAddress", accountAddress)
-        console.log("accountChainId", accountChainId)
-
-        const { calls, capabilities, from, chainId } = params[0]
+        const { calls, from, chainId } = params[0]
         if (from !== accountAddress) {
-            throw new Error("invalid account address")
+            throw new InvalidAccountAddressError()
         }
         if (Number(chainId) !== accountChainId) {
-            throw new Error("invalid chain id")
-        }
-        if (
-            this.comethSmartAccountClient.account.entryPoint.address !== ENTRYPOINT_ADDRESS_V07 &&
-            capabilities?.permissions
-        ) {
-            throw new Error("Permissions not supported")
+            throw new InvalidChainIdError({ chainId: Number(chainId) })
         }
 
         return await this.comethSmartAccountClient.sendUserOperation({
@@ -288,7 +266,7 @@ export class EIP1193Provider extends EventEmitter {
         const userOpHash = params[0]
 
         if (!isHex(userOpHash)) {
-            throw new Error(
+            throw new InvalidParamsError(
                 "Invalid params for wallet_getCallStatus: not a hex string"
             )
         }
@@ -297,11 +275,11 @@ export class EIP1193Provider extends EventEmitter {
         })
         if (!result?.success) {
             return {
-                status: "PENDING"
+                status: CallStatus.PENDING
             }
         }
         return {
-            status: "CONFIRMED",
+            status: CallStatus.CONFIRMED,
             receipts: [
                 {
                     logs: result.logs.map((log) => ({
@@ -322,11 +300,6 @@ export class EIP1193Provider extends EventEmitter {
     private async handleWalletGrantPermissions(
         params: [PermissionRequest]
     ) {
-        if (this.comethSmartAccountClient.account.entryPoint.address !== ENTRYPOINT_ADDRESS_V07) {
-            throw new Error("Permissions not supported")
-        }
-
-
         const safe7559Account = this.comethSmartAccountClient
             .extend(smartSessionActions())
             .extend(erc7579Actions());
@@ -335,56 +308,59 @@ export class EIP1193Provider extends EventEmitter {
             .permissions
 
         if (!capabilities.signerTypes.includes(params[0].signer.type)) {
-            throw new Error("Invalid signer type: must be one of the allowed types");
+            throw new InvalidSignerTypeError()
         }
 
         validatePermissions(params[0], capabilities.permissionTypes)
-        const permissions = params[0].permissions   
+        const permissions = params[0].permissions
 
         const currentTimestamp = Math.floor(Date.now() / 1000);
 
         if (!params[0].expiry) {
-            throw new Error("Invalid expiry: expiry is required");
+            throw new ExpiryRequiredError()
         }
-        
+
         const sessionDuration = params[0].expiry - currentTimestamp;
-        
+
         if (sessionDuration <= 0) {
-            throw new Error("Invalid expiry: expiry must be in the future");
+            throw new ExpiryInPastError()
         }
 
         const sessionRequestedInfo: CreateSessionDataParams[] = permissions.map((permission) => {
             let actionPoliciesInfo: ActionPolicyInfo[] = [];
-        
+
             switch (permission.type) {
                 case "sudo":
                     break;
-        
+
                 case "contract-call":
                     actionPoliciesInfo.push({
                         contractAddress: permission.data.contractAddress as Hex,
-                        ...(permission.data.validUntil && { validUntil: Number(permission.data.validUntil) }),
-                        ...(permission.data.validAfter && { validAfter: Number(permission.data.validAfter) }),
-                        ...(permission.data.functionSelector && { functionSelector: toFunctionSelector(permission.data.functionSelector) as Hex }),
-                        ...(permission.data.valueLimit && { valueLimit: BigInt(permission.data.valueLimit) }),
-                        ...(permission.data.tokenLimits && {
-                            tokenLimits: permission.data.tokenLimits.map((tokenLimit: { token: string; limit: string }) => ({
-                                token: tokenLimit.token as Hex,
-                                limit: BigInt(tokenLimit.limit),
-                            })),
-                        }),
-                        ...(permission.data.usageLimit && { usageLimit: BigInt(permission.data.usageLimit) }),
-                        ...(permission.data.sudo !== undefined && { sudo: permission.data.sudo }),
-                        ...(permission.data.abi && { abi: permission.data.abi }),
-                        ...(permission.data.rules && { rules: permission.data.rules }),
+                        functionSelector: toFunctionSelector(permission.data.functionSelector) as Hex,
                     });
+
+                    const unsupportedFields = [
+                        "validUntil",
+                        "validAfter",
+                        "valueLimit",
+                        "tokenLimits",
+                        "usageLimit",
+                        "sudo",
+                        "abi",
+                        "rules",
+                    ].filter((field) => field in permission.data);
+
+                    if (unsupportedFields.length > 0) {
+                        console.warn(
+                            `Warning: The following fields are currently not supported and will be ignored: ${unsupportedFields.join(", ")}`
+                        );
+                    }
                     break;
-        
+
                 default:
-                    throw new Error(`Unsupported permission type: ${permission.type}`);
+                    throw new UnsupportedPermissionTypeError(permission.type);
             }
 
-            //TODO: adapt response type to ERC-7715
             return {
                 sessionPublicKey: params[0].signer.data.address,
                 sessionValidUntil: params[0].expiry,
@@ -406,7 +382,7 @@ export class EIP1193Provider extends EventEmitter {
             hash: createSessionsResponse.userOpHash,
         });
 
-
+        //TODO: adapt response type to ERC-7715
         return {
             grantedPermissions: permissions.map((permission) => ({
                 type: permission.type,
@@ -419,5 +395,6 @@ export class EIP1193Provider extends EventEmitter {
     }
 }
 
-        //TODO:
-        //Store in localStorage?
+//TODO:
+//Store in localStorage?
+//ShowCallsSatus method

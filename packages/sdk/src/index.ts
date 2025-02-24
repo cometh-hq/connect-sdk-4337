@@ -103,7 +103,16 @@ import {
     FetchingProjectParamsError,
     ChainIdNotFoundError,
     NoPrivateKeyFoundError,
-    ChallengeNotFoundError
+    ChallengeNotFoundError,
+    InvalidSmartAccountClientError,
+    InvalidAccountAddressError,
+    CannotSignForAddressError,
+    InvalidSignerTypeError,
+    ExpiryRequiredError,
+    ExpiryInPastError,
+    UnsupportedPolicyError,
+    UnsupportedPermissionTypeError,
+    InvalidParamsError,
 } from "./errors";
 import { providerToSmartAccountSigner } from "./core/signers/utils";
 
@@ -185,6 +194,15 @@ export {
     ChainIdNotFoundError,
     NoPrivateKeyFoundError,
     ChallengeNotFoundError,
+    InvalidSmartAccountClientError,
+    InvalidAccountAddressError,
+    CannotSignForAddressError,
+    InvalidSignerTypeError,
+    ExpiryRequiredError,
+    ExpiryInPastError,
+    UnsupportedPolicyError,
+    UnsupportedPermissionTypeError,
+    InvalidParamsError,
 };
 
 export type {

@@ -21,7 +21,7 @@ export class WalletDoesNotExistsError extends Error {
 
 export class WalletNotConnectedError extends Error {
     constructor() {
-        super("Wallet is not connected");
+        super("Account is not connected");
     }
 }
 
@@ -116,7 +116,7 @@ export class MethodNotSupportedError extends BaseError {
       super("Method not supported",
         {
             docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/quick-start/supported-networks",
+            docsPath: "/",
         },
       )
     }
@@ -162,6 +162,18 @@ export class OwnerToRemoveIsNotSafeOwnerError extends Error {
 export class MigrationContractAddressNotAvailableError extends Error {
     constructor() {
         super("Migration contract address not available for this network");
+    }
+}
+
+export class InvalidSmartAccountClientError extends Error {
+    constructor() {
+        super("Invalid Smart Account Client");
+    }
+}
+
+export class InvalidAccountAddressError extends Error {
+    constructor() {
+        super("Invalid account address");
     }
 }
 
@@ -296,6 +308,18 @@ export class EoaSignerRequiredError extends Error {
     }
 }
 
+export class CannotSignForAddressError extends Error {
+    constructor() {
+        super("Cannot sign for address that is not the current account");
+    }
+}
+
+export class InvalidSignerTypeError extends Error {
+    constructor() {
+        super("Invalid signer type: must be one of the allowed types");
+    }
+}
+
 /**
  * Add New Device Errors
  **/
@@ -393,6 +417,35 @@ export class PermissionNotInstalledError extends BaseError {
     }
 }
 
+export class ExpiryRequiredError extends Error {
+    constructor() {
+        super("Invalid expiry: expiry is required");
+    }
+}
+
+export class ExpiryInPastError extends Error {
+    constructor() {
+        super("Invalid expiry: expiry must be in the future");
+    }
+}
+
+export class UnsupportedPolicyError extends Error {
+    constructor(policy: string) {
+        super(`Unsupported policy: ${policy}`);
+    }
+}
+
+export class UnsupportedPermissionTypeError extends Error {
+    constructor(permissionType: string) {
+        super(`Unsupported permission type: ${permissionType}`);
+    }
+}
+
+export class InvalidParamsError extends Error {
+    constructor(message: string) {
+        super(`Invalid params: ${message}`);
+    }
+}
 
 /**
  * Transactions Errors
