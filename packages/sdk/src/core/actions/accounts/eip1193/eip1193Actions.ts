@@ -45,7 +45,6 @@ export const eip1193Actions =
                     });
                     return result;
                 } catch (error) {
-                    console.error("Error in request:", error);
                     throw error;
                 }
             },

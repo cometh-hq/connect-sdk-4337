@@ -365,7 +365,6 @@ export class EIP1193Provider extends EventEmitter {
                 sessionPublicKey: params[0].signer.data.address,
                 sessionValidUntil: params[0].expiry,
                 sessionValidAfter: currentTimestamp,
-                chainIds: [BigInt(params[0].chainId)],
                 actionPoliciesInfo,
             };
         });
@@ -374,26 +373,25 @@ export class EIP1193Provider extends EventEmitter {
             sessionRequestedInfo,
         };
 
-
-
         const createSessionsResponse = await safe7559Account.grantPermission(grantPermissionParams);
 
         const response = await safe7559Account.waitForUserOperationReceipt({
             hash: createSessionsResponse.userOpHash,
         });
 
-        //TODO: adapt response type to ERC-7715
         return {
             grantedPermissions: permissions.map((permission) => ({
                 type: permission.type,
                 data: permission.data,
+                policies: permission.policies,
             })),
             expiry: params[0].expiry,
-            txHash: response.receipt.transactionHash,
+            permissionsContext: response.receipt.transactionHash,
             createSessionsResponse,
         }
     }
 }
+
 
 //TODO:
 //Store in localStorage?

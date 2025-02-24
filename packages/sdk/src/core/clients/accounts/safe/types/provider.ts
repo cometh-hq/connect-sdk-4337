@@ -45,25 +45,30 @@ export type PermissionRequest = {
     address?: Address;
     expiry: number; // unix timestamp
     signer: {
-      type: string; // enum defined by ERCs
-      data: Record<string, any>;
+        type: string; // enum defined by ERCs
+        data: Record<string, any>;
     };
     permissions: {
-      type: string; // enum defined by ERCs
-      data: Record<string, any>;
+        type: string; // enum defined by ERCs
+        data: Record<string, any>;
+        policies: readonly {
+            data: unknown;
+            type: string;
+        }[];
+        required?: boolean | undefined;
     }[];
-  };
+};
 
- export type PermissionResponse = PermissionRequest & {
+export type PermissionResponse = PermissionRequest & {
     context: Hex;
     accountMeta?: {
-      factory: `0x${string}`;
-      factoryData: `0x${string}`;
+        factory: `0x${string}`;
+        factoryData: `0x${string}`;
     };
     signerMeta?: {
-      // 7679 userOp building
-      userOpBuilder?: `0x${string}`;
-      // 7710 delegation
-      delegationManager?: `0x${string}`;
+        // 7679 userOp building
+        userOpBuilder?: `0x${string}`;
+        // 7710 delegation
+        delegationManager?: `0x${string}`;
     };
-  };
+};
