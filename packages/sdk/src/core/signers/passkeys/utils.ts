@@ -2,6 +2,7 @@ import * as psl from "psl";
 import { maxUint256, toBytes, toHex } from "viem";
 
 import type { webAuthnOptions } from "./types";
+import { ChallengeNotFoundError, InvalidSignatureEncodingError } from "@/errors";
 
 export const challengePrefix = "226368616c6c656e6765223a";
 
@@ -180,7 +181,7 @@ export function extractClientDataFields(
     );
 
     if (!match) {
-        throw new Error("challenge not found in client data JSON");
+        throw new ChallengeNotFoundError();
     }
 
     const [, fields] = match;
@@ -195,18 +196,18 @@ export function extractClientDataFields(
  * - <https://en.wikipedia.org/wiki/X.690#BER_encoding>
  */
 export function extractSignature(
-    response: AuthenticatorAssertionResponse
+    signature: ArrayBuffer | Uint8Array
 ): [bigint, bigint] {
     const check = (x: boolean): void => {
         if (!x) {
-            throw new Error("invalid signature encoding");
+            throw new InvalidSignatureEncodingError();
         }
     };
 
-    // Decode the DER signature. Note that we assume that all lengths fit into 8-bit integers,
-    // which is true for the kinds of signatures we are decoding but generally false. I.e. this
-    // code should not be used in any serious application.
-    const view = new DataView(response.signature);
+    // Convert Uint8Array to ArrayBuffer if needed
+    const buffer =
+        signature instanceof Uint8Array ? signature.buffer : signature;
+    const view = new DataView(buffer);
 
     // check that the sequence header is valid
     check(view.getUint8(0) === 0x30);
@@ -218,7 +219,7 @@ export function extractSignature(
         const len = view.getUint8(offset + 1);
         const start = offset + 2;
         const end = start + len;
-        const n = BigInt(toHex(new Uint8Array(view.buffer.slice(start, end))));
+        const n = BigInt(toHex(new Uint8Array(buffer.slice(start, end))));
         check(n < maxUint256);
         return [n, end] as const;
     };

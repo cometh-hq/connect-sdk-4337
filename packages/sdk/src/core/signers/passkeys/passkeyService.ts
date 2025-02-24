@@ -17,9 +17,12 @@ import {
     toHex,
 } from "viem";
 import {
+    FailedToGeneratePasskeyError,
     NoPasskeySignerFoundForGivenChain,
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
+    PasskeyCreationError,
+    PasskeySignatureFailedError,
     RetrieveWalletFromPasskeyError,
     SignerNotOwnerError,
 } from "../../../errors";
@@ -107,9 +110,7 @@ const createPasskeySigner = async ({
         })) as PasskeyCredential;
 
         if (!passkeyCredential) {
-            throw new Error(
-                "Failed to generate passkey. Received null as a credential"
-            );
+            throw new FailedToGeneratePasskeyError();
         }
 
         const publicKeyAlgorithm =
@@ -163,7 +164,7 @@ const createPasskeySigner = async ({
         return passkeyWithCoordinates;
     } catch (e) {
         console.log({ e });
-        throw new Error("Error in the passkey creation");
+        throw new PasskeyCreationError();
     }
 };
 
@@ -186,7 +187,7 @@ const sign = async ({
         },
     })) as Assertion | null;
 
-    if (!assertion) throw new Error("Passkey signature failed");
+    if (!assertion) throw new PasskeySignatureFailedError();
 
     const signature = encodeAbiParameters(
         [
@@ -197,7 +198,7 @@ const sign = async ({
         [
             toHex(new Uint8Array(assertion.response.authenticatorData)),
             extractClientDataFields(assertion.response) as Hex,
-            extractSignature(assertion.response),
+            extractSignature(assertion.response.signature),
         ]
     );
 
@@ -360,17 +361,36 @@ const getPasskeySigner = async ({
     const webAuthnSignerForGivenChain = signingWebAuthnSigners.find(
         (signer) => +signer.chainId === chain.id
     );
-    if (!webAuthnSignerForGivenChain)
-        throw new NoPasskeySignerFoundForGivenChain();
 
-    const passkeyWithCoordinates: PasskeyLocalStorageFormat = {
-        id: webAuthnSignerForGivenChain.publicKeyId as Hex,
-        pubkeyCoordinates: {
-            x: webAuthnSignerForGivenChain.publicKeyX as Hex,
-            y: webAuthnSignerForGivenChain.publicKeyY as Hex,
-        },
-        signerAddress: webAuthnSignerForGivenChain.signerAddress as Address,
-    };
+    let passkeyWithCoordinates: PasskeyLocalStorageFormat;
+
+    if (
+        signingWebAuthnSigners[0]?.signerAddress !==
+            safeWebAuthnSharedSignerAddress &&
+        !webAuthnSignerForGivenChain
+    ) {
+        throw new NoPasskeySignerFoundForGivenChain();
+    }
+
+    if (webAuthnSignerForGivenChain) {
+        passkeyWithCoordinates = {
+            id: webAuthnSignerForGivenChain.publicKeyId as Hex,
+            pubkeyCoordinates: {
+                x: webAuthnSignerForGivenChain.publicKeyX as Hex,
+                y: webAuthnSignerForGivenChain.publicKeyY as Hex,
+            },
+            signerAddress: webAuthnSignerForGivenChain.signerAddress as Address,
+        };
+    } else {
+        passkeyWithCoordinates = {
+            id: signingWebAuthnSigners[0].publicKeyId as Hex,
+            pubkeyCoordinates: {
+                x: signingWebAuthnSigners[0].publicKeyX as Hex,
+                y: signingWebAuthnSigners[0].publicKeyY as Hex,
+            },
+            signerAddress: signingWebAuthnSigners[0].signerAddress as Address,
+        };
+    }
 
     setPasskeyInStorage(
         smartAccountAddress,

@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
-import { arbitrumSepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -39,7 +39,7 @@ export function useSmartAccount() {
             ) as Hex;
 
             const publicClient = createPublicClient({
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 transport: http(),
                 cacheTime: 60_000,
                 batch: {
@@ -52,30 +52,28 @@ export function useSmartAccount() {
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: baseSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
-                    entryPoint: ENTRYPOINT_ADDRESS_V07,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: baseSepolia,
                     publicClient,
-                    entryPoint: ENTRYPOINT_ADDRESS_V07,
                 });
                 window.localStorage.setItem("walletAddress", smartAccount.address);
             }
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 publicClient,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                chain: arbitrumSepolia,
+                chain: baseSepolia,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,

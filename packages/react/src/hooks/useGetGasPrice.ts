@@ -1,3 +1,4 @@
+import { SmartAccountNotFoundError } from "@/errors";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useQuery } from "@tanstack/react-query";
 import type { UseQueryOptions } from "@tanstack/react-query";
@@ -54,7 +55,7 @@ export const useGetGasPrice = (
             queryKey: ["gasPrice", rpcUrl],
             queryFn: async (): Promise<GasPriceResult> => {
                 if (!smartAccountClient) {
-                    throw new Error("No smart account found");
+                    throw new SmartAccountNotFoundError();
                 }
 
                 const publicClient = createPublicClient({

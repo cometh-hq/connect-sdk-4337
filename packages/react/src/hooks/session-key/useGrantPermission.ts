@@ -12,6 +12,7 @@ import type {
 } from "../types";
 import type { Hash } from "viem";
 import { useSmartAccount } from "../useSmartAccount";
+import { SmartAccountNotFoundError } from "@/errors";
 
 export type GrantPermissionMutate = (
   variables: GrantPermissionParameters<ComethSafeSmartAccount>
@@ -42,7 +43,7 @@ export function useGrantPermission(
     mutationFn: async (
       args: GrantPermissionParameters<ComethSafeSmartAccount>
     ): Promise<GrantPermissionMutateResponse> => {
-      if (!smartAccountClient) throw new Error("No smart account found");
+      if (!smartAccountClient) throw new SmartAccountNotFoundError();
 
       const safe7559Account = smartAccountClient
         .extend(smartSessionActions())
