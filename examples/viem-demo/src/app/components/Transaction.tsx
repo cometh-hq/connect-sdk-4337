@@ -10,7 +10,7 @@ import {
   getContract,
   parseEther,
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
@@ -19,7 +19,7 @@ export const COUNTER_CONTRACT_ADDRESS =
   "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
-  chain: baseSepolia,
+  chain: arbitrumSepolia,
   transport: http(),
   cacheTime: 60_000,
   batch: {
@@ -101,10 +101,86 @@ function Transaction({
         functionName: "count",
       });
 
-      const txHash = await smartAccount.sendTransaction({
-        to: COUNTER_CONTRACT_ADDRESS,
-        data: calldata,
-      });
+
+    console.log("####1: eth_chainId ", await smartAccount.request({ method: "eth_chainId" }))
+    console.log("####2: eth_requestAccounts ", await smartAccount.request({ method: "eth_requestAccounts" }))
+    console.log("####3: eth_accounts ", await smartAccount.request({ method: "eth_accounts" }))
+    console.log("####4: eth_sendTransaction ", await smartAccount.request({ method: "eth_sendTransaction", params: [{ from: smartAccount.account.address, to: COUNTER_CONTRACT_ADDRESS, value: 0, data: calldata }] }))
+    console.log("####5: eth_sign ", await smartAccount.request({ method: "eth_sign", params: [smartAccount.account.address, "0xdeadbeef"] }))
+    console.log("####6: personal_sign ", await smartAccount.request({ method: "personal_sign", params: ["0xdeadbeef",smartAccount.account.address] }))
+
+    // const typedData = {
+    //   account: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+    //   domain: { 
+    //     name: 'Ether Mail',
+    //     version: '1',
+    //     chainId: 1,
+    //     verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+    //   },
+    //   types: {
+    //     Person: [
+    //       { name: 'name', type: 'string' },
+    //       { name: 'wallet', type: 'address' },
+    //     ],
+    //     Mail: [
+    //       { name: 'from', type: 'Person' },
+    //       { name: 'to', type: 'Person' },
+    //       { name: 'contents', type: 'string' },
+    //     ],
+    //   },
+    //   primaryType: 'Mail',
+    //   message: {
+    //     from: {
+    //       name: 'Cow',
+    //       wallet: '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826',
+    //     },
+    //     to: {
+    //       name: 'Bob',
+    //       wallet: '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB',
+    //     },
+    //     contents: 'Hello, Bob!',
+    //   },
+    // }
+
+    //Method not supported:
+    // console.log("####7: eth_signTypedData ", await smartAccount.request({ method: "eth_signTypedData", params: [smartAccount.account.address,JSON.stringify(typedData)] }))
+    // console.log("####8: eth_signTypedData_v4 ", await smartAccount.request({ method: "eth_signTypedData_v4", params: [smartAccount.account.address,JSON.stringify(typedData)] }))
+   
+   
+   
+   
+    console.log("####9: wallet_getCapabilities ", await smartAccount.getCapabilities())  //OK
+
+    const txHash = await smartAccount.sendCalls({calls: [{ to: COUNTER_CONTRACT_ADDRESS, value: 0, data: calldata }]})
+    console.log("####10: wallet_sendCalls ", txHash)
+    console.log("####11: wallet_getCallsStatus ", await smartAccount.getCallsStatus({id: txHash}))
+
+
+    const grantParams = [{
+      chainId: 421614,
+      signer: {
+        type: 'account',
+        data: {
+          address: "0x3DC29f7394Bd83fC99058e018426eB8724629fC6",
+        }
+      },
+      permissions: [
+        {
+          type: 'contract-call',
+          data: {
+            contractAddress: COUNTER_CONTRACT_ADDRESS,  
+            functionSelector: 'function count()'
+          },
+        },
+      ],
+      expiry: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+    }]
+
+  const grantPermissions = await smartAccount.request({ method: "wallet_grantPermissions", params: grantParams})
+    console.log("####12: wallet_grantPermissions ", grantPermissions)
+    
+    //console.log("####13", await eip1193Provider.request({ method: "wallet_switchEthereumChain" })) //OK: Error Not Implemented.
+
 
       const balance = await counterContract.read.counters([
         smartAccount.account.address,
@@ -139,7 +215,7 @@ function Transaction({
                   to: COUNTER_CONTRACT_ADDRESS,
                   data: calldata,
                 });
-
+                           
                 setTransactionSended(txHash);
               })
             }

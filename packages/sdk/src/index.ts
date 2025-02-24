@@ -103,9 +103,20 @@ import {
     FetchingProjectParamsError,
     ChainIdNotFoundError,
     NoPrivateKeyFoundError,
-    ChallengeNotFoundError
+    ChallengeNotFoundError,
+    InvalidSmartAccountClientError,
+    InvalidAccountAddressError,
+    CannotSignForAddressError,
+    InvalidSignerTypeError,
+    ExpiryRequiredError,
+    ExpiryInPastError,
+    UnsupportedPolicyError,
+    UnsupportedPermissionTypeError,
+    InvalidParamsError,
 } from "./errors";
 import { providerToSmartAccountSigner } from "./core/signers/utils";
+
+import { EIP1193Provider } from "./core/clients/accounts/safe/1193Provider";
 
 export {
     createSigner,
@@ -128,6 +139,7 @@ export {
     ENTRYPOINT_ADDRESS_V07,
     customChains,
     SmartSessionMode,
+    EIP1193Provider,
     WalletDoesNotExistsError,
     WalletNotConnectedError,
     WalletNotDeployedError,
@@ -182,6 +194,15 @@ export {
     ChainIdNotFoundError,
     NoPrivateKeyFoundError,
     ChallengeNotFoundError,
+    InvalidSmartAccountClientError,
+    InvalidAccountAddressError,
+    CannotSignForAddressError,
+    InvalidSignerTypeError,
+    ExpiryRequiredError,
+    ExpiryInPastError,
+    UnsupportedPolicyError,
+    UnsupportedPermissionTypeError,
+    InvalidParamsError,
 };
 
 export type {

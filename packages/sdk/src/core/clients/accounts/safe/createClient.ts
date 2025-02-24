@@ -14,10 +14,12 @@ import {
 } from "viem";
 import { type BundlerActions, bundlerActions } from "viem/account-abstraction";
 import type { Prettify } from "viem/chains";
+import { eip5792Actions } from 'viem/experimental';
 import {
     type ComethClientActions,
     comethAccountClientActions,
 } from "../../decorators/cometh";
+import { eip1193Actions } from "@/core/actions/accounts/eip1193/eip1193Actions";
 
 export type ComethAccountClientActions<
     chain extends Chain | undefined = Chain | undefined,
@@ -120,5 +122,7 @@ export function createSmartAccountClient<
             // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         ) as any;
 
-    return client.extend(safeOwnerPluginActions());
+    return client.extend(safeOwnerPluginActions())
+                .extend(eip1193Actions())
+                .extend(eip5792Actions());
 }
