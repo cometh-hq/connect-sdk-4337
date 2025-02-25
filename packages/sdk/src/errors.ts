@@ -113,18 +113,20 @@ export class SmartAccountAddressNotFoundError extends Error {
 
 export class MethodNotSupportedError extends BaseError {
     constructor() {
-      super("Method not supported",
-        {
+        super("Method not supported", {
             docsBaseUrl: "https://docs.cometh.io/connect-4337",
             docsPath: "/",
-        },
-      )
+        });
     }
 }
 
 export class BatchCallModeNotSupportedError extends Error {
     constructor(mode: ExecutionMode<CallType>) {
-        super(`Mode ${JSON.stringify(mode)} is not supported for batchcall calldata`);
+        super(
+            `Mode ${JSON.stringify(
+                mode
+            )} is not supported for batchcall calldata`
+        );
     }
 }
 
@@ -142,14 +144,15 @@ export class InvalidCallDataError extends Error {
 
 export class SafeVersionNotSupportedError extends BaseError {
     constructor(supportedVersion: string, currentVersion: string) {
-        super(`Safe is not version ${supportedVersion}. Current version: ${currentVersion}`,
-        {
-        metaMessages: [
-              `Current Version:  ${currentVersion}`,
-              `Supported Version: ${supportedVersion}`,
-            ],
-          },
-        )
+        super(
+            `Safe is not version ${supportedVersion}. Current version: ${currentVersion}`,
+            {
+                metaMessages: [
+                    `Current Version:  ${currentVersion}`,
+                    `Supported Version: ${supportedVersion}`,
+                ],
+            }
+        );
     }
 }
 
@@ -183,100 +186,82 @@ export class InvalidAccountAddressError extends Error {
 
 export class NoRecoveryRequestFoundError extends BaseError {
     constructor() {
-        super("No recovery request found",
-            {
+        super("No recovery request found", {
             docsBaseUrl: "https://docs.cometh.io/connect-4337",
             docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        });
     }
 }
 
 export class AddressIsNotAGuardianError extends BaseError {
     constructor() {
-        super("Address is not a guardian",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        super("Address is not a guardian", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/social-recovery",
+        });
     }
 }
 
 export class DelayModuleNotEnabledError extends BaseError {
     constructor() {
-        super("Delay module not enabled",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        super("Delay module not enabled", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/social-recovery",
+        });
     }
 }
 
 export class DelayModuleAlreadySetUpError extends BaseError {
     constructor() {
-        super("Delay module already set up",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        super("Delay module already set up", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/social-recovery",
+        });
     }
 }
 
 export class GuardianAlreadyEnabledError extends BaseError {
     constructor() {
-        super("Guardian already enabled",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        super("Guardian already enabled", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/social-recovery",
+        });
     }
 }
 
 export class PreviousModuleNotFoundError extends BaseError {
     constructor() {
-        super("Previous module not found",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        super("Previous module not found", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/social-recovery",
+        });
     }
 }
 
 export class RecoveryNotActiveError extends BaseError {
     constructor() {
-        super("Recovery not active",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        super("Recovery not active", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/social-recovery",
+        });
     }
 }
 
 export class RecoveryNotSetUpError extends BaseError {
     constructor() {
-        super("Recovery has not been setup",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        super("Recovery has not been setup", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/social-recovery",
+        });
     }
 }
 
 export class RecoveryAlreadySetUpError extends BaseError {
     constructor() {
-        super("Recovery already setup",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/social-recovery",
-            },
-        );
+        super("Recovery already setup", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/social-recovery",
+        });
     }
 }
 
@@ -408,12 +393,10 @@ export class PasskeySignerNotValidError extends Error {
 
 export class PermissionNotInstalledError extends BaseError {
     constructor() {
-        super("Permission not installed for this wallet",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/resources/advanced-features/session-keys",
-            },
-        );
+        super("Permission not installed for this wallet", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/resources/advanced-features/session-keys",
+        });
     }
 }
 
@@ -453,15 +436,12 @@ export class InvalidParamsError extends Error {
 
 export class MissingToAddressError extends BaseError {
     constructor() {
-        super("Missing to address",
-            {
-                docsBaseUrl: "https://docs.cometh.io/connect-4337",
-                docsPath: "/sdk-features/send-transactions",
-            },
-        );
+        super("Missing to address", {
+            docsBaseUrl: "https://docs.cometh.io/connect-4337",
+            docsPath: "/sdk-features/send-transactions",
+        });
     }
 }
-
 
 /**
  * Utils Errors

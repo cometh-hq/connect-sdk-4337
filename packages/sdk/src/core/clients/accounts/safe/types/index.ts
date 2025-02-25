@@ -5,4 +5,4 @@ export type {
     GetCallsResult,
     PermissionRequest,
     PermissionResponse,
-} from "./provider.js"
+} from "./provider.js";
