@@ -1,7 +1,6 @@
 "use client";
 
 import {
-    ENTRYPOINT_ADDRESS_V07,
     createComethPaymasterClient,
     createSafeSmartAccount,
     createSmartAccountClient,
@@ -16,10 +15,12 @@ export function useSmartAccount() {
 
     const [connectionError, setConnectionError] = useState<string | null>(null);
 
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     const [newSigner, setNewSigner] = useState<any | null>(null);
-
+    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
+    // biome-ignore lint/style/noNonNullAssertion:  TODO
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
@@ -47,7 +48,8 @@ export function useSmartAccount() {
                 },
             }) as PublicClient;
 
-            let smartAccount;
+            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+            let smartAccount: any;
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
