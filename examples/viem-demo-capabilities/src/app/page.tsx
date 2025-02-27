@@ -35,7 +35,6 @@ export default function App() {
                                 isConnecting={isConnecting}
                                 connect={connect}
                                 connectionError={connectionError}
-                                // biome-ignore lint/style/noNonNullAssertion: TODO
                                 smartAccount={smartAccount!}
                             />
                         </div>

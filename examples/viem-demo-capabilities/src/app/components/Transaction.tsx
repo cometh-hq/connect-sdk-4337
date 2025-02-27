@@ -44,7 +44,7 @@ const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
 const privateKey = process.env.NEXT_PUBLIC_PRIVATE_KEY as `0x${string}`;
 if (!privateKey) {
-    throw new Error("Private key not found in .env");
+    throw new Error("Permission Signer Private key not found in .env");
 }
 
 const account = privateKeyToAccount(privateKey);
@@ -117,7 +117,7 @@ function Transaction({ smartAccount }: TransactionProps) {
                                 contractAddress: COUNTER_CONTRACT_ADDRESS,
                                 functionSelector: "function count()",
                             },
-                            policies: [],
+                           policies: [],
                         },
                     ],
                     expiry: Math.floor(Date.now() / 1000) + 3600,
