@@ -7,13 +7,13 @@ import type {
     EIP1474Methods,
     RpcSchema,
     Transport,
+    EIP1193Parameters,
 } from "viem";
 
 import { EIP1193Provider } from "@/core/clients/accounts/safe/1193Provider";
 
 export type Eip1193Actions = {
-    // biome-ignore lint/suspicious/noExplicitAny: TODO
-    request: (args: { method: string; params?: any }) => Promise<
+    request: (args: { method: string; params?: EIP1193Parameters }) => Promise<
         EIP1193RequestFn<
             RpcSchema extends undefined ? EIP1474Methods : RpcSchema
         >
@@ -37,8 +37,7 @@ export const eip1193Actions =
     ): Eip1193Actions => {
         // Override the 'request' method
         Object.defineProperty(smartAccountClient, "request", {
-            // biome-ignore lint/suspicious/noExplicitAny: TODO
-            value: async (args: { method: string; params?: any }) => {
+            value: async (args: { method: string; params?: EIP1193Parameters }) => {
                 // biome-ignore lint/suspicious/noExplicitAny: TODO
                 const provider = new EIP1193Provider(smartAccountClient as any);
                 const result = await provider.request({
@@ -51,8 +50,7 @@ export const eip1193Actions =
             configurable: true,
         });
         return {
-            // biome-ignore lint/suspicious/noExplicitAny: TODO
-            request: async (args: { method: string; params?: any }) => {
+            request: async (args: { method: string; params?: EIP1193Parameters }) => {
                 // biome-ignore lint/suspicious/noExplicitAny: TODO
                 return await smartAccountClient.request(args as any);
             },
