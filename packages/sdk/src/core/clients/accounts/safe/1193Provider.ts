@@ -398,23 +398,19 @@ export class EIP1193Provider extends EventEmitter {
             grantPermissionParams
         );
 
-        const response = await safe7559Account.waitForUserOperationReceipt({
+        await safe7559Account.waitForUserOperationReceipt({
             hash: createSessionsResponse.userOpHash,
         });
 
         return {
             grantedPermissions: permissions.map((permission) => ({
                 type: permission.type,
-                data: permission.data,
+                //data: permission.data,
+                data: createSessionsResponse,
                 policies: permission.policies,
             })),
             expiry: params[0].expiry,
-            permissionsContext: response.receipt.transactionHash, //renvoyer userOpHash
-            createSessionsResponse,
+            permissionsContext: createSessionsResponse.userOpHash,
         };
     }
 }
-
-//TODO:
-//Store in localStorage?
-//ShowCallsSatus method
