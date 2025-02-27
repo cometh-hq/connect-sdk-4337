@@ -3,11 +3,11 @@ import type { SmartAccountClient } from "@/core/clients/accounts/safe/createClie
 import type {
     Chain,
     Client,
+    EIP1193Parameters,
     EIP1193RequestFn,
     EIP1474Methods,
     RpcSchema,
     Transport,
-    EIP1193Parameters,
 } from "viem";
 
 import { EIP1193Provider } from "@/core/clients/accounts/safe/1193Provider";
@@ -37,7 +37,10 @@ export const eip1193Actions =
     ): Eip1193Actions => {
         // Override the 'request' method
         Object.defineProperty(smartAccountClient, "request", {
-            value: async (args: { method: string; params?: EIP1193Parameters }) => {
+            value: async (args: {
+                method: string;
+                params?: EIP1193Parameters;
+            }) => {
                 // biome-ignore lint/suspicious/noExplicitAny: TODO
                 const provider = new EIP1193Provider(smartAccountClient as any);
                 const result = await provider.request({
@@ -50,7 +53,10 @@ export const eip1193Actions =
             configurable: true,
         });
         return {
-            request: async (args: { method: string; params?: EIP1193Parameters }) => {
+            request: async (args: {
+                method: string;
+                params?: EIP1193Parameters;
+            }) => {
                 // biome-ignore lint/suspicious/noExplicitAny: TODO
                 return await smartAccountClient.request(args as any);
             },

@@ -12,7 +12,14 @@ import {
     isWebAuthnCompatible,
 } from "@/core/signers/passkeys/utils";
 import type { Signer } from "@/core/types";
-import { DeviceNotCompatibleWithPasskeysError, DeviceNotCompatibleWithSECKP256r1PasskeysError, FailedToGenerateQRCodeError, FailedToSerializeUrlError, InvalidSignerDataError, NoFallbackSignerError } from "@/errors";
+import {
+    DeviceNotCompatibleWithPasskeysError,
+    DeviceNotCompatibleWithSECKP256r1PasskeysError,
+    FailedToGenerateQRCodeError,
+    FailedToSerializeUrlError,
+    InvalidSignerDataError,
+    NoFallbackSignerError,
+} from "@/errors";
 import * as QRCode from "qrcode";
 import type { Address, Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";

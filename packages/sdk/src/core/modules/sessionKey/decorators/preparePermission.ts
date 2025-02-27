@@ -14,9 +14,9 @@ import {
     getSudoPolicy,
 } from "@rhinestone/module-sdk";
 import {
-    ChainNotFoundError,
     type Address,
     type Chain,
+    ChainNotFoundError,
     type Client,
     type Hex,
     type PublicClient,

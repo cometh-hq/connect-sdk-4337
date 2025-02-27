@@ -4,7 +4,11 @@ import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService, {
     type RecoveryParamsResponse,
 } from "@/core/services/delayModuleService";
-import { APINotFoundError, FetchingProjectParamsError, RecoveryNotSetUpError } from "@/errors";
+import {
+    APINotFoundError,
+    FetchingProjectParamsError,
+    RecoveryNotSetUpError,
+} from "@/errors";
 
 import {
     http,

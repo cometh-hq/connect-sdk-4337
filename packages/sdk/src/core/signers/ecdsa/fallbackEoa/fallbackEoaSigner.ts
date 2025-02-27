@@ -4,9 +4,9 @@ import {
     privateKeyToAccount,
 } from "viem/accounts";
 
+import { NoPrivateKeyFoundError } from "@/errors";
 import type { Hex, PrivateKeyAccount } from "viem";
 import { getSignerLocalStorage } from "../services/ecdsaService";
-import { NoPrivateKeyFoundError } from "@/errors";
 
 export const getFallbackEoaSigner = async ({
     smartAccountAddress,

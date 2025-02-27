@@ -3,6 +3,11 @@ import delayModuleService from "@/core/services/delayModuleService";
 
 import { defaultClientConfig } from "@/constants";
 import { getProjectParamsByChain } from "@/core/services/comethService";
+import {
+    APINotFoundError,
+    FetchingProjectParamsError,
+    RecoveryAlreadySetUpError,
+} from "@/errors";
 import { sendTransaction } from "permissionless/actions/smartAccount";
 import {
     http,
@@ -17,7 +22,6 @@ import {
     parseAbi,
 } from "viem";
 import { getAction } from "viem/utils";
-import { APINotFoundError, FetchingProjectParamsError, RecoveryAlreadySetUpError } from "@/errors";
 
 export async function setUpRecoveryModule<
     TTransport extends Transport = Transport,
