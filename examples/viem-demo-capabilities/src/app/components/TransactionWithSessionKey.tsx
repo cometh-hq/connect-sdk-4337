@@ -8,15 +8,26 @@ import {
     createPublicClient,
     encodeFunctionData,
     getContract,
-    parseEther,
 } from "viem";
 import { baseSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
 
+import {
+    createComethPaymasterClient,
+    createSafeSmartAccount,
+    createSmartAccountClient,
+    smartSessionActions,
+} from "@cometh/connect-sdk-4337";
+import { useSessionKey } from "../modules/hooks/useSessionKey";
+
 export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
+
+const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
+const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
+const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
 const publicClient = createPublicClient({
     chain: baseSepolia,
@@ -39,7 +50,7 @@ interface TransactionProps {
     setTransactionSuccess: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-function Transaction({
+function TransactionWithSessionKey({
     smartAccount,
     transactionSuccess,
     setTransactionSuccess,
@@ -51,6 +62,8 @@ function Transaction({
     );
     const [transactionFailure, setTransactionFailure] = useState(false);
     const [nftBalance, setNftBalance] = useState<number>(0);
+
+    const { getSessionKeySigner } = useSessionKey();
 
     function TransactionButton({
         sendTestTransaction,
@@ -98,21 +111,12 @@ function Transaction({
         try {
             if (!smartAccount) throw new Error("No wallet instance");
 
-            const calldata = encodeFunctionData({
-                abi: countContractAbi,
-                functionName: "count",
-            });
-
-            const txHash = await smartAccount.sendTransaction({
-                to: COUNTER_CONTRACT_ADDRESS,
-                data: calldata,
-            });
+            await action();
 
             const balance = await counterContract.read.counters([
                 smartAccount.account.address,
             ]);
             setNftBalance(Number(balance));
-            setTransactionSended(txHash);
 
             setTransactionSuccess(true);
         } catch (e) {
@@ -133,18 +137,55 @@ function Transaction({
                                 if (!smartAccount)
                                     throw new Error("No wallet instance");
 
+                                const sessionKeySigner =
+                                    await getSessionKeySigner({
+                                        smartAccountClient: smartAccount,
+                                    });
+
+                                const sessionKeyAccount =
+                                    await createSafeSmartAccount({
+                                        apiKey,
+                                        chain: baseSepolia,
+                                        smartAccountAddress:
+                                            smartAccount?.account?.address,
+                                        smartSessionSigner: sessionKeySigner,
+                                    });
+
+                                const paymasterClient =
+                                    await createComethPaymasterClient({
+                                        transport: http(paymasterUrl),
+                                        chain: baseSepolia,
+                                    });
+
+                                const sessionKeyClient =
+                                    createSmartAccountClient({
+                                        account: sessionKeyAccount,
+                                        chain: baseSepolia,
+                                        bundlerTransport: http(bundlerUrl),
+                                        paymaster: paymasterClient,
+                                        userOperation: {
+                                            estimateFeesPerGas: async () => {
+                                                return await paymasterClient.getUserOperationGasPrice();
+                                            },
+                                        },
+                                    }).extend(smartSessionActions());
+
                                 const calldata = encodeFunctionData({
                                     abi: countContractAbi,
                                     functionName: "count",
                                 });
 
-                                const txHash =
-                                    await smartAccount.sendTransaction({
-                                        to: COUNTER_CONTRACT_ADDRESS,
-                                        data: calldata,
+                                const hash =
+                                    await sessionKeyClient.usePermission({
+                                        actions: [
+                                            {
+                                                target: COUNTER_CONTRACT_ADDRESS,
+                                                callData: calldata,
+                                                value: BigInt(0),
+                                            },
+                                        ],
                                     });
-
-                                setTransactionSended(txHash);
+                                setTransactionSended(hash);
                             })
                         }
                         isTransactionLoading={isTransactionLoading}
@@ -172,4 +213,4 @@ function Transaction({
     );
 }
 
-export default Transaction;
+export default TransactionWithSessionKey;

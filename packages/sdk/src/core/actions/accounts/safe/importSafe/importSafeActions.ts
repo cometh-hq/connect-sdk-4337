@@ -83,8 +83,8 @@ export type SafeImportActions = {
 export function importSafeActions() {
     return <
         TAccount extends ComethSafeSmartAccount | undefined =
-            | ComethSafeSmartAccount
-            | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
     >(
         client: Client<Transport, Chain | undefined, TAccount>
     ): SafeImportActions => {
@@ -482,10 +482,10 @@ export function importSafeActions() {
 
                 const nonce = isDeployed
                     ? ((await rpcClient.readContract({
-                          address: client.account?.address as Address,
-                          abi: SafeAbi,
-                          functionName: "nonce",
-                      })) as bigint)
+                        address: client.account?.address as Address,
+                        abi: SafeAbi,
+                        functionName: "nonce",
+                    })) as bigint)
                     : BigInt(0);
 
                 return signTypedData({

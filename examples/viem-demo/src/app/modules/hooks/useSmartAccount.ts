@@ -66,7 +66,6 @@ export function useSmartAccount() {
                     apiKey,
                     chain: arbitrumSepolia,
                     signer: owner,
-
                     publicClient,
                 });
                 window.localStorage.setItem(
