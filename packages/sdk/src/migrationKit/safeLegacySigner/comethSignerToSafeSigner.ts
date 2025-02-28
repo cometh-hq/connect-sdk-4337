@@ -8,10 +8,10 @@ import type {
 } from "viem";
 
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types.js";
+import { EoaSignerRequiredError } from "@/errors.js";
 import { safeLegacyECDSASigner } from "./ecdsa/ecdsa.js";
 import type { SafeSigner } from "./types.js";
 import { safeLegacyWebAuthnSigner } from "./webauthn/webAuthn.js";
-import { EoaSignerRequiredError } from "@/errors.js";
 
 type SafeSignerParams = {
     smartAccountAddress: Address;

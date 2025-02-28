@@ -22,13 +22,13 @@ import {
     packInitCode,
     packPaymasterData,
 } from "@/core/accounts/safe/services/utils";
+import { MethodNotSupportedError } from "@/errors";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,
 } from "../../types";
 import type { SafeSigner } from "../types";
 import { adjustVInSignature, generateSafeMessageMessage } from "../utils";
-import { MethodNotSupportedError } from "@/errors";
 
 /**
  * Creates a SafeSigner using ECDSA for signing

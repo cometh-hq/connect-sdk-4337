@@ -1,6 +1,7 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type { SafeSigner } from "@/core/accounts/safe/safeSigner/types";
 import type { ComethSmartAccountClient } from "@/core/clients/accounts/safe/createClient";
+import { MethodNotSupportedError, PermissionNotInstalledError } from "@/errors";
 import {
     SMART_SESSIONS_ADDRESS,
     SmartSessionMode,
@@ -29,7 +30,6 @@ import {
 import { toAccount } from "viem/accounts";
 import { isPermissionEnabledAbi } from "./decorators/isPermissionInstalled";
 import type { UsePermissionModuleData } from "./types";
-import { MethodNotSupportedError, PermissionNotInstalledError } from "@/errors";
 
 export type UsePermissionModuleParameters = {
     moduleData?: UsePermissionModuleData;
@@ -79,8 +79,7 @@ export async function toSmartSessionsSigner<
         ],
     });
 
-    if (!isPermissionInstalled)
-        throw new PermissionNotInstalledError();
+    if (!isPermissionInstalled) throw new PermissionNotInstalledError();
 
     const account = toAccount({
         address: signer.address,

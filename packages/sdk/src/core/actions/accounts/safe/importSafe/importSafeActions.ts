@@ -9,6 +9,11 @@ import type { SafeContractParams } from "@/core/accounts/safe/types";
 import type { API } from "@/core/services/API";
 import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
+import {
+    ImportOnUndeployedSafeError,
+    SafeVersionNotSupportedError,
+    WalletAlreadyImportedError,
+} from "@/errors";
 import type { SafeTransactionDataPartial } from "@/migrationKit/types";
 import { isSmartAccountDeployed } from "permissionless";
 import {
@@ -29,7 +34,6 @@ import {
     signTypedData,
     waitForTransactionRelayAndImport,
 } from "./utils";
-import { ImportOnUndeployedSafeError, SafeVersionNotSupportedError, WalletAlreadyImportedError } from "@/errors";
 
 const multisendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 
@@ -129,15 +133,18 @@ export function importSafeActions() {
                             }),
                         ])) as [string, number, boolean, bigint];
 
-                const supportedVersion = "1.3.0";
-                if (currentVersion !== supportedVersion) {
-                    throw new SafeVersionNotSupportedError(supportedVersion, currentVersion);
+                    const supportedVersion = "1.3.0";
+                    if (currentVersion !== supportedVersion) {
+                        throw new SafeVersionNotSupportedError(
+                            supportedVersion,
+                            currentVersion
+                        );
+                    }
+                } else {
+                    threshold = 1;
+                    is4337ModuleEnabled = false;
+                    nonce = 0n;
                 }
-            } else {
-                threshold = 1;
-                is4337ModuleEnabled = false;
-                nonce = 0n;
-            }
 
                 const isWebAuthnCompatible =
                     await isDeviceCompatibleWithPasskeys({
@@ -253,15 +260,18 @@ export function importSafeActions() {
                             }),
                         ])) as [string, number, boolean, bigint];
 
-                const supportedVersion = "1.4.1";
-                if (currentVersion !== supportedVersion) {
-                    throw new SafeVersionNotSupportedError(supportedVersion, currentVersion);
+                    const supportedVersion = "1.4.1";
+                    if (currentVersion !== supportedVersion) {
+                        throw new SafeVersionNotSupportedError(
+                            supportedVersion,
+                            currentVersion
+                        );
+                    }
+                } else {
+                    threshold = 1;
+                    is4337ModuleEnabled = false;
+                    nonce = 0n;
                 }
-            } else {
-                threshold = 1;
-                is4337ModuleEnabled = false;
-                nonce = 0n;
-            }
 
                 const isWebAuthnCompatible =
                     await isDeviceCompatibleWithPasskeys({

@@ -1,4 +1,5 @@
 import { SENTINEL_MODULES } from "@/constants";
+import { AddressIsNotAGuardianError } from "@/errors";
 import {
     type Address,
     type Client,
@@ -17,7 +18,6 @@ import { getCode } from "viem/actions";
 import { delayModuleABI } from "../accounts/safe/abi/delayModule";
 import { delayModuleFactoryABI } from "../accounts/safe/abi/delayModuleFactory";
 import type { MultiSendTransaction } from "../types";
-import { AddressIsNotAGuardianError } from "@/errors";
 
 export type RecoveryParamsResponse = {
     txCreatedAt: bigint;

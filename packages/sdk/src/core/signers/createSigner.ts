@@ -18,6 +18,10 @@ import {
     getSignerLocalStorage,
 } from "./ecdsa/services/ecdsaService";
 
+import {
+    DeviceNotCompatibleWithPasskeysError,
+    PasskeySignerNotValidError,
+} from "@/errors";
 import type {
     PasskeyLocalStorageFormat,
     webAuthnOptions,
@@ -27,7 +31,6 @@ import {
     isWebAuthnCompatible,
 } from "./passkeys/utils";
 import type { ComethSigner, CreateSignerParams, Signer } from "./types";
-import { DeviceNotCompatibleWithPasskeysError, PasskeySignerNotValidError } from "@/errors";
 
 export const isComethSigner = (signer: Signer): signer is ComethSigner => {
     return (
@@ -89,8 +92,7 @@ export const saveSigner = async (
 export const throwErrorWhenEoaFallbackDisabled = (
     disableEoaFallback: boolean
 ): void => {
-    if (disableEoaFallback)
-        throw new DeviceNotCompatibleWithPasskeysError();
+    if (disableEoaFallback) throw new DeviceNotCompatibleWithPasskeysError();
 };
 
 export const isFallbackSigner = (): boolean => {

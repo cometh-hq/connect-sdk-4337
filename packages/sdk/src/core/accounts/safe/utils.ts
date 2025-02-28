@@ -1,5 +1,6 @@
 import type { API } from "@/core/services/API";
 import type { ComethSignerConfig } from "@/core/signers/types";
+import { MethodNotSupportedError } from "@/errors";
 import { type Abi, parseAbi } from "abitype";
 import {
     type Address,
@@ -16,7 +17,6 @@ import type {
 import { getCode, readContract } from "viem/actions";
 import { getAction } from "viem/utils";
 import type { SafeContractParams } from "./types";
-import { MethodNotSupportedError } from "@/errors";
 
 export type ToSmartAccountParameters<
     entryPointAbi extends Abi | readonly unknown[] = Abi,

@@ -39,6 +39,7 @@ import {
 } from "./services/safe";
 
 import { SAFE_7579_ADDRESS, add7579FunctionSelector } from "@/constants";
+import { MethodNotSupportedError } from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
@@ -46,7 +47,6 @@ import { SafeAbi } from "./abi/safe";
 import type { SafeSigner } from "./safeSigner/types";
 import { encode7579Calls } from "./services/7579";
 import type { SafeContractParams } from "./types";
-import { MethodNotSupportedError } from "@/errors";
 
 export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
     connectApiInstance: API;

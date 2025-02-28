@@ -21,13 +21,13 @@ import {
 import { sign } from "@/core/signers/passkeys/passkeyService";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import { parseHex } from "@/core/signers/passkeys/utils";
+import { MethodNotSupportedError } from "@/errors";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,
 } from "../../types";
 import type { SafeSigner } from "../types";
 import { generateSafeMessageMessage } from "../utils";
-import { MethodNotSupportedError } from "@/errors";
 
 /**
  * Creates a SafeSigner using WebAuthn for authentication
