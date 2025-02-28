@@ -1,8 +1,11 @@
 import * as psl from "psl";
 import { maxUint256, toBytes, toHex } from "viem";
 
+import {
+    ChallengeNotFoundError,
+    InvalidSignatureEncodingError,
+} from "@/errors";
 import type { webAuthnOptions } from "./types";
-import { ChallengeNotFoundError, InvalidSignatureEncodingError } from "@/errors";
 
 export const challengePrefix = "226368616c6c656e6765223a";
 

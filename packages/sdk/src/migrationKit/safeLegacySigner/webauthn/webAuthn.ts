@@ -12,6 +12,7 @@ import {
 import { toAccount } from "viem/accounts";
 
 import { EIP712_SAFE_MESSAGE_TYPE } from "@/core/accounts/safe/types";
+import { MethodNotSupportedError } from "@/errors";
 import {
     formatToSafeContractSignature,
     getWebAuthnSignature,
@@ -19,7 +20,6 @@ import {
 import { parseHex } from "@/migrationKit/signers/utils";
 import { EIP712_SAFE_TX_TYPES } from "@/migrationKit/types";
 import type { SafeSigner } from "../types";
-import { MethodNotSupportedError } from "@/errors";
 
 /**
  * Creates a SafeSigner using ECDSA for signing

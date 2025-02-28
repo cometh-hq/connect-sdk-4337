@@ -30,6 +30,11 @@ import {
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
 import { getFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
+import {
+    MigrationContractAddressNotAvailableError,
+    SafeVersionNotSupportedError,
+    SmartAccountAddressNotFoundError,
+} from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import { comethSignerToSafeSigner } from "./safeLegacySigner/comethSignerToSafeSigner";
 import { LEGACY_API } from "./services/LEGACY_API";
@@ -37,7 +42,6 @@ import { getLegacyProjectParams } from "./services/comethService";
 import { getLegacySafeDeploymentData } from "./services/safe";
 import { getLegacySigner } from "./signers/passkeyService";
 import type { SafeTransactionDataPartial } from "./types";
-import { SmartAccountAddressNotFoundError, SafeVersionNotSupportedError, MigrationContractAddressNotAvailableError } from "@/errors";
 
 const multisendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 
@@ -284,7 +288,10 @@ export async function createLegacySafeSmartAccount<
 
                 const supportedVersion = "1.3.0";
                 if (currentVersion !== supportedVersion) {
-                    throw new SafeVersionNotSupportedError(supportedVersion, currentVersion);
+                    throw new SafeVersionNotSupportedError(
+                        supportedVersion,
+                        currentVersion
+                    );
                 }
             } else {
                 threshold = 1;

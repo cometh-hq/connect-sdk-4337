@@ -4,7 +4,10 @@ import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmar
 import { SAFE_SENTINEL_OWNERS } from "@/core/accounts/safe/types";
 import type { SmartAccountClient } from "@/core/clients/accounts/safe/createClient";
 import type { DeviceData, WebAuthnSigner } from "@/core/types";
-import { OwnerToRemoveIsNotSafeOwnerError, RemoveOwnerOnUndeployedSafeError } from "@/errors";
+import {
+    OwnerToRemoveIsNotSafeOwnerError,
+    RemoveOwnerOnUndeployedSafeError,
+} from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
@@ -74,8 +77,7 @@ export const safeOwnerPluginActions =
                 smartAccountClient.account?.address as Address
             );
 
-            if (!isDeployed)
-                throw new RemoveOwnerOnUndeployedSafeError();
+            if (!isDeployed) throw new RemoveOwnerOnUndeployedSafeError();
 
             const owners = (await rpcClient.readContract({
                 address: smartAccountClient.account?.address as Address,

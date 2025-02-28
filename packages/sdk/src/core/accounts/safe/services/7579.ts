@@ -16,6 +16,7 @@ import {
 
 import { isComethSigner } from "@/core/signers/createSigner";
 import type { Signer } from "@/core/signers/types";
+import { BatchCallModeNotSupportedError, NoCallsToEncodeError } from "@/errors";
 import {
     MOCK_ATTESTER_ADDRESS,
     RHINESTONE_ATTESTER_ADDRESS,
@@ -23,7 +24,6 @@ import {
 } from "@rhinestone/module-sdk";
 import { LaunchpadAbi } from "../abi/7579/Launchpad";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
-import { NoCallsToEncodeError, BatchCallModeNotSupportedError } from "@/errors";
 
 export type CallType = "call" | "delegatecall" | "batchcall";
 

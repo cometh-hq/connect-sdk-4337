@@ -1,6 +1,7 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { SafeProxyContractFactoryABI } from "@/core/accounts/safe/abi/safeProxyFactory";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
+import { SafeNotDeployedError } from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     type Address,
@@ -14,7 +15,6 @@ import {
 } from "viem";
 import { SafeLegacyAbi } from "../abi/safeLegacy";
 import type { LEGACY_API } from "./LEGACY_API";
-import { SafeNotDeployedError } from "@/errors";
 
 export const WEBAUTHN_DEFAULT_BASE_GAS = 300000;
 

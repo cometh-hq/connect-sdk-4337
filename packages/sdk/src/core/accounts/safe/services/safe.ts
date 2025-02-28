@@ -2,6 +2,7 @@ import { getSignerAddress, isComethSigner } from "@/core/signers/createSigner";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import type { Signer } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
+import { InvalidCallDataError, SafeNotDeployedError } from "@/errors";
 import { MigrationAbi } from "@/migrationKit/abi/migration";
 import { isSmartAccountDeployed } from "permissionless";
 import {
@@ -31,7 +32,6 @@ import { safe4337SessionKeyModuleAbi } from "../abi/safe4337SessionKeyModuleAbi"
 import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
 import type { MultiSendTransaction } from "../types";
-import { InvalidCallDataError, SafeNotDeployedError } from "@/errors";
 
 /**
  * Encodes multiple transactions into a single byte string for multi-send functionality

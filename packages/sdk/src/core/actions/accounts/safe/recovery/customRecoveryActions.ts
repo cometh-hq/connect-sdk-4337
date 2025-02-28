@@ -4,7 +4,14 @@ import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmar
 import { isModuleEnabled } from "@/core/accounts/safe/services/safe";
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService from "@/core/services/delayModuleService";
-import { APINotFoundError, DelayModuleAlreadySetUpError, DelayModuleNotEnabledError, FetchingProjectParamsError, GuardianAlreadyEnabledError, PreviousModuleNotFoundError } from "@/errors";
+import {
+    APINotFoundError,
+    DelayModuleAlreadySetUpError,
+    DelayModuleNotEnabledError,
+    FetchingProjectParamsError,
+    GuardianAlreadyEnabledError,
+    PreviousModuleNotFoundError,
+} from "@/errors";
 import { sendTransaction } from "permissionless/actions/smartAccount";
 
 import {

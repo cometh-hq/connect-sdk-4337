@@ -4,7 +4,12 @@ import { sendTransaction } from "permissionless/actions/smartAccount";
 
 import { defaultClientConfig } from "@/constants";
 import { getProjectParamsByChain } from "@/core/services/comethService";
-import { APINotFoundError, FetchingProjectParamsError, NoRecoveryRequestFoundError, RecoveryNotActiveError } from "@/errors";
+import {
+    APINotFoundError,
+    FetchingProjectParamsError,
+    NoRecoveryRequestFoundError,
+    RecoveryNotActiveError,
+} from "@/errors";
 import {
     http,
     type Address,
