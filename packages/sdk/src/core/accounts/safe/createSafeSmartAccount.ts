@@ -204,7 +204,7 @@ export async function createSafeSmartAccount<
         safe4337ModuleAddress: safe4337Module,
         safeWebAuthnSignerFactory,
     } = safeContractConfig ??
-    (contractParams.safeContractParams as SafeContractParams);
+        (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337Module) {
         throw new ChainNotFoundError();
