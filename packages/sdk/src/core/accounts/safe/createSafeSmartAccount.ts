@@ -39,6 +39,7 @@ import {
 } from "./services/safe";
 
 import { SAFE_7579_ADDRESS, add7579FunctionSelector } from "@/constants";
+import { MethodNotSupportedError } from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
@@ -322,7 +323,7 @@ export async function createSafeSmartAccount<
         },
 
         async signTypedData() {
-            throw new Error("method not supported");
+            throw new MethodNotSupportedError();
         },
 
         async getFactoryArgs() {
@@ -346,10 +347,11 @@ export async function createSafeSmartAccount<
             return smartAccountAddress;
         },
 
-        async getNonce() {
+        async getNonce(args) {
             return getAccountNonce(client, {
                 address: smartAccountAddress as Address,
                 entryPointAddress: entryPoint07Address,
+                key: args?.key
             });
         },
 

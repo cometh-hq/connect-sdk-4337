@@ -16,6 +16,7 @@ import {
 
 import { isComethSigner } from "@/core/signers/createSigner";
 import type { Signer } from "@/core/signers/types";
+import { BatchCallModeNotSupportedError, NoCallsToEncodeError } from "@/errors";
 import {
     MOCK_ATTESTER_ADDRESS,
     RHINESTONE_ATTESTER_ADDRESS,
@@ -278,11 +279,7 @@ export function encode7579Calls<callType extends CallType>({
     callData,
 }: EncodeCallDataParams<callType>): Hex {
     if (callData.length > 1 && mode?.type !== "batchcall") {
-        throw new Error(
-            `mode ${JSON.stringify(
-                mode
-            )} does not supported for batchcall calldata`
-        );
+        throw new BatchCallModeNotSupportedError(mode);
     }
 
     const executeAbi = [
@@ -350,7 +347,7 @@ export function encode7579Calls<callType extends CallType>({
     const call = callData.length === 0 ? undefined : callData[0];
 
     if (!call) {
-        throw new Error("No calls to encode");
+        throw new NoCallsToEncodeError();
     }
 
     return encodeFunctionData({

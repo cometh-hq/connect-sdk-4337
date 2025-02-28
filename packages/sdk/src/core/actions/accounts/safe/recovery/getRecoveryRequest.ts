@@ -4,6 +4,11 @@ import { getProjectParamsByChain } from "@/core/services/comethService";
 import delayModuleService, {
     type RecoveryParamsResponse,
 } from "@/core/services/delayModuleService";
+import {
+    APINotFoundError,
+    FetchingProjectParamsError,
+    RecoveryNotSetUpError,
+} from "@/errors";
 
 import {
     http,
@@ -49,14 +54,14 @@ export async function getRecoveryRequest<
     } else {
         const api = client?.account?.connectApiInstance;
 
-        if (!api) throw new Error("No api found");
+        if (!api) throw new APINotFoundError();
 
         const projectParams = await getProjectParamsByChain({
             api,
             chain: client.chain as Chain,
         });
 
-        if (!projectParams) throw Error("Error fetching project params");
+        if (!projectParams) throw new FetchingProjectParamsError();
 
         const {
             moduleFactoryAddress,
@@ -81,7 +86,7 @@ export async function getRecoveryRequest<
         client: rpcClient,
     });
 
-    if (!isDelayModuleDeployed) throw new Error("Recovery has not been setup");
+    if (!isDelayModuleDeployed) throw new RecoveryNotSetUpError();
 
     const isRecoveryQueueEmpty = await delayModuleService.isQueueEmpty(
         delayAddress,

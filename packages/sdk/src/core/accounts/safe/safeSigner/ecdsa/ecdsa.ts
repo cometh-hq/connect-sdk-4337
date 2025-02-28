@@ -22,6 +22,7 @@ import {
     packInitCode,
     packPaymasterData,
 } from "@/core/accounts/safe/services/utils";
+import { MethodNotSupportedError } from "@/errors";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,
@@ -59,7 +60,7 @@ export async function safeECDSASigner<
     const viemSigner: LocalAccount = {
         ...signer,
         signTransaction: (_, __) => {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     } as LocalAccount;
 
@@ -86,7 +87,7 @@ export async function safeECDSASigner<
             );
         },
         async signTransaction(_, __) {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTypedData<
             const TTypedData extends TypedData | Record<string, unknown>,

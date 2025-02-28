@@ -12,6 +12,7 @@ import {
 import { toAccount } from "viem/accounts";
 
 import { EIP712_SAFE_MESSAGE_TYPE } from "@/core/accounts/safe/types";
+import { MethodNotSupportedError } from "@/errors";
 import {
     formatToSafeContractSignature,
     getWebAuthnSignature,
@@ -117,7 +118,7 @@ export async function safeLegacyWebAuthnSigner<
             ) as Hex;
         },
         async signTypedData() {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     });
 

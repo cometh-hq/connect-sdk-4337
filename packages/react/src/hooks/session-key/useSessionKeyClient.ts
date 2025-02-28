@@ -10,6 +10,7 @@ import {
 } from "@/actions/createSessionSmartAccount";
 import { useContext } from "react";
 import { ConnectContext } from "@/providers";
+import { ApiKeyNotFoundError, SignerNotFoundError, SmartAccountNotFoundError } from "@/errors";
 
 export type UseSessionKeyClientReturn = QueryResultType<SmartSessionClient>;
 
@@ -36,9 +37,9 @@ export function useSessionKeyClient({
   const query = useQuery<unknown, unknown, SmartSessionClient, unknown[]>({
     queryKey: ["session-key-get-client", sessionKeySigner, smartAccountClient],
     queryFn: async (): Promise<SmartSessionClient> => {
-      if (!smartAccountClient) throw new Error("No smart account found");
-      if (!sessionKeySigner) throw new Error("No signer found");
-      if (!context.apikey) throw new Error("No apikey found");
+      if (!smartAccountClient) throw new SmartAccountNotFoundError();
+      if (!sessionKeySigner) throw new SignerNotFoundError();
+      if (!context.apikey) throw new ApiKeyNotFoundError();
 
       return createSessionSmartAccountClient(
         context.apikey,
