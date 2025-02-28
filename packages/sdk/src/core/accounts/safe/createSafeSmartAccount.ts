@@ -347,10 +347,11 @@ export async function createSafeSmartAccount<
             return smartAccountAddress;
         },
 
-        async getNonce() {
+        async getNonce(args) {
             return getAccountNonce(client, {
                 address: smartAccountAddress as Address,
                 entryPointAddress: entryPoint07Address,
+                key: args?.key
             });
         },
 
