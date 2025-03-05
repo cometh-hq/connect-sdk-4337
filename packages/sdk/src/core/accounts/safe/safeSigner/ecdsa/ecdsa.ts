@@ -9,8 +9,6 @@ import {
     type TypedData,
     type TypedDataDefinition,
     encodePacked,
-    hashTypedData,
-    toBytes,
 } from "viem";
 import { toAccount } from "viem/accounts";
 import { signTypedData } from "viem/actions";
@@ -67,22 +65,16 @@ export async function safeECDSASigner<
     const account = toAccount({
         address: smartAccountAddress,
         async signMessage({ message }) {
-            const messageHash = hashTypedData({
-                domain: {
-                    chainId: client.chain?.id,
-                    verifyingContract: smartAccountAddress,
-                },
-                types: EIP712_SAFE_MESSAGE_TYPE,
-                primaryType: "SafeMessage" as const,
-                message: { message: generateSafeMessageMessage(message) },
-            });
-
             return adjustVInSignature(
-                "eth_sign",
-                await viemSigner.signMessage({
-                    message: {
-                        raw: toBytes(messageHash),
+                "eth_signTypedData",
+                await viemSigner.signTypedData({
+                    domain: {
+                        chainId: client.chain?.id,
+                        verifyingContract: smartAccountAddress,
                     },
+                    types: EIP712_SAFE_MESSAGE_TYPE,
+                    primaryType: "SafeMessage" as const,
+                    message: { message: generateSafeMessageMessage(message) },
                 })
             );
         },
