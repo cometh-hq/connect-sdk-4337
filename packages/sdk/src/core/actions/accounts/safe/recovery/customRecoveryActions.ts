@@ -39,8 +39,8 @@ export async function getDelayModuleAddress<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetDelayModuleAddressParams>
@@ -75,8 +75,8 @@ export async function getGuardianAddress<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<GetGuardianAddressParams>
@@ -117,8 +117,8 @@ export async function addGuardian<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<AddGuardianParams>
@@ -184,8 +184,8 @@ export async function disableGuardian<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<DisableGuardianParams>
@@ -276,8 +276,8 @@ export async function setupCustomDelayModule<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<SetupCustomDelayModuleParams>
