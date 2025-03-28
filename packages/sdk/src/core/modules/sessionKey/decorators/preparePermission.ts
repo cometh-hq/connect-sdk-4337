@@ -13,13 +13,14 @@ import {
     getPermissionId,
     getSudoPolicy,
 } from "@rhinestone/module-sdk";
-import type {
-    Address,
-    Chain,
-    Client,
-    Hex,
-    PublicClient,
-    Transport,
+import {
+    type Address,
+    type Chain,
+    ChainNotFoundError,
+    type Client,
+    type Hex,
+    type PublicClient,
+    type Transport,
 } from "viem";
 import { encodeFunctionData } from "viem/utils";
 import { SmartSessionAbi } from "../abi/smartSessionAbi";
@@ -205,7 +206,7 @@ export async function preparePermission<
     const chainId = publicClient_?.chain?.id;
 
     if (!chainId) {
-        throw new Error("Chain not found");
+        throw new ChainNotFoundError();
     }
 
     const defaultedSessionRequestedInfo =

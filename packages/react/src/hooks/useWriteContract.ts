@@ -22,6 +22,7 @@ import type {
   MutationOptionsWithoutMutationFn,
   QueryResultType,
 } from "./types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * @description A custom hook for writing to smart contracts through a smart account.
@@ -155,7 +156,7 @@ export const useWriteContract = (
     {
       mutationFn: async (variables: WriteContractParameters): Promise<Hash> => {
         if (!smartAccountClient) {
-          throw new Error("No smart account found");
+          throw new SmartAccountNotFoundError();
         }
 
         const { abi, address, functionName, args, value } = variables;

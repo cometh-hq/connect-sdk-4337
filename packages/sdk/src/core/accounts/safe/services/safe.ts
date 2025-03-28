@@ -2,6 +2,7 @@ import { getSignerAddress, isComethSigner } from "@/core/signers/createSigner";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import type { Signer } from "@/core/signers/types";
 import type { UserOperation } from "@/core/types";
+import { InvalidCallDataError, SafeNotDeployedError } from "@/errors";
 import { MigrationAbi } from "@/migrationKit/abi/migration";
 import { isSmartAccountDeployed } from "permissionless";
 import {
@@ -68,7 +69,7 @@ export const decodeUserOp = ({
         data: userOperation.callData as `0x${string}`,
     });
 
-    if (!args) throw new Error("Invalid callData for Safe Account");
+    if (!args) throw new InvalidCallDataError();
 
     const txs: MultiSendTransaction[] = [];
 
@@ -310,7 +311,7 @@ export const isSafeOwner = async ({
             safeAddress
         );
 
-        if (!isDeployed) throw new Error("Safe not deployed");
+        if (!isDeployed) throw new SafeNotDeployedError();
 
         return (await safe.read.isOwner([signerAddress])) as boolean;
     } catch {
@@ -517,7 +518,7 @@ export const isModuleEnabled = async ({
 
     const isDeployed = await isSmartAccountDeployed(client, safeAddress);
 
-    if (!isDeployed) throw new Error("Safe not deployed");
+    if (!isDeployed) throw new SafeNotDeployedError();
 
     return await safe.read.isModuleEnabled([moduleAddress]);
 };

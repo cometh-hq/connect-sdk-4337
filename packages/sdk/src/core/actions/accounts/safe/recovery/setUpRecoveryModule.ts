@@ -3,6 +3,11 @@ import delayModuleService from "@/core/services/delayModuleService";
 
 import { defaultClientConfig } from "@/constants";
 import { getProjectParamsByChain } from "@/core/services/comethService";
+import {
+    APINotFoundError,
+    FetchingProjectParamsError,
+    RecoveryAlreadySetUpError,
+} from "@/errors";
 import { sendTransaction } from "permissionless/actions/smartAccount";
 import {
     http,
@@ -37,14 +42,14 @@ export async function setUpRecoveryModule<
 
     const api = client?.account?.connectApiInstance;
 
-    if (!api) throw new Error("No api found");
+    if (!api) throw new APINotFoundError();
 
     const projectParams = await getProjectParamsByChain({
         api,
         chain: client.chain as Chain,
     });
 
-    if (!projectParams) throw Error("Error fetching project params");
+    if (!projectParams) throw new FetchingProjectParamsError();
 
     const {
         moduleFactoryAddress,
@@ -69,7 +74,7 @@ export async function setUpRecoveryModule<
         client: rpcClient,
     });
 
-    if (isDelayModuleDeployed) throw Error("Recovery already setup");
+    if (isDelayModuleDeployed) throw new RecoveryAlreadySetUpError();
 
     const delayModuleInitializer = await delayModuleService.setUpDelayModule({
         safe: smartAccounAddress,

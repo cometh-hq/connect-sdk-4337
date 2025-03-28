@@ -8,6 +8,7 @@ import type {
 } from "viem";
 
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types.js";
+import { EoaSignerRequiredError } from "@/errors.js";
 import { safeLegacyECDSASigner } from "./ecdsa/ecdsa.js";
 import type { SafeSigner } from "./types.js";
 import { safeLegacyWebAuthnSigner } from "./webauthn/webAuthn.js";
@@ -48,7 +49,7 @@ export async function comethSignerToSafeSigner<
         };
     }
 
-    if (!eoaSigner) throw new Error("eoaSigner is required");
+    if (!eoaSigner) throw new EoaSignerRequiredError();
 
     return {
         ...(await safeLegacyECDSASigner(client, {

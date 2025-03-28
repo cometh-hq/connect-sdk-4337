@@ -1,4 +1,5 @@
 import { SENTINEL_MODULES } from "@/constants";
+import { AddressIsNotAGuardianError } from "@/errors";
 import {
     type Address,
     type Client,
@@ -243,7 +244,7 @@ const findPrevModule = async ({
     );
 
     if (index === -1) {
-        throw new Error("Address is not a guardian");
+        throw new AddressIsNotAGuardianError();
     }
 
     return index !== 0

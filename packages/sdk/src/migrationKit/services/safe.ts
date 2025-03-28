@@ -1,6 +1,7 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { SafeProxyContractFactoryABI } from "@/core/accounts/safe/abi/safeProxyFactory";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
+import { SafeNotDeployedError } from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     type Address,
@@ -34,7 +35,7 @@ export const isSafeOwner = async ({
 
     const isDeployed = await isSmartAccountDeployed(client, safeAddress);
 
-    if (!isDeployed) throw new Error("Safe not deployed");
+    if (!isDeployed) throw new SafeNotDeployedError();
 
     return (await safe.read.isOwner([signerAddress])) as boolean;
 };

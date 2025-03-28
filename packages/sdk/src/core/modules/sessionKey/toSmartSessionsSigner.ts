@@ -1,6 +1,7 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type { SafeSigner } from "@/core/accounts/safe/safeSigner/types";
 import type { ComethSmartAccountClient } from "@/core/clients/accounts/safe/createClient";
+import { MethodNotSupportedError, PermissionNotInstalledError } from "@/errors";
 import {
     SMART_SESSIONS_ADDRESS,
     SmartSessionMode,
@@ -78,19 +79,18 @@ export async function toSmartSessionsSigner<
         ],
     });
 
-    if (!isPermissionInstalled)
-        throw new Error("Permission not installed for this wallet");
+    if (!isPermissionInstalled) throw new PermissionNotInstalledError();
 
     const account = toAccount({
         address: signer.address,
         async signMessage() {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTransaction(_, __) {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTypedData() {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     });
 

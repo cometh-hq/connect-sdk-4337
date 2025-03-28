@@ -4,7 +4,12 @@ import { sendTransaction } from "permissionless/actions/smartAccount";
 
 import { defaultClientConfig } from "@/constants";
 import { getProjectParamsByChain } from "@/core/services/comethService";
-import { NoRecoveryRequestFoundError } from "@/errors";
+import {
+    APINotFoundError,
+    FetchingProjectParamsError,
+    NoRecoveryRequestFoundError,
+    RecoveryNotActiveError,
+} from "@/errors";
 import {
     http,
     type Address,
@@ -53,14 +58,14 @@ export async function cancelRecoveryRequest<
     } else {
         const api = client?.account?.connectApiInstance;
 
-        if (!api) throw new Error("No api found");
+        if (!api) throw new APINotFoundError();
 
         const projectParams = await getProjectParamsByChain({
             api,
             chain: client.chain as Chain,
         });
 
-        if (!projectParams) throw Error("Error fetching project params");
+        if (!projectParams) throw new FetchingProjectParamsError();
 
         const {
             moduleFactoryAddress,
@@ -85,7 +90,7 @@ export async function cancelRecoveryRequest<
         client: rpcClient,
     });
 
-    if (!isDelayModuleDeployed) throw Error("Recovery not active");
+    if (!isDelayModuleDeployed) throw new RecoveryNotActiveError();
 
     const recoveryRequest = await delayModuleService.getCurrentRecoveryParams(
         delayAddress,

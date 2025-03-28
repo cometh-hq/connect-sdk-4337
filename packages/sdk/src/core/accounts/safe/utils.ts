@@ -1,5 +1,6 @@
 import type { API } from "@/core/services/API";
 import type { ComethSignerConfig } from "@/core/signers/types";
+import { MethodNotSupportedError } from "@/errors";
 import { type Abi, parseAbi } from "abitype";
 import {
     type Prettify,
@@ -129,9 +130,7 @@ export async function toSmartAccount<
                               comethImplementation.sign
                                   ? comethImplementation.sign(parameters)
                                   : Promise.reject(
-                                          new Error(
-                                              "sign method is not defined"
-                                          )
+                                          new MethodNotSupportedError()
                                       ),
                           ]);
                       if (factory && factoryData)

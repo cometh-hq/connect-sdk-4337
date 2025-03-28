@@ -18,6 +18,10 @@ import {
     getSignerLocalStorage,
 } from "./ecdsa/services/ecdsaService";
 
+import {
+    DeviceNotCompatibleWithPasskeysError,
+    PasskeySignerNotValidError,
+} from "@/errors";
 import type {
     PasskeyLocalStorageFormat,
     webAuthnOptions,
@@ -48,7 +52,7 @@ export const getSignerAddress = (customSigner: Signer) => {
 export const getSigner = (customSigner: Signer) => {
     if (isComethSigner(customSigner)) {
         if (customSigner.type === "passkey")
-            throw Error("passkey signer not valid");
+            throw new PasskeySignerNotValidError();
 
         return customSigner.eoaFallback.signer;
     }
@@ -88,8 +92,7 @@ export const saveSigner = async (
 export const throwErrorWhenEoaFallbackDisabled = (
     disableEoaFallback: boolean
 ): void => {
-    if (disableEoaFallback)
-        throw new Error("Passkeys are not compatible with your device");
+    if (disableEoaFallback) throw new DeviceNotCompatibleWithPasskeysError();
 };
 
 export const isFallbackSigner = (): boolean => {

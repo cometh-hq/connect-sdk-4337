@@ -4,6 +4,10 @@ import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmar
 import { SAFE_SENTINEL_OWNERS } from "@/core/accounts/safe/types";
 import type { SmartAccountClient } from "@/core/clients/accounts/safe/createClient";
 import type { DeviceData, WebAuthnSigner } from "@/core/types";
+import {
+    OwnerToRemoveIsNotSafeOwnerError,
+    RemoveOwnerOnUndeployedSafeError,
+} from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
@@ -73,8 +77,7 @@ export const safeOwnerPluginActions =
                 smartAccountClient.account?.address as Address
             );
 
-            if (!isDeployed)
-                throw new Error("Can't remove owner on an undeployed safe");
+            if (!isDeployed) throw new RemoveOwnerOnUndeployedSafeError();
 
             const owners = (await rpcClient.readContract({
                 address: smartAccountClient.account?.address as Address,
@@ -87,7 +90,7 @@ export const safeOwnerPluginActions =
             );
 
             if (index === -1)
-                throw new Error(`${args.ownerToRemove} is not a safe owner`);
+                throw new OwnerToRemoveIsNotSafeOwnerError(args.ownerToRemove);
 
             let prevOwner: Address;
 

@@ -62,7 +62,10 @@ export function useSmartAccount() {
                     chain: arbitrumSepolia,
                     publicClient,
                 });
-                window.localStorage.setItem("walletAddress", smartAccount.address);
+                window.localStorage.setItem(
+                    "walletAddress",
+                    smartAccount.address
+                );
             }
 
             const paymasterClient = await createComethPaymasterClient({

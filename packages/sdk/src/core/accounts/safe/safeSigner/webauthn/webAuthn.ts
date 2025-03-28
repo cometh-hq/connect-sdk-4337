@@ -21,6 +21,7 @@ import {
 import { sign } from "@/core/signers/passkeys/passkeyService";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
 import { parseHex } from "@/core/signers/passkeys/utils";
+import { MethodNotSupportedError } from "@/errors";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,
@@ -92,10 +93,10 @@ export async function safeWebAuthnSigner<
             ]) as Hex;
         },
         async signTransaction(_, __) {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTypedData() {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     });
 

@@ -30,6 +30,11 @@ import {
 import { getProjectParamsByChain } from "@/core/services/comethService";
 import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
 import { getFallbackEoaSigner } from "@/core/signers/ecdsa/fallbackEoa/fallbackEoaSigner";
+import {
+    MigrationContractAddressNotAvailableError,
+    SafeVersionNotSupportedError,
+    SmartAccountAddressNotFoundError,
+} from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import { comethSignerToSafeSigner } from "./safeLegacySigner/comethSignerToSafeSigner";
 import { LEGACY_API } from "./services/LEGACY_API";
@@ -137,7 +142,7 @@ export async function createLegacySafeSmartAccount<
     baseUrl,
     publicClient,
 }: createSafeSmartAccountParameters): Promise<LegacySafeSmartAccount> {
-    if (!smartAccountAddress) throw new Error("Account address not found");
+    if (!smartAccountAddress) throw new SmartAccountAddressNotFoundError();
 
     const legacyApi = new LEGACY_API(apiKeyLegacy);
     const api = new API(apiKey4337, baseUrl);
@@ -175,9 +180,7 @@ export async function createLegacySafeSmartAccount<
     } = legacyProjectParams;
 
     if (!migrationContractAddress) {
-        throw new Error(
-            "Migration contract address not available for this network"
-        );
+        throw new MigrationContractAddressNotAvailableError();
     }
 
     let signer: ComethSigner;
@@ -283,9 +286,11 @@ export async function createLegacySafeSmartAccount<
                         }),
                     ])) as [string, number, boolean, bigint];
 
-                if (currentVersion !== "1.3.0") {
-                    throw new Error(
-                        `Safe is not version 1.3.0. Current version: ${currentVersion}`
+                const supportedVersion = "1.3.0";
+                if (currentVersion !== supportedVersion) {
+                    throw new SafeVersionNotSupportedError(
+                        supportedVersion,
+                        currentVersion
                     );
                 }
             } else {

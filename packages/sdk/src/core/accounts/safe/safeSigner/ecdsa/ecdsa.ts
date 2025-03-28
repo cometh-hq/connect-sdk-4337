@@ -9,8 +9,6 @@ import {
     type TypedData,
     type TypedDataDefinition,
     encodePacked,
-    hashTypedData,
-    toBytes,
 } from "viem";
 import { toAccount } from "viem/accounts";
 import { signTypedData } from "viem/actions";
@@ -22,6 +20,7 @@ import {
     packInitCode,
     packPaymasterData,
 } from "@/core/accounts/safe/services/utils";
+import { MethodNotSupportedError } from "@/errors";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,
@@ -59,34 +58,28 @@ export async function safeECDSASigner<
     const viemSigner: LocalAccount = {
         ...signer,
         signTransaction: (_, __) => {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
     } as LocalAccount;
 
     const account = toAccount({
         address: smartAccountAddress,
         async signMessage({ message }) {
-            const messageHash = hashTypedData({
-                domain: {
-                    chainId: client.chain?.id,
-                    verifyingContract: smartAccountAddress,
-                },
-                types: EIP712_SAFE_MESSAGE_TYPE,
-                primaryType: "SafeMessage" as const,
-                message: { message: generateSafeMessageMessage(message) },
-            });
-
             return adjustVInSignature(
-                "eth_sign",
-                await viemSigner.signMessage({
-                    message: {
-                        raw: toBytes(messageHash),
+                "eth_signTypedData",
+                await viemSigner.signTypedData({
+                    domain: {
+                        chainId: client.chain?.id,
+                        verifyingContract: smartAccountAddress,
                     },
+                    types: EIP712_SAFE_MESSAGE_TYPE,
+                    primaryType: "SafeMessage" as const,
+                    message: { message: generateSafeMessageMessage(message) },
                 })
             );
         },
         async signTransaction(_, __) {
-            throw new Error("not supported");
+            throw new MethodNotSupportedError();
         },
         async signTypedData<
             const TTypedData extends TypedData | Record<string, unknown>,

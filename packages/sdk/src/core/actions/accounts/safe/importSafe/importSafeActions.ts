@@ -9,6 +9,11 @@ import type { SafeContractParams } from "@/core/accounts/safe/types";
 import type { API } from "@/core/services/API";
 import { isDeviceCompatibleWithPasskeys } from "@/core/signers/createSigner";
 import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
+import {
+    ImportOnUndeployedSafeError,
+    SafeVersionNotSupportedError,
+    WalletAlreadyImportedError,
+} from "@/errors";
 import type { SafeTransactionDataPartial } from "@/migrationKit/types";
 import { isSmartAccountDeployed } from "permissionless";
 import {
@@ -88,7 +93,7 @@ export function importSafeActions() {
                 );
 
                 if (!isDeployed) {
-                    throw new Error("Import can only be done on deployed safe");
+                    throw new ImportOnUndeployedSafeError();
                 }
 
                 const api = client?.account?.connectApiInstance as API;
@@ -128,9 +133,11 @@ export function importSafeActions() {
                             }),
                         ])) as [string, number, boolean, bigint];
 
-                    if (currentVersion !== "1.3.0") {
-                        throw new Error(
-                            `Safe is not version 1.3.0. Current version: ${currentVersion}`
+                    const supportedVersion = "1.3.0";
+                    if (currentVersion !== supportedVersion) {
+                        throw new SafeVersionNotSupportedError(
+                            supportedVersion,
+                            currentVersion
                         );
                     }
                 } else {
@@ -205,7 +212,7 @@ export function importSafeActions() {
                 );
 
                 if (!isDeployed) {
-                    throw new Error("Import can only be done on deployed safe");
+                    throw new ImportOnUndeployedSafeError();
                 }
 
                 const api = client?.account?.connectApiInstance as API;
@@ -217,7 +224,7 @@ export function importSafeActions() {
                 );
 
                 if (importedWallet?.length > 0) {
-                    throw new Error("Wallet already imported");
+                    throw new WalletAlreadyImportedError();
                 }
 
                 let threshold: number;
@@ -253,9 +260,11 @@ export function importSafeActions() {
                             }),
                         ])) as [string, number, boolean, bigint];
 
-                    if (currentVersion !== "1.4.1") {
-                        throw new Error(
-                            `Safe is not version 1.4.1. Current version: ${currentVersion}`
+                    const supportedVersion = "1.4.1";
+                    if (currentVersion !== supportedVersion) {
+                        throw new SafeVersionNotSupportedError(
+                            supportedVersion,
+                            currentVersion
                         );
                     }
                 } else {

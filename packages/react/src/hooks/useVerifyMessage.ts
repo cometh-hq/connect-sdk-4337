@@ -2,6 +2,7 @@ import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import type { MutationOptionsWithoutMutationFn } from "./types";
+import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * Props for the useVerifyMessage hook.
@@ -65,7 +66,7 @@ export const useVerifyMessage = (
                 variables: UseVerifySignatureProps
             ): Promise<boolean> => {
                 if (!smartAccountClient) {
-                    throw new Error("No smart account found");
+                    throw new SmartAccountNotFoundError();
                 }
                 const { message, signature } = variables;
 
