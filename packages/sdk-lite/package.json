@@ -1,0 +1,72 @@
+{
+  "name": "@cometh/connect-sdk-lite",
+  "author": "Cometh",
+  "maintainers": [
+    {
+      "name": "yoanslvy"
+    }
+  ],
+  "version": "0.0.1",
+  "description": "SDK Cometh Connect Lite",
+  "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
+  "keywords": [
+    "cometh",
+    "passkeys",
+    "erc-4337",
+    "smart-wallet"
+  ],
+  "license": "ISC",
+  "private": false,
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typings": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "/dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.cjs"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js",
+      "default": "./dist/core/index.cjs"
+    }
+  },
+  "scripts": {
+    "lint": "biome lint .",
+    "format:check": "biome check .",
+    "format": "biome check --apply .",
+    "clean": "rimraf dist",
+    "build": "tsup --splitting"
+  },
+  "peerDependencies": {
+    "viem": "2.22.2",
+    "wagmi": "^2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsup": "^8.0.2",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.6.0",
+    "@rhinestone/module-sdk": "^0.2.3",
+    "@simplewebauthn/server": "^7.2.0",
+    "@types/cbor-js": "^0.1.1",
+    "@types/elliptic": "^6.4.18",
+    "@types/psl": "^1.1.3",
+    "@types/qrcode": "^1.5.5",
+    "axios": "^1.6.8",
+    "bowser": "^2.11.0",
+    "cbor-js": "^0.1.0",
+    "elliptic": "^6.5.7",
+    "permissionless": "^0.2.39",
+    "psl": "^1.9.0",
+    "qrcode": "^1.5.3"
+  }
+}
