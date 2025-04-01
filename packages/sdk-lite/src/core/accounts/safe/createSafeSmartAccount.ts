@@ -4,13 +4,6 @@ import {
 import type {Signer } from "@/core/signers/types";
 import { getAccountNonce } from "permissionless/actions";
 import { toSmartAccount } from "./utils";
-import {    
-    SETUP_CONTRACT_ADDRESS,
-    SAFE_PROXY_FACTORY_ADDRESS,
-    SAFE_SINGLETON_ADDRESS,
-    MULTISEND_ADDRESS,
-    SAFE_4337_MODULE_ADDRESS,
-} from "@/constants";
 
 import {
     http,
@@ -56,11 +49,11 @@ export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
 
 export type createSafeSmartAccountParameters = Prettify<{
     chain: Chain;
+    safeContractConfig: SafeContractParams;
+    signer: Signer;
     publicClient?: PublicClient;
     baseUrl?: string;
     smartAccountAddress?: Address;
-    safeContractConfig?: SafeContractParams;
-    signer: Signer;
     smartSessionSigner?: SafeSigner;
 }>;
 
@@ -132,16 +125,6 @@ export async function createSafeSmartAccount<
             undefined
         >;
 
-    const contractParams = {
-        setUpContractAddress: SETUP_CONTRACT_ADDRESS,
-        safeProxyFactoryAddress: SAFE_PROXY_FACTORY_ADDRESS,
-        safeSingletonAddress: SAFE_SINGLETON_ADDRESS,
-        multisendAddress: MULTISEND_ADDRESS,
-        safe4337ModuleAddress: SAFE_4337_MODULE_ADDRESS,
-    }
-
-    console.log("####1");
-
     publicClient =
         publicClient ??
         (createPublicClient({
@@ -153,31 +136,21 @@ export async function createSafeSmartAccount<
             },
         }) as PublicClient);
 
-        console.log("####2");
-
     const {
         setUpContractAddress,
         safeProxyFactoryAddress,
         safeSingletonAddress,
         multisendAddress,
         safe4337ModuleAddress: safe4337Module,
-    } = safeContractConfig ??
-    (contractParams as SafeContractParams);
-
-    console.log("####3");
-    console.log(safe4337Module);
+    } = safeContractConfig;
 
     if (!safe4337Module) {
         throw new ChainNotFoundError();
     }
 
-    console.log("####4");
-
     const accountSigner = signer
 
     const signerAddress: Address = getSignerAddress(accountSigner);
-
-    console.log("####5");
 
     const initializer = getSafeInitializer({
         accountSigner,
@@ -186,8 +159,6 @@ export async function createSafeSmartAccount<
         modules: [safe4337Module],
         setUpContractAddress,
     });
-
-    console.log("####6");
 
     if (!smartAccountAddress) {
         smartAccountAddress = await getAccountAddress({
@@ -200,15 +171,11 @@ export async function createSafeSmartAccount<
         });
     }
 
-    console.log("####7");
-
     const generateInitCode = () =>
         getAccountInitCode({
             initializer,
             singletonAddress: safeSingletonAddress,
         });
-
-    console.log("####8");
 
     let userOpVerifyingContract = safe4337Module;
 
@@ -216,8 +183,6 @@ export async function createSafeSmartAccount<
         client,
         smartAccountAddress
     );
-
-    console.log("####9");
 
     if (isDeployed) {
         const is7579Enabled = await publicClient.readContract({
@@ -232,8 +197,6 @@ export async function createSafeSmartAccount<
         }
     }
 
-    console.log("####10");
-
     const safeSigner =
         smartSessionSigner ??
         (await comethSignerToSafeSigner<TTransport, TChain>(client, {
@@ -241,8 +204,6 @@ export async function createSafeSmartAccount<
             userOpVerifyingContract,
             smartAccountAddress,
         }));
-
-        console.log("####11");
 
     return toSmartAccount({
         client,
@@ -253,8 +214,7 @@ export async function createSafeSmartAccount<
             version: "0.7",
         },
         safeContractParams:
-            safeContractConfig ??
-            (contractParams as SafeContractParams),
+            safeContractConfig,
         publicClient,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
