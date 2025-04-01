@@ -15,7 +15,6 @@ export const COUNTER_CONTRACT_ADDRESS =
   "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 export default function App() {
-  const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
   const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL!;
   const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!;
   const walletToImport = "0x";
@@ -28,7 +27,6 @@ export default function App() {
     );
 
     const safe4337SmartAccount = await createSafeSmartAccount({
-      apiKey,
       chain: arbitrumSepolia,
       smartAccountAddress: legacyWalletAddress,
       signer,
@@ -68,7 +66,6 @@ export default function App() {
     });
 
     const safe4337SmartAccountImported = await createSafeSmartAccount({
-      apiKey,
       chain: arbitrumSepolia,
       smartAccountAddress: legacyWalletAddress,
     });
