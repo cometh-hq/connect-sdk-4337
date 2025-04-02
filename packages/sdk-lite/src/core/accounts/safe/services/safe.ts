@@ -42,7 +42,6 @@ export const encodeMultiSendTransactions = (
     );
 };
 
-
 /**
  * Generates setup data for enabling modules and configuring the signer
  * @param modules - Array of module addresses to enable
@@ -105,7 +104,6 @@ export const getSafeInitializer = ({
         fallbackHandler,
     });
 };
-
 
 /**
  * Calculates the Safe address based on the initializer data

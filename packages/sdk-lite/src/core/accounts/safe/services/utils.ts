@@ -15,7 +15,6 @@ export const DUMMY_AUTHENTICATOR_DATA = new Uint8Array(37);
 DUMMY_AUTHENTICATOR_DATA.fill(0xfe);
 DUMMY_AUTHENTICATOR_DATA[32] = 0x04;
 
-
 export const buildSignatureBytes = (signatures: SafeSignature[]): string => {
     const SIGNATURE_LENGTH_BYTES = 65;
     signatures.sort((left, right) =>

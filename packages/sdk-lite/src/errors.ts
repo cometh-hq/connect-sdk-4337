@@ -9,7 +9,6 @@ export type ExecutionMode<callType extends CallType> = {
     context?: `0x${string}`;
 };
 
-
 /**
  * Adaptor Errors
  **/
@@ -67,7 +66,6 @@ export class InvalidCallDataError extends Error {
     }
 }
 
-
 /**
  * Signature Errors
  **/
@@ -77,7 +75,6 @@ export class InvalidSignatureError extends Error {
         super("Invalid signature");
     }
 }
-
 
 /**
  * Transactions Errors

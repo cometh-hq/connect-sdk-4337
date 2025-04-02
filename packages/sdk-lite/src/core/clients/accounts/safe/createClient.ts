@@ -117,7 +117,5 @@ export function createSmartAccountClient<
             // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         ) as any;
 
-    return client
-        .extend(eip5792Actions())
-        .extend(erc7715Actions());
+    return client.extend(eip5792Actions()).extend(erc7715Actions());
 }

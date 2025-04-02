@@ -31,6 +31,7 @@ import {
 
 import { SAFE_7579_ADDRESS, add7579FunctionSelector } from "@/constants";
 import { MethodNotSupportedError } from "@/errors";
+import defaultSafeContractConfig from "@/safeContractConfig";
 import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
@@ -46,10 +47,9 @@ export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
 
 export type createSafeSmartAccountParameters = Prettify<{
     chain: Chain;
-    safeContractConfig: SafeContractParams;
     signer: Signer;
+    safeContractConfig?: SafeContractParams;
     publicClient?: PublicClient;
-    baseUrl?: string;
     smartAccountAddress?: Address;
 }>;
 
@@ -136,7 +136,8 @@ export async function createSafeSmartAccount<
         safeSingletonAddress,
         multisendAddress,
         safe4337ModuleAddress: safe4337Module,
-    } = safeContractConfig;
+    } = safeContractConfig ??
+    (defaultSafeContractConfig.networks[chain.id] as SafeContractParams);
 
     if (!safe4337Module) {
         throw new ChainNotFoundError();
@@ -191,11 +192,14 @@ export async function createSafeSmartAccount<
         }
     }
 
-    const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(client, {
+    const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
+        client,
+        {
             accountSigner,
             userOpVerifyingContract,
             smartAccountAddress,
-        });
+        }
+    );
 
     return toSmartAccount({
         client,
@@ -205,7 +209,11 @@ export async function createSafeSmartAccount<
             address: entryPoint07Address,
             version: "0.7",
         },
-        safeContractParams: safeContractConfig,
+        safeContractParams:
+            safeContractConfig ??
+            (defaultSafeContractConfig.networks[
+                chain.id
+            ] as SafeContractParams),
         publicClient,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
