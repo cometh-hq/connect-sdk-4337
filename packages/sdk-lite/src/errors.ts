@@ -9,71 +9,14 @@ export type ExecutionMode<callType extends CallType> = {
     context?: `0x${string}`;
 };
 
-/**
- * Wallet Errors
- **/
-
-export class WalletDoesNotExistsError extends Error {
-    constructor() {
-        super("Provided wallet does not exists. Please verify wallet address");
-    }
-}
-
-export class WalletNotConnectedError extends Error {
-    constructor() {
-        super("Account is not connected");
-    }
-}
-
-export class WalletNotDeployedError extends Error {
-    constructor() {
-        super("Wallet is not deployed yet");
-    }
-}
-
-export class WalletAlreadyImportedError extends Error {
-    constructor() {
-        super("Wallet is already imported");
-    }
-}
-
-export class NoSignerFoundError extends Error {
-    constructor() {
-        super("No signer instance found");
-    }
-}
 
 /**
  * Adaptor Errors
  **/
 
-export class NoFallbackSignerError extends Error {
-    constructor() {
-        super("No fallback signer found");
-    }
-}
-
 export class FallbackAlreadySetError extends Error {
     constructor() {
         super("Fallback already set");
-    }
-}
-
-export class SignerNotOwnerError extends Error {
-    constructor() {
-        super("Signer found is not owner of the wallet");
-    }
-}
-
-export class UnauthorizedMethodError extends Error {
-    constructor(methodName: string) {
-        super(`Not authorized method: ${methodName}`);
-    }
-}
-
-export class RelayedTransactionError extends Error {
-    constructor() {
-        super("Error during the relay of the transaction");
     }
 }
 
@@ -84,18 +27,6 @@ export class RelayedTransactionError extends Error {
 export class SafeNotDeployedError extends Error {
     constructor() {
         super("Safe not deployed");
-    }
-}
-
-export class ImportOnUndeployedSafeError extends Error {
-    constructor() {
-        super("Import can only be done on deployed safe");
-    }
-}
-
-export class RemoveOwnerOnUndeployedSafeError extends Error {
-    constructor() {
-        super("Can't remove owner on an undeployed safe");
     }
 }
 
@@ -136,128 +67,6 @@ export class InvalidCallDataError extends Error {
     }
 }
 
-export class SafeVersionNotSupportedError extends BaseError {
-    constructor(supportedVersion: string, currentVersion: string) {
-        super(
-            `Safe is not version ${supportedVersion}. Current version: ${currentVersion}`,
-            {
-                metaMessages: [
-                    `Current Version:  ${currentVersion}`,
-                    `Supported Version: ${supportedVersion}`,
-                ],
-            }
-        );
-    }
-}
-
-export class OwnerToRemoveIsNotSafeOwnerError extends Error {
-    constructor(ownerToRemove: string) {
-        super(`${ownerToRemove} is not a safe owner`);
-    }
-}
-
-export class MigrationContractAddressNotAvailableError extends Error {
-    constructor() {
-        super("Migration contract address not available for this network");
-    }
-}
-
-export class InvalidSmartAccountClientError extends Error {
-    constructor() {
-        super("Invalid Smart Account Client");
-    }
-}
-
-export class InvalidAccountAddressError extends Error {
-    constructor() {
-        super("Invalid account address");
-    }
-}
-
-/**
- * Recovery Errors
- **/
-
-export class NoRecoveryRequestFoundError extends BaseError {
-    constructor() {
-        super("No recovery request found", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
-
-export class AddressIsNotAGuardianError extends BaseError {
-    constructor() {
-        super("Address is not a guardian", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
-
-export class DelayModuleNotEnabledError extends BaseError {
-    constructor() {
-        super("Delay module not enabled", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
-
-export class DelayModuleAlreadySetUpError extends BaseError {
-    constructor() {
-        super("Delay module already set up", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
-
-export class GuardianAlreadyEnabledError extends BaseError {
-    constructor() {
-        super("Guardian already enabled", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
-
-export class PreviousModuleNotFoundError extends BaseError {
-    constructor() {
-        super("Previous module not found", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
-
-export class RecoveryNotActiveError extends BaseError {
-    constructor() {
-        super("Recovery not active", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
-
-export class RecoveryNotSetUpError extends BaseError {
-    constructor() {
-        super("Recovery has not been setup", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
-
-export class RecoveryAlreadySetUpError extends BaseError {
-    constructor() {
-        super("Recovery already setup", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/social-recovery",
-        });
-    }
-}
 
 /**
  * Signature Errors
@@ -269,94 +78,6 @@ export class InvalidSignatureError extends Error {
     }
 }
 
-export class InvalidSignerDataError extends Error {
-    constructor() {
-        super("Invalid signer data");
-    }
-}
-
-export class InvalidSignatureEncodingError extends Error {
-    constructor() {
-        super("Invalid signature encoding");
-    }
-}
-
-export class EoaSignerRequiredError extends Error {
-    constructor() {
-        super("eoaSigner is required");
-    }
-}
-
-export class CannotSignForAddressError extends Error {
-    constructor() {
-        super("Cannot sign for address that is not the current account");
-    }
-}
-
-export class InvalidSignerTypeError extends Error {
-    constructor() {
-        super("Invalid signer type: must be one of the allowed types");
-    }
-}
-
-/**
- * Add New Device Errors
- **/
-
-export class FailedToSerializeUrlError extends Error {
-    constructor(error: Error) {
-        super(`Failed to serialize url: ${error}`);
-    }
-}
-
-export class FailedToGenerateQRCodeError extends Error {
-    constructor(error: Error) {
-        super(`Failed to generate QR Code: ${error}`);
-    }
-}
-
-/**
- * Session keys Errors
- **/
-
-export class PermissionNotInstalledError extends BaseError {
-    constructor() {
-        super("Permission not installed for this wallet", {
-            docsBaseUrl: "https://docs.cometh.io/connect-4337",
-            docsPath: "/resources/advanced-features/session-keys",
-        });
-    }
-}
-
-export class ExpiryRequiredError extends Error {
-    constructor() {
-        super("Invalid expiry: expiry is required");
-    }
-}
-
-export class ExpiryInPastError extends Error {
-    constructor() {
-        super("Invalid expiry: expiry must be in the future");
-    }
-}
-
-export class UnsupportedPolicyError extends Error {
-    constructor(policy: string) {
-        super(`Unsupported policy: ${policy}`);
-    }
-}
-
-export class UnsupportedPermissionTypeError extends Error {
-    constructor(permissionType: string) {
-        super(`Unsupported permission type: ${permissionType}`);
-    }
-}
-
-export class InvalidParamsError extends Error {
-    constructor(message: string) {
-        super(`Invalid params: ${message}`);
-    }
-}
 
 /**
  * Transactions Errors
@@ -368,27 +89,5 @@ export class MissingToAddressError extends BaseError {
             docsBaseUrl: "https://docs.cometh.io/connect-4337",
             docsPath: "/sdk-features/send-transactions",
         });
-    }
-}
-
-/**
- * Utils Errors
- **/
-
-export class ChainIdNotFoundError extends Error {
-    constructor() {
-        super("ChainId not found");
-    }
-}
-
-export class NoPrivateKeyFoundError extends Error {
-    constructor() {
-        super("No private key found");
-    }
-}
-
-export class ChallengeNotFoundError extends Error {
-    constructor() {
-        super("Challenge not found in client data JSON");
     }
 }

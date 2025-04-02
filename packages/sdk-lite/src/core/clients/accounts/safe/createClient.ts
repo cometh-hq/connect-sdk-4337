@@ -1,9 +1,4 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
-import { eip1193Actions } from "@/core/actions/accounts/eip1193/eip1193Actions";
-import {
-    type SafeOwnerPluginActions,
-    safeOwnerPluginActions,
-} from "@/core/actions/accounts/safe/owners/safeOwnerActions";
 import type { SmartAccountClientConfig } from "permissionless";
 import {
     type BundlerRpcSchema,
@@ -26,7 +21,7 @@ export type ComethAccountClientActions<
     account extends ComethSafeSmartAccount | undefined =
         | ComethSafeSmartAccount
         | undefined,
-> = ComethClientActions<chain, account> & SafeOwnerPluginActions;
+> = ComethClientActions<chain, account>;
 
 export type SmartAccountClient<
     transport extends Transport = Transport,
@@ -123,8 +118,6 @@ export function createSmartAccountClient<
         ) as any;
 
     return client
-        .extend(safeOwnerPluginActions())
-        .extend(eip1193Actions())
         .extend(eip5792Actions())
         .extend(erc7715Actions());
 }

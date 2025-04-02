@@ -11,8 +11,6 @@ import {
 
 import { BatchCallModeNotSupportedError, NoCallsToEncodeError } from "@/errors";
 
-import { LaunchpadAbi } from "../abi/7579/Launchpad";
-
 export type CallType = "call" | "delegatecall" | "batchcall";
 
 export type ExecutionMode<callType extends CallType> = {
@@ -41,65 +39,6 @@ function parseCallType(callType: CallType) {
             return "0xff";
     }
 }
-
-export const getSafeInitData = ({
-    safe4337ModuleAddress,
-    safeSingletonAddress,
-    erc7579LaunchpadAddress,
-    owner,
-    validators,
-    executors,
-    fallbacks,
-    hooks,
-    attesters,
-    attestersThreshold,
-}: {
-    safe4337ModuleAddress: Address;
-    safeSingletonAddress: Address;
-    erc7579LaunchpadAddress: Address;
-    owner: Address;
-    executors: {
-        address: Address;
-        context: Address;
-    }[];
-    validators: { address: Address; context: Address }[];
-    fallbacks: { address: Address; context: Address }[];
-    hooks: { address: Address; context: Address }[];
-    attesters: Address[];
-    attestersThreshold: number;
-}) => {
-    const initSafe7579CallData = encodeFunctionData({
-        abi: LaunchpadAbi,
-        functionName: "initSafe7579",
-        args: [
-            safe4337ModuleAddress, // SAFE_7579_ADDRESS,
-            executors.map((executor) => ({
-                module: executor.address,
-                initData: executor.context,
-            })),
-            fallbacks.map((fallback) => ({
-                module: fallback.address,
-                initData: fallback.context,
-            })),
-            hooks.map((hook) => ({
-                module: hook.address,
-                initData: hook.context,
-            })),
-            attesters,
-            attestersThreshold,
-        ],
-    });
-
-    return {
-        singleton: safeSingletonAddress,
-        owners: [owner],
-        threshold: BigInt(1),
-        setupTo: erc7579LaunchpadAddress,
-        setupData: initSafe7579CallData,
-        safe7579: safe4337ModuleAddress,
-        validators: validators,
-    };
-};
 
 export function encode7579Calls<callType extends CallType>({
     mode,

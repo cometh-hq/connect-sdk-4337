@@ -35,7 +35,6 @@ import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
 import { SafeAbi } from "./abi/safe";
-import type { SafeSigner } from "./safeSigner/types";
 import { encode7579Calls } from "./services/7579";
 import type { SafeContractParams } from "./types";
 
@@ -52,7 +51,6 @@ export type createSafeSmartAccountParameters = Prettify<{
     publicClient?: PublicClient;
     baseUrl?: string;
     smartAccountAddress?: Address;
-    smartSessionSigner?: SafeSigner;
 }>;
 
 /**
@@ -114,7 +112,6 @@ export async function createSafeSmartAccount<
     smartAccountAddress,
     safeContractConfig,
     signer,
-    smartSessionSigner,
 }: createSafeSmartAccountParameters): Promise<ComethSafeSmartAccount> {
     const client = (await getViemClient(chain, publicClient)) as Client<
         TTransport,
@@ -194,13 +191,11 @@ export async function createSafeSmartAccount<
         }
     }
 
-    const safeSigner =
-        smartSessionSigner ??
-        (await comethSignerToSafeSigner<TTransport, TChain>(client, {
+    const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(client, {
             accountSigner,
             userOpVerifyingContract,
             smartAccountAddress,
-        }));
+        });
 
     return toSmartAccount({
         client,
