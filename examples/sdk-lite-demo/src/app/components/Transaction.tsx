@@ -10,7 +10,7 @@ import {
     getContract,
     parseEther,
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
@@ -19,7 +19,7 @@ export const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 const publicClient = createPublicClient({
-    chain: baseSepolia,
+    chain: arbitrumSepolia,
     transport: http(),
     cacheTime: 60_000,
     batch: {
@@ -93,35 +93,26 @@ function Transaction({
         setTransactionSended(null);
         setTransactionFailure(false);
         setTransactionSuccess(false);
-
+    
         setIsTransactionLoading(true);
         try {
-            if (!smartAccount) throw new Error("No wallet instance");
-
-            const calldata = encodeFunctionData({
-                abi: countContractAbi,
-                functionName: "count",
-            });
-
-            const txHash = await smartAccount.sendTransaction({
-                to: COUNTER_CONTRACT_ADDRESS,
-                data: calldata,
-            });
-
-            const balance = await counterContract.read.counters([
-                smartAccount.account.address,
-            ]);
-            setNftBalance(Number(balance));
-            setTransactionSended(txHash);
-
-            setTransactionSuccess(true);
+          if (!smartAccount) throw new Error("No wallet instance");
+    
+          await action();
+    
+          const balance = await counterContract.read.counters([
+            smartAccount.account.address,
+          ]);
+          setNftBalance(Number(balance));
+    
+          setTransactionSuccess(true);
         } catch (e) {
-            console.log("Error:", e);
-            setTransactionFailure(true);
+          console.log("Error:", e);
+          setTransactionFailure(true);
         }
-
+    
         setIsTransactionLoading(false);
-    };
+      };
 
     return (
         <main>
