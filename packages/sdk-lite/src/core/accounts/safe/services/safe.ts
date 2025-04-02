@@ -170,7 +170,7 @@ export const getSafeInitializer = ({
     const signerAddress = getSignerAddress(accountSigner);
 
     const setUpCallData = getSetUpCallData({
-        modules
+        modules,
     });
 
     return getSafeSetUpData({

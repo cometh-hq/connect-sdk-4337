@@ -65,7 +65,7 @@ export async function toSmartAccount<
 
     const address = await comethImplementation.getAddress();
     const signerAddress = comethImplementation.signerAddress;
-    const publicClient = comethImplementation.publicClient;  
+    const publicClient = comethImplementation.publicClient;
 
     return {
         ...extend,

@@ -20,7 +20,6 @@ export async function is7579Installed<
         | ComethSafeSmartAccount
         | undefined,
 >(client: Client<TTransport, TChain, TAccount>): Promise<boolean> {
-
     const smartAccountAddress = client.account?.address;
 
     const publicClient =

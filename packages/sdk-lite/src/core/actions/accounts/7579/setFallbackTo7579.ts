@@ -31,7 +31,6 @@ export async function setFallbackTo7579<
         | ComethSafeSmartAccount
         | undefined,
 >(client: Client<TTransport, TChain, TAccount>): Promise<Hash> {
-
     const smartAccountAddress = client.account?.address;
 
     const publicClient =

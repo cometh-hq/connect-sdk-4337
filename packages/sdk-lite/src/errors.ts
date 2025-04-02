@@ -47,12 +47,6 @@ export class NoSignerFoundError extends Error {
  * Adaptor Errors
  **/
 
-export class EoaFallbackDisableError extends Error {
-    constructor() {
-        super("ECC Passkeys are not compatible with your current device");
-    }
-}
-
 export class NoFallbackSignerError extends Error {
     constructor() {
         super("No fallback signer found");
@@ -321,72 +315,6 @@ export class FailedToGenerateQRCodeError extends Error {
     }
 }
 
-export class DeviceNotCompatibleWithPasskeysError extends Error {
-    constructor() {
-        super("Device not compatible with passkeys");
-    }
-}
-
-export class DeviceNotCompatibleWithSECKP256r1PasskeysError extends Error {
-    constructor() {
-        super("Device not compatible with SECKP256r1 passkeys");
-    }
-}
-
-/**
- * Passkeys Errors
- **/
-
-export class PasskeyCreationError extends Error {
-    constructor() {
-        super("Error in the passkey creation");
-    }
-}
-
-export class FailedToGeneratePasskeyError extends Error {
-    constructor() {
-        super("Failed to generate passkey. Received null as a credential");
-    }
-}
-
-export class NoPasskeySignerFoundInDBError extends Error {
-    constructor() {
-        super("No passkey signer found in db for this walletAddress");
-    }
-}
-
-export class NoPasskeySignerFoundForGivenChain extends Error {
-    constructor() {
-        super("No passkey signer found in db for this walletAddress and chain");
-    }
-}
-
-export class NoPasskeySignerFoundInDeviceError extends Error {
-    constructor() {
-        super(
-            "No signer was found on your device. You might need to add that domain as signer"
-        );
-    }
-}
-
-export class RetrieveWalletFromPasskeyError extends Error {
-    constructor() {
-        super("Unable to retrieve wallet address from passkeys");
-    }
-}
-
-export class PasskeySignatureFailedError extends Error {
-    constructor() {
-        super("Passkey signature failed");
-    }
-}
-
-export class PasskeySignerNotValidError extends Error {
-    constructor() {
-        super("Passkey signer not valid");
-    }
-}
-
 /**
  * Session keys Errors
  **/
@@ -446,18 +374,6 @@ export class MissingToAddressError extends BaseError {
 /**
  * Utils Errors
  **/
-
-export class APINotFoundError extends Error {
-    constructor() {
-        super("No API found");
-    }
-}
-
-export class FetchingProjectParamsError extends Error {
-    constructor() {
-        super("Error fetching project params");
-    }
-}
 
 export class ChainIdNotFoundError extends Error {
     constructor() {

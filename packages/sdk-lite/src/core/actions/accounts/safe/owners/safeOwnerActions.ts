@@ -148,18 +148,16 @@ export const safeOwnerPluginActions =
                 smartAccountClient.account?.address as Address
             );
 
+            if (!isDeployed) throw new Error("Not implemented");
+            //TODO: what to return here?
 
-            if (!isDeployed)
-                throw new Error("Not implemented");
-                //TODO: what to return here?
-                
-                // return [
-                //     {
-                //         address: webAuthnSigners[0].signerAddress as Address,
-                //         deviceData: webAuthnSigners[0].deviceData,
-                //         creationDate: webAuthnSigners[0].creationDate,
-                //     },
-                // ];
+            // return [
+            //     {
+            //         address: webAuthnSigners[0].signerAddress as Address,
+            //         deviceData: webAuthnSigners[0].deviceData,
+            //         creationDate: webAuthnSigners[0].creationDate,
+            //     },
+            // ];
 
             const owners = (await rpcClient.readContract({
                 address: smartAccountClient.account?.address as Address,
@@ -168,7 +166,7 @@ export const safeOwnerPluginActions =
             })) as Address[];
 
             const enrichedOwners: EnrichedOwner[] = owners.map((owner) => {
-            return { address: owner, isSmartContract: false };
+                return { address: owner, isSmartContract: false };
             });
 
             const bytecodes = await Promise.all(

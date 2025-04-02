@@ -14,11 +14,6 @@ export interface QRCodeOptions {
     };
 }
 
-export type CreateNewSignerParams = {
-    fullDomainSelected?: boolean;
-    encryptionSalt?: string;
-};
-
 const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
     const optimizedPayload = {
         os: signerPayload.deviceData.os,

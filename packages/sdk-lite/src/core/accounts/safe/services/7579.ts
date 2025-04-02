@@ -1,24 +1,16 @@
 import {
-    http,
     type Address,
-    type Chain,
     type Hex,
     concatHex,
-    createPublicClient,
     encodeAbiParameters,
     encodeFunctionData,
     encodePacked,
-    keccak256,
     toBytes,
     toHex,
 } from "viem";
 
 import { BatchCallModeNotSupportedError, NoCallsToEncodeError } from "@/errors";
-import {
-    MOCK_ATTESTER_ADDRESS,
-    RHINESTONE_ATTESTER_ADDRESS,
-    getTrustAttestersAction,
-} from "@rhinestone/module-sdk";
+
 import { LaunchpadAbi } from "../abi/7579/Launchpad";
 
 export type CallType = "call" | "delegatecall" | "batchcall";
@@ -48,139 +40,6 @@ function parseCallType(callType: CallType) {
         case "delegatecall":
             return "0xff";
     }
-}
-
-export const getPublicClient = (chain: Chain) => {
-    return createPublicClient({
-        transport: http(),
-        chain: chain,
-    });
-};
-
-export async function getSafeInitializer({
-    owner,
-    validators = [],
-    executors = [],
-    fallbacks = [],
-    hooks = [],
-    attesters = [],
-    attestersThreshold = 0,
-    safeSingletonAddress,
-    erc7579LaunchpadAddress,
-    safe7579Address,
-}: {
-    owner: Address;
-    validators?: { address: Address; context: Address }[];
-    executors?: {
-        address: Address;
-        context: Address;
-    }[];
-    fallbacks?: { address: Address; context: Address }[];
-    hooks?: { address: Address; context: Address }[];
-    attesters?: Address[];
-    attestersThreshold?: number;
-    safeSingletonAddress: Address;
-    erc7579LaunchpadAddress: Address;
-    safe7579Address: Address;
-}): Promise<Hex> {
-    const safe4337ModuleAddress = safe7579Address;
-
-    const initData = getSafeInitData({
-        owner,
-        validators,
-        executors,
-        fallbacks,
-        hooks,
-        attesters,
-        attestersThreshold,
-        safeSingletonAddress,
-        erc7579LaunchpadAddress,
-        safe4337ModuleAddress,
-    });
-
-    const initHash = keccak256(
-        encodeAbiParameters(
-            [
-                {
-                    internalType: "address",
-                    name: "singleton",
-                    type: "address",
-                },
-                {
-                    internalType: "address[]",
-                    name: "owners",
-                    type: "address[]",
-                },
-                {
-                    internalType: "uint256",
-                    name: "threshold",
-                    type: "uint256",
-                },
-                {
-                    internalType: "address",
-                    name: "setupTo",
-                    type: "address",
-                },
-                {
-                    internalType: "bytes",
-                    name: "setupData",
-                    type: "bytes",
-                },
-                {
-                    internalType: "contract ISafe7579",
-                    name: "safe7579",
-                    type: "address",
-                },
-                {
-                    internalType: "struct ModuleInit[]",
-                    name: "validators",
-                    type: "tuple[]",
-                    components: [
-                        {
-                            internalType: "address",
-                            name: "module",
-                            type: "address",
-                        },
-                        {
-                            internalType: "bytes",
-                            name: "initData",
-                            type: "bytes",
-                        },
-                    ],
-                },
-            ],
-            [
-                initData.singleton,
-                initData.owners,
-                initData.threshold,
-                initData.setupTo,
-                initData.setupData,
-                initData.safe7579,
-                initData.validators.map((validator) => ({
-                    module: validator.address,
-                    initData: validator.context,
-                })),
-            ]
-        )
-    );
-
-    const trustAttestersAction = getTrustAttestersAction({
-        threshold: 1,
-        attesters: [
-            RHINESTONE_ATTESTER_ADDRESS, // Rhinestone Attester
-            MOCK_ATTESTER_ADDRESS, // Mock Attester - do not use in production
-        ],
-    });
-
-    return encodeFunctionData({
-        abi: LaunchpadAbi,
-        functionName: "preValidationSetup",
-        args: [
-            initHash,
-            trustAttestersAction.target,
-            trustAttestersAction.data,
-        ],
-    });
 }
 
 export const getSafeInitData = ({

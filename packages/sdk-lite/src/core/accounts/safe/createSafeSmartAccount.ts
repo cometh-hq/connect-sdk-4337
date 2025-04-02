@@ -1,7 +1,5 @@
-import {
-    getSignerAddress,
-} from "@/core/signers/createSigner";
-import type {Signer } from "@/core/signers/types";
+import { getSignerAddress } from "@/core/signers/createSigner";
+import type { Signer } from "@/core/signers/types";
 import { getAccountNonce } from "permissionless/actions";
 import { toSmartAccount } from "./utils";
 
@@ -76,7 +74,6 @@ const getAccountInitCode = async ({
     });
 };
 
-
 /**
  * Get the predicted account address for a Safe smart account
  */
@@ -119,11 +116,11 @@ export async function createSafeSmartAccount<
     signer,
     smartSessionSigner,
 }: createSafeSmartAccountParameters): Promise<ComethSafeSmartAccount> {
-    const client = await getViemClient(chain, publicClient) as Client<
-            TTransport,
-            TChain,
-            undefined
-        >;
+    const client = (await getViemClient(chain, publicClient)) as Client<
+        TTransport,
+        TChain,
+        undefined
+    >;
 
     publicClient =
         publicClient ??
@@ -148,7 +145,7 @@ export async function createSafeSmartAccount<
         throw new ChainNotFoundError();
     }
 
-    const accountSigner = signer
+    const accountSigner = signer;
 
     const signerAddress: Address = getSignerAddress(accountSigner);
 
@@ -213,8 +210,7 @@ export async function createSafeSmartAccount<
             address: entryPoint07Address,
             version: "0.7",
         },
-        safeContractParams:
-            safeContractConfig,
+        safeContractParams: safeContractConfig,
         publicClient,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
@@ -249,7 +245,7 @@ export async function createSafeSmartAccount<
             return getAccountNonce(client, {
                 address: smartAccountAddress as Address,
                 entryPointAddress: entryPoint07Address,
-                key: args?.key
+                key: args?.key,
             });
         },
 
