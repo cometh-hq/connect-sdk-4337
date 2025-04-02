@@ -34,21 +34,6 @@ export function useSmartAccount() {
         setIsConnecting(true);
         try {
 
-
-            const SETUP_CONTRACT_ADDRESS = "0x2dd68b007B46fBe91B9A7c3EDa5A7a1063cB5b47" as Address;
-            const SAFE_PROXY_FACTORY_ADDRESS = "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67" as Address;
-            const SAFE_SINGLETON_ADDRESS = "0x29fcb43b46531bca003ddc8fcb67ffe91900c762" as Address;
-            const MULTISEND_ADDRESS = "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526" as Address;
-            const SAFE_4337_MODULE_ADDRESS = "0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226" as Address;
-
-            const contractParams = {
-                setUpContractAddress: SETUP_CONTRACT_ADDRESS,
-                safeProxyFactoryAddress: SAFE_PROXY_FACTORY_ADDRESS,
-                safeSingletonAddress: SAFE_SINGLETON_ADDRESS,
-                multisendAddress: MULTISEND_ADDRESS,
-                safe4337ModuleAddress: SAFE_4337_MODULE_ADDRESS,
-            }
-
             const publicClient = createPublicClient({
                 chain: arbitrumSepolia,
                 transport: http(),
@@ -64,7 +49,6 @@ export function useSmartAccount() {
                     chain: arbitrumSepolia,
                     publicClient,
                     signer,
-                    safeContractConfig: contractParams,
                 });
 
             const paymasterClient = await createComethPaymasterClient({
