@@ -45,10 +45,6 @@ export const encodeMultiSendTransactions = (
 /**
  * Generates setup data for enabling modules and configuring the signer
  * @param modules - Array of module addresses to enable
- * @param accountSigner - The signer instance
- * @param setUpContractAddress - Address of the setup contract
- * @param safeWebAuthnSharedSignerContractAddress - Address of the WebAuthn shared signer contract
- * @param safeP256VerifierAddress - Address of the P256 verifier contract
  * @returns Encoded setup data as a Hex string
  */
 export const getSetUpCallData = ({
@@ -72,9 +68,6 @@ export const getSetUpCallData = ({
  * @param fallbackHandler - Address of the fallback handler
  * @param modules - Array of module addresses to enable
  * @param setUpContractAddress - Address of the setup contract
- * @param safeWebAuthnSharedSignerContractAddress - Address of the WebAuthn shared signer contract
- * @param p256Verifier - Address of the P256 verifier contract
- * @param multisendAddress - Address of the multisend contract
  * @returns Encoded initializer data as a Hex string
  */
 export const getSafeInitializer = ({
@@ -108,7 +101,7 @@ export const getSafeInitializer = ({
 /**
  * Calculates the Safe address based on the initializer data
  * @param chain - The blockchain network
- * @param rpcUrl - Optional RPC URL for the network
+ * @param publicClient - The public client
  * @param safeProxyFactoryAddress - Address of the Safe proxy factory
  * @param safeSingletonAddress - Address of the Safe singleton
  * @param initializer - Initializer data for the Safe contract

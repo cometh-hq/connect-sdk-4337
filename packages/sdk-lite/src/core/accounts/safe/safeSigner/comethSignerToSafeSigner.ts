@@ -20,8 +20,8 @@ type SafeSignerParams = {
  *
  * @param client - The viem Client instance
  * @param params - SafeSignerParams object containing:
- *   @param comethSigner - The ComethSigner instance to convert
- *   @param safe4337SessionKeysModule - The address of the Safe 4337 session keys module
+ *   @param accountSigner - The account signer instance to convert
+ *   @param userOpVerifyingContract - The address of the user operation verifying contract
  *   @param smartAccountAddress - The address of the smart account
  *
  * @returns A Promise that resolves to a SafeSigner instance

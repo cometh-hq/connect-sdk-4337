@@ -34,7 +34,7 @@ import { adjustVInSignature, generateSafeMessageMessage } from "../utils";
  * @param client - The viem Client instance
  * @param params - Object containing:
  *   @param signer - The SmartAccountSigner instance
- *   @param safe4337SessionKeysModule - The address of the Safe 4337 session keys module
+ *   @param userOpVerifyingContract - The address of the user operation verifying contract
  *   @param smartAccountAddress - The address of the smart account
  *
  * @returns A Promise that resolves to a SafeSigner instance with ECDSA capabilities
