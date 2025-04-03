@@ -10,7 +10,6 @@ import {
 } from "viem";
 import { type BundlerActions, bundlerActions } from "viem/account-abstraction";
 import type { Prettify } from "viem/chains";
-import { eip5792Actions, erc7715Actions } from "viem/experimental";
 import {
     type ComethClientActions,
     comethAccountClientActions,
@@ -117,5 +116,5 @@ export function createSmartAccountClient<
             // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         ) as any;
 
-    return client.extend(eip5792Actions()).extend(erc7715Actions());
+    return client;
 }
