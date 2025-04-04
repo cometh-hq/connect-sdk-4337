@@ -10,7 +10,7 @@ bun add viem @cometh/connect-sdk-lite
 ## Setup
 
 ```ts
-import { createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient } from "@cometh/connect-sdk-lite";
+import { createComethPaymasterClient, createSafeSmartAccount, createSmartAccountClient, providerToSmartAccountSigner } from "@cometh/connect-sdk-lite";
 import { arbitrumSepolia } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import { http } from "viem";
@@ -18,7 +18,9 @@ import { http } from "viem";
 const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
 const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
-const signer = privateKeyToAccount(process.env.NEXT_PUBLIC_PRIVATE_KEY!);
+const signer = await providerToSmartAccountSigner(
+    window.ethereum
+);
 
 const publicClient = createPublicClient({
     chain: arbitrumSepolia,
