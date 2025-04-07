@@ -8,6 +8,7 @@ import {
 } from "@cometh/connect-sdk-4337";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -47,6 +48,10 @@ export function useSmartAccount() {
                 },
             }) as PublicClient;
 
+            const ownerPK = "0xb88fdd40d81be848087838aec4b2de324f661d662d1316c2cfe7dfd651804005";
+
+            const owner = privateKeyToAccount(ownerPK as Hex);
+
             let smartAccount;
 
             if (localStorageAddress) {
@@ -54,12 +59,15 @@ export function useSmartAccount() {
                     apiKey,
                     chain: arbitrumSepolia,
                     publicClient,
+                    signer: owner,
                     smartAccountAddress: localStorageAddress,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
                     chain: arbitrumSepolia,
+                    signer: owner,
+
                     publicClient,
                 });
                 window.localStorage.setItem(

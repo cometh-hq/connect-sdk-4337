@@ -46,7 +46,7 @@ export function useSmartAccount() {
             }) as PublicClient;
 
             const signer = await providerToSmartAccountSigner(
-                await window.ethereum
+                await (window as any).ethereum
             );
 
             let smartAccount;
