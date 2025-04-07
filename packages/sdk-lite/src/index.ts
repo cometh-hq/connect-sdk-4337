@@ -1,4 +1,4 @@
-import { ENTRYPOINT_ADDRESS_V07, customChains } from "./constants";
+import { ENTRYPOINT_ADDRESS_V07 } from "./constants";
 import {
     type ComethSafeSmartAccount,
     createSafeSmartAccount,
@@ -31,7 +31,6 @@ export {
     createComethPaymasterClient,
     providerToSmartAccountSigner,
     ENTRYPOINT_ADDRESS_V07,
-    customChains,
     FallbackAlreadySetError,
     SafeNotDeployedError,
     SmartAccountAddressNotFoundError,

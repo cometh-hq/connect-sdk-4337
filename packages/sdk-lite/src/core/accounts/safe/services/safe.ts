@@ -1,4 +1,3 @@
-import { getSignerAddress } from "@/core/signers/createSigner";
 import type { Signer } from "@/core/signers/types";
 import { SafeNotDeployedError } from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
@@ -83,14 +82,12 @@ export const getSafeInitializer = ({
     modules: Address[];
     setUpContractAddress: Address;
 }): Hex => {
-    const signerAddress = getSignerAddress(accountSigner);
-
     const setUpCallData = getSetUpCallData({
         modules,
     });
 
     return getSafeSetUpData({
-        owner: signerAddress,
+        owner: accountSigner.address,
         threshold,
         setUpContractAddress,
         setUpData: setUpCallData,

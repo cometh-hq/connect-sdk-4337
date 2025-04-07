@@ -1,4 +1,3 @@
-import { getSignerAddress } from "@/core/signers/createSigner";
 import type { Signer } from "@/core/signers/types";
 import { getAccountNonce } from "permissionless/actions";
 import { toSmartAccount } from "./utils";
@@ -22,16 +21,19 @@ import { getViemClient } from "../utils";
 import { MultiSendContractABI } from "./abi/Multisend";
 import { safe4337ModuleAbi } from "./abi/safe4337ModuleAbi";
 import { SafeProxyContractFactoryABI } from "./abi/safeProxyFactory";
-import { comethSignerToSafeSigner } from "./safeSigner/comethSignerToSafeSigner";
+import { safeECDSASigner } from "./safeSigner/ecdsa/ecdsa.js";
 import {
     encodeMultiSendTransactions,
     getSafeAddressFromInitializer,
     getSafeInitializer,
 } from "./services/safe";
 
-import { SAFE_7579_ADDRESS, add7579FunctionSelector } from "@/constants";
+import {
+    SAFE_7579_ADDRESS,
+    add7579FunctionSelector,
+    defaultSafeContractConfig,
+} from "@/constants";
 import { MethodNotSupportedError } from "@/errors";
-import defaultSafeContractConfig from "@/safeContractConfig";
 import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
@@ -136,19 +138,14 @@ export async function createSafeSmartAccount<
         safeSingletonAddress,
         multisendAddress,
         safe4337ModuleAddress: safe4337Module,
-    } = safeContractConfig ??
-    (defaultSafeContractConfig.networks[chain.id] as SafeContractParams);
+    } = safeContractConfig ?? (defaultSafeContractConfig as SafeContractParams);
 
     if (!safe4337Module) {
         throw new ChainNotFoundError();
     }
 
-    const accountSigner = signer;
-
-    const signerAddress: Address = getSignerAddress(accountSigner);
-
     const initializer = getSafeInitializer({
-        accountSigner,
+        accountSigner: signer,
         threshold: 1,
         fallbackHandler: safe4337Module,
         modules: [safe4337Module],
@@ -192,18 +189,15 @@ export async function createSafeSmartAccount<
         }
     }
 
-    const safeSigner = await comethSignerToSafeSigner<TTransport, TChain>(
-        client,
-        {
-            accountSigner,
-            userOpVerifyingContract,
-            smartAccountAddress,
-        }
-    );
+    const safeSigner = await safeECDSASigner<TTransport, TChain>(client, {
+        signer,
+        smartAccountAddress,
+        userOpVerifyingContract,
+    });
 
     return toSmartAccount({
         client,
-        signerAddress,
+        signerAddress: signer.address,
         entryPoint: {
             abi: entryPoint07Abi,
             address: entryPoint07Address,
@@ -211,9 +205,7 @@ export async function createSafeSmartAccount<
         },
         safeContractParams:
             safeContractConfig ??
-            (defaultSafeContractConfig.networks[
-                chain.id
-            ] as SafeContractParams),
+            (defaultSafeContractConfig as SafeContractParams),
         publicClient,
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
