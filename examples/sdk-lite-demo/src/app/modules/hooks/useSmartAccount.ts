@@ -5,10 +5,10 @@ import {
     createComethPaymasterClient,
     createSafeSmartAccount,
     createSmartAccountClient,
+    providerToSmartAccountSigner,
 } from "@cometh/connect-sdk-lite";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient, type Address } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -33,6 +33,9 @@ export function useSmartAccount() {
 
         setIsConnecting(true);
         try {
+            const localStorageAddress = window.localStorage.getItem(
+                "walletAddress"
+            ) as Hex;
 
             const publicClient = createPublicClient({
                 chain: arbitrumSepolia,
@@ -43,14 +46,31 @@ export function useSmartAccount() {
                 },
             }) as PublicClient;
 
-            const signer = privateKeyToAccount(process.env.NEXT_PUBLIC_PRIVATE_KEY!);
+            const signer = await providerToSmartAccountSigner(
+                await window.ethereum
+            );
 
-            const smartAccount = await createSafeSmartAccount({
+            let smartAccount;
+
+            if (localStorageAddress) {
+                smartAccount = await createSafeSmartAccount({
+                    chain: arbitrumSepolia,
+                    publicClient,
+                    smartAccountAddress: localStorageAddress,
+                    signer
+                });
+            } else {
+                smartAccount = await createSafeSmartAccount({
                     chain: arbitrumSepolia,
                     publicClient,
                     signer,
                 });
-
+                window.localStorage.setItem(
+                    "walletAddress",
+                    smartAccount.address
+                );
+            }
+            
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
                 chain: arbitrumSepolia,
