@@ -1,5 +1,5 @@
 {
-  "name": "@cometh/connect-sdk-lite",
+  "name": "@cometh/connect-core-sdk",
   "author": "Cometh",
   "maintainers": [
     {
@@ -7,7 +7,7 @@
     }
   ],
   "version": "0.0.1",
-  "description": "SDK Cometh Connect Lite",
+  "description": "SDK Cometh Connect Core",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
     "cometh",

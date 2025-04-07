@@ -1,14 +1,13 @@
 "use client";
 
 import {
-    ENTRYPOINT_ADDRESS_V07,
     createComethPaymasterClient,
     createSafeSmartAccount,
     createSmartAccountClient,
     providerToSmartAccountSigner,
-} from "@cometh/connect-sdk-lite";
+} from "@cometh/connect-core-sdk";
 import { useState } from "react";
-import { http, type Hex, type PublicClient, createPublicClient, type Address } from "viem";
+import { http, type Hex, type PublicClient, createPublicClient } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -70,7 +69,7 @@ export function useSmartAccount() {
                     smartAccount.address
                 );
             }
-            
+
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
                 chain: arbitrumSepolia,
