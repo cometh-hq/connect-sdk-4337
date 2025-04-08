@@ -1,7 +1,6 @@
-import type { ComethSafeSmartAccount } from "@cometh/connect-sdk-4337";
-
 import type { GrantPermissionResponse } from "@/index";
 import type { Chain, Client, Hash, Transport } from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 import type { Execution, PreparePermissionResponse } from "../types";
 import {
     type GrantPermissionParameters,
@@ -36,9 +35,7 @@ export type UsePermissionParameters = {
 };
 
 export type SmartSessionCreateActions<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 > = {
     /**
      * Creates multiple sessions for a  smart account.
@@ -96,9 +93,7 @@ export type SmartSessionCreateActions<
  */
 export function smartSessionActions() {
     return <
-        TAccount extends ComethSafeSmartAccount | undefined =
-            | ComethSafeSmartAccount
-            | undefined,
+        TAccount extends SmartAccount | undefined = SmartAccount | undefined,
     >(
         client: Client<Transport, Chain | undefined, TAccount>
     ): SmartSessionCreateActions<TAccount> => {

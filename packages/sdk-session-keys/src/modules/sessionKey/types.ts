@@ -3,7 +3,17 @@ import type {
     Session,
     SmartSessionMode,
 } from "@rhinestone/module-sdk";
-import type { Abi, AbiFunction, Address, ByteArray, Hex, OneOf } from "viem";
+import type {
+    Abi,
+    AbiFunction,
+    Address,
+    ByteArray,
+    Hex,
+    LocalAccount,
+    OneOf,
+    UnionPartialBy,
+} from "viem";
+import type { UserOperation } from "viem/account-abstraction";
 
 export type Execution = {
     target: Address;
@@ -193,4 +203,13 @@ export type FullCreateSessionDataParams = {
 
 export type ResolvedActionPolicyInfo = ActionPolicyInfo & {
     functionSelector: string | AbiFunction;
+};
+
+export type SafeSigner<Name extends string = string> = LocalAccount<Name> & {
+    getStubSignature(): Promise<Hex>;
+    signUserOperation: (
+        parameters: UnionPartialBy<UserOperation, "sender"> & {
+            chainId?: number | undefined;
+        }
+    ) => Promise<Hex>;
 };

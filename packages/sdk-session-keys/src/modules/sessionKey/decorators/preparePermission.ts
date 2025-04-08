@@ -1,5 +1,3 @@
-import type { ComethSafeSmartAccount } from "@cometh/connect-sdk-4337";
-
 import {
     FALLBACK_TARGET_FLAG,
     FALLBACK_TARGET_SELECTOR_FLAG_PERMITTED_TO_CALL_SMARTSESSION,
@@ -22,6 +20,7 @@ import {
     type PublicClient,
     type Transport,
 } from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 import { encodeFunctionData } from "viem/utils";
 import { SmartSessionAbi } from "../abi/smartSessionAbi";
 import type {
@@ -38,9 +37,7 @@ import {
 } from "../utils";
 
 export type PreparePermissionParameters<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 > = {
     /** Array of session data parameters for creating multiple sessions. */
     sessionRequestedInfo: CreateSessionDataParams[];
@@ -190,16 +187,13 @@ export const getPermissionAction = async ({
 };
 
 export async function preparePermission<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 >(
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: PreparePermissionParameters<TAccount>
 ): Promise<PreparePermissionResponse> {
     const {
-        publicClient: publicClient_ = client.account
-            ?.publicClient as PublicClient,
+        publicClient: publicClient_ = client.account?.client as PublicClient,
         sessionRequestedInfo,
     } = parameters;
 

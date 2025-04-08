@@ -4,7 +4,6 @@ import {
     SAFE_7579_ADDRESS,
     hardcodeVerificationGasLimit7579,
 } from "@/constants";
-import type { ComethSafeSmartAccount } from "@cometh/connect-sdk-4337";
 
 import type { CreateSessionDataParams, GrantPermissionResponse } from "@/index";
 import {
@@ -12,15 +11,13 @@ import {
     getSmartSessionsValidator,
 } from "@rhinestone/module-sdk";
 import type { Chain, Client, Hex, PublicClient, Transport } from "viem";
-import { sendUserOperation } from "viem/account-abstraction";
+import { type SmartAccount, sendUserOperation } from "viem/account-abstraction";
 import { encodeFunctionData, getAction, parseAbi } from "viem/utils";
 import type { Call } from "../types";
 import { preparePermission } from "./preparePermission";
 
 export type GrantPermissionParameters<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 > = {
     /** Array of session data parameters for creating multiple sessions. */
     sessionRequestedInfo: CreateSessionDataParams[];
@@ -41,9 +38,7 @@ export type GrantPermissionParameters<
 };
 
 export async function grantPermission<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 >(
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: GrantPermissionParameters<TAccount>

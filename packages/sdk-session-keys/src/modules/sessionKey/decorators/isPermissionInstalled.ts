@@ -1,5 +1,4 @@
 import { ChainIdNotFoundError } from "@/errors";
-import type { ComethSafeSmartAccount } from "@cometh/connect-sdk-4337";
 import {
     SMART_SESSIONS_ADDRESS,
     type Session,
@@ -11,9 +10,11 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type PublicClient,
     type Transport,
     createPublicClient,
 } from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 
 export const isPermissionEnabledAbi = [
     {
@@ -47,9 +48,7 @@ export type IsPermissionInstalledParameters = {
 };
 
 export async function isPermissionInstalled<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 >(
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: IsPermissionInstalledParameters
@@ -57,7 +56,7 @@ export async function isPermissionInstalled<
     const { session } = parameters;
 
     const publicClient =
-        client.account?.publicClient ??
+        (client.account?.client as PublicClient) ??
         createPublicClient({
             transport: http(),
             chain: client.chain,

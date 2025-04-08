@@ -1,5 +1,4 @@
 import { hardcodeVerificationGasLimit7579 } from "@/constants";
-import type { ComethSafeSmartAccount } from "@cometh/connect-sdk-4337";
 import {
     encodeValidatorNonce,
     getAccount,
@@ -12,9 +11,11 @@ import {
     type Chain,
     type Client,
     type Hex,
+    type PublicClient,
     type Transport,
     createPublicClient,
 } from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 import {
     entryPoint07Address,
     sendUserOperation,
@@ -23,9 +24,7 @@ import { getAction } from "viem/utils";
 import type { Execution } from "../types";
 
 export type UsePermissionParameters<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 > = {
     /** Array of executions to perform in the session. Allows for batch transactions if the session is enabled for multiple actions. */
     actions: Execution[];
@@ -42,9 +41,7 @@ export type UsePermissionParameters<
 };
 
 export async function usePermission<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 >(
     client: Client<Transport, Chain | undefined, TAccount>,
     parameters: UsePermissionParameters<TAccount>
@@ -54,7 +51,7 @@ export async function usePermission<
     const smartSessions = getSmartSessionsValidator({});
 
     const publicClient =
-        client.account?.publicClient ??
+        (client.account?.client as PublicClient) ??
         createPublicClient({
             chain: client?.chain,
             transport: http(),

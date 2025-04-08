@@ -1,7 +1,5 @@
 import { SafeAbi } from "@/abis/safe";
 import { SAFE_7579_ADDRESS } from "@/constants";
-import { APINotFoundError } from "@/errors";
-import type { ComethSafeSmartAccount } from "@cometh/connect-sdk-4337";
 
 import { isSmartAccountDeployed } from "permissionless";
 
@@ -10,25 +8,21 @@ import {
     type Address,
     type Chain,
     type Client,
+    type PublicClient,
     type Transport,
     createPublicClient,
 } from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 
 export async function is7579Installed<
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined,
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 >(client: Client<TTransport, TChain, TAccount>): Promise<boolean> {
-    const api = client?.account?.connectApiInstance;
-
-    if (!api) throw new APINotFoundError();
-
     const smartAccountAddress = client.account?.address;
 
     const publicClient =
-        client?.account?.publicClient ??
+        (client?.account?.client as PublicClient) ??
         createPublicClient({
             chain: client.chain,
             transport: http(),
@@ -37,6 +31,14 @@ export async function is7579Installed<
                 multicall: { wait: 50 },
             },
         });
+    createPublicClient({
+        chain: client.chain,
+        transport: http(),
+        cacheTime: 60_000,
+        batch: {
+            multicall: { wait: 50 },
+        },
+    });
 
     const isDeployed = await isSmartAccountDeployed(
         publicClient,

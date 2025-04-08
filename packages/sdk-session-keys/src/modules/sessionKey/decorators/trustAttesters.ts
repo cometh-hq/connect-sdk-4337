@@ -1,16 +1,13 @@
-import type { ComethSafeSmartAccount } from "@cometh/connect-sdk-4337";
 import {
     RHINESTONE_ATTESTER_ADDRESS,
     getTrustAttestersAction,
 } from "@rhinestone/module-sdk";
 import type { Chain, Client, Hex, Transport } from "viem";
-import { sendUserOperation } from "viem/account-abstraction";
+import { type SmartAccount, sendUserOperation } from "viem/account-abstraction";
 import { getAction } from "viem/utils";
 
 export type TrustAttestersParameters<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 > = {
     /** The addresses of the attesters to be trusted. */
     attesters?: Hex[];
@@ -29,9 +26,7 @@ export type TrustAttestersParameters<
 };
 
 export async function trustAttesters<
-    TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 >(client: Client<Transport, Chain | undefined, TAccount>): Promise<Hex> {
     const trustAttestersAction = getTrustAttestersAction({
         threshold: 1,

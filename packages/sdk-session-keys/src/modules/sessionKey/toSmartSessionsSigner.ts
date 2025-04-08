@@ -1,9 +1,4 @@
 import { MethodNotSupportedError, PermissionNotInstalledError } from "@/errors";
-import type {
-    ComethSafeSmartAccount,
-    ComethSmartAccountClient,
-    SafeSigner,
-} from "@cometh/connect-sdk-4337";
 import {
     SMART_SESSIONS_ADDRESS,
     SmartSessionMode,
@@ -13,6 +8,7 @@ import {
     getOwnableValidatorMockSignature,
     getSmartSessionsValidator,
 } from "@rhinestone/module-sdk";
+import type { SmartAccountClient } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
 import {
     http,
@@ -21,16 +17,19 @@ import {
     type Client,
     type Hex,
     type PrivateKeyAccount,
+    type PublicClient,
     type Transport,
     createPublicClient,
 } from "viem";
 import {
+    type SmartAccount,
     type UserOperation,
     entryPoint07Address,
     getUserOperationHash,
 } from "viem/account-abstraction";
 import { toAccount } from "viem/accounts";
 import { isPermissionEnabledAbi } from "./decorators/isPermissionInstalled";
+import type { SafeSigner } from "./types";
 import type { UsePermissionModuleData } from "./types";
 
 export type UsePermissionModuleParameters = {
@@ -41,17 +40,10 @@ export type UsePermissionModuleParameters = {
 export async function toSmartSessionsSigner<
     transport extends Transport,
     chain extends Chain | undefined = undefined,
-    account extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    account extends SmartAccount | undefined = SmartAccount | undefined,
     client extends Client | undefined = undefined,
 >(
-    smartAccountClient: ComethSmartAccountClient<
-        transport,
-        chain,
-        account,
-        client
-    >,
+    smartAccountClient: SmartAccountClient<transport, chain, account, client>,
     parameters: UsePermissionModuleParameters
 ): Promise<SafeSigner<"safeSmartSessionsSigner">> {
     const {
@@ -65,7 +57,7 @@ export async function toSmartSessionsSigner<
     } = parameters;
 
     const publicClient =
-        smartAccountClient.account?.publicClient ??
+        (smartAccountClient.account?.client as PublicClient) ??
         createPublicClient({
             chain: smartAccountClient?.chain,
             transport: http(),

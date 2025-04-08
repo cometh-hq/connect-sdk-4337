@@ -30,12 +30,6 @@ export class PermissionNotInstalledError extends BaseError {
  * Utils Errors
  **/
 
-export class APINotFoundError extends Error {
-    constructor() {
-        super("No API found");
-    }
-}
-
 export class ChainIdNotFoundError extends Error {
     constructor() {
         super("ChainId not found");
