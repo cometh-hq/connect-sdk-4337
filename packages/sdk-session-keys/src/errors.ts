@@ -13,7 +13,6 @@ export class MethodNotSupportedError extends BaseError {
     }
 }
 
-
 /**
  * Session keys Errors
  **/
@@ -26,7 +25,6 @@ export class PermissionNotInstalledError extends BaseError {
         });
     }
 }
-
 
 /**
  * Utils Errors

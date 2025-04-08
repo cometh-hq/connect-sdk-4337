@@ -1,9 +1,9 @@
 import { MethodNotSupportedError, PermissionNotInstalledError } from "@/errors";
-import type { 
+import type {
     ComethSafeSmartAccount,
+    ComethSmartAccountClient,
     SafeSigner,
-    ComethSmartAccountClient
- } from "@cometh/connect-sdk-4337";
+} from "@cometh/connect-sdk-4337";
 import {
     SMART_SESSIONS_ADDRESS,
     SmartSessionMode,

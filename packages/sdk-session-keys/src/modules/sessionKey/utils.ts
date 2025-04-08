@@ -1,9 +1,3 @@
-import type {
-    ActionPolicyInfo,
-    CreateSessionDataParams,
-    FullCreateSessionDataParams,
-    ResolvedActionPolicyInfo,
-} from "./types";
 import {
     type ActionData,
     OWNABLE_VALIDATOR_ADDRESS,
@@ -20,6 +14,12 @@ import {
     toFunctionSelector,
     toHex,
 } from "viem";
+import type {
+    ActionPolicyInfo,
+    CreateSessionDataParams,
+    FullCreateSessionDataParams,
+    ResolvedActionPolicyInfo,
+} from "./types";
 
 export const ONE_YEAR_FROM_NOW_IN_SECONDS = Date.now() + 60 * 60 * 24 * 365;
 
