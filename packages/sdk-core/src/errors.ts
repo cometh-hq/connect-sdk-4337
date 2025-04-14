@@ -10,6 +10,7 @@ export type ExecutionMode<callType extends CallType> = {
 };
 
 /**
+<<<<<<< HEAD
  * Wallet Errors
  **/
 
@@ -20,6 +21,8 @@ export class WalletNotConnectedError extends Error {
 }
 
 /**
+=======
+>>>>>>> bac4782 (feat/sdk-lite (#75))
  * Adaptor Errors
  **/
 
@@ -45,6 +48,7 @@ export class SmartAccountAddressNotFoundError extends Error {
     }
 }
 
+<<<<<<< HEAD
 export class OwnerToRemoveIsNotSafeOwnerError extends Error {
     constructor(ownerToRemove: string) {
         super(`${ownerToRemove} is not a safe owner`);
@@ -57,6 +61,8 @@ export class RemoveOwnerOnUndeployedSafeError extends Error {
     }
 }
 
+=======
+>>>>>>> bac4782 (feat/sdk-lite (#75))
 export class MethodNotSupportedError extends BaseError {
     constructor() {
         super("Method not supported", {
@@ -88,6 +94,7 @@ export class InvalidCallDataError extends Error {
     }
 }
 
+<<<<<<< HEAD
 export class InvalidAccountAddressError extends Error {
     constructor() {
         super("Invalid account address");
@@ -100,6 +107,8 @@ export class InvalidSmartAccountClientError extends Error {
     }
 }
 
+=======
+>>>>>>> bac4782 (feat/sdk-lite (#75))
 /**
  * Signature Errors
  **/
@@ -110,12 +119,15 @@ export class InvalidSignatureError extends Error {
     }
 }
 
+<<<<<<< HEAD
 export class CannotSignForAddressError extends Error {
     constructor() {
         super("Cannot sign for address that is not the current account");
     }
 }
 
+=======
+>>>>>>> bac4782 (feat/sdk-lite (#75))
 /**
  * Transactions Errors
  **/
@@ -128,6 +140,7 @@ export class MissingToAddressError extends BaseError {
         });
     }
 }
+<<<<<<< HEAD
 
 /**
  * Utils Errors
@@ -138,3 +151,5 @@ export class InvalidParamsError extends Error {
         super(`Invalid params: ${message}`);
     }
 }
+=======
+>>>>>>> bac4782 (feat/sdk-lite (#75))

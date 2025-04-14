@@ -6,7 +6,11 @@
       "name": "yoanslvy"
     }
   ],
+<<<<<<< HEAD
   "version": "0.0.2",
+=======
+  "version": "0.0.1",
+>>>>>>> bac4782 (feat/sdk-lite (#75))
   "description": "SDK Cometh Connect Core",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
@@ -44,7 +48,11 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
+<<<<<<< HEAD
     "viem": "^2.27.3"
+=======
+    "viem": "2.22.2"
+>>>>>>> bac4782 (feat/sdk-lite (#75))
   },
   "devDependencies": {
     "tsup": "^8.0.2",
