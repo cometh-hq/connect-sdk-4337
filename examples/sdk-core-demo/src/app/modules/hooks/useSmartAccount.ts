@@ -1,14 +1,13 @@
 "use client";
 
 import {
-    ENTRYPOINT_ADDRESS_V07,
     createComethPaymasterClient,
     createSafeSmartAccount,
     createSmartAccountClient,
-} from "@cometh/connect-sdk-4337";
+    providerToSmartAccountSigner,
+} from "@cometh/connect-core-sdk";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -21,7 +20,6 @@ export function useSmartAccount() {
 
     const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
-    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
@@ -30,7 +28,6 @@ export function useSmartAccount() {
     }
 
     async function connect() {
-        if (!apiKey) throw new Error("API key not found");
         if (!bundlerUrl) throw new Error("Bundler Url not found");
 
         setIsConnecting(true);
@@ -48,27 +45,24 @@ export function useSmartAccount() {
                 },
             }) as PublicClient;
 
-            const ownerPK = "0xb88fdd40d81be848087838aec4b2de324f661d662d1316c2cfe7dfd651804005";
-
-            const owner = privateKeyToAccount(ownerPK as Hex);
+            const signer = await providerToSmartAccountSigner(
+                await (window as any).ethereum
+            );
 
             let smartAccount;
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
-                    apiKey,
                     chain: arbitrumSepolia,
                     publicClient,
-                    signer: owner,
                     smartAccountAddress: localStorageAddress,
+                    signer
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
-                    apiKey,
                     chain: arbitrumSepolia,
-                    signer: owner,
-
                     publicClient,
+                    signer,
                 });
                 window.localStorage.setItem(
                     "walletAddress",

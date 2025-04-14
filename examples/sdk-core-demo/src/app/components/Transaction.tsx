@@ -8,7 +8,6 @@ import {
   createPublicClient,
   encodeFunctionData,
   getContract,
-  parseEther,
 } from "viem";
 import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
@@ -96,21 +95,12 @@ function Transaction({
     try {
       if (!smartAccount) throw new Error("No wallet instance");
 
-      const calldata = encodeFunctionData({
-        abi: countContractAbi,
-        functionName: "count",
-      });
-
-      const txHash = await smartAccount.sendTransaction({
-        to: COUNTER_CONTRACT_ADDRESS,
-        data: calldata,
-      });
+      await action();
 
       const balance = await counterContract.read.counters([
         smartAccount.account.address,
       ]);
       setNftBalance(Number(balance));
-      setTransactionSended(txHash);
 
       setTransactionSuccess(true);
     } catch (e) {
