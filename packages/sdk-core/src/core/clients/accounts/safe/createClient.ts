@@ -1,6 +1,9 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+<<<<<<< HEAD
 import { eip1193Actions } from "@/core/actions/accounts/eip1193/eip1193Actions";
 import { safeOwnerPluginActions } from "@/core/actions/accounts/safe/owners/safeOwnerActions";
+=======
+>>>>>>> bac4782 (feat/sdk-lite (#75))
 import type { SmartAccountClientConfig } from "permissionless";
 import {
     type BundlerRpcSchema,
@@ -12,7 +15,10 @@ import {
 } from "viem";
 import { type BundlerActions, bundlerActions } from "viem/account-abstraction";
 import type { Prettify } from "viem/chains";
+<<<<<<< HEAD
 import { eip5792Actions } from "viem/experimental";
+=======
+>>>>>>> bac4782 (feat/sdk-lite (#75))
 import {
     type ComethClientActions,
     comethAccountClientActions,
@@ -119,8 +125,12 @@ export function createSmartAccountClient<
             // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         ) as any;
 
+<<<<<<< HEAD
     return client
     .extend(safeOwnerPluginActions())
     .extend(eip1193Actions())
     .extend(eip5792Actions());
+=======
+    return client;
+>>>>>>> bac4782 (feat/sdk-lite (#75))
 }
