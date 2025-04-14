@@ -47,15 +47,6 @@ export function useSmartAccount() {
                 },
             }) as PublicClient;
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-            const ownerPK = process.env.NEXT_PUBLIC_OWNER_PK;
-=======
-            const ownerPK = "0xb88fdd40d81be848087838aec4b2de324f661d662d1316c2cfe7dfd651804005";
->>>>>>> bac4782 (feat/sdk-lite (#75))
->>>>>>> fdfc31e (feat/sdk-lite (#75))
-
             const ownerPK = process.env.NEXT_PUBLIC_OWNER_PK;
             const owner = privateKeyToAccount(ownerPK as Hex);
 
