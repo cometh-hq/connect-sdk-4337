@@ -10,6 +10,7 @@ import {
 } from "@rhinestone/module-sdk";
 import type { SmartAccountClient } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
+import type { Erc7579Actions } from "permissionless/actions/erc7579";
 import {
     http,
     type Address,
@@ -28,6 +29,7 @@ import {
     getUserOperationHash,
 } from "viem/account-abstraction";
 import { toAccount } from "viem/accounts";
+import type { SmartSessionCreateActions } from "./decorators";
 import { isPermissionEnabledAbi } from "./decorators/isPermissionInstalled";
 import type { SafeSigner } from "./types";
 import type { UsePermissionModuleData } from "./types";
@@ -43,7 +45,9 @@ export async function toSmartSessionsSigner<
     account extends SmartAccount | undefined = SmartAccount | undefined,
     client extends Client | undefined = undefined,
 >(
-    smartAccountClient: SmartAccountClient<transport, chain, account, client>,
+    smartAccountClient: SmartAccountClient<transport, chain, account, client> &
+        SmartSessionCreateActions<account> &
+        Erc7579Actions<account>,
     parameters: UsePermissionModuleParameters
 ): Promise<SafeSigner<"safeSmartSessionsSigner">> {
     const {
