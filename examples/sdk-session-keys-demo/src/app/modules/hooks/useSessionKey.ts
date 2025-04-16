@@ -1,17 +1,17 @@
 "use client";
 
 import {
-    type ComethSmartAccountClient,
-    type SafeSigner,
 } from "@cometh/connect-core-sdk";
 import {
     erc7579Actions,
     smartSessionActions,
     toSmartSessionsSigner,
+    type SafeSigner
 } from "@cometh/session-keys";
 import { SmartSessionMode } from "@rhinestone/module-sdk";
+import type { SmartAccountClient } from "permissionless";
 import { useState } from "react";
-import { type Address, type Hex, stringify, toFunctionSelector } from "viem";
+import { type Address, type Client, type Hex, stringify, toFunctionSelector } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 export function parse(data: string): Record<string, any> {
@@ -34,7 +34,7 @@ export function useSessionKey() {
     const getSessionKeySigner = async ({
         smartAccountClient,
     }: {
-        smartAccountClient: ComethSmartAccountClient;
+        smartAccountClient: SmartAccountClient;
     }): Promise<SafeSigner> => {
         const stringifiedSessionData = localStorage.getItem(
             `session-key-${smartAccountClient?.account?.address}`
@@ -68,8 +68,6 @@ export function useSessionKey() {
             await safe7559Account.waitForUserOperationReceipt({
                 hash: createSessionsResponse.userOpHash,
             });
-
-            console.log("createSessionsResponse", createSessionsResponse.);
 
             const sessionData = {
                 granter: smartAccountClient?.account?.address as Address,

@@ -15,16 +15,19 @@ import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
 
 import {
-  createComethPaymasterClient,
-  createSafeSmartAccount,
+  //createComethPaymasterClient,
+  //createSafeSmartAccount,
   //createSmartAccountClient,
 } from "@cometh/connect-core-sdk"
 import { createSmartAccountClient } from "permissionless";
+import { ENTRYPOINT_ADDRESS_V07 } from "@cometh/connect-core-sdk";
+import { createPaymasterClient } from "viem/account-abstraction";
 import {
   smartSessionActions,
   toSmartSessionsAccount,
 } from "@cometh/session-keys";
 import { useSessionKey } from "../modules/hooks/useSessionKey";
+import { createPimlicoClient } from "permissionless/clients/pimlico";
 
 export const COUNTER_CONTRACT_ADDRESS =
   "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
@@ -144,10 +147,17 @@ function TransactionWithSessionKey({
 
                 const smartSessionAccount = await toSmartSessionsAccount(smartAccount.account, sessionKeySigner)
 
-                const paymasterClient = await createComethPaymasterClient({
-                  transport: http(paymasterUrl),
-                  chain: arbitrumSepolia,
+                const paymasterClient = await createPaymasterClient({
+                    transport: http(paymasterUrl)
                 });
+    
+                const pimlicoClient = createPimlicoClient({
+                    transport: http(paymasterUrl),
+                    entryPoint: {
+                        address: ENTRYPOINT_ADDRESS_V07,
+                        version: "0.7",
+                    },
+                })
 
                 const sessionKeyClient = createSmartAccountClient({
                   account: smartSessionAccount,
@@ -156,7 +166,7 @@ function TransactionWithSessionKey({
                   paymaster: paymasterClient,
                   userOperation: {
                     estimateFeesPerGas: async () => {
-                      return await paymasterClient.getUserOperationGasPrice();
+                      return (await pimlicoClient.getUserOperationGasPrice()).fast;
                     },
                   },
                 }).extend(smartSessionActions());
