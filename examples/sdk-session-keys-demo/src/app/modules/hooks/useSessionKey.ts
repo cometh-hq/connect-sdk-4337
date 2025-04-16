@@ -9,9 +9,9 @@ import {
     type SafeSigner,
 } from "@cometh/session-keys";
 import { SmartSessionMode } from "@rhinestone/module-sdk";
-import type { SmartAccountClient } from "permissionless";
+import { isSmartAccountDeployed, type SmartAccountClient } from "permissionless";
 import { useState } from "react";
-import { type Address, type Chain, type Client, type Hex, stringify, toFunctionSelector, type Transport } from "viem";
+import { type Address, type Chain, type Client, type Hex, type PublicClient, stringify, toFunctionSelector, type Transport } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { type SmartAccount } from "viem/account-abstraction";
 
@@ -46,14 +46,17 @@ export function useSessionKey() {
             ...smartAccountClient
                 .extend(smartSessionActions())
                 .extend(erc7579Actions()),
-            client: undefined, 
-            paymaster: undefined, 
-            paymasterContext: undefined, 
-            userOperation: {}, 
         };
 
         const privateKey = generatePrivateKey();
         const sessionOwner = privateKeyToAccount(privateKey);
+
+        // if (!(await isSmartAccountDeployed(
+        //     smartAccountClient.account?.client as PublicClient, 
+        //     smartAccountClient?.account?.address as Address,
+        // ))) {
+        //     safe7559Account.addSafe7579Module()
+        // }
 
         if (!stringifiedSessionData) {
             const createSessionsResponse =
