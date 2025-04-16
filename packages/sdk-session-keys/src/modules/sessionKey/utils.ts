@@ -51,6 +51,7 @@ export const applyDefaults = (
                 threshold: 1,
                 owners: [getAddress(sessionPublicKey)],
             }),
+        actionPoliciesInfo: sessionInfo.actionPoliciesInfo ?? [],
     };
 };
 
