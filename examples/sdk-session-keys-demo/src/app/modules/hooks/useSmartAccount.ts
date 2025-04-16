@@ -2,12 +2,12 @@
 
 import {
     ENTRYPOINT_ADDRESS_V07,
-    createComethPaymasterClient,
-    createSafeSmartAccount,
-    createSmartAccountClient,
 } from "@cometh/connect-core-sdk";
-import { RHINESTONE_ATTESTER_ADDRESS } from "@rhinestone/module-sdk";
+import { RHINESTONE_ATTESTER_ADDRESS, getSmartSessionsValidator } from "@rhinestone/module-sdk";
 import { toSafeSmartAccount } from "permissionless/accounts";
+import { createSmartAccountClient} from "permissionless";
+import { createPaymasterClient } from "viem/account-abstraction";
+import { createPimlicoClient } from "permissionless/clients/pimlico"
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -52,74 +52,68 @@ export function useSmartAccount() {
                 process.env.NEXT_PUBLIC_PRIVATE_KEY as Hex
             );
 
+            const smartSessions = getSmartSessionsValidator({});
 
             let smartAccount;
 
             if (localStorageAddress) {
-                // smartAccount = await toSafeSmartAccount({
-                //     client: publicClient,
-                //     owners: [signer],
-                //     version: "1.4.1",
-                //     entryPoint: {
-                //         address: ENTRYPOINT_ADDRESS_V07,
-                //         version: "0.7",
-                //     },
-                //     safeSingletonAddress: "0x29fcb43b46531bca003ddc8fcb67ffe91900c762",
-                //     safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
-                //     erc7579LaunchpadAddress: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
-                //     safeProxyFactoryAddress: "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
-                //     multisendAddress: "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526",
-                //     setUpContractAddress: "0x2dd68b007B46fBe91B9A7c3EDa5A7a1063cB5b47",
-                //     modules: ["0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226"],
-                //     fallback: "0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226",
-                //     attesters: [
-                //         RHINESTONE_ATTESTER_ADDRESS,
-                //         //"0xA4C777199658a41688E9488c4EcbD7a2925Cc23A", // Mock Attester - do not use in production
-                //     ],
-                //     attestersThreshold: 1,
-                //     chain: arbitrumSepolia,
-                //     saltNonce: BigInt(12),
-                //     address: localStorageAddress,
-                // })
+                smartAccount = await toSafeSmartAccount({
+                    client: publicClient,
+                    owners: [signer],
+                    version: "1.4.1",
+                    entryPoint: {
+                        address: ENTRYPOINT_ADDRESS_V07,
+                        version: "0.7",
+                    },
+                    safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
+                    erc7579LaunchpadAddress: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
+                    attesters: [
+                        RHINESTONE_ATTESTER_ADDRESS, // Rhinestone Attester
+                    ],
+                    attestersThreshold: 1,
+                    validators: [
+                        {
+                            address: smartSessions.address,
+                            context: smartSessions.initData,
+                        },
+                    ],
+                    address: localStorageAddress,
+                });
 
-                smartAccount = await createSafeSmartAccount({
-                    signer,
-                    smartAccountAddress: localStorageAddress,
-                    chain: arbitrumSepolia,
-                    publicClient,
-                })
+                // smartAccount = await createSafeSmartAccount({
+                //     signer,
+                //     smartAccountAddress: localStorageAddress,
+                //     chain: arbitrumSepolia,
+                //     publicClient,
+                // })
   
             } else {
-                // smartAccount = await toSafeSmartAccount({
-                //     client: publicClient,
-                //     owners: [signer],
-                //     version: "1.4.1",
-                //     entryPoint: {
-                //         address: ENTRYPOINT_ADDRESS_V07,
-                //         version: "0.7",
-                //     },
-                //     safeSingletonAddress: "0x29fcb43b46531bca003ddc8fcb67ffe91900c762",
-                //     safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
-                //     erc7579LaunchpadAddress: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
-                //     safeProxyFactoryAddress: "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
-                //     multisendAddress: "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526",
-                //     setUpContractAddress: "0x2dd68b007B46fBe91B9A7c3EDa5A7a1063cB5b47",
-                //     modules: ["0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226"],
-                //     fallback: "0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226",
-                //     attesters: [
-                //         RHINESTONE_ATTESTER_ADDRESS,
-                //         //"0xA4C777199658a41688E9488c4EcbD7a2925Cc23A", // Mock Attester - do not use in production
-                //     ],
-                //     attestersThreshold: 1,
+                smartAccount = await toSafeSmartAccount({
+                    client: publicClient,
+                    owners: [signer],
+                    version: "1.4.1",
+                    entryPoint: {
+                        address: ENTRYPOINT_ADDRESS_V07,
+                        version: "0.7",
+                    },
+                    safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
+                    erc7579LaunchpadAddress: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
+                    attesters: [
+                        RHINESTONE_ATTESTER_ADDRESS, // Rhinestone Attester
+                    ],
+                    attestersThreshold: 1,
+                    validators: [
+                        {
+                            address: smartSessions.address,
+                            context: smartSessions.initData,
+                        },
+                    ],
+                });
+                // smartAccount = await createSafeSmartAccount({
+                //     signer,
                 //     chain: arbitrumSepolia,
-                //     saltNonce: BigInt(12),
-                // });
-
-                smartAccount = await createSafeSmartAccount({
-                    signer,
-                    chain: arbitrumSepolia,
-                    publicClient,
-                })
+                //     publicClient,
+                // })
 
                 window.localStorage.setItem(
                     "walletAddress",
@@ -131,11 +125,17 @@ export function useSmartAccount() {
 
 
 
-            const paymasterClient = await createComethPaymasterClient({
-                transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
-                publicClient,
+            const paymasterClient = await createPaymasterClient({
+                transport: http(paymasterUrl)
             });
+
+            const pimlicoClient = createPimlicoClient({
+                transport: http(paymasterUrl),
+                entryPoint: {
+                    address: ENTRYPOINT_ADDRESS_V07,
+                    version: "0.7",
+                },
+            })
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
@@ -148,7 +148,7 @@ export function useSmartAccount() {
                 paymaster: paymasterClient,
                 userOperation: {
                     estimateFeesPerGas: async () => {
-                        return await paymasterClient.getUserOperationGasPrice();
+                        return (await pimlicoClient.getUserOperationGasPrice()).fast
                     },
                 },
             });

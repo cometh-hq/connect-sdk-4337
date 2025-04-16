@@ -10,6 +10,7 @@ import type {
     Execution,
     GrantPermissionResponse,
 } from "./modules/sessionKey/types";
+import type { SafeSigner } from "./modules/sessionKey/types";
 
 export {
     erc7579Actions,
@@ -25,4 +26,5 @@ export type {
     CreateSessionDataParams,
     Execution,
     GrantPermissionResponse,
+    SafeSigner,
 };
