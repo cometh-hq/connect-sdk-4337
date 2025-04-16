@@ -45,6 +45,55 @@ export type GrantPermissionParameters<
     calls?: Call[];
 };
 
+function buildAddSafe7579Call(): Call {
+    const smartSessions = getSmartSessionsValidator({});
+
+    return {
+        to: LAUNCHPAD_ADDRESS,
+        data: encodeFunctionData({
+            abi: parseAbi([
+                "struct ModuleInit {address module;bytes initData;}",
+                "function addSafe7579(address safe7579,ModuleInit[] calldata validators,ModuleInit[] calldata executors,ModuleInit[] calldata fallbacks, ModuleInit[] calldata hooks,address[] calldata attesters,uint8 threshold) external",
+            ]),
+            functionName: "addSafe7579",
+            args: [
+                SAFE_7579_ADDRESS,
+                [
+                    {
+                        module: smartSessions.address,
+                        initData: smartSessions.initData,
+                    },
+                ],
+                [],
+                [],
+                [],
+                [RHINESTONE_ATTESTER_ADDRESS],
+                1,
+            ],
+        }),
+        value: BigInt(0),
+    };
+}
+
+export async function addSafe7579Module<
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
+>(
+    client: Client<Transport, Chain | undefined, TAccount>
+): Promise<{ userOpHash: Hex }> {
+    const call = buildAddSafe7579Call();
+
+    const userOpHash = await getAction(
+        client,
+        sendUserOperation,
+        "sendUserOperation"
+    )({
+        calls: [call],
+        verificationGasLimit: hardcodeVerificationGasLimit7579,
+    });
+
+    return { userOpHash };
+}
+
 export async function grantPermission<
     TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 >(
@@ -77,33 +126,7 @@ export async function grantPermission<
     )(client);
 
     if (!is7579FallbackSet && isDeployed) {
-        const smartSessions = getSmartSessionsValidator({});
-
-        calls.unshift({
-            to: LAUNCHPAD_ADDRESS,
-            data: encodeFunctionData({
-                abi: parseAbi([
-                    "struct ModuleInit {address module;bytes initData;}",
-                    "function addSafe7579(address safe7579,ModuleInit[] calldata validators,ModuleInit[] calldata executors,ModuleInit[] calldata fallbacks, ModuleInit[] calldata hooks,address[] calldata attesters,uint8 threshold) external",
-                ]),
-                functionName: "addSafe7579",
-                args: [
-                    SAFE_7579_ADDRESS,
-                    [
-                        {
-                            module: smartSessions.address,
-                            initData: smartSessions.initData,
-                        },
-                    ],
-                    [],
-                    [],
-                    [],
-                    [RHINESTONE_ATTESTER_ADDRESS],
-                    1,
-                ],
-            }),
-            value: BigInt(0),
-        });
+        calls.unshift(buildAddSafe7579Call());
     }
 
     const userOpHash = await getAction(

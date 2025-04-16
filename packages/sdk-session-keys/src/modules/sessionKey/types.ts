@@ -55,10 +55,15 @@ export type GrantPermissionResponse = {
     userOpHash: Hex;
 } & PreparePermissionResponse;
 
+export type AddSafe7579Response = {
+    /** The hash of the user operation. */
+    userOpHash: Hex;
+};
+
 export type Call = {
     to: Hex;
-    data?: Hex | undefined;
-    value?: bigint | undefined;
+    data: Hex;
+    value: bigint;
 };
 
 type OptionalSessionKeyData = OneOf<

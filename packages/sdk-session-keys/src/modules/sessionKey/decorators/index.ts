@@ -1,9 +1,14 @@
 import type { GrantPermissionResponse } from "@/index";
 import type { Chain, Client, Hash, Transport } from "viem";
 import type { SmartAccount } from "viem/account-abstraction";
-import type { Execution, PreparePermissionResponse } from "../types";
+import type {
+    AddSafe7579Response,
+    Execution,
+    PreparePermissionResponse,
+} from "../types";
 import {
     type GrantPermissionParameters,
+    addSafe7579Module,
     grantPermission,
 } from "./grantPermission";
 import {
@@ -37,6 +42,13 @@ export type UsePermissionParameters = {
 export type SmartSessionCreateActions<
     TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 > = {
+    /**
+     * Adds the smart sessions module to the smart account.
+     *
+     * @returns A promise that resolves to the transaction hash.
+     */
+    addSafe7579Module: () => Promise<AddSafe7579Response>;
+
     /**
      * Creates multiple sessions for a  smart account.
      *
@@ -98,6 +110,7 @@ export function smartSessionActions() {
         client: Client<Transport, Chain | undefined, TAccount>
     ): SmartSessionCreateActions<TAccount> => {
         return {
+            addSafe7579Module: () => addSafe7579Module(client),
             grantPermission: (args) => grantPermission(client, args),
             preparePermission: (args) => preparePermission(client, args),
             isPermissionInstalled: (args) =>
