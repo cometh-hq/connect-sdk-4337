@@ -10,7 +10,15 @@ import {
     RHINESTONE_ATTESTER_ADDRESS,
     getSmartSessionsValidator,
 } from "@rhinestone/module-sdk";
-import type { Chain, Client, Hex, PublicClient, Transport } from "viem";
+import { isSmartAccountDeployed } from "permissionless";
+import type {
+    Address,
+    Chain,
+    Client,
+    Hex,
+    PublicClient,
+    Transport,
+} from "viem";
 import { type SmartAccount, sendUserOperation } from "viem/account-abstraction";
 import { encodeFunctionData, getAction, parseAbi } from "viem/utils";
 import type { Call } from "../types";
@@ -49,6 +57,11 @@ export async function grantPermission<
         "preparePermission"
     )(parameters);
 
+    const isDeployed = await isSmartAccountDeployed(
+        client.account?.client as PublicClient,
+        client.account?.address as Address
+    );
+
     const calls = [
         {
             to: preparedPermission.action.target,
@@ -63,7 +76,7 @@ export async function grantPermission<
         "is7579Installed"
     )(client);
 
-    if (!is7579FallbackSet) {
+    if (!is7579FallbackSet && isDeployed) {
         const smartSessions = getSmartSessionsValidator({});
 
         calls.unshift({

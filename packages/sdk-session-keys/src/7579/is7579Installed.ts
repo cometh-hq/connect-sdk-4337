@@ -1,6 +1,8 @@
 import { SafeAbi } from "@/abis/safe";
 import { SAFE_7579_ADDRESS } from "@/constants";
 
+import type { ReadContractParameters } from "viem";
+
 import { isSmartAccountDeployed } from "permissionless";
 
 import {
@@ -51,8 +53,7 @@ export async function is7579Installed<
             abi: SafeAbi,
             functionName: "isModuleEnabled",
             args: [SAFE_7579_ADDRESS as Address],
-            // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-        } as any)) as boolean;
+        } as ReadContractParameters)) as boolean;
 
         return isFallbackSet;
     }

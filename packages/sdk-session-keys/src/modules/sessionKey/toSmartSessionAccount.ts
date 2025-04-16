@@ -1,5 +1,5 @@
-import { serializeErc6492Signature } from "viem";
-import type { SmartAccount } from "viem/account-abstraction";
+import { type UnionPartialBy, serializeErc6492Signature } from "viem";
+import type { SmartAccount, UserOperation } from "viem/account-abstraction";
 import type { SafeSigner } from "./types";
 
 export async function toSmartSessionsAccount(
@@ -21,8 +21,11 @@ export async function toSmartSessionsAccount(
                 });
             return signature;
         },
-        //biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-        async signUserOperation(parameters: any) {
+        async signUserOperation(
+            parameters: UnionPartialBy<UserOperation, "sender"> & {
+                chainId?: number | undefined;
+            }
+        ) {
             return sessionKeySigner.signUserOperation(parameters);
         },
         async getStubSignature() {
