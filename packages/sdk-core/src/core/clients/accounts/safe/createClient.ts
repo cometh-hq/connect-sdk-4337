@@ -1,4 +1,5 @@
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
+import { eip1193Actions } from "@/core/actions/accounts/eip1193/eip1193Actions";
 import { safeOwnerPluginActions } from "@/core/actions/accounts/safe/owners/safeOwnerActions";
 import type { SmartAccountClientConfig } from "permissionless";
 import {
@@ -118,5 +119,8 @@ export function createSmartAccountClient<
             // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         ) as any;
 
-    return client.extend(safeOwnerPluginActions()).extend(eip5792Actions());
+    return client
+    .extend(safeOwnerPluginActions())
+    .extend(eip1193Actions())
+    .extend(eip5792Actions());
 }
