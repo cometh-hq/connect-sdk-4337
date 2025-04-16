@@ -16,6 +16,13 @@ const defaultSafeContractConfig = {
     safe4337ModuleAddress: "0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226",
 };
 
+const defaultClientConfig = {
+    cacheTime: 60_000,
+    batch: {
+        multicall: { wait: 50 },
+    },
+};
+
 export {
     ENTRYPOINT_ADDRESS_V07,
     SAFE_7579_ADDRESS,
@@ -23,4 +30,5 @@ export {
     add7579FunctionSelector,
     hardcodeVerificationGasLimit7579,
     defaultSafeContractConfig,
+    defaultClientConfig,
 };
