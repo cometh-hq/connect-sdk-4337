@@ -3,17 +3,29 @@ import type {
     Session,
     SmartSessionMode,
 } from "@rhinestone/module-sdk";
+import type { Erc7579Actions } from "permissionless/actions/erc7579";
 import type {
     Abi,
     AbiFunction,
     Address,
+    BundlerRpcSchema,
     ByteArray,
+    Chain,
+    Client,
     Hex,
     LocalAccount,
     OneOf,
+    Prettify,
+    RpcSchema,
+    Transport,
     UnionPartialBy,
 } from "viem";
-import type { UserOperation } from "viem/account-abstraction";
+import type {
+    BundlerActions,
+    SmartAccount,
+    UserOperation,
+} from "viem/account-abstraction";
+import type { SmartSessionCreateActions } from "./decorators";
 
 export type Execution = {
     target: Address;
@@ -218,3 +230,28 @@ export type SafeSigner<Name extends string = string> = LocalAccount<Name> & {
         }
     ) => Promise<Hex>;
 };
+
+export type SmartSessionsAccountClient<
+    transport extends Transport = Transport,
+    chain extends Chain | undefined = Chain | undefined,
+    account extends SmartAccount | undefined = SmartAccount | undefined,
+    client extends Client | undefined = Client | undefined,
+    rpcSchema extends RpcSchema | undefined = undefined,
+> = Prettify<
+    Client<
+        transport,
+        chain extends Chain
+            ? chain
+            : // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
+              client extends Client<any, infer chain>
+              ? chain
+              : undefined,
+        account,
+        rpcSchema extends RpcSchema
+            ? [...BundlerRpcSchema, ...rpcSchema]
+            : BundlerRpcSchema,
+        BundlerActions<account> &
+            SmartSessionCreateActions<account> &
+            Erc7579Actions<account>
+    >
+>;
