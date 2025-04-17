@@ -4,9 +4,10 @@ import {
     createComethPaymasterClient,
     createSafeSmartAccount,
     createSmartAccountClient,
-} from "@cometh/connect-sdk-4337";
+} from "@cometh/connect-core-sdk";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -18,7 +19,6 @@ export function useSmartAccount() {
     const [newSigner, setNewSigner] = useState<any | null>(null);
     const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
-    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
@@ -27,7 +27,6 @@ export function useSmartAccount() {
     }
 
     async function connect() {
-        if (!apiKey) throw new Error("API key not found");
         if (!bundlerUrl) throw new Error("Bundler Url not found");
 
         setIsConnecting(true);
@@ -45,18 +44,22 @@ export function useSmartAccount() {
                 },
             }) as PublicClient;
 
+            const signer = privateKeyToAccount(
+                process.env.NEXT_PUBLIC_PRIVATE_KEY as Hex
+            );
+
             let smartAccount: any;
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
-                    apiKey,
+                    signer,
                     chain: arbitrumSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
-                    apiKey,
+                    signer,
                     chain: arbitrumSepolia,
                     publicClient,
                 });
