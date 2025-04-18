@@ -44,7 +44,7 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "2.22.2"
+    "viem": "2.27.2"
   },
   "devDependencies": {
     "tsup": "^8.0.2",

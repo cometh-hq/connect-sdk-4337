@@ -28,16 +28,14 @@ export function walletClientToSmartAccountSigner<
             return walletClient.signMessage({ message });
         },
         async signTypedData<
-            const TTypedData extends TypedData | Record<string, unknown>,
-            TPrimaryType extends
-                | keyof TTypedData
-                | "EIP712Domain" = keyof TTypedData,
-        >(typedData: TypedDataDefinition<TTypedData, TPrimaryType>) {
-            return signTypedData<TTypedData, TPrimaryType, TChain, Account>(
+            const typedData extends TypedData | Record<string, unknown>,
+            primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,
+        >(parameters: TypedDataDefinition<typedData, primaryType>) {
+            return signTypedData<typedData, primaryType, TChain, Account>(
                 walletClient,
                 {
+                    ...parameters,
                     account: walletClient.account,
-                    ...typedData,
                 }
             );
         },
