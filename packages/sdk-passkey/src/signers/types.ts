@@ -1,6 +1,5 @@
 import type { Address, Chain, PrivateKeyAccount, PublicClient } from "viem";
 import type { SafeContractParams } from "../accounts/safe/types";
-import type { eoaFallback } from "./ecdsa/fallbackEoa/types";
 import type {
     PasskeyLocalStorageFormat,
     webAuthnOptions,
@@ -10,21 +9,14 @@ interface ComethSignerTypes {
     type: "localWallet" | "passkey";
 }
 
-export interface FallbackEoaSigner extends ComethSignerTypes {
-    type: "localWallet";
-    eoaFallback: eoaFallback;
-}
-
 export interface PasskeySigner extends ComethSignerTypes {
     type: "passkey";
     passkey: PasskeyLocalStorageFormat;
 }
 
-export type ComethSigner = FallbackEoaSigner | PasskeySigner;
+export type ComethSigner = PasskeySigner;
 
 export type ComethSignerConfig = {
-    disableEoaFallback?: boolean;
-    encryptionSalt?: string;
     webAuthnOptions?: webAuthnOptions;
     passKeyName?: string;
     fullDomainSelected?: boolean;

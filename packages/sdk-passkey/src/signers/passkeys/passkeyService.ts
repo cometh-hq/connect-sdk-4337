@@ -71,7 +71,7 @@ const _formatSigningRpId = (
     return fullDomainSelected ? window.location.host : rootDomain;
 };
 
-const createPasskeySigner = async ({
+const createPasskey = async ({
     api,
     webAuthnOptions,
     passKeyName,
@@ -504,7 +504,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
 };
 
 export {
-    createPasskeySigner,
+    createPasskey,
     getPasskeyInStorage,
     getPasskeySigner,
     setPasskeyInStorage,

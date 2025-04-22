@@ -21,13 +21,6 @@ export type UserOperation = {
     paymasterData?: never;
 };
 
-export type MultiSendTransaction = {
-    to: string;
-    value?: Hex;
-    data: Hex;
-    operation: number;
-};
-
 export type DeviceData = {
     browser: string;
     os: string;
@@ -44,44 +37,5 @@ export type WebAuthnSigner = {
     publicKeyY: string;
     signerAddress: string;
     deviceData: DeviceData;
-    creationDate?: Date;
-};
-
-export enum WebauthnVersion {
-    V1 = "v1.0",
-}
-
-export type WebAuthnDeploymentParams = {
-    version: WebauthnVersion;
-    safeWebAuthnSharedSignerAddress: string;
-    safeWebAuthnSignerFactory: string;
-    safeWebAuthnSignerSingleton: string;
-    verifier: string;
-};
-
-export enum SignerType {
-    WEBAUTHN = "WEBAUTHN",
-    FALLBACK_WALLET = "FALLBACK_WALLET",
-}
-
-export type Signer = {
-    signerAddress: Address;
-    deviceData: DeviceData;
-    publicKeyId?: Hex;
-    publicKeyX?: Hex;
-    publicKeyY?: Hex;
-};
-
-export type RecoveryRequest = {
-    projectId: string;
-    chainId: string;
-    walletAddress: string;
-    signerAddress: string;
-    deviceData: DeviceData;
-    type: SignerType;
-    publicKeyId?: string;
-    publicKeyX?: string;
-    publicKeyY?: string;
-    deploymentParams?: WebAuthnDeploymentParams;
     creationDate?: Date;
 };

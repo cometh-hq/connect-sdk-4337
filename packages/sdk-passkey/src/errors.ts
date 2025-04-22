@@ -124,9 +124,3 @@ export class ChallengeNotFoundError extends Error {
         super("Challenge not found in client data JSON");
     }
 }
-
-export class NoPrivateKeyFoundError extends Error {
-    constructor() {
-        super("No private key found");
-    }
-}
