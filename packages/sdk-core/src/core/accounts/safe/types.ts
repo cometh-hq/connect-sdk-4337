@@ -47,7 +47,12 @@ export interface SafeSignature {
     dynamic?: true;
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 export const SAFE_SENTINEL_OWNERS = "0x1";
 =======
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+
+export const SAFE_SENTINEL_OWNERS = "0x1";
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
