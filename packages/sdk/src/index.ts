@@ -47,6 +47,7 @@ import { SmartSessionMode } from "@rhinestone/module-sdk";
 import type { UsePermissionParameters } from "./core/modules/sessionKey/decorators/usePermission";
 import type {
     CreateSessionDataParams,
+    Execution,
     GrantPermissionResponse,
 } from "./core/modules/sessionKey/types";
 import { providerToSmartAccountSigner } from "./core/signers/utils";
@@ -223,4 +224,5 @@ export type {
     GrantPermissionParameters,
     GrantPermissionResponse,
     UsePermissionParameters,
+    Execution,
 };

@@ -9,7 +9,7 @@ import {
   encodeFunctionData,
   getContract,
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { arbitrumSepolia } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
@@ -30,7 +30,7 @@ const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
 const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
 
 const publicClient = createPublicClient({
-  chain: baseSepolia,
+  chain: arbitrumSepolia,
   transport: http(),
   cacheTime: 60_000,
   batch: {
@@ -140,19 +140,19 @@ function TransactionWithSessionKey({
 
                 const sessionKeyAccount = await createSafeSmartAccount({
                   apiKey,
-                  chain: baseSepolia,
+                  chain: arbitrumSepolia,
                   smartAccountAddress: smartAccount?.account?.address,
                   smartSessionSigner: sessionKeySigner,
                 });
 
                 const paymasterClient = await createComethPaymasterClient({
                   transport: http(paymasterUrl),
-                  chain: baseSepolia,
+                  chain: arbitrumSepolia,
                 });
 
                 const sessionKeyClient = createSmartAccountClient({
                   account: sessionKeyAccount,
-                  chain: baseSepolia,
+                  chain: arbitrumSepolia,
                   bundlerTransport: http(bundlerUrl),
                   paymaster: paymasterClient,
                   userOperation: {

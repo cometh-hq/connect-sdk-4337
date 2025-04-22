@@ -476,3 +476,15 @@ export class ChallengeNotFoundError extends Error {
         super("Challenge not found in client data JSON");
     }
 }
+
+export class SessionKeyModeError extends Error {
+    constructor() {
+        super("Please provide a wallet address to use session keys.");
+    }
+}
+
+export class WalletNotStoredForSessionKeyModeError extends Error {
+    constructor() {
+        super("Wallet needs to be stored in cometh api fro session key mode.");
+    }
+}

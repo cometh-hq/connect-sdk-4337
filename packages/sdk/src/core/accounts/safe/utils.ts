@@ -3,7 +3,6 @@ import type { ComethSignerConfig } from "@/core/signers/types";
 import { MethodNotSupportedError } from "@/errors";
 import { type Abi, parseAbi } from "abitype";
 import {
-    type Address,
     type Prettify,
     type PublicClient,
     createNonceManager,
@@ -40,7 +39,6 @@ export async function toSmartAccount<
         connectApiInstance: API;
         safeContractParams: SafeContractParams;
         comethSignerConfig?: ComethSignerConfig;
-        signerAddress: Address;
         publicClient?: PublicClient;
     },
 >(
@@ -50,7 +48,6 @@ export async function toSmartAccount<
         connectApiInstance: API;
         safeContractParams: SafeContractParams;
         comethSignerConfig?: ComethSignerConfig;
-        signerAddress: Address;
         publicClient?: PublicClient;
     }
 > {
@@ -70,7 +67,6 @@ export async function toSmartAccount<
     let deployed = false;
 
     const address = await comethImplementation.getAddress();
-    const signerAddress = comethImplementation.signerAddress;
     const connectApiInstance = comethImplementation.connectApiInstance;
     const publicClient = comethImplementation.publicClient;
 
@@ -78,7 +74,6 @@ export async function toSmartAccount<
         ...extend,
         ...rest,
         address,
-        signerAddress,
         connectApiInstance,
         publicClient,
         async getFactoryArgs() {
