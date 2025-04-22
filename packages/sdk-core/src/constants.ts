@@ -17,6 +17,9 @@ const defaultSafeContractConfig = {
 };
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 const defaultClientConfig = {
     cacheTime: 60_000,
     batch: {
@@ -24,8 +27,11 @@ const defaultClientConfig = {
     },
 };
 
+<<<<<<< HEAD
 =======
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 export {
     ENTRYPOINT_ADDRESS_V07,
     SAFE_7579_ADDRESS,
@@ -34,7 +40,11 @@ export {
     hardcodeVerificationGasLimit7579,
     defaultSafeContractConfig,
 <<<<<<< HEAD
+<<<<<<< HEAD
     defaultClientConfig,
 =======
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+    defaultClientConfig,
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 };
