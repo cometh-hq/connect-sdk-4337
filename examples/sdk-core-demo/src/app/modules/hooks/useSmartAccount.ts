@@ -4,10 +4,10 @@ import {
     createComethPaymasterClient,
     createSafeSmartAccount,
     createSmartAccountClient,
+    providerToSmartAccountSigner,
 } from "@cometh/connect-core-sdk";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
 
 export function useSmartAccount() {
@@ -17,6 +17,7 @@ export function useSmartAccount() {
     const [connectionError, setConnectionError] = useState<string | null>(null);
 
     const [newSigner, setNewSigner] = useState<any | null>(null);
+
     const [smartAccount, setSmartAccount] = useState<any | null>(null);
 
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
@@ -44,24 +45,24 @@ export function useSmartAccount() {
                 },
             }) as PublicClient;
 
-            const signer = privateKeyToAccount(
-                process.env.NEXT_PUBLIC_PRIVATE_KEY as Hex
+            const signer = await providerToSmartAccountSigner(
+                await (window as any).ethereum
             );
 
-            let smartAccount: any;
+            let smartAccount;
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
-                    signer,
                     chain: arbitrumSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
+                    signer
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
-                    signer,
                     chain: arbitrumSepolia,
                     publicClient,
+                    signer,
                 });
                 window.localStorage.setItem(
                     "walletAddress",
