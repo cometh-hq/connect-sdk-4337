@@ -15,14 +15,21 @@ import { createComethPaymasterClient } from "./core/clients/paymaster/createPaym
 import { providerToSmartAccountSigner } from "./core/signers/utils";
 import {
     BatchCallModeNotSupportedError,
+    CannotSignForAddressError,
     FallbackAlreadySetError,
+    InvalidAccountAddressError,
     InvalidCallDataError,
+    InvalidParamsError,
     InvalidSignatureError,
+    InvalidSmartAccountClientError,
     MethodNotSupportedError,
     MissingToAddressError,
     NoCallsToEncodeError,
+    OwnerToRemoveIsNotSafeOwnerError,
+    RemoveOwnerOnUndeployedSafeError,
     SafeNotDeployedError,
     SmartAccountAddressNotFoundError,
+    WalletNotConnectedError,
 } from "./errors";
 
 export {
@@ -40,6 +47,13 @@ export {
     InvalidCallDataError,
     InvalidSignatureError,
     MissingToAddressError,
+    OwnerToRemoveIsNotSafeOwnerError,
+    RemoveOwnerOnUndeployedSafeError,
+    CannotSignForAddressError,
+    InvalidAccountAddressError,
+    InvalidParamsError,
+    WalletNotConnectedError,
+    InvalidSmartAccountClientError,
 };
 
 export type {
