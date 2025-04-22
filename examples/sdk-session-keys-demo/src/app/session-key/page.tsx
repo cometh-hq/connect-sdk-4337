@@ -1,5 +1,6 @@
 "use client";
 
+<<<<<<< HEAD
 import React from "react";
 
 import ConnectWallet from "../../../../viem-demo-capabilities/src/app/components/ConnectWallet";
@@ -7,6 +8,14 @@ import SafeOwners from "../components/SafeOwners";
 import { useSmartAccount } from "../../../../viem-demo-capabilities/src/app/modules/hooks/useSmartAccount";
 
 export default function OwnerManagementApp() {
+=======
+import React, { useState } from "react";
+import ConnectWallet from "../components/ConnectWallet";
+import TransactionWithSessionKey from "../components/TransactionWithSessionKey";
+import { useSmartAccount } from "../modules/hooks/useSmartAccount";
+
+export default function App() {
+>>>>>>> a562b86 (feat/session-keys sdk (#76))
     const {
         isConnecting,
         isConnected,
@@ -14,6 +23,10 @@ export default function OwnerManagementApp() {
         connectionError,
         smartAccount,
     } = useSmartAccount();
+<<<<<<< HEAD
+=======
+    const [transactionSuccess, setTransactionSuccess] = useState(false);
+>>>>>>> a562b86 (feat/session-keys sdk (#76))
 
     return (
         <div
@@ -40,8 +53,17 @@ export default function OwnerManagementApp() {
 
                         {isConnected && (
                             <>
+<<<<<<< HEAD
                                 <SafeOwners
                                     smartAccount={smartAccount}
+=======
+                                <TransactionWithSessionKey
+                                    smartAccount={smartAccount}
+                                    transactionSuccess={transactionSuccess}
+                                    setTransactionSuccess={
+                                        setTransactionSuccess
+                                    }
+>>>>>>> a562b86 (feat/session-keys sdk (#76))
                                 />
                             </>
                         )}
