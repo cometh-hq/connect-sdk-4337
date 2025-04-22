@@ -11,6 +11,9 @@ export type ExecutionMode<callType extends CallType> = {
 
 /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
  * Wallet Errors
  **/
 
@@ -21,8 +24,11 @@ export class WalletNotConnectedError extends Error {
 }
 
 /**
+<<<<<<< HEAD
 =======
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
  * Adaptor Errors
  **/
 
@@ -49,6 +55,9 @@ export class SmartAccountAddressNotFoundError extends Error {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 export class OwnerToRemoveIsNotSafeOwnerError extends Error {
     constructor(ownerToRemove: string) {
         super(`${ownerToRemove} is not a safe owner`);
@@ -61,8 +70,11 @@ export class RemoveOwnerOnUndeployedSafeError extends Error {
     }
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 export class MethodNotSupportedError extends BaseError {
     constructor() {
         super("Method not supported", {
@@ -95,6 +107,9 @@ export class InvalidCallDataError extends Error {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 export class InvalidAccountAddressError extends Error {
     constructor() {
         super("Invalid account address");
@@ -107,8 +122,11 @@ export class InvalidSmartAccountClientError extends Error {
     }
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 /**
  * Signature Errors
  **/
@@ -120,14 +138,20 @@ export class InvalidSignatureError extends Error {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 export class CannotSignForAddressError extends Error {
     constructor() {
         super("Cannot sign for address that is not the current account");
     }
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 /**
  * Transactions Errors
  **/
@@ -141,6 +165,9 @@ export class MissingToAddressError extends BaseError {
     }
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 
 /**
  * Utils Errors
@@ -151,5 +178,8 @@ export class InvalidParamsError extends Error {
         super(`Invalid params: ${message}`);
     }
 }
+<<<<<<< HEAD
 =======
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))

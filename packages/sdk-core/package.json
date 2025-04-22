@@ -7,10 +7,14 @@
     }
   ],
 <<<<<<< HEAD
+<<<<<<< HEAD
   "version": "0.0.2",
 =======
   "version": "0.0.1",
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+  "version": "0.0.2",
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
   "description": "SDK Cometh Connect Core",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
@@ -49,10 +53,14 @@
   },
   "peerDependencies": {
 <<<<<<< HEAD
+<<<<<<< HEAD
     "viem": "^2.27.3"
 =======
     "viem": "2.22.2"
 >>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+    "viem": "^2.27.3"
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
   },
   "devDependencies": {
     "tsup": "^8.0.2",
