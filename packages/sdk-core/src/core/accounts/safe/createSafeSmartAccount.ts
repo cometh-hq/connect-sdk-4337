@@ -39,7 +39,7 @@ import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
 import { SafeAbi } from "./abi/safe";
 import { encode7579Calls } from "./services/7579";
-import type { SafeContractParams } from "./types";
+import type { MultiSendTransaction, SafeContractParams } from "./types";
 
 export type ComethSafeSmartAccount = ToSafeSmartAccountReturnType<"0.7"> & {
     signerAddress: Address;
@@ -53,6 +53,7 @@ export type createSafeSmartAccountParameters = Prettify<{
     safeContractConfig?: SafeContractParams;
     publicClient?: PublicClient;
     smartAccountAddress?: Address;
+    setupTransactions?: MultiSendTransaction[];
 }>;
 
 /**
@@ -114,6 +115,7 @@ export async function createSafeSmartAccount<
     smartAccountAddress,
     safeContractConfig,
     signer,
+    setupTransactions,
 }: createSafeSmartAccountParameters): Promise<ComethSafeSmartAccount> {
     const client = (await getViemClient(chain, publicClient)) as Client<
         TTransport,
@@ -150,6 +152,8 @@ export async function createSafeSmartAccount<
         fallbackHandler: safe4337Module,
         modules: [safe4337Module],
         setUpContractAddress,
+        multisendAddress,
+        setupTransactions,
     });
 
     if (!smartAccountAddress) {
