@@ -1,16 +1,17 @@
 {
-  "name": "@cometh/connect-core-sdk",
+  "name": "@cometh/session-keys",
   "author": "Cometh",
   "maintainers": [
     {
       "name": "yoanslvy"
     }
   ],
-  "version": "0.0.2",
-  "description": "SDK Cometh Connect Core",
+  "version": "0.0.1",
+  "description": "SDK Cometh Connect Session Keys",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
     "cometh",
+    "session-keys",
     "erc-4337",
     "smart-wallet"
   ],
@@ -44,7 +45,7 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2.27.3"
+    "viem": "^2.22.2"
   },
   "devDependencies": {
     "tsup": "^8.0.2",
@@ -52,7 +53,6 @@
   },
   "dependencies": {
     "@rhinestone/module-sdk": "^0.2.3",
-    "abitype": "^1.0.8",
     "permissionless": "^0.2.39"
   }
 }
