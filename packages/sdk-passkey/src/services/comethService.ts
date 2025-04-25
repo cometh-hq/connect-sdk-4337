@@ -1,5 +1,5 @@
 import type { Address, Chain } from "viem";
-import type { ProjectParams, Wallet } from "../accounts/safe/types";
+import type { ProjectParams } from "../accounts/safe/types";
 import { getSignerAddress } from "../signers/createPasskeySigner";
 import type { Signer } from "../signers/types";
 import type { API } from "./API";
@@ -35,4 +35,11 @@ export const createNewWalletInDb = async ({
         smartAccountAddress,
         initiatorAddress: initiatorAddress,
     });
+};
+
+export const getProjectParamsByChain = async ({
+    api,
+    chain,
+}: { api: API; chain: Chain }): Promise<ProjectParams> => {
+    return (await api.getProjectParams(chain.id)) as ProjectParams;
 };

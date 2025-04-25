@@ -1,4 +1,4 @@
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 
 export const EIP712_SAFE_OPERATION_TYPE = {
     SafeOp: [

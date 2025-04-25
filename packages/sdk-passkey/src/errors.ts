@@ -10,12 +10,6 @@ export class SafeNotDeployedError extends Error {
     }
 }
 
-export class InvalidCallDataError extends Error {
-    constructor() {
-        super("Invalid callData for Safe Account");
-    }
-}
-
 export class MethodNotSupportedError extends BaseError {
     constructor() {
         super("Method not supported", {
@@ -39,11 +33,30 @@ export class SignerNotOwnerError extends Error {
  * Add New Device Errors
  **/
 
+export class FailedToSerializeUrlError extends Error {
+    constructor(error: Error) {
+        super(`Failed to serialize url: ${error}`);
+    }
+}
+
+export class FailedToGenerateQRCodeError extends Error {
+    constructor(error: Error) {
+        super(`Failed to generate QR Code: ${error}`);
+    }
+}
+
 export class DeviceNotCompatibleWithPasskeysError extends Error {
     constructor() {
         super("Device not compatible with passkeys");
     }
 }
+
+export class DeviceNotCompatibleWithSECKP256r1PasskeysError extends Error {
+    constructor() {
+        super("Device not compatible with SECKP256r1 passkeys");
+    }
+}
+
 
 /**
  * Passkeys Errors
@@ -93,12 +106,6 @@ export class PasskeySignatureFailedError extends Error {
     }
 }
 
-export class PasskeySignerNotValidError extends Error {
-    constructor() {
-        super("Passkey signer not valid");
-    }
-}
-
 /**
  * Signature Errors
  **/
@@ -114,6 +121,13 @@ export class InvalidSignatureError extends Error {
         super("Invalid signature");
     }
 }
+
+export class InvalidSignerDataError extends Error {
+    constructor() {
+        super("Invalid signer data");
+    }
+}
+
 
 /**
  * Utils Errors

@@ -5,12 +5,12 @@ import {
     getPasskeySigner,
     setPasskeyInStorage,
 } from "./passkeys/passkeyService";
+//import { storeWalletInComethApi } from "./storeWalletInComethApi";
 
 import { API } from "@/services/API";
 
 import {
     DeviceNotCompatibleWithPasskeysError,
-    PasskeySignerNotValidError,
 } from "@/errors";
 import type {
     PasskeyLocalStorageFormat,
@@ -20,9 +20,9 @@ import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "./passkeys/utils";
-import type { ComethSigner, CreateSignerParams, Signer } from "./types";
+import type { CreateSignerParams, PasskeySigner, Signer } from "./types";
 
-export const isComethSigner = (signer: Signer): signer is ComethSigner => {
+export const isPasskeySigner = (signer: Signer): signer is PasskeySigner => {
     return (
         "type" in signer &&
         (signer.type === "passkey")
@@ -30,7 +30,7 @@ export const isComethSigner = (signer: Signer): signer is ComethSigner => {
 };
 
 export const getSignerAddress = (customSigner: Signer) => {
-    if (isComethSigner(customSigner)) {
+    if (isPasskeySigner(customSigner)) {
         return customSigner.passkey.signerAddress;
     }
 
@@ -38,18 +38,16 @@ export const getSignerAddress = (customSigner: Signer) => {
 };
 
 export const saveSigner = async (
-    signer: Signer,
+    signer: PasskeySigner,
     smartAccountAddress: Address
 ) => {
-    if (isComethSigner(signer)) {
-        setPasskeyInStorage(
-            smartAccountAddress,
-            signer.passkey.id,
-            signer.passkey.pubkeyCoordinates.x,
-            signer.passkey.pubkeyCoordinates.y,
-            signer.passkey.signerAddress
-        );
-    }
+    setPasskeyInStorage(
+        smartAccountAddress,
+        signer.passkey.id,
+        signer.passkey.pubkeyCoordinates.x,
+        signer.passkey.pubkeyCoordinates.y,
+        signer.passkey.signerAddress
+    );
 };
 
 export const isDeviceCompatibleWithPasskeys = async (options: {
@@ -80,12 +78,17 @@ export async function createPasskeySigner({
     passKeyName,
     fullDomainSelected = false,
     safeContractParams,
-}: CreateSignerParams): Promise<ComethSigner> {
+}: CreateSignerParams): Promise<PasskeySigner> {
     const api = new API(apiKey, baseUrl);
 
     const passkeyCompatible = await isDeviceCompatibleWithPasskeys({
         webAuthnOptions,
     });
+
+    if (!safeContractParams) {
+        const contractParams = await api.getProjectParams(chain.id);
+        safeContractParams = contractParams.safeContractParams
+    }
 
     if (passkeyCompatible) {
         let passkey: PasskeyLocalStorageFormat;
@@ -121,10 +124,27 @@ export async function createPasskeySigner({
             });
         }
 
-        return {
+        const passkeySigner = {
             type: "passkey",
             passkey,
-        };
+        } as PasskeySigner;
+
+        // const res = await storeWalletInComethApi({
+        //     chain,
+        //     singletonAddress: safeSingletonAddress,
+        //     safeProxyFactoryAddress,
+        //     saltNonce: zeroHash,
+        //     initializer,
+        //     signer: passkeySigner,
+        //     api,
+        //     publicClient,
+        // });
+    
+        // if (res.isNewWallet) {
+        //     await saveSigner(passkeySigner, smartAccountAddress);
+        // }
+
+        return passkeySigner;
     }
     throw new DeviceNotCompatibleWithPasskeysError()
 }

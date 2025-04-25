@@ -5,16 +5,10 @@ import type {
     webAuthnOptions,
 } from "./passkeys/types";
 
-interface ComethSignerTypes {
-    type: "localWallet" | "passkey";
-}
-
-export interface PasskeySigner extends ComethSignerTypes {
+export interface PasskeySigner {
     type: "passkey";
     passkey: PasskeyLocalStorageFormat;
 }
-
-export type ComethSigner = PasskeySigner;
 
 export type ComethSignerConfig = {
     webAuthnOptions?: webAuthnOptions;
@@ -26,9 +20,9 @@ export type CreateSignerParams = {
     apiKey: string;
     chain: Chain;
     smartAccountAddress?: Address;
-    safeContractParams: SafeContractParams;
+    safeContractParams?: SafeContractParams;
     baseUrl?: string;
     publicClient?: PublicClient;
 } & ComethSignerConfig;
 
-export type Signer = ComethSigner | PrivateKeyAccount;
+export type Signer = PasskeySigner | PrivateKeyAccount;

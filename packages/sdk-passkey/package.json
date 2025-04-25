@@ -45,14 +45,23 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "2.22.2"
+    "viem": "^2.22.2"
   },
   "devDependencies": {
     "tsup": "^8.0.2",
     "typescript": "^5"
   },
   "dependencies": {
-    "@rhinestone/module-sdk": "^0.2.3",
-    "permissionless": "^0.2.39"
+    "@simplewebauthn/server": "^7.4.0",
+    "@types/cbor-js": "^0.1.1",
+    "@types/elliptic": "^6.4.18",
+    "@types/psl": "^1.1.3",
+    "axios": "^1.6.8",
+    "bowser": "^2.11.0",
+    "cbor-js": "^0.1.0",
+    "elliptic": "^6.5.7",
+    "permissionless": "^0.2.39",
+    "psl": "^1.9.0",
+    "qrcode": "^1.5.4"
   }
 }
