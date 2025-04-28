@@ -26,18 +26,20 @@ export async function passkeySetupTx({
     apiKey,
     chain,
     baseUrl,
+    safeContractConfig,
 }: {
     passkeySigner: SafeSigner;
     apiKey: string;
     chain: Chain;
     baseUrl?: string;
+    safeContractConfig?: SafeContractParams;
 }) {
     const api = new API(apiKey, baseUrl);
     const contractParams = await getProjectParamsByChain({ api, chain });
 
     const { safeWebAuthnSharedSignerContractAddress, p256Verifier } =
-        //safeContractConfig ??
-        contractParams.safeContractParams as SafeContractParams;
+        safeContractConfig ??
+        (contractParams.safeContractParams as SafeContractParams);
 
     const passkey = {
         type: "passkey",
@@ -63,6 +65,7 @@ export async function toPasskeySigner<
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
     passKeyName,
     fullDomainSelected = false,
+    safeContractParams,
 }: CreateSignerParams): Promise<SafeSigner<"safeWebAuthnSigner">> {
     const api = new API(apiKey, baseUrl);
     const [client, contractParams] = await Promise.all([
@@ -93,7 +96,8 @@ export async function toPasskeySigner<
         safeSingletonAddress,
         multisendAddress,
         safe4337ModuleAddress: safe4337Module,
-    } = contractParams.safeContractParams as SafeContractParams; //safeContractConfig ??
+    } = safeContractParams ??
+    (contractParams.safeContractParams as SafeContractParams);
 
     if (!safe4337Module) {
         throw new ChainNotFoundError();
@@ -108,7 +112,8 @@ export async function toPasskeySigner<
         webAuthnOptions,
         passKeyName,
         fullDomainSelected,
-        safeContractParams: contractParams.safeContractParams,
+        safeContractParams:
+            safeContractParams ?? contractParams.safeContractParams,
     });
 
     const initializer = getSafeInitializer({
