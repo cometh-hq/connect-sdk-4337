@@ -1,6 +1,6 @@
 import type { ProjectParams, Wallet } from "@/accounts/safe/types";
 import { API_URL } from "@/constants";
-import type { RelayedTransactionDetails } from "@/migrationKit/types";
+import type { RelayedTransactionDetails } from "@/services/types";
 import type { DeviceData, WebAuthnSigner } from "@/types";
 import axios from "axios";
 import type { AxiosInstance } from "axios";
