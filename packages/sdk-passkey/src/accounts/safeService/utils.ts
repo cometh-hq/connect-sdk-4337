@@ -1,12 +1,17 @@
 import {
     type Address,
     type Hex,
+    type SignableMessage,
+    type TypedData,
+    type TypedDataDefinition,
     concat,
     encodePacked,
+    hashMessage,
+    hashTypedData,
     toBytes,
     toHex,
 } from "viem";
-import type { SafeSignature } from "../types";
+import type { SafeSignature } from "./types";
 
 export const DUMMY_AUTHENTICATOR_DATA = new Uint8Array(37);
 DUMMY_AUTHENTICATOR_DATA.fill(0xfe);
@@ -154,4 +159,21 @@ export const packInitCode = ({
     const factoryDataBytes = toBytes(factoryData);
 
     return toHex(concat([factoryBytes, factoryDataBytes]));
+};
+
+export const generateSafeMessageMessage = <
+    const TTypedData extends TypedData | { [key: string]: unknown },
+    TPrimaryType extends keyof TTypedData | "EIP712Domain" = keyof TTypedData,
+>(
+    message: SignableMessage | TypedDataDefinition<TTypedData, TPrimaryType>
+): Hex => {
+    const signableMessage = message as SignableMessage;
+
+    if (typeof signableMessage === "string" || signableMessage.raw) {
+        return hashMessage(signableMessage);
+    }
+
+    return hashTypedData(
+        message as TypedDataDefinition<TTypedData, TPrimaryType>
+    );
 };

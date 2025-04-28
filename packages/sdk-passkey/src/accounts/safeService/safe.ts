@@ -1,5 +1,5 @@
 import { SafeNotDeployedError } from "@/errors";
-import type { PasskeySigner } from "@/signers/types";
+import type { PasskeySigner } from "@/signers/passkeyService/types";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
@@ -23,7 +23,7 @@ import { EnableModuleAbi } from "../abi/enableModule";
 import { SafeAbi } from "../abi/safe";
 import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
-import type { MultiSendTransaction } from "../types";
+import type { MultiSendTransaction } from "./types";
 
 /**
  * Encodes multiple transactions into a single byte string for multi-send functionality

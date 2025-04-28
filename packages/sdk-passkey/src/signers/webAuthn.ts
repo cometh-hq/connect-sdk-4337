@@ -16,18 +16,18 @@ import {
     getSignatureBytes,
     packInitCode,
     packPaymasterData,
-} from "@/accounts/safe/services/utils";
+} from "@/accounts/safeService/utils";
+import { generateSafeMessageMessage } from "@/accounts/safeService/utils";
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
 import { MethodNotSupportedError } from "@/errors";
-import { sign } from "@/signers/passkeys/passkeyService";
-import type { PasskeyLocalStorageFormat } from "@/signers/passkeys/types";
-import { parseHex } from "@/signers/passkeys/utils";
+import { sign } from "@/signers/passkeyService/passkey";
+import type { PasskeyLocalStorageFormat } from "@/signers/passkeyService/types";
+import { parseHex } from "@/signers/passkeyService/utils";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,
-} from "../../types";
-import type { SafeSigner } from "../types";
-import { generateSafeMessageMessage } from "../utils";
+} from "../accounts/safeService/types";
+import type { SafeSigner } from "../accounts/safeService/types";
 
 /**
  * Creates a SafeSigner using WebAuthn for authentication

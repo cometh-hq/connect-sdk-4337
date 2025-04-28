@@ -1,4 +1,5 @@
-import type { Address } from "viem";
+import type { Address, Hex, LocalAccount, UnionPartialBy } from "viem";
+import type { UserOperation } from "viem/account-abstraction";
 
 export const EIP712_SAFE_OPERATION_TYPE = {
     SafeOp: [
@@ -85,4 +86,13 @@ export type Wallet = {
     connectionDate: Date;
     initiatorAddress: string;
     deploymentParams: DeploymentParams;
+};
+export type SafeSigner<Name extends string = string> = LocalAccount<Name> & {
+    smartAccountAddress: Address;
+    getStubSignature(): Promise<Hex>;
+    signUserOperation: (
+        parameters: UnionPartialBy<UserOperation, "sender"> & {
+            chainId?: number | undefined;
+        }
+    ) => Promise<Hex>;
 };

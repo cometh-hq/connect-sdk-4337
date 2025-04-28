@@ -1,10 +1,11 @@
 import { toPasskeyAccount } from "./accounts/toPasskeyAccount";
-import { createNewSigner } from "./actions/accounts/addNewDevice";
+import { addPasskeyOwner } from "./actions/addPasskeyOwnerActions";
 import {
     retrieveAccountAddressFromPasskeyId,
     retrieveAccountAddressFromPasskeys,
-} from "./actions/accounts/retrieveAccountAddressFromPasskey";
-import type { webAuthnOptions } from "./signers/passkeys/types";
+} from "./actions/retrieveAccountAddressFromPasskey";
+import type { webAuthnOptions } from "./signers/passkeyService/types";
+import { createPasskeySigner } from "./signers/toPasskeySigner";
 import { passkeySetupTx, toPasskeySigner } from "./signers/toPasskeySigner";
 
 export {
@@ -13,7 +14,8 @@ export {
     toPasskeySigner,
     toPasskeyAccount,
     passkeySetupTx,
-    createNewSigner,
+    createPasskeySigner,
+    addPasskeyOwner,
 };
 
 export type { webAuthnOptions };

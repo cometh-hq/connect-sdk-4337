@@ -1,6 +1,6 @@
 import type { Address, Chain } from "viem";
-import type { ProjectParams } from "../accounts/safe/types";
-import type { PasskeySigner } from "../signers/types";
+import type { ProjectParams } from "../accounts/safeService/types";
+import type { PasskeySigner } from "../signers/passkeyService/types";
 import type { API } from "./API";
 import { getDeviceData } from "./deviceService";
 

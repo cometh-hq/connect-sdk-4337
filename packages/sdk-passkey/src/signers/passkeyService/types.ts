@@ -1,12 +1,13 @@
-import type { Address, Hex } from "viem";
+import type { Address, Chain, Hex, PublicClient } from "viem";
+import type { SafeContractParams } from "../../accounts/safeService/types";
 import type { DeviceData } from "../../types";
 
-type Assertion = {
+export type Assertion = {
     rawId: ArrayBuffer;
     response: AuthenticatorAssertionResponse;
 };
 
-type PasskeyCredential = {
+export type PasskeyCredential = {
     id: "string";
     rawId: ArrayBuffer;
     response: {
@@ -18,20 +19,20 @@ type PasskeyCredential = {
     type: "public-key";
 };
 
-type PasskeyCredentialWithPubkeyCoordinates = PasskeyCredential & {
+export type PasskeyCredentialWithPubkeyCoordinates = PasskeyCredential & {
     pubkeyCoordinates: {
         x: Hex;
         y: Hex;
     };
 };
 
-type PasskeyCredentials = Readonly<{
+export type PasskeyCredentials = Readonly<{
     publicKeyId: Hex;
     publicKeyX: Hex;
     publicKeyY: Hex;
 }>;
 
-interface webAuthnOptions {
+export interface webAuthnOptions {
     authenticatorSelection?: {
         authenticatorAttachment?: AuthenticatorAttachment;
         userVerification?: UserVerificationRequirement;
@@ -42,7 +43,7 @@ interface webAuthnOptions {
     extensions?: any;
 }
 
-type PasskeyLocalStorageFormat = {
+export type PasskeyLocalStorageFormat = {
     id: Hex;
     pubkeyCoordinates: {
         x: Hex;
@@ -52,7 +53,7 @@ type PasskeyLocalStorageFormat = {
     publicKeyAlgorithm?: number;
 };
 
-type P256Signature = Readonly<{
+export type P256Signature = Readonly<{
     r: Hex;
     s: Hex;
 }>;
@@ -60,7 +61,7 @@ type P256Signature = Readonly<{
 /**
  * The signature of a webauthn authentication
  */
-type WebAuthnSignature = Readonly<{
+export type WebAuthnSignature = Readonly<{
     id: string;
     authenticatorData: string;
     clientData: string;
@@ -72,7 +73,7 @@ enum WebauthnVersion {
     V1 = "v1.0",
 }
 
-type WebAuthnDeploymentParams = {
+export type WebAuthnDeploymentParams = {
     version: WebauthnVersion;
     safeWebAuthnSharedSignerAddress: string;
     safeWebAuthnSignerFactory: string;
@@ -80,7 +81,7 @@ type WebAuthnDeploymentParams = {
     verifier: string;
 };
 
-type WebAuthnSigner = {
+export type WebAuthnSigner = {
     projectId: string;
     userId: string;
     chainId: string;
@@ -93,14 +94,22 @@ type WebAuthnSigner = {
     deploymentParams: WebAuthnDeploymentParams;
 };
 
-export type {
-    Assertion,
-    PasskeyCredential,
-    PasskeyCredentials,
-    PasskeyCredentialWithPubkeyCoordinates,
-    webAuthnOptions,
-    PasskeyLocalStorageFormat,
-    P256Signature,
-    WebAuthnSignature,
-    WebAuthnSigner,
+export interface PasskeySigner {
+    type: "passkey";
+    passkey: PasskeyLocalStorageFormat;
+}
+
+export type PasskeySignerConfig = {
+    webAuthnOptions?: webAuthnOptions;
+    passKeyName?: string;
+    fullDomainSelected?: boolean;
 };
+
+export type CreateSignerParams = {
+    apiKey: string;
+    chain: Chain;
+    smartAccountAddress?: Address;
+    safeContractParams?: SafeContractParams;
+    baseUrl?: string;
+    publicClient?: PublicClient;
+} & PasskeySignerConfig;

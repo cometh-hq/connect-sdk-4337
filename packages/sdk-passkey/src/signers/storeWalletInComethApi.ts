@@ -1,9 +1,9 @@
 import type { API } from "@/services/API";
 import { createNewWalletInDb } from "@/services/comethService";
 
-import type { PasskeySigner } from "@/signers/types";
+import type { PasskeySigner } from "@/signers/passkeyService/types";
 
-import { getSafeAddressFromInitializer } from "@/accounts/safe/services/safe";
+import { getSafeAddressFromInitializer } from "@/accounts/safeService/safe";
 import {
     type Address,
     type Chain,

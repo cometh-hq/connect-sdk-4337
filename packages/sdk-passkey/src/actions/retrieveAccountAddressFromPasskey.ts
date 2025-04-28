@@ -2,7 +2,7 @@ import { API } from "@/services/API";
 import {
     retrieveSmartAccountAddressFromPasskey,
     retrieveSmartAccountAddressFromPasskeyId,
-} from "@/signers/passkeys/passkeyService";
+} from "@/signers/passkeyService/passkey";
 import type { Address, Chain } from "viem";
 
 /**

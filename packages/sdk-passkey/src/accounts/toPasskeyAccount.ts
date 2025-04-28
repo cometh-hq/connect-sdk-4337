@@ -1,6 +1,6 @@
 import { type UnionPartialBy, serializeErc6492Signature } from "viem";
 import type { SmartAccount, UserOperation } from "viem/account-abstraction";
-import type { SafeSigner } from "./safe/safeSigner/types";
+import type { SafeSigner } from "./safeService/types";
 
 export async function toPasskeyAccount(
     smartAccount: SmartAccount,

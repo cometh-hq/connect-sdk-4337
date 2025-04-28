@@ -1,25 +1,120 @@
-import { SafeAbi } from "@/accounts/safe/abi/safe";
-import type { SafeSigner } from "@/accounts/safe/safeSigner/types";
-import { safeWebAuthnSigner } from "@/accounts/safe/safeSigner/webauthn/webAuthn";
+import { SafeAbi } from "@/accounts/abi/safe";
 import {
     getConfigurePasskeyData,
     getSafeInitializer,
-} from "@/accounts/safe/services/safe";
-import type { SafeContractParams } from "@/accounts/safe/types";
+} from "@/accounts/safeService/safe";
+import type { SafeSigner } from "@/accounts/safeService/types";
+import type { SafeContractParams } from "@/accounts/safeService/types";
 import { getViemClient } from "@/accounts/utils";
 import { SAFE_7579_ADDRESS } from "@/constants";
 import { API } from "@/services/API";
 import { getProjectParamsByChain } from "@/services/comethService";
-import { DEFAULT_WEBAUTHN_OPTIONS } from "@/signers/passkeys/utils";
 import { storeWalletInComethApi } from "@/signers/storeWalletInComethApi";
+import { safeWebAuthnSigner } from "@/signers/webAuthn";
 import { isSmartAccountDeployed } from "permissionless";
 import type { Address, Chain, Client, PublicClient, Transport } from "viem";
 import { http, ChainNotFoundError, createPublicClient, zeroHash } from "viem";
-import { createPasskeySigner } from "./createPasskeySigner";
-import { saveSigner } from "./createPasskeySigner";
-import { getPasskeyInStorage } from "./passkeys/passkeyService";
+import { getPasskeyInStorage } from "./passkeyService/passkey";
+import type { CreateSignerParams, PasskeySigner } from "./passkeyService/types";
 import { getAccountAddress } from "./storeWalletInComethApi";
-import type { CreateSignerParams, PasskeySigner } from "./types";
+
+import {
+    createPasskey,
+    getPasskeySigner,
+    setPasskeyInStorage,
+} from "./passkeyService/passkey";
+
+import { DeviceNotCompatibleWithPasskeysError } from "@/errors";
+import type { PasskeyLocalStorageFormat } from "./passkeyService/types";
+import {
+    DEFAULT_WEBAUTHN_OPTIONS,
+    isWebAuthnCompatible,
+} from "./passkeyService/utils";
+
+export const saveSigner = async (
+    signer: PasskeySigner,
+    smartAccountAddress: Address
+) => {
+    setPasskeyInStorage(
+        smartAccountAddress,
+        signer.passkey.id,
+        signer.passkey.pubkeyCoordinates.x,
+        signer.passkey.pubkeyCoordinates.y,
+        signer.passkey.signerAddress
+    );
+};
+
+/**
+ * Helper to create the Passkey Signer
+ * @param apiKey
+ * @param smartAccountAddress
+ * @param encryptionSalt
+ * @param webAuthnOptions
+ * @param passKeyName
+ */
+export async function createPasskeySigner({
+    apiKey,
+    chain,
+    publicClient,
+    smartAccountAddress,
+    baseUrl,
+    webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+    passKeyName,
+    fullDomainSelected = false,
+    safeContractParams,
+}: CreateSignerParams): Promise<PasskeySigner> {
+    const api = new API(apiKey, baseUrl);
+
+    const passkeyCompatible = await await isWebAuthnCompatible(webAuthnOptions);
+
+    if (!safeContractParams) {
+        const contractParams = await api.getProjectParams(chain.id);
+        safeContractParams = contractParams.safeContractParams;
+    }
+
+    if (passkeyCompatible) {
+        let passkey: PasskeyLocalStorageFormat;
+        if (!smartAccountAddress) {
+            passkey = await createPasskey({
+                api,
+                webAuthnOptions,
+                passKeyName,
+                fullDomainSelected,
+                safeWebAuthnSharedSignerAddress:
+                    safeContractParams.safeWebAuthnSharedSignerContractAddress,
+            });
+
+            if (passkey.publicKeyAlgorithm !== -7) {
+                throw new DeviceNotCompatibleWithPasskeysError();
+            }
+        } else {
+            passkey = await getPasskeySigner({
+                api,
+                smartAccountAddress,
+                chain,
+                publicClient,
+                safeModuleSetUpAddress: safeContractParams.setUpContractAddress,
+                safeProxyFactoryAddress:
+                    safeContractParams.safeProxyFactoryAddress,
+                safeSingletonAddress: safeContractParams.safeSingletonAddress,
+                fallbackHandler: safeContractParams.fallbackHandler as Address,
+                p256Verifier: safeContractParams.p256Verifier,
+                multisendAddress: safeContractParams.multisendAddress,
+                safeWebAuthnSharedSignerAddress:
+                    safeContractParams.safeWebAuthnSharedSignerContractAddress,
+                fullDomainSelected,
+            });
+        }
+
+        const passkeySigner = {
+            type: "passkey",
+            passkey,
+        } as PasskeySigner;
+
+        return passkeySigner;
+    }
+    throw new DeviceNotCompatibleWithPasskeysError();
+}
 
 export async function passkeySetupTx({
     passkeySigner,

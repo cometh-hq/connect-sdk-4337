@@ -19,6 +19,12 @@ export class MethodNotSupportedError extends BaseError {
     }
 }
 
+export class SmartAccountAddressNotFoundError extends Error {
+    constructor() {
+        super("No smart account address found");
+    }
+}
+
 /**
  * Adaptor Errors
  **/
@@ -128,5 +134,11 @@ export class InvalidSignerDataError extends Error {
 export class ChallengeNotFoundError extends Error {
     constructor() {
         super("Challenge not found in client data JSON");
+    }
+}
+
+export class APINotFoundError extends Error {
+    constructor() {
+        super("No API found");
     }
 }

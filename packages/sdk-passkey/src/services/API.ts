@@ -1,4 +1,4 @@
-import type { ProjectParams, Wallet } from "@/accounts/safe/types";
+import type { ProjectParams, Wallet } from "@/accounts/safeService/types";
 import { API_URL } from "@/constants";
 import type { RelayedTransactionDetails } from "@/services/types";
 import type { DeviceData, WebAuthnSigner } from "@/types";

@@ -1,4 +1,4 @@
-import { isSafeOwner } from "@/accounts/safe/services/safe";
+import { isSafeOwner } from "@/accounts/safeService/safe";
 import {
     FailedToGeneratePasskeyError,
     NoPasskeySignerFoundForGivenChain,
@@ -26,13 +26,7 @@ import {
     toBytes,
     toHex,
 } from "viem";
-import {
-    extractClientDataFields,
-    extractSignature,
-    hexArrayStr,
-    parseHex,
-} from "../passkeys/utils";
-import type { PasskeySigner } from "../types";
+import type { PasskeySigner } from "./types";
 import type {
     Assertion,
     PasskeyCredential,
@@ -40,6 +34,12 @@ import type {
     WebAuthnSigner,
     webAuthnOptions,
 } from "./types";
+import {
+    extractClientDataFields,
+    extractSignature,
+    hexArrayStr,
+    parseHex,
+} from "./utils";
 
 const EC = elliptic.ec;
 
