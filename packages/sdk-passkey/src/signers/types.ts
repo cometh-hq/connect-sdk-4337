@@ -1,4 +1,4 @@
-import type { Address, Chain, PrivateKeyAccount, PublicClient } from "viem";
+import type { Address, Chain, PublicClient } from "viem";
 import type { SafeContractParams } from "../accounts/safe/types";
 import type {
     PasskeyLocalStorageFormat,
@@ -10,7 +10,7 @@ export interface PasskeySigner {
     passkey: PasskeyLocalStorageFormat;
 }
 
-export type ComethSignerConfig = {
+export type PasskeySignerConfig = {
     webAuthnOptions?: webAuthnOptions;
     passKeyName?: string;
     fullDomainSelected?: boolean;
@@ -23,6 +23,4 @@ export type CreateSignerParams = {
     safeContractParams?: SafeContractParams;
     baseUrl?: string;
     publicClient?: PublicClient;
-} & ComethSignerConfig;
-
-export type Signer = PasskeySigner | PrivateKeyAccount;
+} & PasskeySignerConfig;

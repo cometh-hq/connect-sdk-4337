@@ -5,13 +5,10 @@ import {
     getPasskeySigner,
     setPasskeyInStorage,
 } from "./passkeys/passkeyService";
-//import { storeWalletInComethApi } from "./storeWalletInComethApi";
 
 import { API } from "@/services/API";
 
-import {
-    DeviceNotCompatibleWithPasskeysError,
-} from "@/errors";
+import { DeviceNotCompatibleWithPasskeysError } from "@/errors";
 import type {
     PasskeyLocalStorageFormat,
     webAuthnOptions,
@@ -20,22 +17,7 @@ import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "./passkeys/utils";
-import type { CreateSignerParams, PasskeySigner, Signer } from "./types";
-
-export const isPasskeySigner = (signer: Signer): signer is PasskeySigner => {
-    return (
-        "type" in signer &&
-        (signer.type === "passkey")
-    );
-};
-
-export const getSignerAddress = (customSigner: Signer) => {
-    if (isPasskeySigner(customSigner)) {
-        return customSigner.passkey.signerAddress;
-    }
-
-    return customSigner.address;
-};
+import type { CreateSignerParams, PasskeySigner } from "./types";
 
 export const saveSigner = async (
     signer: PasskeySigner,
@@ -61,7 +43,7 @@ export const isDeviceCompatibleWithPasskeys = async (options: {
 };
 
 /**
- * Helper to create the Cometh Signer
+ * Helper to create the Passkey Signer
  * @param apiKey
  * @param smartAccountAddress
  * @param encryptionSalt
@@ -87,7 +69,7 @@ export async function createPasskeySigner({
 
     if (!safeContractParams) {
         const contractParams = await api.getProjectParams(chain.id);
-        safeContractParams = contractParams.safeContractParams
+        safeContractParams = contractParams.safeContractParams;
     }
 
     if (passkeyCompatible) {
@@ -103,7 +85,7 @@ export async function createPasskeySigner({
             });
 
             if (passkey.publicKeyAlgorithm !== -7) {
-                throw new DeviceNotCompatibleWithPasskeysError()
+                throw new DeviceNotCompatibleWithPasskeysError();
             }
         } else {
             passkey = await getPasskeySigner({
@@ -129,22 +111,7 @@ export async function createPasskeySigner({
             passkey,
         } as PasskeySigner;
 
-        // const res = await storeWalletInComethApi({
-        //     chain,
-        //     singletonAddress: safeSingletonAddress,
-        //     safeProxyFactoryAddress,
-        //     saltNonce: zeroHash,
-        //     initializer,
-        //     signer: passkeySigner,
-        //     api,
-        //     publicClient,
-        // });
-    
-        // if (res.isNewWallet) {
-        //     await saveSigner(passkeySigner, smartAccountAddress);
-        // }
-
         return passkeySigner;
     }
-    throw new DeviceNotCompatibleWithPasskeysError()
+    throw new DeviceNotCompatibleWithPasskeysError();
 }

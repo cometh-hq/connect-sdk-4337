@@ -9,7 +9,6 @@ import {
 } from "viem";
 import { toAccount } from "viem/accounts";
 
-import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
 import {
     DUMMY_AUTHENTICATOR_DATA,
     DUMMY_CLIENT_DATA_FIELDS,
@@ -18,10 +17,11 @@ import {
     packInitCode,
     packPaymasterData,
 } from "@/accounts/safe/services/utils";
+import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
+import { MethodNotSupportedError } from "@/errors";
 import { sign } from "@/signers/passkeys/passkeyService";
 import type { PasskeyLocalStorageFormat } from "@/signers/passkeys/types";
 import { parseHex } from "@/signers/passkeys/utils";
-import { MethodNotSupportedError } from "@/errors";
 import {
     EIP712_SAFE_MESSAGE_TYPE,
     EIP712_SAFE_OPERATION_TYPE,
@@ -36,8 +36,10 @@ import { generateSafeMessageMessage } from "../utils";
  * @param params - Object containing:
  *   @param passkey - The passkey in local storage format
  *   @param passkeySignerAddress - The address of the passkey signer
- *   @param safe4337SessionKeysModule - The address of the Safe 4337 session keys module
  *   @param smartAccountAddress - The address of the smart account
+ *   @param fullDomainSelected - Boolean indicating if the full domain is selected
+ *   @param userOpVerifyingContract - The address of the user operation verifying contract
+ *   @param safeWebAuthnSharedSignerContractAddress - The address of the Safe WebAuthn shared signer contract
  *
  * @returns A Promise that resolves to a SafeSigner instance with WebAuthn capabilities
  */
@@ -67,11 +69,9 @@ export async function safeWebAuthnSigner<
         type: "public-key",
     };
 
-    console.log(safeWebAuthnSharedSignerContractAddress)
-    console.log("passkeySignerAddress", passkeySignerAddress);
-
     const account = toAccount({
-        address: smartAccountAddress,
+        //address: smartAccountAddress,
+        address: safeWebAuthnSharedSignerContractAddress,
         async signMessage({ message }) {
             const hash = hashTypedData({
                 domain: {
@@ -107,7 +107,8 @@ export async function safeWebAuthnSigner<
 
     return {
         ...account,
-        address: smartAccountAddress,
+        address: safeWebAuthnSharedSignerContractAddress,
+        smartAccountAddress,
         source: "safeWebAuthnSigner",
         // Sign a user operation
         async signUserOperation(parameters) {

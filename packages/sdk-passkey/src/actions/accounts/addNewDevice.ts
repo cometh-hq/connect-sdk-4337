@@ -1,3 +1,10 @@
+import {
+    DeviceNotCompatibleWithPasskeysError,
+    DeviceNotCompatibleWithSECKP256r1PasskeysError,
+    FailedToGenerateQRCodeError,
+    FailedToSerializeUrlError,
+    InvalidSignerDataError,
+} from "@/errors";
 import { API } from "@/services/API";
 import { getDeviceData } from "@/services/deviceService";
 import {
@@ -10,16 +17,8 @@ import {
     isWebAuthnCompatible,
 } from "@/signers/passkeys/utils";
 import type { Signer } from "@/types";
-import {
-    DeviceNotCompatibleWithPasskeysError,
-    DeviceNotCompatibleWithSECKP256r1PasskeysError,
-    FailedToGenerateQRCodeError,
-    FailedToSerializeUrlError,
-    InvalidSignerDataError,
-} from "@/errors";
 import * as QRCode from "qrcode";
 import type { Address } from "viem";
-import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 export interface QRCodeOptions {
     width?: number;
@@ -87,29 +86,27 @@ export const createNewSignerWithAccountAddress = async ({
     params?: CreateNewSignerParams;
 }): Promise<Signer> => {
     const api = new API(apiKey, baseUrl);
-    const { signer, localPrivateKey } = await _createNewSigner(api, {
+    const { signer } = await _createNewSigner(api, {
         passKeyName: params.passKeyName,
         webAuthnOptions: params.webAuthnOptions,
         fullDomainSelected: params.fullDomainSelected ?? false,
     });
 
-    if (signer.publicKeyId) {
-        const { publicKeyId, publicKeyX, publicKeyY, signerAddress } = signer;
-
-        if (!(publicKeyId && publicKeyX && publicKeyY && signerAddress))
-            throw new InvalidSignerDataError();
-
-        setPasskeyInStorage(
-            smartAccountAddress,
-            publicKeyId,
-            publicKeyX,
-            publicKeyY,
-            signerAddress
-        );
-    } else {
-        console.log("localPrivateKey", localPrivateKey);
-        throw new Error("TODO: handle this case");
+    if (!signer.publicKeyId) {
+        throw new Error("TODO: error on create new passkey signer");
     }
+    const { publicKeyId, publicKeyX, publicKeyY, signerAddress } = signer;
+
+    if (!(publicKeyId && publicKeyX && publicKeyY && signerAddress))
+        throw new InvalidSignerDataError();
+
+    setPasskeyInStorage(
+        smartAccountAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        signerAddress
+    );
     return signer;
 };
 
@@ -201,8 +198,7 @@ const _createNewPasskeySigner = async (
 }> => {
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
-    if (!webAuthnCompatible)
-        throw new DeviceNotCompatibleWithPasskeysError();
+    if (!webAuthnCompatible) throw new DeviceNotCompatibleWithPasskeysError();
 
     const passkeyWithCoordinates = await createPasskey({
         api,
@@ -238,7 +234,6 @@ const _createNewSigner = async (
     }
 ): Promise<{
     signer: Signer;
-    localPrivateKey?: string;
 }> => {
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
@@ -263,14 +258,5 @@ const _createNewSigner = async (
         }
     }
 
-    const privateKey = generatePrivateKey();
-    const signer = privateKeyToAccount(privateKey);
-
-    return {
-        signer: {
-            signerAddress: signer.address,
-            deviceData: getDeviceData(),
-        },
-        localPrivateKey: privateKey,
-    };
+    throw new Error("TODO: failed to create new signer error");
 };

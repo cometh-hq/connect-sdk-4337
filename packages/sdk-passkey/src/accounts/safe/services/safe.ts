@@ -1,6 +1,5 @@
-import { getSignerAddress, isPasskeySigner } from "@/signers/createPasskeySigner";
-import type { PasskeySigner } from "@/signers/types";
 import { SafeNotDeployedError } from "@/errors";
+import type { PasskeySigner } from "@/signers/types";
 import { isSmartAccountDeployed } from "permissionless";
 import {
     http,
@@ -24,11 +23,7 @@ import { EnableModuleAbi } from "../abi/enableModule";
 import { SafeAbi } from "../abi/safe";
 import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
 import { SafeWebAuthnSharedSignerAbi } from "../abi/sharedWebAuthnSigner";
-import type { MultiSendTransaction, SafeContractParams } from "../types";
-import { API } from "@/services/API";
-import { getProjectParamsByChain } from "@/services/comethService";
-import type { Signer } from "@/types";
-
+import type { MultiSendTransaction } from "../types";
 
 /**
  * Encodes multiple transactions into a single byte string for multi-send functionality
@@ -48,11 +43,10 @@ export const encodeMultiSendTransactions = (
     );
 };
 
-
 /**
  * Generates setup data for enabling modules and configuring the signer
  * @param modules - Array of module addresses to enable
- * @param accountSigner - The signer instance
+ * @param passkeySigner - The signer instance
  * @param setUpContractAddress - Address of the setup contract
  * @param safeWebAuthnSharedSignerContractAddress - Address of the WebAuthn shared signer contract
  * @param safeP256VerifierAddress - Address of the P256 verifier contract
@@ -60,13 +54,13 @@ export const encodeMultiSendTransactions = (
  */
 export const getSetUpCallData = ({
     modules,
-    accountSigner,
+    passkeySigner,
     setUpContractAddress,
     safeWebAuthnSharedSignerContractAddress,
     safeP256VerifierAddress,
 }: {
     modules: Address[];
-    accountSigner: PasskeySigner;
+    passkeySigner: PasskeySigner;
     setUpContractAddress: Address;
     safeWebAuthnSharedSignerContractAddress: Address;
     safeP256VerifierAddress: Address;
@@ -77,107 +71,77 @@ export const getSetUpCallData = ({
         args: [modules],
     });
 
-    if (isPasskeySigner(accountSigner) && accountSigner.type === "passkey") {
-        console.log("before")
-        const sharedSignerConfigCallData = encodeFunctionData({
-            abi: SafeWebAuthnSharedSignerAbi,
-            functionName: "configure",
-            args: [
+    const sharedSignerConfigCallData = encodeFunctionData({
+        abi: SafeWebAuthnSharedSignerAbi,
+        functionName: "configure",
+        args: [
+            {
+                x: hexToBigInt(passkeySigner.passkey.pubkeyCoordinates.x),
+                y: hexToBigInt(passkeySigner.passkey.pubkeyCoordinates.y),
+                verifiers: hexToBigInt(safeP256VerifierAddress),
+            },
+        ],
+    });
+
+    return encodeFunctionData({
+        abi: MultiSendContractABI,
+        functionName: "multiSend",
+        args: [
+            encodeMultiSendTransactions([
                 {
-                    x: hexToBigInt(accountSigner.passkey.pubkeyCoordinates.x),
-                    y: hexToBigInt(accountSigner.passkey.pubkeyCoordinates.y),
-                    verifiers: hexToBigInt(safeP256VerifierAddress),
+                    op: 1 as const,
+                    to: setUpContractAddress,
+                    data: enableModuleCallData,
                 },
-            ],
-        });
-
-        console.log("after")
-
-        return encodeFunctionData({
-            abi: MultiSendContractABI,
-            functionName: "multiSend",
-            args: [
-                encodeMultiSendTransactions([
-                    {
-                        op: 1 as const,
-                        to: setUpContractAddress,
-                        data: enableModuleCallData,
-                    },
-                    {
-                        op: 1 as const,
-                        to: safeWebAuthnSharedSignerContractAddress,
-                        data: sharedSignerConfigCallData,
-                    },
-                ]),
-            ],
-        });
-    }
-
-    return enableModuleCallData;
-};
-
-//TODO
-/**
- * Generates setup data for enabling modules and configuring the signer
- * @param modules - Array of module addresses to enable
- * @param accountSigner - The signer instance
- * @param setUpContractAddress - Address of the setup contract
- * @param safeWebAuthnSharedSignerContractAddress - Address of the WebAuthn shared signer contract
- * @param safeP256VerifierAddress - Address of the P256 verifier contract
- * @returns Encoded setup data as a Hex string
- */
-export const getConfigurePasskeyData = async ({
-    accountSigner,
-    apiKey,
-    chain,
-    baseUrl,
-}: {
-    accountSigner: Signer;
-    apiKey: string;
-    chain: Chain;
-    baseUrl?: string;
-}) => {
-
-        const api = new API(apiKey, baseUrl);
-        const contractParams = await getProjectParamsByChain({ api, chain })
-    
-        const {
-            safeWebAuthnSharedSignerContractAddress,
-            p256Verifier,
-        } = 
-        //safeContractConfig ??
-        (contractParams.safeContractParams as SafeContractParams);
-
-        console.log(
-            "safeWebAuthnSharedSignerContractAddress",
-            safeWebAuthnSharedSignerContractAddress)
-
-            console.log("before 2")
-        const sharedSignerConfigCallData = encodeFunctionData({
-            abi: SafeWebAuthnSharedSignerAbi,
-            functionName: "configure",
-            args: [
                 {
-                    x: hexToBigInt(accountSigner.publicKeyX!),
-                    y: hexToBigInt(accountSigner.publicKeyY!),
-                    verifiers: hexToBigInt(p256Verifier),
-                },
-            ],
-        });
-
-        console.log("after 2")
-
-        return ({
+                    op: 1 as const,
                     to: safeWebAuthnSharedSignerContractAddress,
                     data: sharedSignerConfigCallData,
-                    value: 0n,
-                });
+                },
+            ]),
+        ],
+    });
 };
 
+/**
+ * Generates passkey setup data for configuring the signer
+ * @param passkeySigner - The signer instance
+ * @param safeWebAuthnSharedSignerContractAddress - Address of the WebAuthn shared signer contract
+ * @param safeP256VerifierAddress - Address of the P256 verifier contract
+ * @returns Multisend Transaction for passkey configuration
+ */
+export const getConfigurePasskeyData = async ({
+    passkeySigner,
+    p256Verifier,
+    safeWebAuthnSharedSignerContractAddress,
+}: {
+    passkeySigner: PasskeySigner;
+    p256Verifier: Address;
+    safeWebAuthnSharedSignerContractAddress: Address;
+}) => {
+    const sharedSignerConfigCallData = encodeFunctionData({
+        abi: SafeWebAuthnSharedSignerAbi,
+        functionName: "configure",
+        args: [
+            {
+                x: hexToBigInt(passkeySigner.passkey.pubkeyCoordinates.x),
+                y: hexToBigInt(passkeySigner.passkey.pubkeyCoordinates.y),
+                verifiers: hexToBigInt(p256Verifier),
+            },
+        ],
+    });
+
+    return {
+        to: safeWebAuthnSharedSignerContractAddress,
+        data: sharedSignerConfigCallData,
+        value: 0n,
+        op: 1 as const,
+    } as MultiSendTransaction;
+};
 
 /**
  * Generates the initializer data for a Safe smart contract
- * @param accountSigner - The signer instance
+ * @param passkeySigner - The signer instance
  * @param threshold - The threshold for the multi-signature wallet
  * @param fallbackHandler - Address of the fallback handler
  * @param modules - Array of module addresses to enable
@@ -188,7 +152,7 @@ export const getConfigurePasskeyData = async ({
  * @returns Encoded initializer data as a Hex string
  */
 export const getSafeInitializer = ({
-    accountSigner,
+    passkeySigner,
     threshold,
     fallbackHandler,
     modules,
@@ -197,7 +161,7 @@ export const getSafeInitializer = ({
     p256Verifier,
     multisendAddress,
 }: {
-    accountSigner: PasskeySigner;
+    passkeySigner: PasskeySigner;
     threshold: number;
     fallbackHandler: Address;
     modules: Address[];
@@ -208,25 +172,25 @@ export const getSafeInitializer = ({
 }): Hex => {
     const setUpCallData = getSetUpCallData({
         modules,
-        accountSigner,
+        passkeySigner,
         setUpContractAddress,
         safeWebAuthnSharedSignerContractAddress:
             safeWebAuthnSharedSignerContractAddress,
         safeP256VerifierAddress: p256Verifier,
     });
-        return getSafeSetUpData({
-            owner: safeWebAuthnSharedSignerContractAddress,
-            threshold,
-            setUpContractAddress: multisendAddress,
-            setUpData: setUpCallData,
-            fallbackHandler,
-        });
+    return getSafeSetUpData({
+        owner: safeWebAuthnSharedSignerContractAddress,
+        threshold,
+        setUpContractAddress: multisendAddress,
+        setUpData: setUpCallData,
+        fallbackHandler,
+    });
 };
 
 /**
  * Checks if a given address is an owner of a Safe smart contract
  * @param safeAddress - Address of the Safe contract
- * @param comethSigner - The Cometh signer instance
+ * @param passkeySigner - The Passkey signer instance
  * @param chain - The blockchain network
  * @param safeProxyFactoryAddress - Address of the Safe proxy factory
  * @param safeSingletonAddress - Address of the Safe singleton
@@ -236,12 +200,12 @@ export const getSafeInitializer = ({
  * @param sharedWebAuthnSignerContractAddress - Address of the shared WebAuthn signer contract
  * @param p256Verifier - Address of the P256 verifier
  * @param multisendAddress - Address of the multisend contract
- * @param rpcUrl - Optional RPC URL for the network
+ * @param publicClient - Optional public client for blockchain interaction
  * @returns A boolean indicating whether the address is an owner
  */
 export const isSafeOwner = async ({
     safeAddress,
-    accountSigner,
+    passkeySigner,
     chain,
     safeProxyFactoryAddress,
     safeSingletonAddress,
@@ -254,7 +218,7 @@ export const isSafeOwner = async ({
     publicClient,
 }: {
     safeAddress: Address;
-    accountSigner: PasskeySigner;
+    passkeySigner: PasskeySigner;
     chain: Chain;
     safeProxyFactoryAddress: Address;
     safeSingletonAddress: Address;
@@ -266,7 +230,7 @@ export const isSafeOwner = async ({
     multisendAddress: Address;
     publicClient?: PublicClient;
 }): Promise<boolean> => {
-    const signerAddress = getSignerAddress(accountSigner);
+    const signerAddress = passkeySigner.passkey.signerAddress;
 
     try {
         const publicClient_ =
@@ -294,7 +258,7 @@ export const isSafeOwner = async ({
         const predictedWalletAddress = await predictSafeAddress({
             saltNonce: 0n,
             chain,
-            accountSigner,
+            passkeySigner,
             safeProxyFactoryAddress,
             safeSingletonAddress,
             setUpContractAddress: safeModuleSetUpAddress,
@@ -317,7 +281,7 @@ export const isSafeOwner = async ({
  * Predicts the address of a Safe smart contract before deployment
  * @param saltNonce - Salt nonce for address generation
  * @param chain - The blockchain network
- * @param comethSigner - The Cometh signer instance
+ * @param passkeySigner - The Passkey signer instance
  * @param fallbackHandler - Address of the fallback handler
  * @param modules - Array of module addresses
  * @param setUpContractAddress - Address of the setup contract
@@ -327,13 +291,13 @@ export const isSafeOwner = async ({
  * @param p256Verifier - Address of the P256 verifier
  * @param multisendAddress - Address of the multisend contract
  * @param threshold - Optional threshold for the multi-signature wallet
- * @param rpcUrl - Optional RPC URL for the network
+ * @param publicClient - Optional public client for blockchain interaction
  * @returns The predicted address of the Safe contract
  */
 export const predictSafeAddress = async ({
     saltNonce,
     chain,
-    accountSigner,
+    passkeySigner,
     fallbackHandler,
     modules,
     setUpContractAddress,
@@ -347,7 +311,7 @@ export const predictSafeAddress = async ({
 }: {
     saltNonce: bigint;
     chain: Chain;
-    accountSigner: PasskeySigner;
+    passkeySigner: PasskeySigner;
     safeSingletonAddress: Address;
     safeProxyFactoryAddress: Address;
     fallbackHandler: Address;
@@ -360,7 +324,7 @@ export const predictSafeAddress = async ({
     publicClient?: PublicClient;
 }): Promise<Address> => {
     const initializer = getSafeInitializer({
-        accountSigner,
+        passkeySigner,
         threshold,
         fallbackHandler,
         modules,
@@ -384,7 +348,7 @@ export const predictSafeAddress = async ({
 /**
  * Calculates the Safe address based on the initializer data
  * @param chain - The blockchain network
- * @param rpcUrl - Optional RPC URL for the network
+ * @param publicClient - Optional public client for blockchain interaction
  * @param safeProxyFactoryAddress - Address of the Safe proxy factory
  * @param safeSingletonAddress - Address of the Safe singleton
  * @param initializer - Initializer data for the Safe contract

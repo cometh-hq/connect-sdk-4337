@@ -57,7 +57,6 @@ export class DeviceNotCompatibleWithSECKP256r1PasskeysError extends Error {
     }
 }
 
-
 /**
  * Passkeys Errors
  **/
@@ -116,18 +115,11 @@ export class InvalidSignatureEncodingError extends Error {
     }
 }
 
-export class InvalidSignatureError extends Error {
-    constructor() {
-        super("Invalid signature");
-    }
-}
-
 export class InvalidSignerDataError extends Error {
     constructor() {
         super("Invalid signer data");
     }
 }
-
 
 /**
  * Utils Errors

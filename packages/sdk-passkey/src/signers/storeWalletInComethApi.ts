@@ -1,10 +1,9 @@
-import { API } from "@/services/API";
-import {
-    createNewWalletInDb,
-} from "@/services/comethService";
+import type { API } from "@/services/API";
+import { createNewWalletInDb } from "@/services/comethService";
 
-import type {Signer } from "@/signers/types";
+import type { PasskeySigner } from "@/signers/types";
 
+import { getSafeAddressFromInitializer } from "@/accounts/safe/services/safe";
 import {
     type Address,
     type Chain,
@@ -13,9 +12,6 @@ import {
     hexToBigInt,
     zeroHash,
 } from "viem";
-import {
-    getSafeAddressFromInitializer,
-} from "@/accounts/safe/services/safe";
 
 /**
  * Get the predicted account address for a Safe smart account
@@ -63,7 +59,7 @@ export const storeWalletInComethApi = async ({
     safeProxyFactoryAddress: Address;
     saltNonce: Hex;
     initializer: Hex;
-    signer: Signer;
+    signer: PasskeySigner;
     api: API;
     publicClient?: PublicClient;
 }): Promise<{ smartAccountAddress: Address; isNewWallet: boolean }> => {

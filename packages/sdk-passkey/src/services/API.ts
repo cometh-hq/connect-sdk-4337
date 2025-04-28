@@ -1,10 +1,10 @@
 import type { ProjectParams, Wallet } from "@/accounts/safe/types";
-import type { DeviceData, WebAuthnSigner } from "@/types";
+import { API_URL } from "@/constants";
 import type { RelayedTransactionDetails } from "@/migrationKit/types";
+import type { DeviceData, WebAuthnSigner } from "@/types";
 import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { Address, Hex } from "viem";
-import { API_URL } from "@/constants";
 
 export class API {
     private readonly api: AxiosInstance;

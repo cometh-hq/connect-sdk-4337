@@ -1,4 +1,4 @@
-import type { Address, Hex } from 'viem';
+import type { Address, Hex } from "viem";
 
 export type DeviceData = {
     browser: string;
@@ -22,7 +22,7 @@ export type WebAuthnSigner = {
 export type Signer = {
     signerAddress: Address;
     deviceData: DeviceData;
-    publicKeyId?: Hex;
-    publicKeyX?: Hex;
-    publicKeyY?: Hex;
+    publicKeyId: Hex;
+    publicKeyX: Hex;
+    publicKeyY: Hex;
 };

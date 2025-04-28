@@ -1,4 +1,14 @@
 import { isSafeOwner } from "@/accounts/safe/services/safe";
+import {
+    FailedToGeneratePasskeyError,
+    NoPasskeySignerFoundForGivenChain,
+    NoPasskeySignerFoundInDBError,
+    NoPasskeySignerFoundInDeviceError,
+    PasskeyCreationError,
+    PasskeySignatureFailedError,
+    RetrieveWalletFromPasskeyError,
+    SignerNotOwnerError,
+} from "@/errors";
 import type { API } from "@/services/API";
 import { parseAuthenticatorData } from "@simplewebauthn/server/helpers";
 import CBOR from "cbor-js";
@@ -17,22 +27,12 @@ import {
     toHex,
 } from "viem";
 import {
-    FailedToGeneratePasskeyError,
-    NoPasskeySignerFoundForGivenChain,
-    NoPasskeySignerFoundInDBError,
-    NoPasskeySignerFoundInDeviceError,
-    PasskeyCreationError,
-    PasskeySignatureFailedError,
-    RetrieveWalletFromPasskeyError,
-    SignerNotOwnerError,
-} from "@/errors";
-import {
     extractClientDataFields,
     extractSignature,
     hexArrayStr,
     parseHex,
 } from "../passkeys/utils";
-import type { Signer } from "../types";
+import type { PasskeySigner } from "../types";
 import type {
     Assertion,
     PasskeyCredential,
@@ -303,7 +303,7 @@ const getPasskeySigner = async ({
     if (localStoragePasskey) {
         const passkey = localStoragePasskey as PasskeyLocalStorageFormat;
 
-        const signer: Signer = {
+        const signer: PasskeySigner = {
             type: "passkey",
             passkey: {
                 id: passkey.id as Hex,
@@ -317,7 +317,7 @@ const getPasskeySigner = async ({
 
         const isOwner = await isSafeOwner({
             safeAddress: smartAccountAddress,
-            accountSigner: signer,
+            passkeySigner: signer,
             chain,
             publicClient,
             safeProxyFactoryAddress,

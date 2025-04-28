@@ -7,8 +7,6 @@ import {
     hashTypedData,
 } from "viem";
 
-import { InvalidSignatureError } from "@/errors";
-
 export const generateSafeMessageMessage = <
     const TTypedData extends TypedData | { [key: string]: unknown },
     TPrimaryType extends keyof TTypedData | "EIP712Domain" = keyof TTypedData,
