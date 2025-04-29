@@ -4,9 +4,7 @@ import {
     createComethPaymasterClient,
     createSafeSmartAccount,
     createSmartAccountClient,
-    ENTRYPOINT_ADDRESS_V07,
 } from "@cometh/connect-core-sdk";
-import { toSafeSmartAccount } from "permissionless/accounts";
 import { passkeySetupTx, toPasskeyAccount, toPasskeySigner } from "@cometh/passkeys";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient, } from "viem";
@@ -67,21 +65,6 @@ export function useSmartAccount() {
                     signer
                 });
 
-
-                // smartAccount = await toSafeSmartAccount({
-                //     client: publicClient,
-                //     owners: [signer],
-                //     version: "1.4.1",
-                //     entryPoint: {
-                //         address: ENTRYPOINT_ADDRESS_V07,
-                //         version: "0.7",
-                //     },
-                //     safeSingletonAddress: "0x29fcb43b46531bca003ddc8fcb67ffe91900c762",
-                //     safeProxyFactoryAddress: "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
-                //     safeModuleSetupAddress: "0x2dd68b007B46fBe91B9A7c3EDa5A7a1063cB5b47",
-                //     address: localStorageAddress,
-                // });
-
             } else {
 
                 signer = await toPasskeySigner({
@@ -102,22 +85,6 @@ export function useSmartAccount() {
                     signer,
                     setupTransactions: [passkeyTx],
                 });
-
-                // smartAccount = await toSafeSmartAccount({
-                //     client: publicClient,
-                //     owners: [signer],
-                //     version: "1.4.1",
-                //     entryPoint: {
-                //         address: ENTRYPOINT_ADDRESS_V07,
-                //         version: "0.7",
-                //     },
-                //     //safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
-                //     safeSingletonAddress: "0x29fcb43b46531bca003ddc8fcb67ffe91900c762",
-                //     safeProxyFactoryAddress: "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
-                //     safeModuleSetupAddress: "0x2dd68b007B46fBe91B9A7c3EDa5A7a1063cB5b47",
-                //     setupTransactions: [passkeyTx],
-                // });
-
 
                 window.localStorage.setItem(
                     "walletAddress",
