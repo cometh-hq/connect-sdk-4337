@@ -18,7 +18,7 @@ import type {
 import type { SmartAccount } from "viem/account-abstraction";
 import { encodeFunctionData, getAction } from "viem/utils";
 
-export type AddNewPasskeyOwner = {
+export type AddPasskeyOwner = {
     passkeySigner: Signer;
     apiKey: string;
     baseUrl?: string;
@@ -30,7 +30,7 @@ export async function addPasskeyOwner<
     TAccount extends SmartAccount | undefined = SmartAccount | undefined,
 >(
     client: Client<TTransport, TChain, TAccount>,
-    args: Prettify<AddNewPasskeyOwner>
+    args: Prettify<AddPasskeyOwner>
 ): Promise<Hash> {
     const { passkeySigner } = args;
 
