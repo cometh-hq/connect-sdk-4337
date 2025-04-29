@@ -19,19 +19,6 @@ export type PasskeyCredential = {
     type: "public-key";
 };
 
-export type PasskeyCredentialWithPubkeyCoordinates = PasskeyCredential & {
-    pubkeyCoordinates: {
-        x: Hex;
-        y: Hex;
-    };
-};
-
-export type PasskeyCredentials = Readonly<{
-    publicKeyId: Hex;
-    publicKeyX: Hex;
-    publicKeyY: Hex;
-}>;
-
 export interface webAuthnOptions {
     authenticatorSelection?: {
         authenticatorAttachment?: AuthenticatorAttachment;
@@ -52,22 +39,6 @@ export type PasskeyLocalStorageFormat = {
     signerAddress: Address;
     publicKeyAlgorithm?: number;
 };
-
-export type P256Signature = Readonly<{
-    r: Hex;
-    s: Hex;
-}>;
-
-/**
- * The signature of a webauthn authentication
- */
-export type WebAuthnSignature = Readonly<{
-    id: string;
-    authenticatorData: string;
-    clientData: string;
-    challengeOffset: number;
-    signature: P256Signature;
-}>;
 
 enum WebauthnVersion {
     V1 = "v1.0",

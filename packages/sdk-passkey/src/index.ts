@@ -1,5 +1,10 @@
 import { toPasskeyAccount } from "./accounts/toPasskeyAccount";
-import { createNewPasskeySigner } from "./actions/addNewDevice";
+import {
+    createNewPasskeySigner,
+    generateQRCodeUrl,
+    serializeUrlWithSignerPayload,
+} from "./actions/addNewDevice";
+import type { QRCodeOptions } from "./actions/addNewDevice";
 import { addPasskeyOwner } from "./actions/addPasskeyOwnerActions";
 import { passkeyActions } from "./actions/decorators/passkeyActions";
 import {
@@ -18,6 +23,8 @@ export {
     createNewPasskeySigner,
     addPasskeyOwner,
     passkeyActions,
+    generateQRCodeUrl,
+    serializeUrlWithSignerPayload,
 };
 
-export type { webAuthnOptions };
+export type { webAuthnOptions, QRCodeOptions };

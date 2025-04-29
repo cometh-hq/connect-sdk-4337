@@ -121,12 +121,6 @@ export class InvalidSignatureEncodingError extends Error {
     }
 }
 
-export class InvalidSignerDataError extends Error {
-    constructor() {
-        super("Invalid signer data");
-    }
-}
-
 /**
  * Utils Errors
  **/
