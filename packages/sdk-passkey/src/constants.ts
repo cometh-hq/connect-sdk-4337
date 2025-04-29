@@ -1,0 +1,9 @@
+import type { Address } from "viem";
+
+const API_URL = "https://api.4337.cometh.io";
+
+// 4337 Contracts
+const ENTRYPOINT_ADDRESS_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
+const SAFE_7579_ADDRESS: Address = "0x7579EE8307284F293B1927136486880611F20002";
+
+export { API_URL, ENTRYPOINT_ADDRESS_V07, SAFE_7579_ADDRESS };
