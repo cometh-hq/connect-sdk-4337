@@ -46,32 +46,15 @@ export const getAccountAddress = async ({
  */
 export const storeWalletInComethApi = async ({
     chain,
-    singletonAddress,
-    safeProxyFactoryAddress,
-    saltNonce,
-    initializer,
     signer,
     api,
-    publicClient,
+    smartAccountAddress,
 }: {
     chain: Chain;
-    singletonAddress: Address;
-    safeProxyFactoryAddress: Address;
-    saltNonce: Hex;
-    initializer: Hex;
     signer: PasskeySigner;
     api: API;
-    publicClient?: PublicClient;
+    smartAccountAddress: Address;
 }): Promise<{ smartAccountAddress: Address; isNewWallet: boolean }> => {
-    const smartAccountAddress = await getAccountAddress({
-        chain,
-        singletonAddress,
-        safeProxyFactoryAddress,
-        saltNonce,
-        initializer,
-        publicClient,
-    });
-
     const isNewWallet = await createNewWalletInDb({
         chain,
         api,

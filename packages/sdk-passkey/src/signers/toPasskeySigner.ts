@@ -239,13 +239,9 @@ export async function toPasskeySigner<
 
     const res = await storeWalletInComethApi({
         chain,
-        singletonAddress: safeSingletonAddress,
-        safeProxyFactoryAddress,
-        saltNonce: zeroHash,
-        initializer,
         signer: passkeySigner,
         api,
-        publicClient,
+        smartAccountAddress,
     });
 
     if (res.isNewWallet) {
@@ -278,6 +274,5 @@ export async function toPasskeySigner<
         smartAccountAddress,
         fullDomainSelected,
         userOpVerifyingContract,
-        safeWebAuthnSharedSignerContractAddress,
     });
 }

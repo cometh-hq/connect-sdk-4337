@@ -54,14 +54,12 @@ export async function safeWebAuthnSigner<
         smartAccountAddress,
         fullDomainSelected,
         userOpVerifyingContract,
-        safeWebAuthnSharedSignerContractAddress,
     }: {
         passkey: PasskeyLocalStorageFormat;
         passkeySignerAddress: Address;
         smartAccountAddress: Address;
         fullDomainSelected: boolean;
         userOpVerifyingContract: Address;
-        safeWebAuthnSharedSignerContractAddress: Address;
     }
 ): Promise<SafeSigner<"safeWebAuthnSigner">> {
     const publicKeyCredential: PublicKeyCredentialDescriptor = {
@@ -70,8 +68,7 @@ export async function safeWebAuthnSigner<
     };
 
     const account = toAccount({
-        //address: smartAccountAddress,
-        address: safeWebAuthnSharedSignerContractAddress,
+        address: passkey.signerAddress,
         async signMessage({ message }) {
             const hash = hashTypedData({
                 domain: {
@@ -107,7 +104,7 @@ export async function safeWebAuthnSigner<
 
     return {
         ...account,
-        address: safeWebAuthnSharedSignerContractAddress,
+        address: passkey.signerAddress,
         smartAccountAddress,
         source: "safeWebAuthnSigner",
         // Sign a user operation
