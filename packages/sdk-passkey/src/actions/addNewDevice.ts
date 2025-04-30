@@ -12,7 +12,7 @@ import {
     DEFAULT_WEBAUTHN_OPTIONS,
     isWebAuthnCompatible,
 } from "@/signers/passkeyService/utils";
-import type { Signer } from "@/types";
+import type { PasskeyObject } from "@/types";
 import * as QRCode from "qrcode";
 
 export interface QRCodeOptions {
@@ -31,7 +31,9 @@ export type CreateNewSignerParams = {
     encryptionSalt?: string;
 };
 
-const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
+const _flattenPayload = (
+    signerPayload: PasskeyObject
+): Record<string, string> => {
     const optimizedPayload = {
         os: signerPayload.deviceData.os,
         b: signerPayload.deviceData.browser,
@@ -76,20 +78,20 @@ export const createNewPasskeySigner = async ({
     apiKey: string;
     baseUrl?: string;
     params?: CreateNewSignerParams;
-}): Promise<Signer> => {
+}): Promise<PasskeyObject> => {
     const api = new API(apiKey, baseUrl);
-    const { signer } = await _createNewPasskeySigner(api, {
+    const { passkeyObject } = await _createNewPasskeySigner(api, {
         webAuthnOptions: params.webAuthnOptions,
         passKeyName: params.passKeyName,
         fullDomainSelected: params.fullDomainSelected ?? false,
     });
 
-    return signer;
+    return passkeyObject;
 };
 
 export const serializeUrlWithSignerPayload = async (
     validationPageUrl: string,
-    signerPayload: Signer
+    signerPayload: PasskeyObject
 ) => {
     try {
         const url = new URL(validationPageUrl);
@@ -106,7 +108,7 @@ export const serializeUrlWithSignerPayload = async (
 
 export const generateQRCodeUrl = async (
     validationPageUrl: string,
-    signerPayload: Signer,
+    signerPayload: PasskeyObject,
     options?: QRCodeOptions
 ) => {
     try {
@@ -143,7 +145,7 @@ const _createNewPasskeySigner = async (
         fullDomainSelected: boolean;
     }
 ): Promise<{
-    signer: Signer;
+    passkeyObject: PasskeyObject;
 }> => {
     const webAuthnCompatible = await isWebAuthnCompatible(webAuthnOptions);
 
@@ -160,7 +162,7 @@ const _createNewPasskeySigner = async (
         throw new DeviceNotCompatibleWithSECKP256r1PasskeysError();
 
     return {
-        signer: {
+        passkeyObject: {
             signerAddress: passkeyWithCoordinates.signerAddress,
             deviceData: getDeviceData(),
             publicKeyId: passkeyWithCoordinates.id,

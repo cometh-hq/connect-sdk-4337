@@ -19,7 +19,7 @@ export type WebAuthnSigner = {
     creationDate?: Date;
 };
 
-export type Signer = {
+export type PasskeyObject = {
     signerAddress: Address;
     deviceData: DeviceData;
     publicKeyId?: Hex;

@@ -5,7 +5,7 @@ import { APINotFoundError, SmartAccountAddressNotFoundError } from "@/errors";
 import { getProjectParamsByChain } from "@/services/comethService";
 
 import { API } from "@/services/API";
-import type { Signer } from "@/types";
+import type { PasskeyObject } from "@/types";
 import { sendTransaction } from "permissionless/actions/smartAccount";
 import type {
     Chain,
@@ -19,7 +19,7 @@ import type { SmartAccount } from "viem/account-abstraction";
 import { encodeFunctionData, getAction } from "viem/utils";
 
 export type AddPasskeyOwner = {
-    passkeySigner: Signer;
+    passkeyObject: PasskeyObject;
     apiKey: string;
     baseUrl?: string;
 };
@@ -32,7 +32,7 @@ export async function addPasskeyOwner<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<AddPasskeyOwner>
 ): Promise<Hash> {
-    const { passkeySigner } = args;
+    const { passkeyObject } = args;
 
     const api = new API(args.apiKey, args.baseUrl);
 
@@ -41,7 +41,7 @@ export async function addPasskeyOwner<
     const addOwnerCalldata = encodeFunctionData({
         abi: SafeAbi,
         functionName: "addOwnerWithThreshold",
-        args: [passkeySigner.signerAddress, 1],
+        args: [passkeyObject.signerAddress, 1],
     });
 
     const smartAccountAddress = client.account?.address;
@@ -56,7 +56,7 @@ export async function addPasskeyOwner<
         },
     ];
 
-    if (passkeySigner.publicKeyX && passkeySigner.publicKeyY) {
+    if (passkeyObject.publicKeyX && passkeyObject.publicKeyY) {
         const {
             p256Verifier: safeP256VerifierAddress,
             safeWebAuthnSignerFactory,
@@ -68,8 +68,8 @@ export async function addPasskeyOwner<
             abi: safeWebauthnSignerFactory,
             functionName: "createSigner",
             args: [
-                passkeySigner.publicKeyX,
-                passkeySigner.publicKeyY,
+                passkeyObject.publicKeyX,
+                passkeyObject.publicKeyY,
                 safeP256VerifierAddress,
             ],
         });
@@ -90,18 +90,18 @@ export async function addPasskeyOwner<
     } as unknown as SendTransactionParameters);
 
     if (
-        passkeySigner.publicKeyX &&
-        passkeySigner.publicKeyY &&
-        passkeySigner.publicKeyId
+        passkeyObject.publicKeyX &&
+        passkeyObject.publicKeyY &&
+        passkeyObject.publicKeyId
     ) {
         await api.createWebAuthnSigner({
             chainId: client.chain?.id as number,
             walletAddress: smartAccountAddress,
-            publicKeyId: passkeySigner.publicKeyId,
-            publicKeyX: passkeySigner.publicKeyX,
-            publicKeyY: passkeySigner.publicKeyY,
-            deviceData: passkeySigner.deviceData,
-            signerAddress: passkeySigner.signerAddress,
+            publicKeyId: passkeyObject.publicKeyId,
+            publicKeyX: passkeyObject.publicKeyX,
+            publicKeyY: passkeyObject.publicKeyY,
+            deviceData: passkeyObject.deviceData,
+            signerAddress: passkeyObject.signerAddress,
             isSharedWebAuthnSigner: false,
         });
     }

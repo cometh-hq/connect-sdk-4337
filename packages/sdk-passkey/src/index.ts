@@ -5,7 +5,6 @@ import {
     serializeUrlWithSignerPayload,
 } from "./actions/addNewDevice";
 import type { QRCodeOptions } from "./actions/addNewDevice";
-import { addPasskeyOwner } from "./actions/addPasskeyOwnerActions";
 import { passkeyActions } from "./actions/decorators/passkeyActions";
 import {
     retrieveAccountAddressFromPasskeyId,
@@ -21,7 +20,6 @@ export {
     toPasskeyAccount,
     passkeySetupTx,
     createNewPasskeySigner,
-    addPasskeyOwner,
     passkeyActions,
     generateQRCodeUrl,
     serializeUrlWithSignerPayload,
