@@ -15,6 +15,8 @@ import { createComethPaymasterClient } from "./core/clients/paymaster/createPaym
 import { providerToSmartAccountSigner } from "./core/signers/utils";
 import {
     BatchCallModeNotSupportedError,
+<<<<<<< HEAD
+<<<<<<< HEAD
     CannotSignForAddressError,
     FallbackAlreadySetError,
     InvalidAccountAddressError,
@@ -30,6 +32,28 @@ import {
     SafeNotDeployedError,
     SmartAccountAddressNotFoundError,
     WalletNotConnectedError,
+=======
+=======
+    CannotSignForAddressError,
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
+    FallbackAlreadySetError,
+    InvalidAccountAddressError,
+    InvalidCallDataError,
+    InvalidParamsError,
+    InvalidSignatureError,
+    InvalidSmartAccountClientError,
+    MethodNotSupportedError,
+    MissingToAddressError,
+    NoCallsToEncodeError,
+    OwnerToRemoveIsNotSafeOwnerError,
+    RemoveOwnerOnUndeployedSafeError,
+    SafeNotDeployedError,
+    SmartAccountAddressNotFoundError,
+<<<<<<< HEAD
+>>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+    WalletNotConnectedError,
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 } from "./errors";
 
 export {
@@ -47,6 +71,10 @@ export {
     InvalidCallDataError,
     InvalidSignatureError,
     MissingToAddressError,
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
     OwnerToRemoveIsNotSafeOwnerError,
     RemoveOwnerOnUndeployedSafeError,
     CannotSignForAddressError,
@@ -54,6 +82,11 @@ export {
     InvalidParamsError,
     WalletNotConnectedError,
     InvalidSmartAccountClientError,
+<<<<<<< HEAD
+=======
+>>>>>>> bac4782 (feat/sdk-lite (#75))
+=======
+>>>>>>> 8f70c31 (Sdk core/new features (#77))
 };
 
 export type {
