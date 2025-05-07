@@ -38,6 +38,11 @@ import {
 const multisendAddress = "0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761";
 
 export type SafeImportActions = {
+    prepareImportSafe1_1Tx: () => Promise<{
+        tx: SafeTransactionDataPartial;
+        passkey?: PasskeyLocalStorageFormat;
+        eoaSigner?: PrivateKeyAccount;
+    }>;
     prepareImportSafe1_3Tx: () => Promise<{
         tx: SafeTransactionDataPartial;
         passkey?: PasskeyLocalStorageFormat;
@@ -66,17 +71,130 @@ export type SafeImportActions = {
         signer: PrivateKeyAccount;
         tx: SafeTransactionDataPartial;
     }) => Promise<Hex | undefined>;
+    signTransactionByExternalOwnerFor1_1: ({
+        signer,
+        tx,
+    }: {
+        signer: PrivateKeyAccount;
+        tx: SafeTransactionDataPartial;
+    }) => Promise<Hex | undefined>;
 };
 
 export function importSafeActions() {
     return <
         TAccount extends ComethSafeSmartAccount | undefined =
-            | ComethSafeSmartAccount
-            | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
     >(
         client: Client<Transport, Chain | undefined, TAccount>
     ): SafeImportActions => {
         return {
+            // Prepare import transaction for Safe v1.1.1
+            prepareImportSafe1_1Tx: async () => {
+                const rpcClient =
+                    client.account?.publicClient ??
+                    createPublicClient({
+                        chain: client.chain,
+                        transport: http(),
+                        ...defaultClientConfig,
+                    });
+
+                const isDeployed = await isSmartAccountDeployed(
+                    rpcClient,
+                    client.account?.address as Address
+                );
+
+                if (!isDeployed) {
+                    throw new ImportOnUndeployedSafeError();
+                }
+
+                const api = client?.account?.connectApiInstance as API;
+                const comethSignerConfig = client?.account?.comethSignerConfig;
+                const contractParams = client?.account?.safeContractParams;
+
+                let threshold: number;
+                let nonce: bigint;
+                let currentVersion: string;
+
+                if (isDeployed) {
+                    [currentVersion, threshold, nonce] = (await Promise.all([
+                        rpcClient.readContract({
+                            address: client.account?.address as Address,
+                            abi: SafeAbi,
+                            functionName: "VERSION",
+                        }),
+                        rpcClient.readContract({
+                            address: client.account?.address as Address,
+                            abi: SafeAbi,
+                            functionName: "getThreshold",
+                        }),
+                        rpcClient.readContract({
+                            address: client.account?.address as Address,
+                            abi: SafeAbi,
+                            functionName: "nonce",
+                        }),
+                    ])) as [string, number, bigint];
+
+                    if (currentVersion !== "1.1.1") {
+                        throw new SafeVersionNotSupportedError(
+                            "1.1.1",
+                            currentVersion
+                        );
+                    }
+                } else {
+                    threshold = 1;
+                    nonce = 0n;
+                }
+
+                const isWebAuthnCompatible =
+                    await isDeviceCompatibleWithPasskeys({
+                        webAuthnOptions: {},
+                    });
+
+                const signer = await create4337Signer({
+                    api,
+                    isWebAuthnCompatible,
+                    comethSignerConfig,
+                    safeWebAuthnSharedSignerContractAddress:
+                        contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
+                });
+
+                const { passkey, eoaSigner } =
+                    extractComethSignerParams(signer);
+
+                const migrateCalldata = await prepareLegacyMigrationCalldata({
+                    threshold,
+                    safe4337ModuleAddress:
+                        contractParams?.safe4337ModuleAddress as Address,
+                    safeWebAuthnSharedSignerContractAddress:
+                        contractParams?.safeWebAuthnSharedSignerContractAddress as Address,
+                    migrationContractAddress:
+                        contractParams?.migrationContractAddress as Address,
+                    p256Verifier: contractParams?.p256Verifier as Address,
+                    smartAccountAddress: client.account?.address as Address,
+                    passkey,
+                    eoaSigner,
+                    isImport: true,
+                    is4337ModuleEnabled: false,
+                });
+
+                return {
+                    tx: {
+                        to: multisendAddress,
+                        value: BigInt(0).toString(),
+                        data: migrateCalldata,
+                        operation: 1,
+                        safeTxGas: 0,
+                        baseGas: 0,
+                        gasPrice: 0,
+                        gasToken: zeroAddress,
+                        refundReceiver: zeroAddress,
+                        nonce: Number(nonce),
+                    } as SafeTransactionDataPartial,
+                    passkey,
+                    eoaSigner,
+                };
+            },
             // Prepare import transaction for Safe v1.3.0
             prepareImportSafe1_3Tx: async () => {
                 const rpcClient =
@@ -133,10 +251,9 @@ export function importSafeActions() {
                             }),
                         ])) as [string, number, boolean, bigint];
 
-                    const supportedVersion = "1.3.0";
-                    if (currentVersion !== supportedVersion) {
+                    if (currentVersion !== "1.3.0") {
                         throw new SafeVersionNotSupportedError(
-                            supportedVersion,
+                            "1.3.0",
                             currentVersion
                         );
                     }
@@ -260,10 +377,9 @@ export function importSafeActions() {
                             }),
                         ])) as [string, number, boolean, bigint];
 
-                    const supportedVersion = "1.4.1";
-                    if (currentVersion !== supportedVersion) {
+                    if (currentVersion !== "1.4.1") {
                         throw new SafeVersionNotSupportedError(
-                            supportedVersion,
+                            "1.4.1",
                             currentVersion
                         );
                     }
@@ -366,10 +482,10 @@ export function importSafeActions() {
 
                 const nonce = isDeployed
                     ? ((await rpcClient.readContract({
-                          address: client.account?.address as Address,
-                          abi: SafeAbi,
-                          functionName: "nonce",
-                      })) as bigint)
+                        address: client.account?.address as Address,
+                        abi: SafeAbi,
+                        functionName: "nonce",
+                    })) as bigint)
                     : BigInt(0);
 
                 return signTypedData({
@@ -378,6 +494,36 @@ export function importSafeActions() {
                     verifyingContract: client.account?.address as Address,
                     tx,
                     nonce,
+                });
+            },
+
+            signTransactionByExternalOwnerFor1_1: async (args) => {
+                const { signer, tx } = args;
+
+                const domain = {
+                    verifyingContract: client.account?.address as Address,
+                };
+
+                const types = {
+                    SafeTx: [
+                        { name: "to", type: "address" },
+                        { name: "value", type: "uint256" },
+                        { name: "data", type: "bytes" },
+                        { name: "operation", type: "uint8" },
+                        { name: "safeTxGas", type: "uint256" },
+                        { name: "baseGas", type: "uint256" },
+                        { name: "gasPrice", type: "uint256" },
+                        { name: "gasToken", type: "address" },
+                        { name: "refundReceiver", type: "address" },
+                        { name: "nonce", type: "uint256" },
+                    ],
+                };
+
+                return await signer.signTypedData({
+                    domain,
+                    types,
+                    primaryType: "SafeTx",
+                    message: tx as unknown as Record<string, unknown>,
                 });
             },
         };
