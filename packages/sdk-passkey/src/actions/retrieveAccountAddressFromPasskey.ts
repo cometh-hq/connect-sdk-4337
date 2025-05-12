@@ -43,7 +43,7 @@ export const retrieveAccountAddressFromPasskeyId = async ({
     apiKey: string;
     id: string;
     chain: Chain;
-    fullDomainSelected: boolean;
+    fullDomainSelected?: boolean;
     baseUrl?: string;
 }): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
