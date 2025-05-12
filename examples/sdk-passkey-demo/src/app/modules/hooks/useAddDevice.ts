@@ -8,7 +8,7 @@ import {
 } from "@cometh/connect-core-sdk";
 import { toSafeSmartAccount } from "permissionless/accounts";
 import { createSmartAccountClient } from "permissionless";
-import { addPasskeyOwner, createNewPasskeySigner, generateQRCodeUrl, passkeyActions, serializeUrlWithSignerPayload, toPasskeyAccount, toPasskeySigner } from "@cometh/passkeys";
+import { createNewPasskeySigner, generateQRCodeUrl, passkeyActions, serializeUrlWithSignerPayload, toPasskeyAccount, toPasskeySigner } from "@cometh/passkeys";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
 import { arbitrumSepolia } from "viem/chains";
@@ -141,7 +141,7 @@ export function useSmartAccount() {
 
 
             const txHash = await smartAccountClient.addPasskeyOwner({
-                passkeySigner: passkey,
+                passkeyObject: passkey,
                 apiKey,
             })
 
@@ -171,8 +171,6 @@ export function useSmartAccount() {
                     },
                 },
             });
-
-
 
             // ##############################################
 

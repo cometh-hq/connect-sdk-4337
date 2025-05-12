@@ -6,6 +6,7 @@ import {
     createSmartAccountClient,
 } from "@cometh/connect-core-sdk";
 import { passkeySetupTx, toPasskeyAccount, toPasskeySigner } from "@cometh/passkeys";
+import { isSmartAccountDeployed } from "permissionless";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient, } from "viem";
 import { arbitrumSepolia } from "viem/chains";
@@ -50,6 +51,7 @@ export function useSmartAccount() {
 
             let signer
             let smartAccount;
+            let passkeyTx;
 
             if (localStorageAddress) {
                 signer = await toPasskeySigner({
@@ -58,11 +60,25 @@ export function useSmartAccount() {
                     smartAccountAddress: localStorageAddress,
                 });
 
+                const isDeployed = await isSmartAccountDeployed(
+                    publicClient,
+                    localStorageAddress,
+                );
+            
+                if (!isDeployed) {
+                    passkeyTx = await passkeySetupTx({
+                        passkeySigner: signer,
+                        chain: arbitrumSepolia,
+                        apiKey,
+                    });
+                }
+
                 smartAccount = await createSafeSmartAccount({
                     chain: arbitrumSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
-                    signer
+                    signer,
+                    setupTransactions: passkeyTx ? [passkeyTx] : [],
                 });
 
             } else {
@@ -73,7 +89,7 @@ export function useSmartAccount() {
                 });
 
 
-                const passkeyTx = await passkeySetupTx({
+                passkeyTx = await passkeySetupTx({
                     passkeySigner: signer,
                     chain: arbitrumSepolia,
                     apiKey,
