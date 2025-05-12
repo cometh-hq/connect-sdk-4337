@@ -233,10 +233,6 @@ export async function toPasskeySigner<
         });
     }
 
-    // TODO: passkey storage management
-    // 1) Check if smart account is new
-    // 2) If it is, save the signer
-
     const res = await storeWalletInComethApi({
         chain,
         signer: passkeySigner,

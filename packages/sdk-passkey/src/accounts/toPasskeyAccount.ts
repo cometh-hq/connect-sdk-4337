@@ -6,10 +6,6 @@ export async function toPasskeyAccount(
     smartAccount: SmartAccount,
     passkeySigner: SafeSigner
 ): Promise<SmartAccount> {
-    // TODO: passkey storage management
-    // 1) Check if smart account is new
-    // 2) If it is, save wallet in storage Connect API
-
     const passkeyAccount = {
         ...smartAccount,
         async signMessage({ message }: { message: string }) {
