@@ -120,7 +120,7 @@ export function createSmartAccountClient<
         ) as any;
 
     return client
-        .extend(safeOwnerPluginActions())
-        .extend(eip1193Actions())
-        .extend(eip5792Actions());
+    .extend(safeOwnerPluginActions())
+    .extend(eip1193Actions())
+    .extend(eip5792Actions());
 }
