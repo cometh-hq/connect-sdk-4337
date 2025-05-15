@@ -48,7 +48,6 @@ export function useSmartAccount() {
             }) as PublicClient;
 
             const ownerPK = process.env.NEXT_PUBLIC_OWNER_PK;
-
             const owner = privateKeyToAccount(ownerPK as Hex);
 
             let smartAccount;

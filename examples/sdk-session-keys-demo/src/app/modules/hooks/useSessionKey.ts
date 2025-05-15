@@ -1,16 +1,20 @@
 "use client";
 
 import {
-    type ComethSmartAccountClient,
-    type SafeSigner,
+} from "@cometh/connect-core-sdk";
+import {
     erc7579Actions,
     smartSessionActions,
     toSmartSessionsSigner,
-} from "@cometh/connect-sdk-4337";
+    type SafeSigner,
+} from "@cometh/session-keys";
 import { SmartSessionMode } from "@rhinestone/module-sdk";
+import { isSmartAccountDeployed, type SmartAccountClient } from "permissionless";
 import { useState } from "react";
-import { type Address, type Hex, stringify, toFunctionSelector } from "viem";
+import { type Address, type Chain, type Client, type Hex, type PublicClient, stringify, toFunctionSelector, type Transport } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { type SmartAccount } from "viem/account-abstraction";
+
 
 export function parse(data: string): Record<string, any> {
     return JSON.parse(data, (_, value) => {
@@ -32,18 +36,27 @@ export function useSessionKey() {
     const getSessionKeySigner = async ({
         smartAccountClient,
     }: {
-        smartAccountClient: ComethSmartAccountClient;
+        smartAccountClient: SmartAccountClient;
     }): Promise<SafeSigner> => {
         const stringifiedSessionData = localStorage.getItem(
             `session-key-${smartAccountClient?.account?.address}`
         );
 
-        const safe7559Account = smartAccountClient
-            .extend(smartSessionActions())
-            .extend(erc7579Actions());
+        const safe7559Account = {
+            ...smartAccountClient
+                .extend(smartSessionActions())
+                .extend(erc7579Actions()),
+        };
 
         const privateKey = generatePrivateKey();
         const sessionOwner = privateKeyToAccount(privateKey);
+
+        // if (!(await isSmartAccountDeployed(
+        //     smartAccountClient.account?.client as PublicClient, 
+        //     smartAccountClient?.account?.address as Address,
+        // ))) {
+        //     safe7559Account.addSafe7579Module()
+        // }
 
         if (!stringifiedSessionData) {
             const createSessionsResponse =
