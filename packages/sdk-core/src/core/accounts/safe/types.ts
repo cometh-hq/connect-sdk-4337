@@ -46,16 +46,5 @@ export interface SafeSignature {
     // a flag to indicate if the signature is a contract signature and the data has to be appended to the dynamic part of signature bytes
     dynamic?: true;
 }
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 export const SAFE_SENTINEL_OWNERS = "0x1";
-=======
->>>>>>> bac4782 (feat/sdk-lite (#75))
-=======
-
-export const SAFE_SENTINEL_OWNERS = "0x1";
->>>>>>> 8f70c31 (Sdk core/new features (#77))
->>>>>>> c2b38e023241767c6d89e0658230cd9541d9046e

@@ -15,18 +15,6 @@ import { createComethPaymasterClient } from "./core/clients/paymaster/createPaym
 import { providerToSmartAccountSigner } from "./core/signers/utils";
 import {
     BatchCallModeNotSupportedError,
-<<<<<<< HEAD
-    FallbackAlreadySetError,
-    InvalidCallDataError,
-    InvalidSignatureError,
-    MethodNotSupportedError,
-    MissingToAddressError,
-    NoCallsToEncodeError,
-    SafeNotDeployedError,
-    SmartAccountAddressNotFoundError,
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
     CannotSignForAddressError,
     FallbackAlreadySetError,
     InvalidAccountAddressError,
@@ -42,29 +30,6 @@ import {
     SafeNotDeployedError,
     SmartAccountAddressNotFoundError,
     WalletNotConnectedError,
-=======
-=======
-    CannotSignForAddressError,
->>>>>>> 8f70c31 (Sdk core/new features (#77))
-    FallbackAlreadySetError,
-    InvalidAccountAddressError,
-    InvalidCallDataError,
-    InvalidParamsError,
-    InvalidSignatureError,
-    InvalidSmartAccountClientError,
-    MethodNotSupportedError,
-    MissingToAddressError,
-    NoCallsToEncodeError,
-    OwnerToRemoveIsNotSafeOwnerError,
-    RemoveOwnerOnUndeployedSafeError,
-    SafeNotDeployedError,
-    SmartAccountAddressNotFoundError,
-<<<<<<< HEAD
->>>>>>> bac4782 (feat/sdk-lite (#75))
-=======
-    WalletNotConnectedError,
->>>>>>> 8f70c31 (Sdk core/new features (#77))
->>>>>>> c2b38e023241767c6d89e0658230cd9541d9046e
 } from "./errors";
 
 export {
@@ -82,12 +47,6 @@ export {
     InvalidCallDataError,
     InvalidSignatureError,
     MissingToAddressError,
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 8f70c31 (Sdk core/new features (#77))
     OwnerToRemoveIsNotSafeOwnerError,
     RemoveOwnerOnUndeployedSafeError,
     CannotSignForAddressError,
@@ -95,12 +54,6 @@ export {
     InvalidParamsError,
     WalletNotConnectedError,
     InvalidSmartAccountClientError,
-<<<<<<< HEAD
-=======
->>>>>>> bac4782 (feat/sdk-lite (#75))
-=======
->>>>>>> 8f70c31 (Sdk core/new features (#77))
->>>>>>> c2b38e023241767c6d89e0658230cd9541d9046e
 };
 
 export type {

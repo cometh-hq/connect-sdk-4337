@@ -16,12 +16,6 @@ const defaultSafeContractConfig = {
     safe4337ModuleAddress: "0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226",
 };
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 8f70c31 (Sdk core/new features (#77))
 const defaultClientConfig = {
     cacheTime: 60_000,
     batch: {
@@ -29,12 +23,6 @@ const defaultClientConfig = {
     },
 };
 
-<<<<<<< HEAD
-=======
->>>>>>> bac4782 (feat/sdk-lite (#75))
-=======
->>>>>>> 8f70c31 (Sdk core/new features (#77))
->>>>>>> c2b38e023241767c6d89e0658230cd9541d9046e
 export {
     ENTRYPOINT_ADDRESS_V07,
     SAFE_7579_ADDRESS,
@@ -42,15 +30,5 @@ export {
     add7579FunctionSelector,
     hardcodeVerificationGasLimit7579,
     defaultSafeContractConfig,
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
     defaultClientConfig,
-=======
->>>>>>> bac4782 (feat/sdk-lite (#75))
-=======
-    defaultClientConfig,
->>>>>>> 8f70c31 (Sdk core/new features (#77))
->>>>>>> c2b38e023241767c6d89e0658230cd9541d9046e
 };
