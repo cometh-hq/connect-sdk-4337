@@ -1,0 +1,110 @@
+import { SafeAbi } from "@/accounts/abi/safe";
+import { safeWebauthnSignerFactory } from "@/accounts/abi/safeWebauthnSignerFactory";
+import type { SafeContractParams } from "@/accounts/safeService/types";
+import { APINotFoundError, SmartAccountAddressNotFoundError } from "@/errors";
+import { getProjectParamsByChain } from "@/services/comethService";
+
+import { API } from "@/services/API";
+import type { PasskeyObject } from "@/types";
+import { sendTransaction } from "permissionless/actions/smartAccount";
+import type {
+    Chain,
+    Client,
+    Hash,
+    Prettify,
+    SendTransactionParameters,
+    Transport,
+} from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
+import { encodeFunctionData, getAction } from "viem/utils";
+
+export type AddPasskeyOwner = {
+    passkeyObject: PasskeyObject;
+    apiKey: string;
+    baseUrl?: string;
+};
+
+export async function addPasskeyOwner<
+    TTransport extends Transport = Transport,
+    TChain extends Chain | undefined = Chain | undefined,
+    TAccount extends SmartAccount | undefined = SmartAccount | undefined,
+>(
+    client: Client<TTransport, TChain, TAccount>,
+    args: Prettify<AddPasskeyOwner>
+): Promise<Hash> {
+    const { passkeyObject } = args;
+
+    const api = new API(args.apiKey, args.baseUrl);
+
+    if (!api) throw new APINotFoundError();
+
+    const addOwnerCalldata = encodeFunctionData({
+        abi: SafeAbi,
+        functionName: "addOwnerWithThreshold",
+        args: [passkeyObject.signerAddress, 1],
+    });
+
+    const smartAccountAddress = client.account?.address;
+
+    if (!smartAccountAddress) throw new SmartAccountAddressNotFoundError();
+
+    const txs = [
+        {
+            to: smartAccountAddress,
+            value: BigInt(0),
+            data: addOwnerCalldata,
+        },
+    ];
+
+    if (passkeyObject.publicKeyX && passkeyObject.publicKeyY) {
+        const {
+            p256Verifier: safeP256VerifierAddress,
+            safeWebAuthnSignerFactory,
+        } = (
+            await getProjectParamsByChain({ api, chain: client.chain as Chain })
+        ).safeContractParams as SafeContractParams;
+
+        const deployWebAuthnSignerCalldata = encodeFunctionData({
+            abi: safeWebauthnSignerFactory,
+            functionName: "createSigner",
+            args: [
+                passkeyObject.publicKeyX,
+                passkeyObject.publicKeyY,
+                safeP256VerifierAddress,
+            ],
+        });
+
+        txs.unshift({
+            to: safeWebAuthnSignerFactory,
+            value: BigInt(0),
+            data: deployWebAuthnSignerCalldata,
+        });
+    }
+
+    const hash = await getAction(
+        client,
+        sendTransaction,
+        "sendTransaction"
+    )({
+        calls: txs,
+    } as unknown as SendTransactionParameters);
+
+    if (
+        passkeyObject.publicKeyX &&
+        passkeyObject.publicKeyY &&
+        passkeyObject.publicKeyId
+    ) {
+        await api.createWebAuthnSigner({
+            chainId: client.chain?.id as number,
+            walletAddress: smartAccountAddress,
+            publicKeyId: passkeyObject.publicKeyId,
+            publicKeyX: passkeyObject.publicKeyX,
+            publicKeyY: passkeyObject.publicKeyY,
+            deviceData: passkeyObject.deviceData,
+            signerAddress: passkeyObject.signerAddress,
+            isSharedWebAuthnSigner: false,
+        });
+    }
+
+    return hash;
+}

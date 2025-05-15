@@ -18,6 +18,7 @@ import {
     size,
     zeroAddress,
 } from "viem";
+import { MultiSendContractABI } from "../abi/Multisend";
 import { EnableModuleAbi } from "../abi/enableModule";
 import { SafeAbi } from "../abi/safe";
 import { SafeProxyContractFactoryABI } from "../abi/safeProxyFactory";
@@ -48,14 +49,40 @@ export const encodeMultiSendTransactions = (
  */
 export const getSetUpCallData = ({
     modules,
+    setUpContractAddress,
+    setupTransactions,
 }: {
     modules: Address[];
+    setUpContractAddress: Address;
+    setupTransactions?: MultiSendTransaction[];
 }) => {
     const enableModuleCallData = encodeFunctionData({
         abi: EnableModuleAbi,
         functionName: "enableModules",
         args: [modules],
     });
+
+    if (setupTransactions) {
+        return encodeFunctionData({
+            abi: MultiSendContractABI,
+            functionName: "multiSend",
+            args: [
+                encodeMultiSendTransactions([
+                    {
+                        op: 1 as const,
+                        to: setUpContractAddress,
+                        data: enableModuleCallData,
+                    },
+                    ...setupTransactions.map((tx) => ({
+                        op: tx.op as 0 | 1,
+                        to: tx.to,
+                        value: tx.value ?? 0n,
+                        data: tx.data,
+                    })),
+                ]),
+            ],
+        });
+    }
 
     return enableModuleCallData;
 };
@@ -75,16 +102,32 @@ export const getSafeInitializer = ({
     fallbackHandler,
     modules,
     setUpContractAddress,
+    multisendAddress,
+    setupTransactions,
 }: {
     accountSigner: Signer;
     threshold: number;
     fallbackHandler: Address;
     modules: Address[];
     setUpContractAddress: Address;
+    multisendAddress: Address;
+    setupTransactions?: MultiSendTransaction[];
 }): Hex => {
     const setUpCallData = getSetUpCallData({
         modules,
+        setUpContractAddress,
+        setupTransactions,
     });
+
+    if (setupTransactions && setupTransactions.length > 0) {
+        return getSafeSetUpData({
+            owner: accountSigner.address,
+            threshold,
+            setUpContractAddress: multisendAddress,
+            setUpData: setUpCallData,
+            fallbackHandler,
+        });
+    }
 
     return getSafeSetUpData({
         owner: accountSigner.address,

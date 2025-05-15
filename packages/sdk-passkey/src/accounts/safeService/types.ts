@@ -1,4 +1,5 @@
-import type { Address } from "viem";
+import type { Address, Hex, LocalAccount, UnionPartialBy } from "viem";
+import type { UserOperation } from "viem/account-abstraction";
 
 export const EIP712_SAFE_OPERATION_TYPE = {
     SafeOp: [
@@ -23,13 +24,41 @@ export const EIP712_SAFE_MESSAGE_TYPE = {
     SafeMessage: [{ type: "bytes", name: "message" }],
 };
 
+export enum WalletVersion {
+    V1 = "v1.0",
+}
+
 export type SafeContractParams = {
     safeProxyFactoryAddress: Address;
     safeSingletonAddress: Address;
     multisendAddress: Address;
+    fallbackHandler: Address;
     setUpContractAddress: Address;
-    fallbackHandler?: Address;
+    safeWebAuthnSharedSignerContractAddress: Address;
+    p256Verifier: Address;
+    safeWebAuthnSignerFactory: Address;
     safe4337ModuleAddress?: Address;
+};
+
+export type RecoveryParams = {
+    socialRecoveryModuleAddress: Address;
+    moduleFactoryAddress: Address;
+    delayModuleAddress: Address;
+    recoveryCooldown: number;
+    recoveryExpiration: number;
+    guardianAddress: Address;
+};
+
+export type DeploymentParams = {
+    version: WalletVersion;
+    safeContractParams: SafeContractParams;
+    recoveryParams: RecoveryParams;
+};
+
+export type ProjectParams = {
+    chainId: string;
+    safeContractParams: SafeContractParams;
+    recoveryParams: RecoveryParams;
 };
 
 export type MultiSendTransaction = {
@@ -47,4 +76,21 @@ export interface SafeSignature {
     dynamic?: true;
 }
 
-export const SAFE_SENTINEL_OWNERS = "0x1";
+export type Wallet = {
+    projectId: string;
+    chainId: string;
+    address: string;
+    creationDate: Date;
+    connectionDate: Date;
+    initiatorAddress: string;
+    deploymentParams: DeploymentParams;
+};
+export type SafeSigner<Name extends string = string> = LocalAccount<Name> & {
+    smartAccountAddress: Address;
+    getStubSignature(): Promise<Hex>;
+    signUserOperation: (
+        parameters: UnionPartialBy<UserOperation, "sender"> & {
+            chainId?: number | undefined;
+        }
+    ) => Promise<Hex>;
+};
