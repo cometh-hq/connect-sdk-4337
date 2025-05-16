@@ -369,7 +369,7 @@ export async function setupCustomDelayModule<
         sendTransaction,
         "sendTransaction"
     )({
-        calls: [setUpDelayTx],
+        calls: setUpDelayTx,
     } as unknown as SendTransactionParameters);
 
     return hash;
