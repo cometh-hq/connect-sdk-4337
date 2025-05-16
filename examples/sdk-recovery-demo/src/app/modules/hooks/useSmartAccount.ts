@@ -3,13 +3,17 @@
 import {
     createComethPaymasterClient,
     createSafeSmartAccount,
-    createSmartAccountClient,
+    //createSmartAccountClient,
 } from "@cometh/connect-core-sdk";
 import { recoveryActions } from "@cometh/recovery"
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
+
+import { toSafeSmartAccount } from 'permissionless/accounts'
+import { entryPoint07Address } from "viem/account-abstraction";
+import { createSmartAccountClient } from "permissionless";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -55,18 +59,42 @@ export function useSmartAccount() {
             let smartAccount;
 
             if (localStorageAddress) {
-                smartAccount = await createSafeSmartAccount({
-                    chain: arbitrumSepolia,
-                    publicClient,
-                    signer: owner,
-                    smartAccountAddress: localStorageAddress,
+                // smartAccount = await createSafeSmartAccount({
+                //     chain: arbitrumSepolia,
+                //     publicClient,
+                //     signer: owner,
+                //     smartAccountAddress: localStorageAddress,
+                // });
+
+                smartAccount = await toSafeSmartAccount({
+                    client: publicClient,
+                    owners: [owner],
+                    version: "1.4.1",
+                    entryPoint: {
+                        address: entryPoint07Address,
+                        version: "0.7",
+                    },
+                    address: localStorageAddress,
                 });
+
             } else {
-                smartAccount = await createSafeSmartAccount({
-                    chain: arbitrumSepolia,
-                    signer: owner,
-                    publicClient,
+                // smartAccount = await createSafeSmartAccount({
+                //     chain: arbitrumSepolia,
+                //     signer: owner,
+                //     publicClient,
+                // });
+
+                smartAccount = await toSafeSmartAccount({
+                    client: publicClient,
+                    owners: [owner],
+                    version: "1.4.1",
+                    entryPoint: {
+                        address: entryPoint07Address,
+                        version: "0.7",
+                    },
                 });
+
+
                 window.localStorage.setItem(
                     "walletAddress",
                     smartAccount.address

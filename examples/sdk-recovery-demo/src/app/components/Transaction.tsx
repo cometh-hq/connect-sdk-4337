@@ -7,6 +7,9 @@ import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
 import { arbitrumSepolia } from "viem/chains";
 import axios from "axios";
+import { encodeFunctionData } from "viem";
+
+import counterContractAbi from "../contract/counterABI.json";
 
 interface TransactionProps {
   smartAccount: any;
@@ -29,6 +32,14 @@ function Transaction({
   const guardianAddress = process.env.NEXT_PUBLIC_GUARDIAN_ADDRESS!;
   const newOwner = process.env.NEXT_PUBLIC_NEW_OWNER!;
   const effectiveDelayAddress = delayModuleAddress;
+
+  const COUNTER_CONTRACT_ADDRESS =
+  "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F"; 
+
+  const calldata = encodeFunctionData({
+    abi: counterContractAbi,
+    functionName: "count",
+  });
 
   async function handleRecoveryAction(action: () => Promise<any>) {
     setTransactionSended(null);
@@ -189,9 +200,20 @@ function Transaction({
           }
         />
         <TransactionButton
-          label="setupCustomDelayModule"
+          label="sendTx"
           onClick={() =>
             handleRecoveryAction(() =>
+              smartAccount.sendTransaction({
+                to: COUNTER_CONTRACT_ADDRESS,
+                data: calldata,
+              })
+            )
+          }
+        />
+        <TransactionButton
+          label="setupCustomDelayModule"
+          onClick={() =>
+            handleRecoveryAction(() => 
               smartAccount.setupCustomDelayModule({
                 apiKey,
                 guardianAddress,
