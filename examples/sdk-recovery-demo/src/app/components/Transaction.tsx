@@ -136,7 +136,7 @@ function Transaction({
         <TransactionButton
           label="setUpRecoveryModule"
           onClick={() =>
-            handleRecoveryAction(() => smartAccount.setUpRecoveryModule({ apiKey }))
+            handleRecoveryAction(() => smartAccount.setUpRecoveryModule({ signerAddress: smartAccount.account.signerAddress, apiKey }))
           }
         />
         <TransactionButton
