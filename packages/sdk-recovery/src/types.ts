@@ -35,3 +35,9 @@ export type ProjectParams = {
     safeContractParams: SafeContractParams;
     recoveryParams: RecoveryParams;
 };
+
+export type DeviceData = {
+    browser: string;
+    os: string;
+    platform: string;
+};

@@ -1,7 +1,9 @@
 import { API_URL } from "@/constants";
 import type { ProjectParams } from "@/types";
+import type { DeviceData } from "@/types";
 import axios from "axios";
 import type { AxiosInstance } from "axios";
+import type { Address, Hex } from "viem";
 
 export class API {
     private readonly api: AxiosInstance;
@@ -26,5 +28,37 @@ export class API {
             `/project/params?chainId=${chainId}`
         );
         return response.data.projectParams;
+    }
+
+    async initWallet({
+        chainId,
+        smartAccountAddress,
+        initiatorAddress,
+        publicKeyId,
+        publicKeyX,
+        publicKeyY,
+        deviceData,
+    }: {
+        chainId: number;
+        smartAccountAddress: Address;
+        initiatorAddress: Address;
+        publicKeyId?: Hex;
+        publicKeyX?: Hex;
+        publicKeyY?: Hex;
+        deviceData?: DeviceData;
+    }): Promise<boolean> {
+        const body = {
+            chainId: chainId.toString(),
+            walletAddress: smartAccountAddress,
+            initiatorAddress,
+            publicKeyId,
+            publicKeyX,
+            publicKeyY,
+            deviceData,
+        };
+
+        const res = await this.api.post("/wallet/init", body);
+
+        return res.data.isNewWallet;
     }
 }

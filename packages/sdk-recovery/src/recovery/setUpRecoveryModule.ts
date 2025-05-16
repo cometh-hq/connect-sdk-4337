@@ -27,6 +27,7 @@ import type { SmartAccount } from "viem/_types/account-abstraction";
 import { getAction } from "viem/utils";
 
 export type SetUpRecoveryModuleParams = {
+    signerAddress: Address;
     apiKey: string;
     baseUrl?: string;
 };
@@ -39,7 +40,7 @@ export async function setUpRecoveryModule<
     client: Client<TTransport, TChain, TAccount>,
     args: Prettify<SetUpRecoveryModuleParams>
 ): Promise<Hex> {
-    const smartAccounAddress = client.account?.address as Address;
+    const smartAccountAddress = client.account?.address as Address;
 
     const rpcClient =
         (client.account?.client as PublicClient) ??
@@ -52,6 +53,12 @@ export async function setUpRecoveryModule<
     const api = new API(args.apiKey, args.baseUrl);
 
     if (!api) throw new APINotFoundError();
+
+    await api.initWallet({
+        chainId: client.chain?.id as number,
+        smartAccountAddress,
+        initiatorAddress: args.signerAddress,
+    });
 
     const projectParams = await getProjectParamsByChain({
         api,
@@ -69,7 +76,7 @@ export async function setUpRecoveryModule<
     } = projectParams.recoveryParams;
 
     const delayAddress = await delayModuleService.getDelayAddress(
-        smartAccounAddress,
+        smartAccountAddress,
         {
             moduleFactoryAddress: moduleFactoryAddress as Address,
             delayModuleAddress: delayModuleAddress as Address,
@@ -86,7 +93,7 @@ export async function setUpRecoveryModule<
     if (isDelayModuleDeployed) throw new RecoveryAlreadySetUpError();
 
     const delayModuleInitializer = await delayModuleService.setUpDelayModule({
-        safe: smartAccounAddress,
+        safe: smartAccountAddress,
         cooldown: recoveryCooldown as number,
         expiration: recoveryExpiration as number,
     });
@@ -98,11 +105,11 @@ export async function setUpRecoveryModule<
             data: await delayModuleService.encodeDeployDelayModule({
                 singletonDelayModule: delayModuleAddress as Address,
                 initializer: delayModuleInitializer as Hex,
-                safe: smartAccounAddress,
+                safe: smartAccountAddress,
             }),
         },
         {
-            to: smartAccounAddress,
+            to: smartAccountAddress,
             value: BigInt(0),
             data: encodeFunctionData({
                 abi: parseAbi(["function enableModule(address module) public"]),
