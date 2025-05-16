@@ -4,6 +4,7 @@ import { defaultClientConfig } from "@/constants";
 import {
     APINotFoundError,
     FetchingProjectParamsError,
+    MissingSignerAddressError,
     RecoveryAlreadySetUpError,
 } from "@/errors";
 import { API } from "@/services/API";
@@ -41,6 +42,8 @@ export async function setUpRecoveryModule<
     args: Prettify<SetUpRecoveryModuleParams>
 ): Promise<Hex> {
     const smartAccountAddress = client.account?.address as Address;
+
+    if (!args.signerAddress) throw new MissingSignerAddressError();
 
     const rpcClient =
         (client.account?.client as PublicClient) ??

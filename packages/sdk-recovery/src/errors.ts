@@ -110,3 +110,9 @@ export class FetchingProjectParamsError extends Error {
         super("Error fetching project params");
     }
 }
+
+export class MissingSignerAddressError extends Error {
+    constructor() {
+        super("Missing signer address");
+    }
+}
