@@ -177,15 +177,19 @@ export async function createSafeSmartAccount<
     );
 
     if (isDeployed) {
-        const is7579Enabled = await publicClient.readContract({
-            address: smartAccountAddress,
-            abi: SafeAbi,
-            functionName: "isModuleEnabled",
-            args: [SAFE_7579_ADDRESS as Address],
-        });
+        try {
+            const is7579Enabled = await publicClient.readContract({
+                address: smartAccountAddress,
+                abi: SafeAbi,
+                functionName: "isModuleEnabled",
+                args: [SAFE_7579_ADDRESS as Address],
+            });
 
-        if (is7579Enabled) {
-            userOpVerifyingContract = SAFE_7579_ADDRESS;
+            if (is7579Enabled) {
+                userOpVerifyingContract = SAFE_7579_ADDRESS;
+            }
+        } catch {
+            // No specific error, just means the module is not enabled or contract doesn't support the call
         }
     }
 

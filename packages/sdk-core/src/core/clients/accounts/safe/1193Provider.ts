@@ -9,7 +9,7 @@ import type {
     SendTransactionParameters,
     Transport,
 } from "viem";
-import { InvalidChainIdError } from "viem";
+import { InvalidChainIdError, toFunctionSelector } from "viem";
 import { type Hex, isHex, toHex } from "viem";
 import type { ComethSmartAccountClient } from "./createClient";
 
@@ -25,12 +25,24 @@ import { CallStatus } from "./types";
 
 import {
     CannotSignForAddressError,
+    ExpiryInPastError,
+    ExpiryRequiredError,
     InvalidAccountAddressError,
     InvalidParamsError,
+    InvalidSignerTypeError,
     InvalidSmartAccountClientError,
     MethodNotSupportedError,
+    UnsupportedPermissionTypeError,
     WalletNotConnectedError,
 } from "@/errors";
+import { smartSessionActions } from "@cometh/session-keys";
+import type {
+    ActionPolicyInfo,
+    CreateSessionDataParams,
+    GrantPermissionParameters,
+} from "@cometh/session-keys";
+import { erc7579Actions } from "permissionless/actions/erc7579";
+import { validatePermissions } from "./utils/permissions";
 
 export class EIP1193Provider extends EventEmitter {
     private comethSmartAccountClient: ComethSmartAccountClient<
@@ -217,10 +229,6 @@ export class EIP1193Provider extends EventEmitter {
         });
     }
 
-    private async handleWalletGrantPermissions(_params: [PermissionRequest]) {
-        throw new MethodNotSupportedError();
-    }
-
     private async handleSwitchEthereumChain() {
         throw new MethodNotSupportedError();
     }
@@ -293,6 +301,113 @@ export class EIP1193Provider extends EventEmitter {
                     transactionHash: result.receipt.transactionHash,
                 },
             ],
+        };
+    }
+
+    private async handleWalletGrantPermissions(params: [PermissionRequest]) {
+        const safe7559Account = this.comethSmartAccountClient
+            .extend(smartSessionActions())
+            .extend(erc7579Actions());
+
+        const capabilities =
+            this.handleWalletCapabilities()[
+                toHex(this.comethSmartAccountClient.chain.id)
+            ].permissions;
+
+        if (!capabilities.signerTypes.includes(params[0].signer.type)) {
+            throw new InvalidSignerTypeError();
+        }
+
+        validatePermissions(params[0], capabilities.permissionTypes);
+        const permissions = params[0].permissions;
+
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+
+        if (!params[0].expiry) {
+            throw new ExpiryRequiredError();
+        }
+
+        const sessionDuration = params[0].expiry - currentTimestamp;
+
+        if (sessionDuration <= 0) {
+            throw new ExpiryInPastError();
+        }
+
+        const sessionRequestedInfo: CreateSessionDataParams[] = permissions.map(
+            (permission) => {
+                const actionPoliciesInfo: ActionPolicyInfo[] = [];
+
+                switch (permission.type) {
+                    case "sudo":
+                        break;
+
+                    case "contract-call": {
+                        actionPoliciesInfo.push({
+                            contractAddress: permission.data
+                                .contractAddress as Hex,
+                            functionSelector: toFunctionSelector(
+                                permission.data.functionSelector
+                            ) as Hex,
+                        });
+
+                        const unsupportedFields = [
+                            "validUntil",
+                            "validAfter",
+                            "valueLimit",
+                            "tokenLimits",
+                            "usageLimit",
+                            "sudo",
+                            "abi",
+                            "rules",
+                        ].filter((field) => field in permission.data);
+
+                        if (unsupportedFields.length > 0) {
+                            console.warn(
+                                `Warning: The following fields are currently not supported and will be ignored: ${unsupportedFields.join(
+                                    ", "
+                                )}`
+                            );
+                        }
+                        break;
+                    }
+
+                    default:
+                        throw new UnsupportedPermissionTypeError(
+                            permission.type
+                        );
+                }
+
+                return {
+                    sessionPublicKey: params[0].signer.data.address,
+                    sessionValidUntil: params[0].expiry,
+                    sessionValidAfter: currentTimestamp,
+                    actionPoliciesInfo,
+                };
+            }
+        );
+
+        const grantPermissionParams: GrantPermissionParameters<ComethSafeSmartAccount> =
+            {
+                sessionRequestedInfo,
+            };
+
+        const createSessionsResponse = await safe7559Account.grantPermission(
+            grantPermissionParams
+        );
+
+        await safe7559Account.waitForUserOperationReceipt({
+            hash: createSessionsResponse.userOpHash,
+        });
+
+        return {
+            grantedPermissions: permissions.map((permission) => ({
+                type: permission.type,
+                //data: permission.data,
+                data: createSessionsResponse,
+                policies: permission.policies,
+            })),
+            expiry: params[0].expiry,
+            permissionsContext: createSessionsResponse.userOpHash,
         };
     }
 }

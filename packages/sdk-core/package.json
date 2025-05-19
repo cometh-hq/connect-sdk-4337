@@ -53,6 +53,7 @@
   "dependencies": {
     "@rhinestone/module-sdk": "^0.2.3",
     "abitype": "^1.0.8",
-    "permissionless": "^0.2.39"
+    "permissionless": "^0.2.39",
+    "@cometh/session-keys": "^0.0.1"
   }
 }
