@@ -116,6 +116,12 @@ export class CannotSignForAddressError extends Error {
     }
 }
 
+export class InvalidSignerTypeError extends Error {
+    constructor() {
+        super("Invalid signer type: must be one of the allowed types");
+    }
+}
+
 /**
  * Transactions Errors
  **/
@@ -126,6 +132,34 @@ export class MissingToAddressError extends BaseError {
             docsBaseUrl: "https://docs.cometh.io/connect-4337",
             docsPath: "/sdk-features/send-transactions",
         });
+    }
+}
+
+/**
+ * Session keys Errors
+ **/
+
+export class ExpiryInPastError extends Error {
+    constructor() {
+        super("Invalid expiry: expiry must be in the future");
+    }
+}
+
+export class UnsupportedPolicyError extends Error {
+    constructor(policy: string) {
+        super(`Unsupported policy: ${policy}`);
+    }
+}
+
+export class ExpiryRequiredError extends Error {
+    constructor() {
+        super("Invalid expiry: expiry is required");
+    }
+}
+
+export class UnsupportedPermissionTypeError extends Error {
+    constructor(permissionType: string) {
+        super(`Unsupported permission type: ${permissionType}`);
     }
 }
 

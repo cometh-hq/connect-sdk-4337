@@ -6,6 +6,7 @@ import type { UsePermissionParameters } from "./modules/sessionKey/decorators/us
 import { toSmartSessionsAccount } from "./modules/sessionKey/toSmartSessionAccount";
 import { toSmartSessionsSigner } from "./modules/sessionKey/toSmartSessionsSigner";
 import type {
+    ActionPolicyInfo,
     CreateSessionDataParams,
     Execution,
     GrantPermissionResponse,
@@ -24,6 +25,7 @@ export {
 };
 
 export type {
+    ActionPolicyInfo,
     GrantPermissionParameters,
     UsePermissionParameters,
     CreateSessionDataParams,

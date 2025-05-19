@@ -30,6 +30,11 @@ import {
     SafeNotDeployedError,
     SmartAccountAddressNotFoundError,
     WalletNotConnectedError,
+    InvalidSignerTypeError,
+    ExpiryInPastError,
+    ExpiryRequiredError,
+    UnsupportedPolicyError,
+    UnsupportedPermissionTypeError
 } from "./errors";
 
 export {
@@ -54,6 +59,11 @@ export {
     InvalidParamsError,
     WalletNotConnectedError,
     InvalidSmartAccountClientError,
+    InvalidSignerTypeError,
+    ExpiryInPastError,
+    ExpiryRequiredError,
+    UnsupportedPolicyError,
+    UnsupportedPermissionTypeError,
 };
 
 export type {
