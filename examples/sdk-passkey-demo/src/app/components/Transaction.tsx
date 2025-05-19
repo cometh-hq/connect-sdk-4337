@@ -49,6 +49,8 @@ function Transaction({
   const [transactionSended, setTransactionSended] = useState<any | null>(null);
   const [transactionFailure, setTransactionFailure] = useState(false);
   const [nftBalance, setNftBalance] = useState<number>(0);
+  const [enrichedOwners, setEnrichedOwners] = useState<any[] | null>(null);
+
 
   function TransactionButton({
     sendTestTransaction,
@@ -112,6 +114,28 @@ function Transaction({
     setIsTransactionLoading(false);
   };
 
+  const fetchEnrichedOwners = async () => {
+    if (!smartAccount) return;
+  
+    setTransactionSended(true);
+    setTransactionFailure(false);
+  
+    try {
+      const result = await smartAccount.getEnrichedOwners({
+        apiKey: process.env.NEXT_PUBLIC_COMETH_API_KEY!,
+      });
+  
+      console.log("Enriched Owners:", result);
+      setEnrichedOwners(result);
+    } catch (e) {
+      console.error("Failed to fetch enriched owners:", e);
+      setTransactionFailure(true);
+    } finally {
+      setIsTransactionLoading(false);
+    }
+  };
+  
+
   return (
     <main>
       <div className="p-4">
@@ -137,6 +161,13 @@ function Transaction({
             isTransactionLoading={isTransactionLoading}
             label="Send tx"
           />
+
+          <TransactionButton
+            sendTestTransaction={fetchEnrichedOwners}
+            isTransactionLoading={isTransactionLoading}
+            label="Get Enriched Owners"
+          />
+
 
           <p className=" text-gray-600">{nftBalance}</p>
         </div>

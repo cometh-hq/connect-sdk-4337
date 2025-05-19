@@ -5,7 +5,7 @@ import {
     createSafeSmartAccount,
     createSmartAccountClient,
 } from "@cometh/connect-core-sdk";
-import { passkeySetupTx, toPasskeyAccount, toPasskeySigner } from "@cometh/passkeys";
+import { passkeyActions, passkeySetupTx, toPasskeyAccount, toPasskeySigner } from "@cometh/passkeys";
 import { isSmartAccountDeployed } from "permissionless";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient, } from "viem";
@@ -133,7 +133,7 @@ export function useSmartAccount() {
                         return await paymasterClient.getUserOperationGasPrice();
                     },
                 },
-            });
+            }).extend(passkeyActions());
 
             setSmartAccount(smartAccountClient);
             setIsConnected(true);
