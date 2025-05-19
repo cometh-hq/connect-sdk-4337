@@ -16,11 +16,14 @@ import { providerToSmartAccountSigner } from "./core/signers/utils";
 import {
     BatchCallModeNotSupportedError,
     CannotSignForAddressError,
+    ExpiryInPastError,
+    ExpiryRequiredError,
     FallbackAlreadySetError,
     InvalidAccountAddressError,
     InvalidCallDataError,
     InvalidParamsError,
     InvalidSignatureError,
+    InvalidSignerTypeError,
     InvalidSmartAccountClientError,
     MethodNotSupportedError,
     MissingToAddressError,
@@ -29,12 +32,9 @@ import {
     RemoveOwnerOnUndeployedSafeError,
     SafeNotDeployedError,
     SmartAccountAddressNotFoundError,
-    WalletNotConnectedError,
-    InvalidSignerTypeError,
-    ExpiryInPastError,
-    ExpiryRequiredError,
+    UnsupportedPermissionTypeError,
     UnsupportedPolicyError,
-    UnsupportedPermissionTypeError
+    WalletNotConnectedError,
 } from "./errors";
 
 export {
