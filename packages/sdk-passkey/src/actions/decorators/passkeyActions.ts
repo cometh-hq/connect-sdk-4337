@@ -4,6 +4,11 @@ import {
     type AddPasskeyOwner,
     addPasskeyOwner,
 } from "../addPasskeyOwnerActions";
+import {
+    type EnrichedOwner,
+    type GetEnrichedOwners,
+    getEnrichedOwners,
+} from "../safeOwnerActions";
 
 export type PasskeyActions<
     TChain extends Chain | undefined = Chain | undefined,
@@ -14,6 +19,11 @@ export type PasskeyActions<
             typeof addPasskeyOwner<TTransport, TChain, TAccount>
         >[1]
     ) => Promise<Hash>;
+    getEnrichedOwners: <TTransport extends Transport>(
+        args: Parameters<
+            typeof getEnrichedOwners<TTransport, TChain, TAccount>
+        >[1]
+    ) => Promise<EnrichedOwner[]>;
 };
 
 export function passkeyActions() {
@@ -29,6 +39,10 @@ export function passkeyActions() {
                 addPasskeyOwner<TTransport, TChain, TAccount>(client, {
                     ...args,
                 } as AddPasskeyOwner),
+            getEnrichedOwners: (args) =>
+                getEnrichedOwners<TTransport, TChain, TAccount>(client, {
+                    ...args,
+                } as GetEnrichedOwners),
         } as PasskeyActions<TChain, TAccount>;
     };
 }
