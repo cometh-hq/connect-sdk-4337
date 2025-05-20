@@ -118,8 +118,9 @@ export function createSmartAccountClient<
             comethAccountClientActions()
             // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         ) as any;
-
+  
     return client
     .extend(safeOwnerPluginActions())
     .extend(eip1193Actions())
     .extend(eip5792Actions());
+}
