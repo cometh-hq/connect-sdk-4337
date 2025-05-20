@@ -49,8 +49,7 @@ import type {
     CreateSessionDataParams,
     GrantPermissionResponse,
 } from "./core/modules/sessionKey/types";
-import { providerToSmartAccountSigner } from "./core/signers/utils";
-import { providerToSmartAccountSigner } from "./core/signers/utils";
+import { providerToSmartAccountSigner, walletClientToSmartAccountSigner } from "./core/signers/utils";
 import {
     APINotFoundError,
     AddressIsNotAGuardianError,
@@ -136,6 +135,7 @@ export {
     erc7579Actions,
     smartSessionActions,
     toSmartSessionsSigner,
+    walletClientToSmartAccountSigner,
     providerToSmartAccountSigner,
     ENTRYPOINT_ADDRESS_V07,
     customChains,
