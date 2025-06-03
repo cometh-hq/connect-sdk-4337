@@ -49,7 +49,10 @@ import type {
     CreateSessionDataParams,
     GrantPermissionResponse,
 } from "./core/modules/sessionKey/types";
-import { providerToSmartAccountSigner, walletClientToSmartAccountSigner } from "./core/signers/utils";
+import {
+    providerToSmartAccountSigner,
+    walletClientToSmartAccountSigner,
+} from "./core/signers/utils";
 import {
     APINotFoundError,
     AddressIsNotAGuardianError,
