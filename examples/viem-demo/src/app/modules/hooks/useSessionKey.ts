@@ -45,36 +45,21 @@ export function useSessionKey() {
         const privateKey = generatePrivateKey();
         const sessionOwner = privateKeyToAccount(privateKey);
 
+
         if (!stringifiedSessionData) {
             const createSessionsResponse =
                 await safe7559Account.grantPermission({
                     sessionRequestedInfo: [
                         {
                             sessionPublicKey: sessionOwner.address,
-                            /*     actionPoliciesInfo: [
-                                    {
-                                        contractAddress: COUNTER_CONTRACT_ADDRESS,
-                                        functionSelector: toFunctionSelector(
-                                            "function count()"
-                                        ) as Hex,
-                                    },
-                                ], */
                         },
                     ],
                 });
 
-            const hash1 = await safe7559Account.waitForUserOperationReceipt({
+            await safe7559Account.waitForUserOperationReceipt({
                 hash: createSessionsResponse.userOpHash,
             });
 
-            const removeSessionsResponse =
-                await safe7559Account.removePermission({
-                    permissionId: createSessionsResponse.permissionIds[0],
-                });
-
-            const hash2 = await safe7559Account.waitForUserOperationReceipt({
-                hash: removeSessionsResponse.userOpHash,
-            });
 
             const sessionData = {
                 granter: smartAccountClient?.account?.address as Address,
