@@ -1,3 +1,4 @@
+import { SmartAccountNotFoundError } from "@/errors";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import { http } from "viem";
@@ -6,7 +7,6 @@ import {
     createBundlerClient,
 } from "viem/account-abstraction";
 import type { MutationOptionsWithoutMutationFn } from "./types";
-import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * Type for the getTransactionCost function.

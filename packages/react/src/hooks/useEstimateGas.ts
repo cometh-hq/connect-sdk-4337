@@ -1,3 +1,4 @@
+import { SmartAccountNotFoundError } from "@/errors";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import { http, createPublicClient } from "viem";
@@ -9,7 +10,6 @@ import {
 import { estimateFeesPerGas } from "viem/actions";
 import { getAction } from "viem/utils";
 import type { MutationOptionsWithoutMutationFn } from "./types";
-import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * Gas estimation result type

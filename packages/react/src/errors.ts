@@ -14,7 +14,6 @@ export class NotWithinSmartAccountProviderError extends Error {
     }
 }
 
-
 /**
  * Smart Account Errors
  **/
@@ -35,14 +34,13 @@ export class ApiKeyNotFoundError extends Error {
     constructor() {
         super("No apikey found");
     }
-} 
+}
 
 export class BundlerUrlNotFoundError extends Error {
     constructor() {
         super("Bundler url not found");
     }
 }
-
 
 /**
  * Hooks Errors

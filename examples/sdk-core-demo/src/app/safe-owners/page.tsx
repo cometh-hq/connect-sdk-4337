@@ -3,8 +3,8 @@
 import React from "react";
 
 import ConnectWallet from "../../../../viem-demo-capabilities/src/app/components/ConnectWallet";
-import SafeOwners from "../components/SafeOwners";
 import { useSmartAccount } from "../../../../viem-demo-capabilities/src/app/modules/hooks/useSmartAccount";
+import SafeOwners from "../components/SafeOwners";
 
 export default function OwnerManagementApp() {
     const {
@@ -40,9 +40,7 @@ export default function OwnerManagementApp() {
 
                         {isConnected && (
                             <>
-                                <SafeOwners
-                                    smartAccount={smartAccount}
-                                />
+                                <SafeOwners smartAccount={smartAccount} />
                             </>
                         )}
                     </div>

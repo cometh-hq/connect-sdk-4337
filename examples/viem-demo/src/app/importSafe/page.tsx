@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  createComethPaymasterClient,
-  createSafeSmartAccount,
-  createSmartAccountClient,
-  importSafeActions,
+    createComethPaymasterClient,
+    createSafeSmartAccount,
+    createSmartAccountClient,
+    importSafeActions,
 } from "@cometh/connect-sdk-4337";
 import { http, type Hex, encodeFunctionData } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -12,114 +12,114 @@ import { gnosis } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 
 export const COUNTER_CONTRACT_ADDRESS =
-  "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
+    "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 export default function App() {
-  const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
-  const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL!;
-  const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!;
-  const walletToImport = "0x";
+    const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
+    const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL!;
+    const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!;
+    const walletToImport = "0x";
 
-  const migrateSafe = async () => {
-    const legacyWalletAddress = walletToImport;
+    const migrateSafe = async () => {
+        const legacyWalletAddress = walletToImport;
 
-    const signer = privateKeyToAccount(
-      process.env.NEXT_PUBLIC_PRIVATE_KEY! as Hex
-    );
+        const signer = privateKeyToAccount(
+            process.env.NEXT_PUBLIC_PRIVATE_KEY! as Hex
+        );
 
-    const safe4337SmartAccount = await createSafeSmartAccount({
-      apiKey,
-      chain: gnosis,
-      smartAccountAddress: legacyWalletAddress,
-      signer,
-    });
+        const safe4337SmartAccount = await createSafeSmartAccount({
+            apiKey,
+            chain: gnosis,
+            smartAccountAddress: legacyWalletAddress,
+            signer,
+        });
 
-    const paymasterClient = await createComethPaymasterClient({
-      transport: http(paymasterUrl),
-      chain: gnosis,
-    });
-    const smartAccountClient = createSmartAccountClient({
-      account: safe4337SmartAccount,
-      chain: gnosis,
-      bundlerTransport: http(bundlerUrl, {
-        retryCount: 10,
-        retryDelay: 200,
-      }),
-      paymaster: paymasterClient,
-      userOperation: {
-        estimateFeesPerGas: async () => {
-          return await paymasterClient.getUserOperationGasPrice();
-        },
-      },
-    });
+        const paymasterClient = await createComethPaymasterClient({
+            transport: http(paymasterUrl),
+            chain: gnosis,
+        });
+        const smartAccountClient = createSmartAccountClient({
+            account: safe4337SmartAccount,
+            chain: gnosis,
+            bundlerTransport: http(bundlerUrl, {
+                retryCount: 10,
+                retryDelay: 200,
+            }),
+            paymaster: paymasterClient,
+            userOperation: {
+                estimateFeesPerGas: async () => {
+                    return await paymasterClient.getUserOperationGasPrice();
+                },
+            },
+        });
 
-    const extendedClient = smartAccountClient.extend(importSafeActions());
+        const extendedClient = smartAccountClient.extend(importSafeActions());
 
-    const importMessage = await extendedClient.prepareImportSafe1_4Tx();
+        const importMessage = await extendedClient.prepareImportSafe1_4Tx();
 
-    const signature = (await extendedClient.signTransactionByExternalOwner({
-      signer,
-      tx: importMessage.tx,
-    })) as Hex;
+        const signature = (await extendedClient.signTransactionByExternalOwner({
+            signer,
+            tx: importMessage.tx,
+        })) as Hex;
 
-    await extendedClient.importSafe({
-      signature,
-      ...importMessage,
-    });
+        await extendedClient.importSafe({
+            signature,
+            ...importMessage,
+        });
 
-    const safe4337SmartAccountImported = await createSafeSmartAccount({
-      apiKey,
-      chain: gnosis,
-      smartAccountAddress: legacyWalletAddress,
-    });
+        const safe4337SmartAccountImported = await createSafeSmartAccount({
+            apiKey,
+            chain: gnosis,
+            smartAccountAddress: legacyWalletAddress,
+        });
 
-    const smartAccountClientImported = createSmartAccountClient({
-      account: safe4337SmartAccountImported,
-      chain: gnosis,
-      bundlerTransport: http(bundlerUrl, {
-        retryCount: 10,
-        retryDelay: 200,
-      }),
-      paymaster: paymasterClient,
-      userOperation: {
-        estimateFeesPerGas: async () => {
-          return await paymasterClient.getUserOperationGasPrice();
-        },
-      },
-    });
+        const smartAccountClientImported = createSmartAccountClient({
+            account: safe4337SmartAccountImported,
+            chain: gnosis,
+            bundlerTransport: http(bundlerUrl, {
+                retryCount: 10,
+                retryDelay: 200,
+            }),
+            paymaster: paymasterClient,
+            userOperation: {
+                estimateFeesPerGas: async () => {
+                    return await paymasterClient.getUserOperationGasPrice();
+                },
+            },
+        });
 
-    const calldata = encodeFunctionData({
-      abi: countContractAbi,
-      functionName: "count",
-    });
+        const calldata = encodeFunctionData({
+            abi: countContractAbi,
+            functionName: "count",
+        });
 
-    const txHash = await smartAccountClientImported.sendTransaction({
-      to: COUNTER_CONTRACT_ADDRESS,
-      data: calldata,
-    });
+        const txHash = await smartAccountClientImported.sendTransaction({
+            to: COUNTER_CONTRACT_ADDRESS,
+            data: calldata,
+        });
 
-    console.log("Transaction hash:", txHash);
-  };
+        console.log("Transaction hash:", txHash);
+    };
 
-  return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div className="md:min-h-[70vh] gap-2 flex flex-col justify-center items-center">
-        <div className="absolute left-1/2 z-10 mt-5 flex w-screen max-w-max -translate-x-1/2 px-4">
-          <div className="w-screen max-w-md flex-auto overflow-hidden rounded-3xl bg-white text-sm leading-6 shadow-lg ring-1 ring-gray-900/5">
-            <div className="grid divide-gray-900/5 bg-gray-50">
-              <button onClick={migrateSafe}>Migrate Safe</button>
+    return (
+        <div
+            style={{
+                height: "100vh",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+            }}
+        >
+            <div className="md:min-h-[70vh] gap-2 flex flex-col justify-center items-center">
+                <div className="absolute left-1/2 z-10 mt-5 flex w-screen max-w-max -translate-x-1/2 px-4">
+                    <div className="w-screen max-w-md flex-auto overflow-hidden rounded-3xl bg-white text-sm leading-6 shadow-lg ring-1 ring-gray-900/5">
+                        <div className="grid divide-gray-900/5 bg-gray-50">
+                            <button onClick={migrateSafe}>Migrate Safe</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

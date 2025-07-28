@@ -1,23 +1,23 @@
+import { SmartAccountNotFoundError } from "@/errors";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import type { CancelRecoveryRequestParams } from "@cometh/connect-sdk-4337";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash, Hex } from "viem";
 import type { QueryResultType } from "../types";
-import { SmartAccountNotFoundError } from "@/errors";
 
 export type UseCancelRecoveryRequestProps = CancelRecoveryRequestParams;
 
 export type CancelRecoveryRequestMutate = (
-  variables: UseCancelRecoveryRequestProps
+    variables: UseCancelRecoveryRequestProps
 ) => void;
 
 export type CancelRecoveryRequestMutateAsync = (
-  variables: UseCancelRecoveryRequestProps
+    variables: UseCancelRecoveryRequestProps
 ) => Promise<Hex>;
 
 export type UseCancelRecoveryRequestReturn = QueryResultType<Hash> & {
-  cancelRecoveryRequest: CancelRecoveryRequestMutate;
-  cancelRecoveryRequestAsync: CancelRecoveryRequestMutateAsync;
+    cancelRecoveryRequest: CancelRecoveryRequestMutate;
+    cancelRecoveryRequestAsync: CancelRecoveryRequestMutateAsync;
 };
 
 /**
@@ -79,32 +79,32 @@ export type UseCancelRecoveryRequestReturn = QueryResultType<Hash> & {
  * - `data`: The transaction hash (Hex) returned after successful cancellation.
  */
 export function useCancelRecoveryRequest(): UseCancelRecoveryRequestReturn {
-  const { smartAccountClient, queryClient } = useSmartAccount();
+    const { smartAccountClient, queryClient } = useSmartAccount();
 
-  const { mutate, mutateAsync, ...result } = useMutation(
-    {
-      mutationFn: async (
-        variables: UseCancelRecoveryRequestProps
-      ): Promise<Hex> => {
-        if (!smartAccountClient) {
-          throw new SmartAccountNotFoundError();
-        }
+    const { mutate, mutateAsync, ...result } = useMutation(
+        {
+            mutationFn: async (
+                variables: UseCancelRecoveryRequestProps
+            ): Promise<Hex> => {
+                if (!smartAccountClient) {
+                    throw new SmartAccountNotFoundError();
+                }
 
-        return smartAccountClient.cancelRecoveryRequest({
-          effectiveDelayAddress: variables.effectiveDelayAddress,
-        });
-      },
-    },
-    queryClient
-  );
+                return smartAccountClient.cancelRecoveryRequest({
+                    effectiveDelayAddress: variables.effectiveDelayAddress,
+                });
+            },
+        },
+        queryClient
+    );
 
-  return {
-    cancelRecoveryRequest: mutate,
-    cancelRecoveryRequestAsync: mutateAsync,
-    isPending: result.isPending,
-    isError: result.isError,
-    error: result.error,
-    isSuccess: result.isSuccess,
-    data: result.data,
-  };
+    return {
+        cancelRecoveryRequest: mutate,
+        cancelRecoveryRequestAsync: mutateAsync,
+        isPending: result.isPending,
+        isError: result.isError,
+        error: result.error,
+        isSuccess: result.isSuccess,
+        data: result.data,
+    };
 }

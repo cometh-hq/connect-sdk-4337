@@ -24,10 +24,7 @@ export const useDisconnect = () => {
                 });
             })
             .catch((e) => {
-                const err =
-                    e instanceof Error
-                        ? e
-                        : new UseDisconnectError();
+                const err = e instanceof Error ? e : new UseDisconnectError();
                 setError(err);
             })
             .finally(() => {
@@ -42,10 +39,7 @@ export const useDisconnect = () => {
             await disconnectSmartAccount();
             queryClient?.invalidateQueries({ queryKey: ["connect"] });
         } catch (e) {
-            const err =
-                e instanceof Error
-                    ? e
-                    : new UseDisconnectError();
+            const err = e instanceof Error ? e : new UseDisconnectError();
             setError(err);
             throw err;
         } finally {

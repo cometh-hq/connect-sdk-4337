@@ -4,23 +4,23 @@ import { generatePrivateKey } from "viem/accounts";
 import { create } from "zustand";
 
 interface SessionKeyStore {
-  permission: GrantPermissionMutateResponse | undefined;
-  privateKey: Hex;
-  reset: () => void;
-  setPermission: (permission: GrantPermissionMutateResponse) => void;
+    permission: GrantPermissionMutateResponse | undefined;
+    privateKey: Hex;
+    reset: () => void;
+    setPermission: (permission: GrantPermissionMutateResponse) => void;
 }
 
 const defaultState = {
-  permission: undefined,
-  privateKey: generatePrivateKey(),
+    permission: undefined,
+    privateKey: generatePrivateKey(),
 };
 
 export const sessionKeyStore = create<SessionKeyStore>((set, get) => ({
-  ...defaultState,
+    ...defaultState,
 
-  reset: () => set(defaultState),
+    reset: () => set(defaultState),
 
-  setPermission: (permission) => {
-    set({ permission });
-  },
+    setPermission: (permission) => {
+        set({ permission });
+    },
 }));

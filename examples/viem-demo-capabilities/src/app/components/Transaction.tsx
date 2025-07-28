@@ -117,7 +117,7 @@ function Transaction({ smartAccount }: TransactionProps) {
                                 contractAddress: COUNTER_CONTRACT_ADDRESS,
                                 functionSelector: "function count()",
                             },
-                           policies: [],
+                            policies: [],
                         },
                     ],
                     expiry: Math.floor(Date.now() / 1000) + 3600,
