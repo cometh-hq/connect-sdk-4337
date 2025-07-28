@@ -11,8 +11,9 @@ import {
     RHINESTONE_ATTESTER_ADDRESS,
     getSmartSessionsValidator,
 } from "@rhinestone/module-sdk";
+import { isModuleInstalled } from "permissionless/actions/erc7579";
 import type { Chain, Client, Hex, PublicClient, Transport } from "viem";
-import { sendUserOperation } from "viem/account-abstraction";
+import { type SmartAccount, sendUserOperation } from "viem/account-abstraction";
 import { encodeFunctionData, getAction, parseAbi } from "viem/utils";
 import type { Call } from "../types";
 import { preparePermission } from "./preparePermission";
@@ -71,6 +72,32 @@ export async function grantPermission<
     if (!is7579FallbackSet) {
         const smartSessions = getSmartSessionsValidator({});
 
+        let isSessionValidatorInstalled: boolean;
+
+        try {
+            isSessionValidatorInstalled = await getAction(
+                client,
+                isModuleInstalled,
+                "isModuleInstalled"
+            )({
+                type: smartSessions.type,
+                address: smartSessions.address,
+                context: smartSessions.initData,
+                account: client.account as SmartAccount,
+            });
+        } catch {
+            isSessionValidatorInstalled = false;
+        }
+
+        const validators = !isSessionValidatorInstalled
+            ? [
+                  {
+                      module: smartSessions.address,
+                      initData: smartSessions.initData,
+                  },
+              ]
+            : [];
+
         calls.unshift({
             to: LAUNCHPAD_ADDRESS,
             data: encodeFunctionData({
@@ -81,12 +108,7 @@ export async function grantPermission<
                 functionName: "addSafe7579",
                 args: [
                     SAFE_7579_ADDRESS,
-                    [
-                        {
-                            module: smartSessions.address,
-                            initData: smartSessions.initData,
-                        },
-                    ],
+                    validators,
                     [],
                     [],
                     [],
