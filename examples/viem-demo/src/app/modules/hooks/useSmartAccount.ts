@@ -47,8 +47,8 @@ export function useSmartAccount() {
                 },
             }) as PublicClient;
 
-            const ownerPK = process.env.NEXT_PUBLIC_OWNER_PK;
-            const owner = privateKeyToAccount(ownerPK as Hex);
+            /*     const ownerPK = process.env.NEXT_PUBLIC_OWNER_PK;
+                const owner = privateKeyToAccount(ownerPK as Hex); */
 
             let smartAccount;
 
@@ -57,15 +57,14 @@ export function useSmartAccount() {
                     apiKey,
                     chain: arbitrumSepolia,
                     publicClient,
-                    signer: owner,
+                    //signer: owner,
                     smartAccountAddress: localStorageAddress,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
                     chain: arbitrumSepolia,
-                    signer: owner,
-
+                    //signer: owner,
                     publicClient,
                 });
                 window.localStorage.setItem(

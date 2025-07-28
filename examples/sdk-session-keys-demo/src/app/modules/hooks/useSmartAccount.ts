@@ -1,15 +1,16 @@
 "use client";
 
+import { ENTRYPOINT_ADDRESS_V07 } from "@cometh/connect-core-sdk";
 import {
-    ENTRYPOINT_ADDRESS_V07,
-} from "@cometh/connect-core-sdk";
-import { RHINESTONE_ATTESTER_ADDRESS, getSmartSessionsValidator } from "@rhinestone/module-sdk";
+    RHINESTONE_ATTESTER_ADDRESS,
+    getSmartSessionsValidator,
+} from "@rhinestone/module-sdk";
+import { createSmartAccountClient } from "permissionless";
 import { toSafeSmartAccount } from "permissionless/accounts";
-import { createSmartAccountClient} from "permissionless";
-import { createPaymasterClient } from "viem/account-abstraction";
-import { createPimlicoClient } from "permissionless/clients/pimlico"
+import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
+import { createPaymasterClient } from "viem/account-abstraction";
 import { privateKeyToAccount } from "viem/accounts";
 import { arbitrumSepolia } from "viem/chains";
 
@@ -65,8 +66,10 @@ export function useSmartAccount() {
                         address: ENTRYPOINT_ADDRESS_V07,
                         version: "0.7",
                     },
-                    safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
-                    erc7579LaunchpadAddress: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
+                    safe4337ModuleAddress:
+                        "0x7579EE8307284F293B1927136486880611F20002",
+                    erc7579LaunchpadAddress:
+                        "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
                     attesters: [
                         RHINESTONE_ATTESTER_ADDRESS, // Rhinestone Attester
                     ],
@@ -86,7 +89,6 @@ export function useSmartAccount() {
                 //     chain: arbitrumSepolia,
                 //     publicClient,
                 // })
-  
             } else {
                 smartAccount = await toSafeSmartAccount({
                     client: publicClient,
@@ -96,8 +98,10 @@ export function useSmartAccount() {
                         address: ENTRYPOINT_ADDRESS_V07,
                         version: "0.7",
                     },
-                    safe4337ModuleAddress: "0x7579EE8307284F293B1927136486880611F20002",
-                    erc7579LaunchpadAddress: "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
+                    safe4337ModuleAddress:
+                        "0x7579EE8307284F293B1927136486880611F20002",
+                    erc7579LaunchpadAddress:
+                        "0x7579011aB74c46090561ea277Ba79D510c6C00ff",
                     attesters: [
                         RHINESTONE_ATTESTER_ADDRESS, // Rhinestone Attester
                     ],
@@ -123,10 +127,8 @@ export function useSmartAccount() {
 
             console.log("smartAccount", smartAccount.address);
 
-
-
             const paymasterClient = await createPaymasterClient({
-                transport: http(paymasterUrl)
+                transport: http(paymasterUrl),
             });
 
             const pimlicoClient = createPimlicoClient({
@@ -135,7 +137,7 @@ export function useSmartAccount() {
                     address: ENTRYPOINT_ADDRESS_V07,
                     version: "0.7",
                 },
-            })
+            });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
@@ -148,7 +150,8 @@ export function useSmartAccount() {
                 paymaster: paymasterClient,
                 userOperation: {
                     estimateFeesPerGas: async () => {
-                        return (await pimlicoClient.getUserOperationGasPrice()).fast
+                        return (await pimlicoClient.getUserOperationGasPrice())
+                            .fast;
                     },
                 },
             });

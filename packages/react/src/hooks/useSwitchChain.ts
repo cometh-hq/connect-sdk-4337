@@ -1,4 +1,8 @@
-import { NoCurrentConfigurationError, NotWithinConnectProviderError, UseSwitchChainError } from "@/errors";
+import {
+    NoCurrentConfigurationError,
+    NotWithinConnectProviderError,
+    UseSwitchChainError,
+} from "@/errors";
 import { ConnectContext } from "@/providers/ConnectProvider";
 import { useCallback, useContext, useState } from "react";
 
@@ -23,14 +27,12 @@ export const useSwitchChain = () => {
         async (params: { chainId: number }) => {
             const { chainId } = params;
 
-            if (!networksConfig)
-                throw new NoCurrentConfigurationError();
+            if (!networksConfig) throw new NoCurrentConfigurationError();
 
             const selectedNetwork = networksConfig?.find(
                 (network) => network.chain?.id === chainId
             );
-            if (!selectedNetwork)
-                throw new NoCurrentConfigurationError();
+            if (!selectedNetwork) throw new NoCurrentConfigurationError();
 
             try {
                 const client = await updateSmartAccountClient({
@@ -44,9 +46,7 @@ export const useSwitchChain = () => {
 
                 return client;
             } catch (e) {
-                throw e instanceof Error
-                    ? e
-                    : new UseSwitchChainError();
+                throw e instanceof Error ? e : new UseSwitchChainError();
             }
         },
         [
@@ -64,9 +64,7 @@ export const useSwitchChain = () => {
             return switchChainInternal(params)
                 .catch((e) => {
                     const err =
-                        e instanceof Error
-                            ? e
-                            : new UseSwitchChainError();
+                        e instanceof Error ? e : new UseSwitchChainError();
                     setError(err);
                 })
                 .finally(() => {
@@ -84,10 +82,7 @@ export const useSwitchChain = () => {
                 const client = await switchChainInternal(params);
                 return client;
             } catch (e) {
-                const err =
-                    e instanceof Error
-                        ? e
-                        : new UseSwitchChainError();
+                const err = e instanceof Error ? e : new UseSwitchChainError();
                 setError(err);
                 throw err;
             } finally {

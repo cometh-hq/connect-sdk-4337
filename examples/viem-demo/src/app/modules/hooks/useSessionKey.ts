@@ -63,8 +63,17 @@ export function useSessionKey() {
                     ],
                 });
 
-            await safe7559Account.waitForUserOperationReceipt({
+            const hash1 = await safe7559Account.waitForUserOperationReceipt({
                 hash: createSessionsResponse.userOpHash,
+            });
+
+            const removeSessionsResponse =
+                await safe7559Account.removePermission({
+                    permissionId: createSessionsResponse.permissionIds[0],
+                });
+
+            const hash2 = await safe7559Account.waitForUserOperationReceipt({
+                hash: removeSessionsResponse.userOpHash,
             });
 
             const sessionData = {

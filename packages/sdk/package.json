@@ -6,7 +6,7 @@
       "name": "yoanslvy"
     }
   ],
-  "version": "1.0.10",
+  "version": "1.0.12",
   "description": "SDK Cometh Connect 4337",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
@@ -45,7 +45,7 @@
     "build": "tsup --splitting"
   },
   "peerDependencies": {
-    "viem": "^2.22.2",
+    "viem": "^2.22.23",
     "wagmi": "^2"
   },
   "devDependencies": {

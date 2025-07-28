@@ -1,20 +1,30 @@
 "use client";
 
+import {} from "@cometh/connect-core-sdk";
 import {
-} from "@cometh/connect-core-sdk";
-import {
+    type SafeSigner,
     erc7579Actions,
     smartSessionActions,
     toSmartSessionsSigner,
-    type SafeSigner,
 } from "@cometh/session-keys";
 import { SmartSessionMode } from "@rhinestone/module-sdk";
-import { isSmartAccountDeployed, type SmartAccountClient } from "permissionless";
+import {
+    type SmartAccountClient,
+    isSmartAccountDeployed,
+} from "permissionless";
 import { useState } from "react";
-import { type Address, type Chain, type Client, type Hex, type PublicClient, stringify, toFunctionSelector, type Transport } from "viem";
+import {
+    type Address,
+    type Chain,
+    type Client,
+    type Hex,
+    type PublicClient,
+    type Transport,
+    stringify,
+    toFunctionSelector,
+} from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { type SmartAccount } from "viem/account-abstraction";
-
 
 export function parse(data: string): Record<string, any> {
     return JSON.parse(data, (_, value) => {
@@ -52,7 +62,7 @@ export function useSessionKey() {
         const sessionOwner = privateKeyToAccount(privateKey);
 
         // if (!(await isSmartAccountDeployed(
-        //     smartAccountClient.account?.client as PublicClient, 
+        //     smartAccountClient.account?.client as PublicClient,
         //     smartAccountClient?.account?.address as Address,
         // ))) {
         //     safe7559Account.addSafe7579Module()

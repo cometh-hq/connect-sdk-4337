@@ -45,6 +45,15 @@ export type GrantPermissionResponse = {
     userOpHash: Hex;
 } & PreparePermissionResponse;
 
+export type RemovePermissionResponse = {
+    /** The hash of the user operation. */
+    userOpHash: Hex;
+    /** The permission ID for the removing session. */
+    permissionId: Hex;
+    /** The execution object for the action. */
+    action: Execution;
+};
+
 export type Call = {
     to: Hex;
     data?: Hex | undefined;
