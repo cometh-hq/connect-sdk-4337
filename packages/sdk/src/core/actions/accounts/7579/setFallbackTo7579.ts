@@ -11,6 +11,7 @@ import {
     getSmartSessionsValidator,
 } from "@rhinestone/module-sdk";
 import { isSmartAccountDeployed } from "permissionless";
+import { isModuleInstalled } from "permissionless/actions/erc7579";
 
 import { sendTransaction } from "permissionless/actions/smartAccount";
 import {
@@ -23,6 +24,7 @@ import {
     type Transport,
     createPublicClient,
 } from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 import { encodeFunctionData, getAction, parseAbi } from "viem/utils";
 
 export async function setFallbackTo7579<
@@ -70,6 +72,32 @@ export async function setFallbackTo7579<
 
     const smartSessions = getSmartSessionsValidator({});
 
+    let isSessionValidatorInstalled: boolean;
+
+    try {
+        isSessionValidatorInstalled = await getAction(
+            client,
+            isModuleInstalled,
+            "isModuleInstalled"
+        )({
+            type: smartSessions.type,
+            address: smartSessions.address,
+            context: smartSessions.initData,
+            account: client.account as SmartAccount,
+        });
+    } catch {
+        isSessionValidatorInstalled = false;
+    }
+
+    const validators = !isSessionValidatorInstalled
+        ? [
+              {
+                  module: smartSessions.address,
+                  initData: smartSessions.initData,
+              },
+          ]
+        : [];
+
     const txs = [
         {
             to: LAUNCHPAD_ADDRESS,
@@ -81,12 +109,7 @@ export async function setFallbackTo7579<
                 functionName: "addSafe7579",
                 args: [
                     SAFE_7579_ADDRESS,
-                    [
-                        {
-                            module: smartSessions.address,
-                            initData: smartSessions.initData,
-                        },
-                    ],
+                    validators,
                     [],
                     [],
                     [],
