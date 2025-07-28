@@ -37,6 +37,7 @@ export type PreparePermissionResponse = {
     /** The sessions that were created. */
     sessions: Session[];
 };
+
 /**
  * Represents the response for creating sessions.
  */
@@ -44,6 +45,15 @@ export type GrantPermissionResponse = {
     /** The hash of the user operation. */
     userOpHash: Hex;
 } & PreparePermissionResponse;
+
+export type RemovePermissionResponse = {
+    /** The hash of the user operation. */
+    userOpHash: Hex;
+    /** The permission ID for the removing session. */
+    permissionId: Hex;
+    /** The execution object for the action. */
+    action: Execution;
+};
 
 export type Call = {
     to: Hex;

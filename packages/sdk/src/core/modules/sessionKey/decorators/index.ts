@@ -2,7 +2,11 @@ import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmar
 
 import type { GrantPermissionResponse } from "@/index";
 import type { Chain, Client, Hash, Transport } from "viem";
-import type { Execution, PreparePermissionResponse } from "../types";
+import type {
+    Execution,
+    PreparePermissionResponse,
+    RemovePermissionResponse,
+} from "../types";
 import {
     type GrantPermissionParameters,
     grantPermission,
@@ -15,6 +19,10 @@ import {
     type PreparePermissionParameters,
     preparePermission,
 } from "./preparePermission";
+import {
+    type RemovePermissionParameters,
+    removePermission,
+} from "./removePermission";
 import {
     type TrustAttestersParameters,
     trustAttesters,
@@ -37,8 +45,8 @@ export type UsePermissionParameters = {
 
 export type SmartSessionCreateActions<
     TAccount extends ComethSafeSmartAccount | undefined =
-        | ComethSafeSmartAccount
-        | undefined,
+    | ComethSafeSmartAccount
+    | undefined,
 > = {
     /**
      * Creates multiple sessions for a  smart account.
@@ -49,6 +57,16 @@ export type SmartSessionCreateActions<
     grantPermission: (
         args: GrantPermissionParameters<TAccount>
     ) => Promise<GrantPermissionResponse>;
+
+    /**
+     * Removes a session for a  smart account.
+     *
+     * @param args - Parameters for removing session.
+     * @returns A promise that resolves to the removal response.
+     */
+    removePermission: (
+        args: RemovePermissionParameters
+    ) => Promise<RemovePermissionResponse>;
 
     /**
      * Prepares permission for a  smart account.
@@ -97,13 +115,14 @@ export type SmartSessionCreateActions<
 export function smartSessionActions() {
     return <
         TAccount extends ComethSafeSmartAccount | undefined =
-            | ComethSafeSmartAccount
-            | undefined,
+        | ComethSafeSmartAccount
+        | undefined,
     >(
         client: Client<Transport, Chain | undefined, TAccount>
     ): SmartSessionCreateActions<TAccount> => {
         return {
             grantPermission: (args) => grantPermission(client, args),
+            removePermission: (args) => removePermission(client, args),
             preparePermission: (args) => preparePermission(client, args),
             isPermissionInstalled: (args) =>
                 isPermissionInstalled(client, args),
@@ -114,4 +133,5 @@ export function smartSessionActions() {
 }
 
 export * from "./grantPermission";
+export * from "./removePermission";
 export * from "./trustAttesters";
