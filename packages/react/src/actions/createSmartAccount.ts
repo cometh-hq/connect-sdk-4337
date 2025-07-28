@@ -61,13 +61,13 @@ export async function createSmartAccount(
                 estimateFeesPerGas: async () => {
                     return await paymasterClient.getUserOperationGasPrice();
                 },
-            }
+            },
         }) as ContextComethSmartAccountClient;
     } else {
         client = createSmartAccountClient({
             account: account as ComethSafeSmartAccount,
             chain,
-            bundlerTransport: http(bundlerUrl)
+            bundlerTransport: http(bundlerUrl),
         }) as ContextComethSmartAccountClient;
     }
 

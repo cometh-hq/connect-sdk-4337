@@ -56,7 +56,7 @@ export function useSmartAccount() {
                     chain: arbitrumSepolia,
                     publicClient,
                     smartAccountAddress: localStorageAddress,
-                    signer
+                    signer,
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({

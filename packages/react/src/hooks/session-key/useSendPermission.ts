@@ -1,87 +1,92 @@
-import { useMutation } from "wagmi/query";
-import {
-  type GrantPermissionResponse,
-  type UsePermissionParameters,
-} from "@cometh/connect-sdk-4337";
-import type {
-  MutationOptionsWithoutMutationFn,
-  QueryResultType,
-} from "../types";
-import { type Hash, type Hex } from "viem";
-import { useSessionKeySigner } from "./useSessionKeySigner";
-import { useSmartAccount } from "../useSmartAccount";
 import { createSessionSmartAccountClient } from "@/actions/createSessionSmartAccount";
-import { useContext } from "react";
+import {
+    ApiKeyNotFoundError,
+    NotWithinConnectProviderError,
+    SignerNotFoundError,
+    SmartAccountNotFoundError,
+} from "@/errors";
 import { ConnectContext } from "@/providers/ConnectProvider";
-import { ApiKeyNotFoundError, SignerNotFoundError, NotWithinConnectProviderError, SmartAccountNotFoundError } from "@/errors";
+import type {
+    GrantPermissionResponse,
+    UsePermissionParameters,
+} from "@cometh/connect-sdk-4337";
+import { useContext } from "react";
+import type { Hash, Hex } from "viem";
+import { useMutation } from "wagmi/query";
+import type {
+    MutationOptionsWithoutMutationFn,
+    QueryResultType,
+} from "../types";
+import { useSmartAccount } from "../useSmartAccount";
+import { useSessionKeySigner } from "./useSessionKeySigner";
 
 export type SendPermissionMutate = (variables: UsePermissionParameters) => void;
 
 export type SendPermissionMutateAsync = (
-  variables: UsePermissionParameters
+    variables: UsePermissionParameters
 ) => Promise<Hash>;
 
 export type UseSendPermissionReturn = QueryResultType<Hash> & {
-  sendPermission: SendPermissionMutate;
-  sendPermissionAsync: SendPermissionMutateAsync;
+    sendPermission: SendPermissionMutate;
+    sendPermissionAsync: SendPermissionMutateAsync;
 };
 
 export function useSendPermission({
-  sessionData,
-  privateKey,
-  mutationProps,
-}: {
-  sessionData: GrantPermissionResponse;
-  privateKey: Hex;
-  mutationProps?: MutationOptionsWithoutMutationFn;
-}): UseSendPermissionReturn {
-  const context = useContext(ConnectContext);
-
-  if (context === undefined) {
-    throw new NotWithinConnectProviderError("useSendPermission");
-  }
-
-  const { smartAccountClient } = useSmartAccount();
-  const { data: sessionKeySigner } = useSessionKeySigner({
     sessionData,
     privateKey,
-  });
+    mutationProps,
+}: {
+    sessionData: GrantPermissionResponse;
+    privateKey: Hex;
+    mutationProps?: MutationOptionsWithoutMutationFn;
+}): UseSendPermissionReturn {
+    const context = useContext(ConnectContext);
 
-  const { mutate, mutateAsync, ...result } = useMutation({
-    mutationKey: [
-      "session-key-send-permission",
-      sessionKeySigner,
-      smartAccountClient,
-    ],
-    mutationFn: async (args: UsePermissionParameters): Promise<Hash> => {
-      if (!smartAccountClient) throw new SmartAccountNotFoundError();
-      if (!sessionKeySigner) throw new SignerNotFoundError();
-      if (!context.apikey) throw new ApiKeyNotFoundError();
+    if (context === undefined) {
+        throw new NotWithinConnectProviderError("useSendPermission");
+    }
 
-      const sessionKeyClient = await createSessionSmartAccountClient(
-        context.apikey,
-        smartAccountClient,
-        sessionKeySigner
-      );
+    const { smartAccountClient } = useSmartAccount();
+    const { data: sessionKeySigner } = useSessionKeySigner({
+        sessionData,
+        privateKey,
+    });
 
-      const userOpHash = await sessionKeyClient.usePermission(args);
+    const { mutate, mutateAsync, ...result } = useMutation({
+        mutationKey: [
+            "session-key-send-permission",
+            sessionKeySigner,
+            smartAccountClient,
+        ],
+        mutationFn: async (args: UsePermissionParameters): Promise<Hash> => {
+            if (!smartAccountClient) throw new SmartAccountNotFoundError();
+            if (!sessionKeySigner) throw new SignerNotFoundError();
+            if (!context.apikey) throw new ApiKeyNotFoundError();
 
-      const userOp = await sessionKeyClient.waitForUserOperationReceipt({
-        hash: userOpHash,
-      });
+            const sessionKeyClient = await createSessionSmartAccountClient(
+                context.apikey,
+                smartAccountClient,
+                sessionKeySigner
+            );
 
-      return userOp.receipt.transactionHash;
-    },
-    ...mutationProps,
-  });
+            const userOpHash = await sessionKeyClient.usePermission(args);
 
-  return {
-    data: result.data,
-    error: result.error,
-    isPending: result.isPending,
-    isSuccess: result.isSuccess,
-    isError: result.isError,
-    sendPermission: mutate,
-    sendPermissionAsync: mutateAsync,
-  };
+            const userOp = await sessionKeyClient.waitForUserOperationReceipt({
+                hash: userOpHash,
+            });
+
+            return userOp.receipt.transactionHash;
+        },
+        ...mutationProps,
+    });
+
+    return {
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
+        sendPermission: mutate,
+        sendPermissionAsync: mutateAsync,
+    };
 }

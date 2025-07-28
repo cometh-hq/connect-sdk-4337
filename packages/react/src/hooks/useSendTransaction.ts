@@ -1,19 +1,19 @@
+import { SmartAccountNotFoundError } from "@/errors";
 import { useSmartAccount } from "@/hooks/useSmartAccount";
 import { useMutation } from "@tanstack/react-query";
 import type { Hash } from "viem";
 import type {
-  MutationOptionsWithoutMutationFn,
-  QueryResultType,
-  Transaction,
+    MutationOptionsWithoutMutationFn,
+    QueryResultType,
+    Transaction,
 } from "./types";
-import { SmartAccountNotFoundError } from "@/errors";
 
 /**
  * Props for the useSendTransaction hook.
  * @property {Transaction | Transaction[]} transactions - A single transaction or an array of transactions to send.
  */
 export type UseSendTransactionProps = {
-  calls: Transaction | Transaction[];
+    calls: Transaction | Transaction[];
 };
 
 /**
@@ -21,7 +21,7 @@ export type UseSendTransactionProps = {
  * This function doesn't return a promise, suitable for fire-and-forget usage.
  */
 export type SendTransactionMutate = (
-  variables: UseSendTransactionProps
+    variables: UseSendTransactionProps
 ) => void;
 
 /**
@@ -29,13 +29,13 @@ export type SendTransactionMutate = (
  * This function returns a promise that resolves to the transaction hash.
  */
 export type SendTransactionMutateAsync = (
-  variables: UseSendTransactionProps
+    variables: UseSendTransactionProps
 ) => Promise<Hash>;
 
 // Return type of the hook
 export type UseSendTransactionReturn = QueryResultType<Hash> & {
-  sendTransaction: SendTransactionMutate;
-  sendTransactionAsync: SendTransactionMutateAsync;
+    sendTransaction: SendTransactionMutate;
+    sendTransactionAsync: SendTransactionMutateAsync;
 };
 
 /**
@@ -121,45 +121,45 @@ export type UseSendTransactionReturn = QueryResultType<Hash> & {
  * - `sendTransactionAsync`: A function to trigger the transaction sending and wait for the result.
  */
 export const useSendTransaction = (
-  mutationProps?: MutationOptionsWithoutMutationFn
+    mutationProps?: MutationOptionsWithoutMutationFn
 ): UseSendTransactionReturn => {
-  // Get the smart account client and query client from the useSmartAccount hook
-  const { smartAccountClient, queryClient } = useSmartAccount();
+    // Get the smart account client and query client from the useSmartAccount hook
+    const { smartAccountClient, queryClient } = useSmartAccount();
 
-  // Create a mutation using @tanstack/react-query
-  const { mutate, mutateAsync, ...result } = useMutation(
-    {
-      // Define the mutation function
-      mutationFn: (variables: UseSendTransactionProps): Promise<Hash> => {
-        // Check if the smart account client exists
-        if (!smartAccountClient) {
-          throw new SmartAccountNotFoundError();
-        }
-        const { calls } = variables;
+    // Create a mutation using @tanstack/react-query
+    const { mutate, mutateAsync, ...result } = useMutation(
+        {
+            // Define the mutation function
+            mutationFn: (variables: UseSendTransactionProps): Promise<Hash> => {
+                // Check if the smart account client exists
+                if (!smartAccountClient) {
+                    throw new SmartAccountNotFoundError();
+                }
+                const { calls } = variables;
 
-        // If transactions is not an array, it's a single transaction
-        if (!Array.isArray(calls)) {
-          return smartAccountClient.sendTransaction(calls);
-        }
-        // If it's an array, send multiple transactions
-        return smartAccountClient.sendTransaction({
-          calls,
-        });
-      },
-      // Spread any additional mutation options provided
-      ...mutationProps,
-    },
-    queryClient
-  );
+                // If transactions is not an array, it's a single transaction
+                if (!Array.isArray(calls)) {
+                    return smartAccountClient.sendTransaction(calls);
+                }
+                // If it's an array, send multiple transactions
+                return smartAccountClient.sendTransaction({
+                    calls,
+                });
+            },
+            // Spread any additional mutation options provided
+            ...mutationProps,
+        },
+        queryClient
+    );
 
-  // Return the mutation object along with the sendTransaction and sendTransactionAsync functions
-  return {
-    data: result.data,
-    error: result.error,
-    isPending: result.isPending,
-    isSuccess: result.isSuccess,
-    isError: result.isError,
-    sendTransaction: mutate,
-    sendTransactionAsync: mutateAsync,
-  };
+    // Return the mutation object along with the sendTransaction and sendTransactionAsync functions
+    return {
+        data: result.data,
+        error: result.error,
+        isPending: result.isPending,
+        isSuccess: result.isSuccess,
+        isError: result.isError,
+        sendTransaction: mutate,
+        sendTransactionAsync: mutateAsync,
+    };
 };

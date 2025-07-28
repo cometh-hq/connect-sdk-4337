@@ -1,8 +1,8 @@
 "use client";
 
+import { PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useState } from "react";
-import { PlusIcon } from "@radix-ui/react-icons";
 import type { Address } from "viem";
 
 interface SafeOwnersProps {
@@ -77,9 +77,7 @@ function SafeOwners({ smartAccount }: SafeOwnersProps) {
                         type="text"
                         placeholder="New owner address"
                         value={newOwner}
-                        onChange={(e) =>
-                            setNewOwner(e.target.value as Address)
-                        }
+                        onChange={(e) => setNewOwner(e.target.value as Address)}
                         className="mt-2 p-2 w-full border rounded-lg text-sm"
                     />
 
