@@ -60,6 +60,7 @@ export async function grantPermission<
             to: preparedPermission.action.target,
             data: preparedPermission.action.callData,
             value: BigInt(0),
+            operation: 0,
         },
     ];
 
@@ -117,6 +118,7 @@ export async function grantPermission<
                 ],
             }),
             value: BigInt(0),
+            operation: 1,
         });
     }
 
