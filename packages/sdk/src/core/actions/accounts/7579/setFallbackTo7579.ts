@@ -118,6 +118,7 @@ export async function setFallbackTo7579<
                 ],
             }),
             value: BigInt(0),
+            operation: 1,
         },
     ];
 

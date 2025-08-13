@@ -38,7 +38,7 @@ import {
     getSafeInitializer,
 } from "./services/safe";
 
-import { SAFE_7579_ADDRESS, add7579FunctionSelector } from "@/constants";
+import { SAFE_7579_ADDRESS } from "@/constants";
 import { MethodNotSupportedError } from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
@@ -325,7 +325,6 @@ export async function createSafeSmartAccount<
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
         },
-
         async signTypedData() {
             throw new MethodNotSupportedError();
         },
@@ -379,12 +378,12 @@ export async function createSafeSmartAccount<
             }
 
             // set fallback 7579 in delegateCall
-            const modifiedCalls = calls.map((call) => ({
+            // biome-ignore lint/suspicious/noExplicitAny: to Allow nested delegatecalls
+            const modifiedCalls = calls.map((call: any) => ({
                 ...call,
                 data: call.data ?? "0x",
                 value: call.value ?? BigInt(0),
-                operation:
-                    call.data?.slice(0, 10) === add7579FunctionSelector ? 1 : 0,
+                operation: call.operation ?? 0,
             }));
 
             if (hasMultipleCalls) {
@@ -417,7 +416,7 @@ export async function createSafeSmartAccount<
                     modifiedCalls[0].to,
                     modifiedCalls[0].value,
                     modifiedCalls[0].data,
-                    modifiedCalls[0].operation,
+                    modifiedCalls[0].operation ?? 0,
                 ],
             });
         },

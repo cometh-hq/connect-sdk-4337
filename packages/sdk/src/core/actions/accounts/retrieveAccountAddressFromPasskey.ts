@@ -3,7 +3,7 @@ import {
     retrieveSmartAccountAddressFromPasskey,
     retrieveSmartAccountAddressFromPasskeyId,
 } from "@/core/signers/passkeys/passkeyService";
-import type { Address, Chain } from "viem";
+import type { Address, Chain, PublicClient } from "viem";
 
 /**
  * Function used to retrieve an account address from passkeys
@@ -11,18 +11,26 @@ import type { Address, Chain } from "viem";
  * @param chain
  * @param fullDomainSelected
  */
-export const retrieveAccountAddressFromPasskeys = async (
-    apiKey: string,
-    chain: Chain,
+export const retrieveAccountAddressFromPasskeys = async ({
+    apiKey,
+    chain,
     fullDomainSelected = false,
-    baseUrl?: string
-): Promise<Address> => {
+    baseUrl,
+    publicClient,
+}: {
+    apiKey: string;
+    chain: Chain;
+    fullDomainSelected: boolean;
+    baseUrl?: string;
+    publicClient?: PublicClient;
+}): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
 
     return await retrieveSmartAccountAddressFromPasskey(
         api,
         chain,
-        fullDomainSelected
+        fullDomainSelected,
+        publicClient
     );
 };
 
@@ -39,12 +47,14 @@ export const retrieveAccountAddressFromPasskeyId = async ({
     chain,
     fullDomainSelected = false,
     baseUrl,
+    publicClient,
 }: {
     apiKey: string;
     id: string;
     chain: Chain;
     fullDomainSelected: boolean;
     baseUrl?: string;
+    publicClient?: PublicClient;
 }): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
 
@@ -53,5 +63,6 @@ export const retrieveAccountAddressFromPasskeyId = async ({
         id,
         chain,
         fullDomainSelected,
+        publicClient,
     });
 };

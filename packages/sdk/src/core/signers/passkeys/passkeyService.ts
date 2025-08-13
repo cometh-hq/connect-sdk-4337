@@ -1,16 +1,22 @@
+import { SafeAbi } from "@/core/accounts/safe/abi/safe";
+import { SafeWebAuthnSharedSignerAbi } from "@/core/accounts/safe/abi/sharedWebAuthnSigner";
 import { isSafeOwner } from "@/core/accounts/safe/services/safe";
 import type { API } from "@/core/services/API";
 import { parseAuthenticatorData } from "@simplewebauthn/server/helpers";
 import CBOR from "cbor-js";
 import elliptic from "elliptic";
+import { isSmartAccountDeployed } from "permissionless";
 import psl from "psl";
 import type { ParsedDomain } from "psl";
 import {
+    http,
     type Address,
     type Chain,
     type Hex,
     type PublicClient,
+    createPublicClient,
     encodeAbiParameters,
+    getContract,
     hashMessage,
     keccak256,
     toBytes,
@@ -406,7 +412,8 @@ const getPasskeySigner = async ({
 const retrieveSmartAccountAddressFromPasskey = async (
     API: API,
     chain: Chain,
-    fullDomainSelected: boolean
+    fullDomainSelected: boolean,
+    publicClient?: PublicClient
 ): Promise<Address> => {
     let publicKeyId: Hex;
 
@@ -435,6 +442,15 @@ const retrieveSmartAccountAddressFromPasskey = async (
     const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
         webAuthnSignerForGivenChain;
 
+    await _checkIfOwner({
+        smartAccountAddress: smartAccountAddress as Address,
+        signerAddress: signerAddress as Address,
+        publicKeyX: publicKeyX as Hex,
+        publicKeyY: publicKeyY as Hex,
+        chain,
+        publicClient: publicClient as PublicClient,
+    });
+
     setPasskeyInStorage(
         smartAccountAddress as Address,
         publicKeyId,
@@ -451,11 +467,13 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     id,
     chain,
     fullDomainSelected,
+    publicClient,
 }: {
     API: API;
     id: string;
     chain: Chain;
     fullDomainSelected: boolean;
+    publicClient?: PublicClient;
 }): Promise<Address> => {
     const publicKeyCredentials = [
         {
@@ -488,9 +506,17 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     );
     if (!webAuthnSignerForGivenChain)
         throw new NoPasskeySignerFoundForGivenChain();
-
     const { smartAccountAddress, publicKeyX, publicKeyY, signerAddress } =
         webAuthnSignerForGivenChain;
+
+    await _checkIfOwner({
+        chain,
+        smartAccountAddress: smartAccountAddress as Address,
+        signerAddress: signerAddress as Address,
+        publicKeyX: publicKeyX as Hex,
+        publicKeyY: publicKeyY as Hex,
+        publicClient: publicClient as PublicClient,
+    });
 
     setPasskeyInStorage(
         smartAccountAddress as Address,
@@ -503,6 +529,62 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     return smartAccountAddress as Address;
 };
 
+const _checkIfOwner = async ({
+    chain,
+    smartAccountAddress,
+    signerAddress,
+    publicKeyX,
+    publicKeyY,
+    publicClient,
+}: {
+    chain: Chain;
+    smartAccountAddress: Address;
+    signerAddress: Address;
+    publicKeyX: Hex;
+    publicKeyY: Hex;
+    publicClient: PublicClient;
+}) => {
+    const _publicClient =
+        publicClient ??
+        createPublicClient({
+            chain,
+            transport: http(),
+        });
+
+    const safe = getContract({
+        address: smartAccountAddress as Address,
+        abi: SafeAbi,
+        client: _publicClient,
+    });
+
+    const sharedWebAuthnSigner = getContract({
+        address: signerAddress as Address,
+        abi: SafeWebAuthnSharedSignerAbi,
+        client: _publicClient,
+    });
+
+    const isSafeDeployed = await isSmartAccountDeployed(
+        _publicClient,
+        smartAccountAddress as Address
+    );
+    if (!isSafeDeployed) return;
+
+    const [isSignerOwner, sharedWebAuthnSignerConfiguration] =
+        await Promise.all([
+            await safe.read.isOwner([signerAddress]),
+            await sharedWebAuthnSigner.read.getConfiguration([
+                smartAccountAddress as Address,
+            ]),
+        ]);
+
+    if (!isSignerOwner) throw new SignerNotOwnerError();
+
+    if (
+        sharedWebAuthnSignerConfiguration.x !== BigInt(publicKeyX) ||
+        sharedWebAuthnSignerConfiguration.y !== BigInt(publicKeyY)
+    )
+        throw new SignerNotOwnerError();
+};
 export {
     createPasskeySigner,
     getPasskeyInStorage,
