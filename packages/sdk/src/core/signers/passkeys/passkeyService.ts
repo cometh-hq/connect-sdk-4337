@@ -185,6 +185,17 @@ const sign = async ({
     publicKeyCredential?: PublicKeyCredentialDescriptor[];
     rpId?: string;
 }): Promise<{ signature: Hex; publicKeyId: Hex }> => {
+    console.log({ rpId });
+    console.log({
+        publicKey: {
+            challenge: toBytes(challenge),
+            rpId: rpId || _formatSigningRpId(fullDomainSelected),
+            allowCredentials: publicKeyCredential || [],
+            userVerification: "required",
+            timeout: 60000,
+        },
+    });
+
     const assertion = (await navigator.credentials.get({
         publicKey: {
             challenge: toBytes(challenge),
@@ -236,6 +247,8 @@ const signWithPasskey = async ({
             };
         });
     }
+
+    console.log({ publicKeyCredentials });
 
     const webAuthnSignature = await sign({
         challenge: keccak256(hashMessage(challenge)),
@@ -421,6 +434,7 @@ const retrieveSmartAccountAddressFromPasskey = async (
     API: API,
     chain: Chain,
     fullDomainSelected: boolean,
+    rpId?: string,
     publicClient?: PublicClient
 ): Promise<Address> => {
     let publicKeyId: Hex;
@@ -430,6 +444,7 @@ const retrieveSmartAccountAddressFromPasskey = async (
             await signWithPasskey({
                 challenge: "Retrieve user wallet",
                 fullDomainSelected,
+                rpId,
             })
         ).publicKeyId as Hex;
     } catch {
@@ -438,6 +453,7 @@ const retrieveSmartAccountAddressFromPasskey = async (
 
     const signingPasskeySigners =
         await API.getPasskeySignerByPublicKeyId(publicKeyId);
+
     if (signingPasskeySigners.length === 0)
         throw new NoPasskeySignerFoundInDBError();
 
@@ -476,12 +492,14 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     chain,
     fullDomainSelected,
     publicClient,
+    rpId,
 }: {
     API: API;
     id: string;
     chain: Chain;
     fullDomainSelected: boolean;
     publicClient?: PublicClient;
+    rpId?: string;
 }): Promise<Address> => {
     const publicKeyCredentials = [
         {
@@ -498,6 +516,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
                 challenge: keccak256(hashMessage("Retrieve user wallet")),
                 publicKeyCredential: publicKeyCredentials,
                 fullDomainSelected,
+                rpId,
             })
         ).publicKeyId as Hex;
     } catch {

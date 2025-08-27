@@ -10,17 +10,20 @@ import type { Address, Chain, PublicClient } from "viem";
  * @param apiKey
  * @param chain
  * @param fullDomainSelected
+ * @param rpId
  */
 export const retrieveAccountAddressFromPasskeys = async ({
     apiKey,
     chain,
     fullDomainSelected = false,
+    rpId,
     baseUrl,
     publicClient,
 }: {
     apiKey: string;
     chain: Chain;
     fullDomainSelected: boolean;
+    rpId: string;
     baseUrl?: string;
     publicClient?: PublicClient;
 }): Promise<Address> => {
@@ -30,6 +33,7 @@ export const retrieveAccountAddressFromPasskeys = async ({
         api,
         chain,
         fullDomainSelected,
+        rpId,
         publicClient
     );
 };
@@ -40,12 +44,14 @@ export const retrieveAccountAddressFromPasskeys = async ({
  * @param id
  * @param chain
  * @param fullDomainSelected
+ * @param rpId
  */
 export const retrieveAccountAddressFromPasskeyId = async ({
     apiKey,
     id,
     chain,
     fullDomainSelected = false,
+    rpId,
     baseUrl,
     publicClient,
 }: {
@@ -53,6 +59,7 @@ export const retrieveAccountAddressFromPasskeyId = async ({
     id: string;
     chain: Chain;
     fullDomainSelected: boolean;
+    rpId?: string;
     baseUrl?: string;
     publicClient?: PublicClient;
 }): Promise<Address> => {
@@ -64,5 +71,6 @@ export const retrieveAccountAddressFromPasskeyId = async ({
         chain,
         fullDomainSelected,
         publicClient,
+        rpId,
     });
 };
