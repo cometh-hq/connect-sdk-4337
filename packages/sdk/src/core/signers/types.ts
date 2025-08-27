@@ -26,6 +26,7 @@ export type ComethSignerConfig = {
     disableEoaFallback?: boolean;
     encryptionSalt?: string;
     webAuthnOptions?: webAuthnOptions;
+    rpId?: string;
     passKeyName?: string;
     fullDomainSelected?: boolean;
 };

@@ -8,7 +8,7 @@ import {
 import { useState } from "react";
 import { http, type Hex, type PublicClient, createPublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { arbitrumSepolia } from "viem/chains";
+import { gnosis } from "viem/chains";
 
 export function useSmartAccount() {
     const [isConnecting, setIsConnecting] = useState(false);
@@ -39,7 +39,7 @@ export function useSmartAccount() {
             ) as Hex;
 
             const publicClient = createPublicClient({
-                chain: arbitrumSepolia,
+                chain: gnosis,
                 transport: http(),
                 cacheTime: 60_000,
                 batch: {
@@ -51,21 +51,26 @@ export function useSmartAccount() {
                 const owner = privateKeyToAccount(ownerPK as Hex); */
 
             let smartAccount;
+            const comethSignerConfig = {
+                rpId: "metri.xyz",
+            }
 
             if (localStorageAddress) {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: gnosis,
                     publicClient,
                     //signer: owner,
                     smartAccountAddress: localStorageAddress,
+                    comethSignerConfig
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
-                    chain: arbitrumSepolia,
+                    chain: gnosis,
                     //signer: owner,
                     publicClient,
+                    comethSignerConfig
                 });
                 window.localStorage.setItem(
                     "walletAddress",
@@ -75,13 +80,13 @@ export function useSmartAccount() {
 
             const paymasterClient = await createComethPaymasterClient({
                 transport: http(paymasterUrl),
-                chain: arbitrumSepolia,
+                chain: gnosis,
                 publicClient,
             });
 
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
-                chain: arbitrumSepolia,
+                chain: gnosis,
                 bundlerTransport: http(bundlerUrl, {
                     retryCount: 5,
                     retryDelay: 1000,

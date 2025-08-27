@@ -51,6 +51,7 @@ export async function safeWebAuthnSigner<
         passkeySignerAddress,
         smartAccountAddress,
         fullDomainSelected,
+        rpId,
         userOpVerifyingContract,
     }: {
         passkey: PasskeyLocalStorageFormat;
@@ -58,6 +59,7 @@ export async function safeWebAuthnSigner<
         smartAccountAddress: Address;
         fullDomainSelected: boolean;
         userOpVerifyingContract: Address;
+        rpId?: string;
     }
 ): Promise<SafeSigner<"safeWebAuthnSigner">> {
     const publicKeyCredential: PublicKeyCredentialDescriptor = {
@@ -82,6 +84,7 @@ export async function safeWebAuthnSigner<
                 challenge: hash,
                 publicKeyCredential: [publicKeyCredential],
                 fullDomainSelected,
+                rpId,
             });
 
             return buildSignatureBytes([
@@ -147,6 +150,7 @@ export async function safeWebAuthnSigner<
                 challenge: hash,
                 publicKeyCredential: [publicKeyCredential],
                 fullDomainSelected,
+                rpId,
             });
 
             return encodePacked(
