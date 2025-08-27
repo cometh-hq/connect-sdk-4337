@@ -12,6 +12,7 @@ type SafeSignerParams = {
     userOpVerifyingContract: Address;
     smartAccountAddress: Address;
     fullDomainSelected: boolean;
+    rpId?: string;
 };
 
 /**
@@ -38,6 +39,7 @@ export async function comethSignerToSafeSigner<
         userOpVerifyingContract,
         smartAccountAddress,
         fullDomainSelected,
+        rpId,
     }: SafeSignerParams
 ): Promise<SafeSigner> {
     if (isComethSigner(accountSigner) && accountSigner.type === "passkey") {
@@ -48,6 +50,7 @@ export async function comethSignerToSafeSigner<
                 userOpVerifyingContract,
                 smartAccountAddress,
                 fullDomainSelected,
+                rpId,
             })),
         };
     }

@@ -130,6 +130,7 @@ export async function createSigner({
     disableEoaFallback = false,
     encryptionSalt,
     webAuthnOptions = DEFAULT_WEBAUTHN_OPTIONS,
+    rpId,
     passKeyName,
     fullDomainSelected = false,
     safeContractParams,
@@ -177,6 +178,7 @@ export async function createSigner({
                 safeWebAuthnSharedSignerAddress:
                     safeContractParams.safeWebAuthnSharedSignerContractAddress,
                 fullDomainSelected,
+                rpId,
             });
         }
 

@@ -178,15 +178,17 @@ const sign = async ({
     challenge,
     fullDomainSelected,
     publicKeyCredential,
+    rpId,
 }: {
     challenge: string;
     fullDomainSelected: boolean;
     publicKeyCredential?: PublicKeyCredentialDescriptor[];
+    rpId?: string;
 }): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     const assertion = (await navigator.credentials.get({
         publicKey: {
             challenge: toBytes(challenge),
-            rpId: _formatSigningRpId(fullDomainSelected),
+            rpId: rpId || _formatSigningRpId(fullDomainSelected),
             allowCredentials: publicKeyCredential || [],
             userVerification: "required",
             timeout: 60000,
@@ -217,10 +219,12 @@ const signWithPasskey = async ({
     challenge,
     webAuthnSigners,
     fullDomainSelected,
+    rpId,
 }: {
     challenge: string;
     webAuthnSigners?: WebAuthnSigner[];
     fullDomainSelected: boolean;
+    rpId?: string;
 }): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     let publicKeyCredentials: PublicKeyCredentialDescriptor[] | undefined;
 
@@ -237,6 +241,7 @@ const signWithPasskey = async ({
         challenge: keccak256(hashMessage(challenge)),
         publicKeyCredential: publicKeyCredentials,
         fullDomainSelected,
+        rpId,
     });
 
     return webAuthnSignature;
@@ -290,6 +295,7 @@ const getPasskeySigner = async ({
     p256Verifier,
     multisendAddress,
     fullDomainSelected,
+    rpId,
 }: {
     api: API;
     smartAccountAddress: Address;
@@ -303,6 +309,7 @@ const getPasskeySigner = async ({
     p256Verifier: Address;
     multisendAddress: Address;
     fullDomainSelected: boolean;
+    rpId?: string;
 }): Promise<PasskeyLocalStorageFormat> => {
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
 
@@ -355,6 +362,7 @@ const getPasskeySigner = async ({
             challenge: "SDK Connection",
             webAuthnSigners: dbPasskeySigners as WebAuthnSigner[],
             fullDomainSelected,
+            rpId,
         });
     } catch {
         throw new NoPasskeySignerFoundInDeviceError();
