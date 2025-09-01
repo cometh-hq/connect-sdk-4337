@@ -22,8 +22,8 @@ export const retrieveAccountAddressFromPasskeys = async ({
 }: {
     apiKey: string;
     chain: Chain;
-    fullDomainSelected: boolean;
-    rpId: string;
+    fullDomainSelected?: boolean;
+    rpId?: string;
     baseUrl?: string;
     publicClient?: PublicClient;
 }): Promise<Address> => {
@@ -58,7 +58,7 @@ export const retrieveAccountAddressFromPasskeyId = async ({
     apiKey: string;
     id: string;
     chain: Chain;
-    fullDomainSelected: boolean;
+    fullDomainSelected?: boolean;
     rpId?: string;
     baseUrl?: string;
     publicClient?: PublicClient;
