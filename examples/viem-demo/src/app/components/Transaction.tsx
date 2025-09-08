@@ -8,13 +8,11 @@ import {
   createPublicClient,
   encodeFunctionData,
   getContract,
-  parseEther,
 } from "viem";
 import { gnosis } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 import { Icons } from "../lib/ui/components";
 import Alert from "../lib/ui/components/Alert";
-import { retrieveAccountAddressFromPasskeys } from "@cometh/connect-sdk-4337";
 
 export const COUNTER_CONTRACT_ADDRESS =
   "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
@@ -97,15 +95,6 @@ function Transaction({
     try {
       if (!smartAccount) throw new Error("No wallet instance");
 
-      const walletAddress = await retrieveAccountAddressFromPasskeys({
-        apiKey: "0uJydu7VY2lGKIcOBYVFWxrs1RHlqYMO",
-        chain: gnosis as any,
-        fullDomainSelected: true,
-        rpId: "metri.xyz",
-      });
-
-      console.log({ walletAddress });
-
       const calldata = encodeFunctionData({
         abi: countContractAbi,
         functionName: "count",
@@ -139,15 +128,6 @@ function Transaction({
             sendTestTransaction={() =>
               sendTestTransaction(async () => {
                 if (!smartAccount) throw new Error("No wallet instance");
-
-                const walletAddress = await retrieveAccountAddressFromPasskeys({
-                  apiKey: "0uJydu7VY2lGKIcOBYVFWxrs1RHlqYMO",
-                  chain: gnosis as any,
-                  fullDomainSelected: true,
-                  rpId: "metri.xyz",
-                });
-
-                console.log({ walletAddress });
 
                 const calldata = encodeFunctionData({
                   abi: countContractAbi,

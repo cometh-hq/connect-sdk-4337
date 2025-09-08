@@ -18,6 +18,7 @@ import {
     type Chain,
     ChainNotFoundError,
     type Client,
+    type Hash,
     type Hex,
     type PublicClient,
     type Transport,
@@ -39,7 +40,6 @@ import {
 } from "./services/safe";
 
 import { SAFE_7579_ADDRESS } from "@/constants";
-import { MethodNotSupportedError } from "@/errors";
 import { isSmartAccountDeployed } from "permissionless";
 import type { ToSafeSmartAccountReturnType } from "permissionless/accounts";
 import { entryPoint07Abi, entryPoint07Address } from "viem/account-abstraction";
@@ -323,11 +323,14 @@ export async function createSafeSmartAccount<
             (contractParams.safeContractParams as SafeContractParams),
         comethSignerConfig: comethSignerConfig,
         publicClient,
+        async sign(parameters: { hash: Hash }) {
+            return safeSigner.sign?.(parameters) as unknown as Hex;
+        },
         async signMessage({ message }) {
             return safeSigner.signMessage({ message });
         },
-        async signTypedData() {
-            throw new MethodNotSupportedError();
+        async signTypedData(typedData) {
+            return safeSigner.signTypedData(typedData);
         },
 
         async getFactoryArgs() {
