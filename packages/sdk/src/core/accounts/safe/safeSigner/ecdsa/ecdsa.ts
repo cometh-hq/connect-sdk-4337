@@ -2,6 +2,7 @@ import {
     type Address,
     type Chain,
     type Client,
+    type Hash,
     type Hex,
     type LocalAccount,
     type PrivateKeyAccount,
@@ -64,6 +65,20 @@ export async function safeECDSASigner<
 
     const account = toAccount({
         address: smartAccountAddress,
+        async sign(parameters: { hash: Hash }) {
+            return adjustVInSignature(
+                "eth_signTypedData",
+                await viemSigner.signTypedData({
+                    domain: {
+                        chainId: client.chain?.id,
+                        verifyingContract: smartAccountAddress,
+                    },
+                    types: EIP712_SAFE_MESSAGE_TYPE,
+                    primaryType: "SafeMessage" as const,
+                    message: { message: parameters.hash },
+                })
+            );
+        },
         async signMessage({ message }) {
             return adjustVInSignature(
                 "eth_signTypedData",

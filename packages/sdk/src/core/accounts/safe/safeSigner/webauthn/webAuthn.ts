@@ -2,11 +2,13 @@ import {
     type Address,
     type Chain,
     type Client,
+    type Hash,
     type Hex,
     type Transport,
     encodePacked,
     hashTypedData,
 } from "viem";
+
 import { toAccount } from "viem/accounts";
 
 import { ENTRYPOINT_ADDRESS_V07 } from "@/constants";
@@ -69,6 +71,32 @@ export async function safeWebAuthnSigner<
 
     const account = toAccount({
         address: smartAccountAddress,
+        async sign(parameters: { hash: Hash }) {
+            const hash = hashTypedData({
+                domain: {
+                    chainId: client.chain?.id,
+                    verifyingContract: smartAccountAddress,
+                },
+                types: EIP712_SAFE_MESSAGE_TYPE,
+                primaryType: "SafeMessage" as const,
+                message: { message: parameters.hash },
+            });
+
+            const passkeySignature = await sign({
+                challenge: hash,
+                publicKeyCredential: [publicKeyCredential],
+                fullDomainSelected,
+                rpId,
+            });
+
+            return buildSignatureBytes([
+                {
+                    signer: passkeySignerAddress,
+                    data: passkeySignature.signature,
+                    dynamic: true,
+                },
+            ]) as Hex;
+        },
         async signMessage({ message }) {
             const hash = hashTypedData({
                 domain: {
@@ -98,8 +126,21 @@ export async function safeWebAuthnSigner<
         async signTransaction(_, __) {
             throw new MethodNotSupportedError();
         },
-        async signTypedData() {
-            throw new MethodNotSupportedError();
+        async signTypedData(typedData) {
+            const passkeySignature = await sign({
+                challenge: hashTypedData(typedData),
+                publicKeyCredential: [publicKeyCredential],
+                fullDomainSelected,
+                rpId,
+            });
+
+            return buildSignatureBytes([
+                {
+                    signer: passkeySignerAddress,
+                    data: passkeySignature.signature,
+                    dynamic: true,
+                },
+            ]) as Hex;
         },
     });
 

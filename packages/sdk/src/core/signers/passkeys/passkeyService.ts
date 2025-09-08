@@ -185,17 +185,6 @@ const sign = async ({
     publicKeyCredential?: PublicKeyCredentialDescriptor[];
     rpId?: string;
 }): Promise<{ signature: Hex; publicKeyId: Hex }> => {
-    console.log({ rpId });
-    console.log({
-        publicKey: {
-            challenge: toBytes(challenge),
-            rpId: rpId || _formatSigningRpId(fullDomainSelected),
-            allowCredentials: publicKeyCredential || [],
-            userVerification: "required",
-            timeout: 60000,
-        },
-    });
-
     const assertion = (await navigator.credentials.get({
         publicKey: {
             challenge: toBytes(challenge),
@@ -247,8 +236,6 @@ const signWithPasskey = async ({
             };
         });
     }
-
-    console.log({ publicKeyCredentials });
 
     const webAuthnSignature = await sign({
         challenge: keccak256(hashMessage(challenge)),
