@@ -1,4 +1,3 @@
-import { EventEmitter } from "events";
 
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type {
@@ -46,8 +45,9 @@ import {
 } from "@/errors";
 import { CallStatus } from "./types/provider";
 import { validatePermissions } from "./utils/permissions";
+import { MittEmitter } from "./utils/mitter";
 
-export class EIP1193Provider extends EventEmitter {
+export class EIP1193Provider extends MittEmitter {
     private comethSmartAccountClient: ComethSmartAccountClient<
         Transport,
         Chain,

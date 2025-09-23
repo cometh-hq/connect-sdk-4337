@@ -6,7 +6,7 @@
       "name": "yoanslvy"
     }
   ],
-  "version": "1.0.18",
+  "version": "1.0.20",
   "description": "SDK Cometh Connect 4337",
   "repository": "https://github.com/cometh-hq/connect-sdk-4337.git",
   "keywords": [
@@ -65,6 +65,7 @@
     "bowser": "^2.11.0",
     "cbor-js": "^0.1.0",
     "elliptic": "^6.5.7",
+    "mitt": "^3.0.1",
     "permissionless": "^0.2.23",
     "psl": "^1.9.0",
     "qrcode": "^1.5.3"
