@@ -1,6 +1,7 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { isSafeOwner } from "@/core/accounts/safe/services/safe";
 import type { API } from "@/core/services/API";
+import type { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
 import { parseAuthenticatorData } from "@simplewebauthn/server/helpers";
 import CBOR from "cbor-js";
 import elliptic from "elliptic";
@@ -26,8 +27,10 @@ import {
     NoPasskeySignerFoundForGivenChain,
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
+    NoPasskeySignerFoundInLegacyDBError,
     PasskeyCreationError,
     PasskeySignatureFailedError,
+    PasskeySignerFoundInLegacyDBError,
     RetrieveWalletFromPasskeyError,
     SignerNotOwnerError,
 } from "../../../errors";
@@ -421,7 +424,8 @@ const retrieveSmartAccountAddressFromPasskey = async (
     chain: Chain,
     fullDomainSelected: boolean,
     rpId?: string,
-    publicClient?: PublicClient
+    publicClient?: PublicClient,
+    legacyAPI?: LEGACY_API
 ): Promise<Address> => {
     let publicKeyId: Hex;
 
@@ -440,8 +444,17 @@ const retrieveSmartAccountAddressFromPasskey = async (
     const signingPasskeySigners =
         await API.getPasskeySignerByPublicKeyId(publicKeyId);
 
-    if (signingPasskeySigners.length === 0)
-        throw new NoPasskeySignerFoundInDBError();
+    if (signingPasskeySigners.length === 0) {
+        if (!legacyAPI) throw new NoPasskeySignerFoundInDBError();
+
+        const legacySigningPasskeySigner =
+            await legacyAPI.getWebAuthnSignerByPublicKeyId(publicKeyId);
+
+        if (!legacySigningPasskeySigner)
+            throw new NoPasskeySignerFoundInLegacyDBError();
+
+        throw new PasskeySignerFoundInLegacyDBError();
+    }
 
     const webAuthnSignerForGivenChain = signingPasskeySigners.find(
         (signer) => +signer.chainId === chain.id
