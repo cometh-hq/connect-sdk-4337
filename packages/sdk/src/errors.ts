@@ -355,6 +355,12 @@ export class NoPasskeySignerFoundInDBError extends Error {
     }
 }
 
+export class NoPasskeySignerFoundInLegacyDBError extends Error {
+    constructor() {
+        super("No passkey signer found in legacy db for this walletAddress");
+    }
+}
+
 export class NoPasskeySignerFoundForGivenChain extends Error {
     constructor() {
         super("No passkey signer found in db for this walletAddress and chain");
@@ -372,6 +378,14 @@ export class NoPasskeySignerFoundInDeviceError extends Error {
 export class RetrieveWalletFromPasskeyError extends Error {
     constructor() {
         super("Unable to retrieve wallet address from passkeys");
+    }
+}
+
+export class PasskeySignerFoundInLegacyDBError extends Error {
+    constructor() {
+        super(
+            "Passkey signer found in legacy DB for this walletAddress - you need to migrate your account"
+        );
     }
 }
 

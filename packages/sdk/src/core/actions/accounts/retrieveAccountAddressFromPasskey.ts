@@ -3,6 +3,7 @@ import {
     retrieveSmartAccountAddressFromPasskey,
     retrieveSmartAccountAddressFromPasskeyId,
 } from "@/core/signers/passkeys/passkeyService";
+import { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
 import type { Address, Chain, PublicClient } from "viem";
 
 /**
@@ -19,6 +20,8 @@ export const retrieveAccountAddressFromPasskeys = async ({
     rpId,
     baseUrl,
     publicClient,
+    checkLegacy = false,
+    legacyBaseUrl,
 }: {
     apiKey: string;
     chain: Chain;
@@ -26,15 +29,23 @@ export const retrieveAccountAddressFromPasskeys = async ({
     rpId?: string;
     baseUrl?: string;
     publicClient?: PublicClient;
+    checkLegacy?: boolean;
+    legacyBaseUrl?: string;
 }): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
+    let legacyApi: LEGACY_API | undefined;
+
+    if (checkLegacy) {
+        legacyApi = new LEGACY_API(apiKey, legacyBaseUrl);
+    }
 
     return await retrieveSmartAccountAddressFromPasskey(
         api,
         chain,
         fullDomainSelected,
         rpId,
-        publicClient
+        publicClient,
+        legacyApi
     );
 };
 
