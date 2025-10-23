@@ -19,18 +19,18 @@ export const retrieveAccountAddressFromPasskeys = async ({
     fullDomainSelected = false,
     rpId,
     baseUrl,
-    legacyBaseUrl,
     publicClient,
     checkLegacy = false,
+    legacyBaseUrl,
 }: {
     apiKey: string;
     chain: Chain;
     fullDomainSelected?: boolean;
     rpId?: string;
     baseUrl?: string;
-    legacyBaseUrl?: string;
     publicClient?: PublicClient;
     checkLegacy?: boolean;
+    legacyBaseUrl?: string;
 }): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
     let legacyApi: LEGACY_API | undefined;
