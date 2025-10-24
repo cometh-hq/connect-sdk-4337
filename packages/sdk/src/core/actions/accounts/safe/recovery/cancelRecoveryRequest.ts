@@ -111,7 +111,7 @@ export async function cancelRecoveryRequest<
         sendTransaction,
         "sendTransaction"
     )({
-        calls: updateNonceTx,
+        calls: [updateNonceTx],
     } as unknown as SendTransactionParameters);
 
     return hash;
