@@ -1,6 +1,7 @@
 import * as psl from "psl";
 import { maxUint256, toBytes, toHex } from "viem";
 
+import { getDeviceData } from "@/core/services/deviceService";
 import {
     ChallengeNotFoundError,
     InvalidSignatureEncodingError,
@@ -143,10 +144,25 @@ export const base64ToBase64Url = (base64: string) => {
     return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
 
+/**
+ * Detects if the device is running iOS.
+ * iOS has issues with PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+ */
+const isIOS = (): boolean => {
+    if (typeof window === "undefined") return false;
+
+    const { os } = getDeviceData();
+    return os === "iOS";
+};
+
 export const isWebAuthnCompatible = async (
     webAuthnOptions: webAuthnOptions
 ): Promise<boolean> => {
     try {
+        // new iOS versions have issues with
+        // PublicKeyCredential APIs, so we skip all checks and return true
+        if (isIOS()) return true;
+
         if (typeof window === "undefined" || !window.PublicKeyCredential)
             return false;
 
