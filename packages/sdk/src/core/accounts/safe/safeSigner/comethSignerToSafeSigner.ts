@@ -6,6 +6,7 @@ import { getSigner, isComethSigner } from "@/core/signers/createSigner.js";
 import type { Signer } from "@/core/signers/types.js";
 import type { SafeSigner } from "./types.js";
 import { safeWebAuthnSigner } from "./webauthn/webAuthn.js";
+import type { webAuthnOptions } from "@/core/signers/passkeys/types.js";
 
 type SafeSignerParams = {
     accountSigner: Signer;
@@ -13,6 +14,7 @@ type SafeSignerParams = {
     smartAccountAddress: Address;
     fullDomainSelected: boolean;
     rpId?: string;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
 };
 
 /**
@@ -40,6 +42,7 @@ export async function comethSignerToSafeSigner<
         smartAccountAddress,
         fullDomainSelected,
         rpId,
+        tauriOptions
     }: SafeSignerParams
 ): Promise<SafeSigner> {
     if (isComethSigner(accountSigner) && accountSigner.type === "passkey") {
@@ -51,6 +54,7 @@ export async function comethSignerToSafeSigner<
                 smartAccountAddress,
                 fullDomainSelected,
                 rpId,
+                tauriOptions
             })),
         };
     }
