@@ -263,7 +263,7 @@ export function parseCosePublicKey(coseKeyBytes: Uint8Array): CosePublicKey {
     const x = coseKey.get(COSE_KEY.X);
     const y = coseKey.get(COSE_KEY.Y);
 
-    if (!(x instanceof Uint8Array) || !(y instanceof Uint8Array)) {
+    if (!(x instanceof Uint8Array && y instanceof Uint8Array)) {
         throw new Error("COSE key missing x or y coordinates");
     }
 

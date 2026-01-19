@@ -21,7 +21,10 @@ import {
     packPaymasterData,
 } from "@/core/accounts/safe/services/utils";
 import { sign } from "@/core/signers/passkeys/passkeyService";
-import type { PasskeyLocalStorageFormat, webAuthnOptions } from "@/core/signers/passkeys/types";
+import type {
+    PasskeyLocalStorageFormat,
+    webAuthnOptions,
+} from "@/core/signers/passkeys/types";
 import { parseHex } from "@/core/signers/passkeys/utils";
 import { MethodNotSupportedError } from "@/errors";
 import {
@@ -115,7 +118,7 @@ export async function safeWebAuthnSigner<
                 publicKeyCredential: [publicKeyCredential],
                 fullDomainSelected,
                 rpId,
-                tauriOptions
+                tauriOptions,
             });
 
             return buildSignatureBytes([
@@ -195,7 +198,7 @@ export async function safeWebAuthnSigner<
                 publicKeyCredential: [publicKeyCredential],
                 fullDomainSelected,
                 rpId,
-                tauriOptions
+                tauriOptions,
             });
 
             return encodePacked(

@@ -1,12 +1,12 @@
 import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { isSafeOwner } from "@/core/accounts/safe/services/safe";
 import type { API } from "@/core/services/API";
-import type { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
 import { isTauri } from "@/core/services/tauri/platform";
 import {
     getTauriCreateFn,
     getTauriGetFn,
 } from "@/core/services/tauri/tauriBridge";
+import type { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
 import { parseAuthenticatorData } from "@simplewebauthn/server/helpers";
 import CBOR from "cbor-js";
 import elliptic from "elliptic";
@@ -91,7 +91,7 @@ const _formatSigningRpId = (
 ): string | undefined => {
     if (isTauri()) {
         if (!tauriOptions?.rpId) throw new Error("Tauri RP ID is required");
-       return tauriOptions.rpId
+        return tauriOptions.rpId;
     }
     const rootDomain = (psl.parse(window.location.host) as psl.ParsedDomain)
         .domain;
@@ -136,7 +136,6 @@ const _formatCredentialIdForOx = (id: unknown): string | undefined => {
     return undefined;
 };
 
-
 const createPasskeySigner = async ({
     api,
     webAuthnOptions,
@@ -154,7 +153,9 @@ const createPasskeySigner = async ({
         const name = passKeyName || "Cometh";
         const extensions = webAuthnOptions?.extensions;
 
-        const tauriCreateFn = webAuthnOptions?.tauriOptions && getTauriCreateFn(webAuthnOptions?.tauriOptions);
+        const tauriCreateFn =
+            webAuthnOptions?.tauriOptions &&
+            getTauriCreateFn(webAuthnOptions?.tauriOptions);
 
         const passkeyCredential = (await WebAuthnP256.createCredential({
             rp: _formatCreatingRpId(
@@ -305,7 +306,7 @@ const signWithPasskey = async ({
         publicKeyCredential: publicKeyCredentials,
         fullDomainSelected,
         rpId,
-        tauriOptions
+        tauriOptions,
     });
 
     return webAuthnSignature;
@@ -429,7 +430,7 @@ const getPasskeySigner = async ({
             webAuthnSigners: dbPasskeySigners as WebAuthnSigner[],
             fullDomainSelected,
             rpId,
-            tauriOptions
+            tauriOptions,
         });
     } catch {
         throw new NoPasskeySignerFoundInDeviceError();
@@ -501,7 +502,7 @@ const retrieveSmartAccountAddressFromPasskey = async (
                 challenge: "Retrieve user wallet",
                 fullDomainSelected,
                 rpId,
-                tauriOptions
+                tauriOptions,
             })
         ).publicKeyId as Hex;
     } catch {
@@ -583,7 +584,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
                 publicKeyCredential: publicKeyCredentials,
                 fullDomainSelected,
                 rpId,
-                tauriOptions
+                tauriOptions,
             })
         ).publicKeyId as Hex;
     } catch {
