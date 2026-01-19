@@ -101,7 +101,6 @@ async function invokeTauriPlugin<T>(
  */
 function getWebAuthnOrigin(tauriOptions: {
     androidApkOrigin: string;
-    rpId: string;
 }): string {
     if (isAndroid()) {
         return tauriOptions.androidApkOrigin;

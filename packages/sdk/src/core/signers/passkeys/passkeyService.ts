@@ -23,6 +23,7 @@ import {
     encodeAbiParameters,
     getContract,
     hashMessage,
+    hexToBytes,
     keccak256,
 } from "viem";
 import {
@@ -102,8 +103,6 @@ const _formatSigningRpId = (
 
 // ox's WebAuthnP256.sign expects `credentialId` as a base64url string.
 // Convert from possible inputs (hex string, ArrayBuffer, TypedArray, base64) to base64url.
-import { hexToBytes } from "viem";
-
 const _formatCredentialIdForOx = (id: unknown): string | undefined => {
     if (!id) return undefined;
 
@@ -250,7 +249,7 @@ const sign = async ({
 
     const assertion = await WebAuthnP256.sign({
         challenge: challenge as Hex,
-        ...(publicKeyCredential && {
+        ...(publicKeyCredential?.length && {
             credentialId: _formatCredentialIdForOx(publicKeyCredential[0].id),
         }),
         rpId: rpId || _formatSigningRpId(fullDomainSelected, tauriOptions),

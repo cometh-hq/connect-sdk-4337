@@ -56,7 +56,6 @@ export function isWeb(): boolean {
  */
 export function isIOS(): boolean {
     if (!isTauri()) return false;
-    if (typeof window === "undefined") return false;
     return window.location.protocol === "tauri:";
 }
 
@@ -77,6 +76,5 @@ export function isIOS(): boolean {
  */
 export function isAndroid(): boolean {
     if (!isTauri()) return false;
-    if (typeof window === "undefined") return false;
     return window.location.hostname === "tauri.localhost";
 }
