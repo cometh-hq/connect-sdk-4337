@@ -159,9 +159,6 @@ export const isWebAuthnCompatible = async (
     webAuthnOptions: webAuthnOptions
 ): Promise<boolean> => {
     try {
-        // Tauri handles WebAuthn via its own native plugin
-        if (webAuthnOptions.tauriOptions) return true;
-
         // new iOS versions have issues with
         // PublicKeyCredential APIs, so we skip all checks and return true
         if (isIOS()) return true;
