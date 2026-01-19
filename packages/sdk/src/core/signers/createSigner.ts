@@ -105,10 +105,7 @@ export const isFallbackSigner = (): boolean => {
 export const isDeviceCompatibleWithPasskeys = async (options: {
     webAuthnOptions: webAuthnOptions;
 }) => {
-    const webAuthnCompatible = await isWebAuthnCompatible(
-        options.webAuthnOptions
-    );
-
+    const webAuthnCompatible = await isWebAuthnCompatible(options.webAuthnOptions);
     return webAuthnCompatible && !isFallbackSigner();
 };
 
@@ -140,6 +137,7 @@ export async function createSigner({
     const passkeyCompatible = await isDeviceCompatibleWithPasskeys({
         webAuthnOptions,
     });
+
 
     if (passkeyCompatible) {
         let passkey: PasskeyLocalStorageFormat;
@@ -179,6 +177,7 @@ export async function createSigner({
                     safeContractParams.safeWebAuthnSharedSignerContractAddress,
                 fullDomainSelected,
                 rpId,
+                tauriOptions: webAuthnOptions?.tauriOptions,
             });
         }
 

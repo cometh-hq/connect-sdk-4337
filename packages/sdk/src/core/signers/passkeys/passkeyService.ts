@@ -2,12 +2,17 @@ import { SafeAbi } from "@/core/accounts/safe/abi/safe";
 import { isSafeOwner } from "@/core/accounts/safe/services/safe";
 import type { API } from "@/core/services/API";
 import type { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
+import { isTauri } from "@/core/services/tauri/platform";
+import {
+    getTauriCreateFn,
+    getTauriGetFn,
+} from "@/core/services/tauri/tauriBridge";
 import { parseAuthenticatorData } from "@simplewebauthn/server/helpers";
 import CBOR from "cbor-js";
 import elliptic from "elliptic";
+import { WebAuthnP256 } from "ox";
 import { isSmartAccountDeployed } from "permissionless";
-import psl from "psl";
-import type { ParsedDomain } from "psl";
+import * as psl from "psl";
 import {
     http,
     type Address,
@@ -18,9 +23,8 @@ import {
     encodeAbiParameters,
     getContract,
     hashMessage,
+    hexToBytes,
     keccak256,
-    toBytes,
-    toHex,
 } from "viem";
 import {
     FailedToGeneratePasskeyError,
@@ -35,15 +39,16 @@ import {
     SignerNotOwnerError,
 } from "../../../errors";
 import {
+    arrayBufferToBase64,
+    base64ToBase64Url,
     extractClientDataFields,
-    extractSignature,
     hexArrayStr,
     parseHex,
+    uint8ArrayToBase64,
 } from "../passkeys/utils";
 import type { Signer } from "../types";
 import type {
-    Assertion,
-    PasskeyCredential,
+    OxPasskeyCredential,
     PasskeyLocalStorageFormat,
     WebAuthnSigner,
     webAuthnOptions,
@@ -52,11 +57,22 @@ import type {
 const EC = elliptic.ec;
 
 const _formatCreatingRpId = (
-    fullDomainSelected: boolean
-): { name: string; id?: string } => {
-    const rootDomain = (psl.parse(window.location.host) as ParsedDomain).domain;
+    fullDomainSelected: boolean,
+    tauriOptions?: webAuthnOptions["tauriOptions"]
+): { name: string; id: string } => {
+    if (isTauri()) {
+        if (!tauriOptions?.rpId) throw new Error("Tauri RP ID is required");
 
-    if (!rootDomain) return { name: "localhost" };
+        return {
+            name: "Cometh Connect",
+            id: tauriOptions.rpId,
+        };
+    }
+
+    const rootDomain = (psl.parse(window.location.host) as psl.ParsedDomain)
+        .domain;
+
+    if (!rootDomain) return { name: "localhost", id: "localhost" };
 
     return fullDomainSelected
         ? {
@@ -70,14 +86,56 @@ const _formatCreatingRpId = (
 };
 
 const _formatSigningRpId = (
-    fullDomainSelected: boolean
+    fullDomainSelected: boolean,
+    tauriOptions?: webAuthnOptions["tauriOptions"]
 ): string | undefined => {
-    const rootDomain = (psl.parse(window.location.host) as ParsedDomain).domain;
+    if (isTauri()) {
+        if (!tauriOptions?.rpId) throw new Error("Tauri RP ID is required");
+       return tauriOptions.rpId
+    }
+    const rootDomain = (psl.parse(window.location.host) as psl.ParsedDomain)
+        .domain;
 
     if (!rootDomain) return undefined;
 
     return fullDomainSelected ? window.location.host : rootDomain;
 };
+
+// ox's WebAuthnP256.sign expects `credentialId` as a base64url string.
+// Convert from possible inputs (hex string, ArrayBuffer, TypedArray, base64) to base64url.
+const _formatCredentialIdForOx = (id: unknown): string | undefined => {
+    if (!id) return undefined;
+
+    // Already base64url
+    if (typeof id === "string" && /^[A-Za-z0-9_-]+$/.test(id)) {
+        return id;
+    }
+
+    // Hex string (0x…)
+    if (typeof id === "string" && id.startsWith("0x")) {
+        const bytes = hexToBytes(id as `0x${string}`);
+        return base64ToBase64Url(uint8ArrayToBase64(bytes));
+    }
+
+    // ArrayBuffer
+    if (id instanceof ArrayBuffer) {
+        return base64ToBase64Url(arrayBufferToBase64(id));
+    }
+
+    // TypedArray / Uint8Array
+    if (ArrayBuffer.isView(id)) {
+        const view = id as ArrayBufferView;
+        const bytes = new Uint8Array(
+            view.buffer,
+            view.byteOffset,
+            view.byteLength
+        );
+        return base64ToBase64Url(uint8ArrayToBase64(bytes));
+    }
+
+    return undefined;
+};
+
 
 const createPasskeySigner = async ({
     api,
@@ -93,39 +151,36 @@ const createPasskeySigner = async ({
     safeWebAuthnSharedSignerAddress?: Address;
 }): Promise<PasskeyLocalStorageFormat> => {
     try {
-        const name = passKeyName || "Cometh Connect";
-        const authenticatorSelection = webAuthnOptions?.authenticatorSelection;
+        const name = passKeyName || "Cometh";
         const extensions = webAuthnOptions?.extensions;
 
-        const passkeyCredential = (await navigator.credentials.create({
-            publicKey: {
-                rp: _formatCreatingRpId(fullDomainSelected),
-                user: {
-                    id: crypto.getRandomValues(new Uint8Array(32)),
-                    name,
-                    displayName: name,
-                },
-                attestation: "none",
-                authenticatorSelection,
-                timeout: 60000,
-                challenge: crypto.getRandomValues(new Uint8Array(32)),
-                pubKeyCredParams: [
-                    { alg: -7, type: "public-key" },
-                    { alg: -257, type: "public-key" },
-                ],
-                extensions,
+        const tauriCreateFn = webAuthnOptions?.tauriOptions && getTauriCreateFn(webAuthnOptions?.tauriOptions);
+
+        const passkeyCredential = (await WebAuthnP256.createCredential({
+            rp: _formatCreatingRpId(
+                fullDomainSelected,
+                webAuthnOptions?.tauriOptions
+            ),
+            user: {
+                name,
+                displayName: name,
             },
-        })) as PasskeyCredential;
+            attestation: "none",
+            authenticatorSelection: webAuthnOptions?.authenticatorSelection,
+            timeout: 60_000,
+            extensions,
+            ...(tauriCreateFn && { createFn: tauriCreateFn }),
+        })) as unknown as OxPasskeyCredential;
 
         if (!passkeyCredential) {
             throw new FailedToGeneratePasskeyError();
         }
 
         const publicKeyAlgorithm =
-            passkeyCredential.response.getPublicKeyAlgorithm();
+            passkeyCredential.raw.response.getPublicKeyAlgorithm();
 
         const attestationObject =
-            passkeyCredential?.response?.attestationObject;
+            passkeyCredential?.raw?.response?.attestationObject;
 
         // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
         let attestation: any;
@@ -139,7 +194,7 @@ const createPasskeySigner = async ({
         const authData = parseAuthenticatorData(attestation.authData);
 
         const credentialPublicKeyBuffer = authData?.credentialPublicKey
-            ?.buffer as ArrayBufferLike;
+            ?.buffer as ArrayBuffer;
 
         const publicKey = CBOR.decode(credentialPublicKeyBuffer);
         const x = publicKey[-2];
@@ -149,7 +204,7 @@ const createPasskeySigner = async ({
 
         const publicKeyX = `0x${point.getX().toString(16)}` as Hex;
         const publicKeyY = `0x${point.getY().toString(16)}` as Hex;
-        const publicKeyId = hexArrayStr(passkeyCredential.rawId) as Hex;
+        const publicKeyId = hexArrayStr(passkeyCredential.raw.rawId) as Hex;
 
         const signerAddress =
             safeWebAuthnSharedSignerAddress ??
@@ -181,21 +236,26 @@ const sign = async ({
     fullDomainSelected,
     publicKeyCredential,
     rpId,
+    tauriOptions,
 }: {
     challenge: string;
     fullDomainSelected: boolean;
     publicKeyCredential?: PublicKeyCredentialDescriptor[];
     rpId?: string;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<{ signature: Hex; publicKeyId: Hex }> => {
-    const assertion = (await navigator.credentials.get({
-        publicKey: {
-            challenge: toBytes(challenge),
-            rpId: rpId || _formatSigningRpId(fullDomainSelected),
-            allowCredentials: publicKeyCredential || [],
-            userVerification: "required",
-            timeout: 60000,
-        },
-    })) as Assertion | null;
+    // Only pass getFn if defined (Android), omit for iOS/web to use browser default
+    const tauriGetFn = tauriOptions && getTauriGetFn(tauriOptions);
+
+    const assertion = await WebAuthnP256.sign({
+        challenge: challenge as Hex,
+        ...(publicKeyCredential?.length && {
+            credentialId: _formatCredentialIdForOx(publicKeyCredential[0].id),
+        }),
+        rpId: rpId || _formatSigningRpId(fullDomainSelected, tauriOptions),
+        userVerification: "required",
+        ...(tauriGetFn && { getFn: tauriGetFn }),
+    });
 
     if (!assertion) throw new PasskeySignatureFailedError();
 
@@ -206,13 +266,13 @@ const sign = async ({
             { type: "uint256[2]", name: "signature" },
         ],
         [
-            toHex(new Uint8Array(assertion.response.authenticatorData)),
-            extractClientDataFields(assertion.response) as Hex,
-            extractSignature(assertion.response.signature),
+            assertion.metadata.authenticatorData as Hex,
+            extractClientDataFields(assertion.raw.response) as Hex,
+            [BigInt(assertion.signature.r), BigInt(assertion.signature.s)],
         ]
     );
 
-    const publicKeyId = hexArrayStr(assertion.rawId) as Hex;
+    const publicKeyId = hexArrayStr(assertion.raw.rawId) as Hex;
 
     return { signature, publicKeyId };
 };
@@ -222,14 +282,15 @@ const signWithPasskey = async ({
     webAuthnSigners,
     fullDomainSelected,
     rpId,
+    tauriOptions,
 }: {
     challenge: string;
     webAuthnSigners?: WebAuthnSigner[];
     fullDomainSelected: boolean;
     rpId?: string;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<{ signature: Hex; publicKeyId: Hex }> => {
     let publicKeyCredentials: PublicKeyCredentialDescriptor[] | undefined;
-
     if (webAuthnSigners) {
         publicKeyCredentials = webAuthnSigners.map((webAuthnSigner) => {
             return {
@@ -244,6 +305,7 @@ const signWithPasskey = async ({
         publicKeyCredential: publicKeyCredentials,
         fullDomainSelected,
         rpId,
+        tauriOptions
     });
 
     return webAuthnSignature;
@@ -298,6 +360,7 @@ const getPasskeySigner = async ({
     multisendAddress,
     fullDomainSelected,
     rpId,
+    tauriOptions,
 }: {
     api: API;
     smartAccountAddress: Address;
@@ -312,6 +375,7 @@ const getPasskeySigner = async ({
     multisendAddress: Address;
     fullDomainSelected: boolean;
     rpId?: string;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<PasskeyLocalStorageFormat> => {
     const localStoragePasskey = getPasskeyInStorage(smartAccountAddress);
 
@@ -365,6 +429,7 @@ const getPasskeySigner = async ({
             webAuthnSigners: dbPasskeySigners as WebAuthnSigner[],
             fullDomainSelected,
             rpId,
+            tauriOptions
         });
     } catch {
         throw new NoPasskeySignerFoundInDeviceError();
@@ -425,7 +490,8 @@ const retrieveSmartAccountAddressFromPasskey = async (
     fullDomainSelected: boolean,
     rpId?: string,
     publicClient?: PublicClient,
-    legacyAPI?: LEGACY_API
+    legacyAPI?: LEGACY_API,
+    tauriOptions?: webAuthnOptions["tauriOptions"]
 ): Promise<Address> => {
     let publicKeyId: Hex;
 
@@ -435,6 +501,7 @@ const retrieveSmartAccountAddressFromPasskey = async (
                 challenge: "Retrieve user wallet",
                 fullDomainSelected,
                 rpId,
+                tauriOptions
             })
         ).publicKeyId as Hex;
     } catch {
@@ -490,6 +557,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     fullDomainSelected,
     publicClient,
     rpId,
+    tauriOptions,
 }: {
     API: API;
     id: string;
@@ -497,6 +565,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     fullDomainSelected: boolean;
     publicClient?: PublicClient;
     rpId?: string;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<Address> => {
     const publicKeyCredentials = [
         {
@@ -514,6 +583,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
                 publicKeyCredential: publicKeyCredentials,
                 fullDomainSelected,
                 rpId,
+                tauriOptions
             })
         ).publicKeyId as Hex;
     } catch {
