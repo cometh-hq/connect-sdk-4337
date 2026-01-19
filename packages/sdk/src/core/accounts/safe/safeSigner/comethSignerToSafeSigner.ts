@@ -3,10 +3,10 @@ import type { Address, Chain, Client, Transport } from "viem";
 import { safeECDSASigner } from "./ecdsa/ecdsa.js";
 
 import { getSigner, isComethSigner } from "@/core/signers/createSigner.js";
+import type { webAuthnOptions } from "@/core/signers/passkeys/types.js";
 import type { Signer } from "@/core/signers/types.js";
 import type { SafeSigner } from "./types.js";
 import { safeWebAuthnSigner } from "./webauthn/webAuthn.js";
-import type { webAuthnOptions } from "@/core/signers/passkeys/types.js";
 
 type SafeSignerParams = {
     accountSigner: Signer;
@@ -42,7 +42,7 @@ export async function comethSignerToSafeSigner<
         smartAccountAddress,
         fullDomainSelected,
         rpId,
-        tauriOptions
+        tauriOptions,
     }: SafeSignerParams
 ): Promise<SafeSigner> {
     if (isComethSigner(accountSigner) && accountSigner.type === "passkey") {
@@ -54,7 +54,7 @@ export async function comethSignerToSafeSigner<
                 smartAccountAddress,
                 fullDomainSelected,
                 rpId,
-                tauriOptions
+                tauriOptions,
             })),
         };
     }

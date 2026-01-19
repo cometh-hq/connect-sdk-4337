@@ -3,8 +3,8 @@ import {
     retrieveSmartAccountAddressFromPasskey,
     retrieveSmartAccountAddressFromPasskeyId,
 } from "@/core/signers/passkeys/passkeyService";
-import { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
 import type { webAuthnOptions } from "@/core/signers/passkeys/types";
+import { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
 import type { Address, Chain, PublicClient } from "viem";
 
 /**
@@ -23,7 +23,7 @@ export const retrieveAccountAddressFromPasskeys = async ({
     publicClient,
     checkLegacy = false,
     legacyBaseUrl,
-    tauriOptions
+    tauriOptions,
 }: {
     apiKey: string;
     chain: Chain;
@@ -69,7 +69,7 @@ export const retrieveAccountAddressFromPasskeyId = async ({
     rpId,
     baseUrl,
     publicClient,
-    tauriOptions
+    tauriOptions,
 }: {
     apiKey: string;
     id: string;
@@ -89,6 +89,6 @@ export const retrieveAccountAddressFromPasskeyId = async ({
         fullDomainSelected,
         publicClient,
         rpId,
-        tauriOptions
+        tauriOptions,
     });
 };
