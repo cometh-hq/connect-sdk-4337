@@ -166,7 +166,7 @@ const createPasskeySigner = async ({
                 name,
                 displayName: name,
             },
-            attestation: "none",
+            attestation: webAuthnOptions?.attestation ?? "none",
             authenticatorSelection: webAuthnOptions?.authenticatorSelection,
             timeout: 60_000,
             extensions,
