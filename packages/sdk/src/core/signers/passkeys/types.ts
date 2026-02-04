@@ -38,6 +38,7 @@ interface webAuthnOptions {
         requireResidentKey?: boolean;
         residentKey?: ResidentKeyRequirement;
     };
+    attestation?: AttestationConveyancePreference;
     // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     extensions?: any;
     tauriOptions?: {
