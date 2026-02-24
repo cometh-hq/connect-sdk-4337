@@ -3,6 +3,7 @@ import {
     retrieveSmartAccountAddressFromPasskey,
     retrieveSmartAccountAddressFromPasskeyId,
 } from "@/core/signers/passkeys/passkeyService";
+import type { webAuthnOptions } from "@/core/signers/passkeys/types";
 import { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
 import type { Address, Chain, PublicClient } from "viem";
 
@@ -22,6 +23,7 @@ export const retrieveAccountAddressFromPasskeys = async ({
     publicClient,
     checkLegacy = false,
     legacyBaseUrl,
+    tauriOptions,
 }: {
     apiKey: string;
     chain: Chain;
@@ -31,6 +33,7 @@ export const retrieveAccountAddressFromPasskeys = async ({
     publicClient?: PublicClient;
     checkLegacy?: boolean;
     legacyBaseUrl?: string;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
     let legacyApi: LEGACY_API | undefined;
@@ -45,7 +48,8 @@ export const retrieveAccountAddressFromPasskeys = async ({
         fullDomainSelected,
         rpId,
         publicClient,
-        legacyApi
+        legacyApi,
+        tauriOptions
     );
 };
 
@@ -65,6 +69,7 @@ export const retrieveAccountAddressFromPasskeyId = async ({
     rpId,
     baseUrl,
     publicClient,
+    tauriOptions,
 }: {
     apiKey: string;
     id: string;
@@ -73,6 +78,7 @@ export const retrieveAccountAddressFromPasskeyId = async ({
     rpId?: string;
     baseUrl?: string;
     publicClient?: PublicClient;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<Address> => {
     const api = new API(apiKey, baseUrl);
 
@@ -83,5 +89,6 @@ export const retrieveAccountAddressFromPasskeyId = async ({
         fullDomainSelected,
         publicClient,
         rpId,
+        tauriOptions,
     });
 };
