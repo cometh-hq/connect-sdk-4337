@@ -21,7 +21,10 @@ import {
     packPaymasterData,
 } from "@/core/accounts/safe/services/utils";
 import { sign } from "@/core/signers/passkeys/passkeyService";
-import type { PasskeyLocalStorageFormat } from "@/core/signers/passkeys/types";
+import type {
+    PasskeyLocalStorageFormat,
+    webAuthnOptions,
+} from "@/core/signers/passkeys/types";
 import { parseHex } from "@/core/signers/passkeys/utils";
 import { MethodNotSupportedError } from "@/errors";
 import {
@@ -55,6 +58,7 @@ export async function safeWebAuthnSigner<
         fullDomainSelected,
         rpId,
         userOpVerifyingContract,
+        tauriOptions,
     }: {
         passkey: PasskeyLocalStorageFormat;
         passkeySignerAddress: Address;
@@ -62,6 +66,7 @@ export async function safeWebAuthnSigner<
         fullDomainSelected: boolean;
         userOpVerifyingContract: Address;
         rpId?: string;
+        tauriOptions?: webAuthnOptions["tauriOptions"];
     }
 ): Promise<SafeSigner<"safeWebAuthnSigner">> {
     const publicKeyCredential: PublicKeyCredentialDescriptor = {
@@ -113,6 +118,7 @@ export async function safeWebAuthnSigner<
                 publicKeyCredential: [publicKeyCredential],
                 fullDomainSelected,
                 rpId,
+                tauriOptions,
             });
 
             return buildSignatureBytes([
@@ -192,6 +198,7 @@ export async function safeWebAuthnSigner<
                 publicKeyCredential: [publicKeyCredential],
                 fullDomainSelected,
                 rpId,
+                tauriOptions,
             });
 
             return encodePacked(

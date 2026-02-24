@@ -1,4 +1,3 @@
-
 import type { ComethSafeSmartAccount } from "@/core/accounts/safe/createSafeSmartAccount";
 import type {
     Chain,
@@ -44,8 +43,8 @@ import {
     WalletNotConnectedError,
 } from "@/errors";
 import { CallStatus } from "./types/provider";
-import { validatePermissions } from "./utils/permissions";
 import { MittEmitter } from "./utils/mitter";
+import { validatePermissions } from "./utils/permissions";
 
 export class EIP1193Provider extends MittEmitter {
     private comethSmartAccountClient: ComethSmartAccountClient<

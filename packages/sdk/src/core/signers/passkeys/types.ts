@@ -6,22 +6,22 @@ type Assertion = {
     response: AuthenticatorAssertionResponse;
 };
 
-type PasskeyCredential = {
-    id: "string";
-    rawId: ArrayBuffer;
-    response: {
-        clientDataJSON: ArrayBuffer;
-        attestationObject: ArrayBuffer;
-        getPublicKey(): ArrayBuffer;
-        getPublicKeyAlgorithm(): number;
-    };
-    type: "public-key";
-};
-
-type PasskeyCredentialWithPubkeyCoordinates = PasskeyCredential & {
-    pubkeyCoordinates: {
+type OxPasskeyCredential = {
+    id: string;
+    publicKey: {
+        prefix: number;
         x: Hex;
         y: Hex;
+    };
+    raw: {
+        rawId: ArrayBuffer;
+        response: {
+            clientDataJSON: ArrayBuffer;
+            attestationObject: ArrayBuffer;
+            getPublicKey(): ArrayBuffer;
+            getPublicKeyAlgorithm(): number;
+        };
+        type: "public-key";
     };
 };
 
@@ -38,8 +38,13 @@ interface webAuthnOptions {
         requireResidentKey?: boolean;
         residentKey?: ResidentKeyRequirement;
     };
+    attestation?: AttestationConveyancePreference;
     // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
     extensions?: any;
+    tauriOptions?: {
+        androidApkOrigin: string;
+        rpId: string;
+    };
 }
 
 type PasskeyLocalStorageFormat = {
@@ -95,9 +100,8 @@ type WebAuthnSigner = {
 
 export type {
     Assertion,
-    PasskeyCredential,
     PasskeyCredentials,
-    PasskeyCredentialWithPubkeyCoordinates,
+    OxPasskeyCredential,
     webAuthnOptions,
     PasskeyLocalStorageFormat,
     P256Signature,

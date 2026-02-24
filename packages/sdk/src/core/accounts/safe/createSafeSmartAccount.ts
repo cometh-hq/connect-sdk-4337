@@ -307,6 +307,7 @@ export async function createSafeSmartAccount<
             smartAccountAddress,
             fullDomainSelected: comethSignerConfig?.fullDomainSelected ?? false,
             rpId: comethSignerConfig?.rpId,
+            tauriOptions: comethSignerConfig?.webAuthnOptions?.tauriOptions,
         }));
 
     return toSmartAccount({
