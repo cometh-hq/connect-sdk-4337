@@ -492,19 +492,25 @@ const retrieveSmartAccountAddressFromPasskey = async (
     rpId?: string,
     publicClient?: PublicClient,
     legacyAPI?: LEGACY_API,
-    tauriOptions?: webAuthnOptions["tauriOptions"]
-): Promise<Address> => {
+    tauriOptions?: webAuthnOptions["tauriOptions"],
+    hash?: Hex
+): Promise<{
+    smartAccountAddress: Address;
+    signature: Hex;
+    publicKeyId: Hex;
+}> => {
+    const challenge = hash ?? keccak256(hashMessage("Retrieve user wallet"));
+
+    let signature: Hex;
     let publicKeyId: Hex;
 
     try {
-        publicKeyId = (
-            await signWithPasskey({
-                challenge: "Retrieve user wallet",
-                fullDomainSelected,
-                rpId,
-                tauriOptions,
-            })
-        ).publicKeyId as Hex;
+        ({ signature, publicKeyId } = await sign({
+            challenge,
+            fullDomainSelected,
+            rpId,
+            tauriOptions,
+        }));
     } catch {
         throw new RetrieveWalletFromPasskeyError();
     }
@@ -548,7 +554,11 @@ const retrieveSmartAccountAddressFromPasskey = async (
         signerAddress as Address
     );
 
-    return smartAccountAddress as Address;
+    return {
+        smartAccountAddress: smartAccountAddress as Address,
+        signature,
+        publicKeyId,
+    };
 };
 
 const retrieveSmartAccountAddressFromPasskeyId = async ({
@@ -559,6 +569,7 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     publicClient,
     rpId,
     tauriOptions,
+    hash,
 }: {
     API: API;
     id: string;
@@ -567,7 +578,12 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
     publicClient?: PublicClient;
     rpId?: string;
     tauriOptions?: webAuthnOptions["tauriOptions"];
-}): Promise<Address> => {
+    hash?: Hex;
+}): Promise<{
+    smartAccountAddress: Address;
+    signature: Hex;
+    publicKeyId: Hex;
+}> => {
     const publicKeyCredentials = [
         {
             id: parseHex(id),
@@ -575,18 +591,19 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
         },
     ] as PublicKeyCredentialDescriptor[];
 
+    const challenge = hash ?? keccak256(hashMessage("Retrieve user wallet"));
+
+    let signature: Hex;
     let publicKeyId: Hex;
 
     try {
-        publicKeyId = (
-            await sign({
-                challenge: keccak256(hashMessage("Retrieve user wallet")),
-                publicKeyCredential: publicKeyCredentials,
-                fullDomainSelected,
-                rpId,
-                tauriOptions,
-            })
-        ).publicKeyId as Hex;
+        ({ signature, publicKeyId } = await sign({
+            challenge,
+            publicKeyCredential: publicKeyCredentials,
+            fullDomainSelected,
+            rpId,
+            tauriOptions,
+        }));
     } catch {
         throw new RetrieveWalletFromPasskeyError();
     }
@@ -619,7 +636,11 @@ const retrieveSmartAccountAddressFromPasskeyId = async ({
         signerAddress as Address
     );
 
-    return smartAccountAddress as Address;
+    return {
+        smartAccountAddress: smartAccountAddress as Address,
+        signature,
+        publicKeyId,
+    };
 };
 
 const _checkIfOwner = async ({

@@ -15,7 +15,9 @@ import {
 } from "./core/actions/accounts/addNewDevice";
 import {
     retrieveAccountAddressFromPasskeyId,
+    retrieveAccountAddressFromPasskeyIdWithSignature,
     retrieveAccountAddressFromPasskeys,
+    retrieveAccountAddressFromPasskeysWithSignature,
 } from "./core/actions/accounts/retrieveAccountAddressFromPasskey";
 import { importSafeActions } from "./core/actions/accounts/safe/importSafe/importSafeActions";
 import type { EnrichedOwner } from "./core/actions/accounts/safe/owners/safeOwnerActions";
@@ -129,6 +131,8 @@ export {
     createSmartAccountClient,
     retrieveAccountAddressFromPasskeys,
     retrieveAccountAddressFromPasskeyId,
+    retrieveAccountAddressFromPasskeysWithSignature,
+    retrieveAccountAddressFromPasskeyIdWithSignature,
     createNewSigner,
     createNewSignerWithAccountAddress,
     serializeUrlWithSignerPayload,
