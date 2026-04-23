@@ -6,7 +6,14 @@ import {
 import type { webAuthnOptions } from "@/core/signers/passkeys/types";
 import { InvalidParamsError } from "@/errors";
 import { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
-import { type Address, type Chain, type Hex, type PublicClient, isHex, size } from "viem";
+import {
+    type Address,
+    type Chain,
+    type Hex,
+    type PublicClient,
+    isHex,
+    size,
+} from "viem";
 
 export type RetrieveAccountAddressWithSignatureResponse = {
     smartAccountAddress: Address;
