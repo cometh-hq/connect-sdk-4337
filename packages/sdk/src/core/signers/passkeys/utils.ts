@@ -1,9 +1,10 @@
 import * as psl from "psl";
-import { maxUint256, toBytes, toHex } from "viem";
+import { type Hex, isHex, maxUint256, size, toBytes, toHex } from "viem";
 
 import { getDeviceData } from "@/core/services/deviceService";
 import {
     ChallengeNotFoundError,
+    InvalidParamsError,
     InvalidSignatureEncodingError,
 } from "@/errors";
 import type { webAuthnOptions } from "./types";
@@ -31,6 +32,14 @@ export const rpId = (): { name: string; id?: string } => {
               id: rootDomain,
           }
         : { name: "localhost" };
+};
+
+export const assertValidHash = (hash: Hex): void => {
+    if (!isHex(hash) || size(hash) !== 32) {
+        throw new InvalidParamsError(
+            "hash must be a 32-byte 0x-prefixed hex string"
+        );
+    }
 };
 
 export const hexArrayStr = (array: ArrayBuffer): string =>
