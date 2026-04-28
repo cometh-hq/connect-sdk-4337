@@ -5,11 +5,14 @@ import { encryptSignerInStorage } from "@/core/signers/ecdsa/services/ecdsaServi
 import {
     createPasskeySigner,
     setPasskeyInStorage,
+    sign,
 } from "@/core/signers/passkeys/passkeyService";
 import type { webAuthnOptions } from "@/core/signers/passkeys/types";
 import {
     DEFAULT_WEBAUTHN_OPTIONS,
+    assertValidHash,
     isWebAuthnCompatible,
+    parseHex,
 } from "@/core/signers/passkeys/utils";
 import type { Signer } from "@/core/types";
 import {
@@ -38,6 +41,7 @@ export type CreateNewSignerParams = {
     passKeyName?: string;
     fullDomainSelected?: boolean;
     encryptionSalt?: string;
+    hash?: Hex;
 };
 
 const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
@@ -77,6 +81,10 @@ const _flattenPayload = (signerPayload: Signer): Record<string, string> => {
  * @param passKeyName - Optional name for the passkey
  * @param encryptionSalt - Optional encryption salt
  * @param fullDomainSelected - Optional selected the full domain for the passkey
+ * @param hash - Optional 32-byte 0x-prefixed hash. When provided, the freshly
+ * created passkey signs it in a second WebAuthn ceremony and the resulting
+ * signature is returned alongside the signer. Disables the EOA fallback:
+ * throws DeviceNotCompatibleWithPasskeysError if WebAuthn is unavailable.
  */
 export const createNewSignerWithAccountAddress = async ({
     apiKey,
@@ -88,13 +96,18 @@ export const createNewSignerWithAccountAddress = async ({
     smartAccountAddress: Address;
     baseUrl?: string;
     params?: CreateNewSignerParams;
-}): Promise<Signer> => {
+}): Promise<Signer & { signature?: Hex }> => {
+    if (params.hash) assertValidHash(params.hash);
+
     const api = new API(apiKey, baseUrl);
-    const { signer, localPrivateKey } = await _createNewSigner(api, {
+    const signerOptions = {
         passKeyName: params.passKeyName,
         webAuthnOptions: params.webAuthnOptions,
         fullDomainSelected: params.fullDomainSelected ?? false,
-    });
+    };
+    const { signer, localPrivateKey } = params.hash
+        ? await _createNewPasskeySigner(api, signerOptions)
+        : await _createNewSigner(api, signerOptions);
 
     if (signer.publicKeyId) {
         const { publicKeyId, publicKeyX, publicKeyY, signerAddress } = signer;
@@ -118,7 +131,18 @@ export const createNewSignerWithAccountAddress = async ({
             params.encryptionSalt
         );
     }
-    return signer;
+
+    if (!params.hash) return signer;
+    if (!signer.publicKeyId) throw new InvalidSignerDataError();
+
+    const signature = await _signHashWithPasskey({
+        hash: params.hash,
+        publicKeyId: signer.publicKeyId,
+        fullDomainSelected: params.fullDomainSelected ?? false,
+        tauriOptions: params.webAuthnOptions?.tauriOptions,
+    });
+
+    return { ...signer, signature };
 };
 
 /**
@@ -128,6 +152,9 @@ export const createNewSignerWithAccountAddress = async ({
  * @param passKeyName - Optional name for the passkey
  * @param encryptionSalt - Optional encryption salt
  * @param fullDomainSelected - Optional selected the full domain for the passkey
+ * @param hash - Optional 32-byte 0x-prefixed hash. When provided, the freshly
+ * created passkey signs it in a second WebAuthn ceremony and the resulting
+ * signature is returned alongside the signer.
  */
 export const createNewSigner = async ({
     apiKey,
@@ -137,7 +164,9 @@ export const createNewSigner = async ({
     apiKey: string;
     baseUrl?: string;
     params?: CreateNewSignerParams;
-}): Promise<Signer> => {
+}): Promise<Signer & { signature?: Hex }> => {
+    if (params.hash) assertValidHash(params.hash);
+
     const api = new API(apiKey, baseUrl);
     const { signer } = await _createNewPasskeySigner(api, {
         webAuthnOptions: params.webAuthnOptions,
@@ -145,7 +174,17 @@ export const createNewSigner = async ({
         fullDomainSelected: params.fullDomainSelected ?? false,
     });
 
-    return signer;
+    if (!params.hash) return signer;
+    if (!signer.publicKeyId) throw new InvalidSignerDataError();
+
+    const signature = await _signHashWithPasskey({
+        hash: params.hash,
+        publicKeyId: signer.publicKeyId,
+        fullDomainSelected: params.fullDomainSelected ?? false,
+        tauriOptions: params.webAuthnOptions?.tauriOptions,
+    });
+
+    return { ...signer, signature };
 };
 
 export const serializeUrlWithSignerPayload = async (
@@ -281,4 +320,29 @@ const _createNewSigner = async (
         },
         localPrivateKey: privateKey,
     };
+};
+
+const _signHashWithPasskey = async ({
+    hash,
+    publicKeyId,
+    fullDomainSelected,
+    tauriOptions,
+}: {
+    hash: Hex;
+    publicKeyId: Hex;
+    fullDomainSelected: boolean;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
+}): Promise<Hex> => {
+    const publicKeyCredential = [
+        { id: parseHex(publicKeyId), type: "public-key" },
+    ] as PublicKeyCredentialDescriptor[];
+
+    const { signature } = await sign({
+        challenge: hash,
+        publicKeyCredential,
+        fullDomainSelected,
+        tauriOptions,
+    });
+
+    return signature;
 };

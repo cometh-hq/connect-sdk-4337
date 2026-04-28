@@ -4,29 +4,14 @@ import {
     retrieveSmartAccountAddressFromPasskeyId,
 } from "@/core/signers/passkeys/passkeyService";
 import type { webAuthnOptions } from "@/core/signers/passkeys/types";
-import { InvalidParamsError } from "@/errors";
+import { assertValidHash } from "@/core/signers/passkeys/utils";
 import { LEGACY_API } from "@/migrationKit/services/LEGACY_API";
-import {
-    type Address,
-    type Chain,
-    type Hex,
-    type PublicClient,
-    isHex,
-    size,
-} from "viem";
+import type { Address, Chain, Hex, PublicClient } from "viem";
 
 export type RetrieveAccountAddressWithSignatureResponse = {
     smartAccountAddress: Address;
     signature: Hex;
     publicKeyId: Hex;
-};
-
-const _assertValidHash = (hash: Hex): void => {
-    if (!isHex(hash) || size(hash) !== 32) {
-        throw new InvalidParamsError(
-            "hash must be a 32-byte 0x-prefixed hex string"
-        );
-    }
 };
 
 type RetrieveFromPasskeysParams = {
@@ -146,7 +131,7 @@ export const retrieveAccountAddressFromPasskeyId = async (
 export const retrieveAccountAddressFromPasskeysWithSignature = async (
     params: RetrieveFromPasskeysParams & { hash: Hex }
 ): Promise<RetrieveAccountAddressWithSignatureResponse> => {
-    _assertValidHash(params.hash);
+    assertValidHash(params.hash);
 
     const { smartAccountAddress, signature, publicKeyId } =
         await _retrieveFromPasskeys(params);
@@ -166,7 +151,7 @@ export const retrieveAccountAddressFromPasskeysWithSignature = async (
 export const retrieveAccountAddressFromPasskeyIdWithSignature = async (
     params: RetrieveFromPasskeyIdParams & { hash: Hex }
 ): Promise<RetrieveAccountAddressWithSignatureResponse> => {
-    _assertValidHash(params.hash);
+    assertValidHash(params.hash);
 
     const { smartAccountAddress, signature, publicKeyId } =
         await _retrieveFromPasskeyId(params);
