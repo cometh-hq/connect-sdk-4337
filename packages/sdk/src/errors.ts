@@ -401,6 +401,18 @@ export class PasskeySignerNotValidError extends Error {
     }
 }
 
+export class PRFNotSupportedError extends Error {
+    constructor() {
+        super("Passkey is not compatible with key derivation");
+    }
+}
+
+export class PRFDerivationFailedError extends Error {
+    constructor() {
+        super("Key derivation from passkey failed");
+    }
+}
+
 /**
  * Session keys Errors
  **/

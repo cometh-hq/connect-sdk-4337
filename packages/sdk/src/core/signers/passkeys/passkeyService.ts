@@ -25,6 +25,7 @@ import {
     hashMessage,
     hexToBytes,
     keccak256,
+    toBytes,
 } from "viem";
 import {
     FailedToGeneratePasskeyError,
@@ -32,6 +33,8 @@ import {
     NoPasskeySignerFoundInDBError,
     NoPasskeySignerFoundInDeviceError,
     NoPasskeySignerFoundInLegacyDBError,
+    PRFDerivationFailedError,
+    PRFNotSupportedError,
     PasskeyCreationError,
     PasskeySignatureFailedError,
     PasskeySignerFoundInLegacyDBError,
@@ -40,6 +43,7 @@ import {
 } from "../../../errors";
 import {
     arrayBufferToBase64,
+    assertValidHash,
     base64ToBase64Url,
     extractClientDataFields,
     hexArrayStr,
@@ -49,7 +53,9 @@ import {
 import type { Signer } from "../types";
 import type {
     OxPasskeyCredential,
+    PRFExtensionOutput,
     PasskeyLocalStorageFormat,
+    WebAuthnExtensions,
     WebAuthnSigner,
     webAuthnOptions,
 } from "./types";
@@ -169,7 +175,9 @@ const createPasskeySigner = async ({
             attestation: webAuthnOptions?.attestation ?? "none",
             authenticatorSelection: webAuthnOptions?.authenticatorSelection,
             timeout: 60_000,
-            extensions,
+            extensions: extensions as unknown as Parameters<
+                typeof WebAuthnP256.createCredential
+            >[0]["extensions"],
             ...(tauriCreateFn && { createFn: tauriCreateFn }),
         })) as unknown as OxPasskeyCredential;
 
@@ -268,7 +276,9 @@ const sign = async ({
         ],
         [
             assertion.metadata.authenticatorData as Hex,
-            extractClientDataFields(assertion.raw.response) as Hex,
+            extractClientDataFields(
+                assertion.raw.response as AuthenticatorAssertionResponse
+            ) as Hex,
             [BigInt(assertion.signature.r), BigInt(assertion.signature.s)],
         ]
     );
@@ -295,7 +305,7 @@ const signWithPasskey = async ({
     if (webAuthnSigners) {
         publicKeyCredentials = webAuthnSigners.map((webAuthnSigner) => {
             return {
-                id: parseHex(webAuthnSigner.publicKeyId),
+                id: parseHex(webAuthnSigner.publicKeyId) as BufferSource,
                 type: "public-key",
             };
         });
@@ -310,6 +320,120 @@ const signWithPasskey = async ({
     });
 
     return webAuthnSignature;
+};
+
+const PRF_DERIVATION_CHALLENGE: Hex = keccak256(
+    toBytes("cometh-prf-derivation")
+);
+
+/**
+ * Derives a deterministic 32-byte symmetric key from a passkey via the
+ * WebAuthn PRF extension. Same `(passkey, salt)` always yields the same
+ * `prfOutput`.
+ *
+ * Constraints:
+ * - The credential must support PRF. Synced passkeys (Apple Passwords,
+ *   Google Password Manager) support PRF on assertion even when the
+ *   credential was created without it. Hardware FIDO2 keys (YubiKey, etc.)
+ *   require the PRF extension to have been requested at credential creation
+ *   (pass `webAuthnOptions.extensions = { prf: {} }` to `createPasskeySigner`).
+ * - If the passkey is lost, all data encrypted with the derived key is
+ *   permanently inaccessible.
+ *
+ * Throws `PRFNotSupportedError` when the authenticator does not return a
+ * PRF output (either unsupported or not enabled on this credential).
+ * Throws `PRFDerivationFailedError` when the underlying WebAuthn assertion
+ * itself fails.
+ */
+const derivePRFKey = async ({
+    salt,
+    publicKeyCredential,
+    fullDomainSelected,
+    rpId,
+    tauriOptions,
+}: {
+    salt: Hex;
+    publicKeyCredential?: PublicKeyCredentialDescriptor;
+    fullDomainSelected: boolean;
+    rpId?: string;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
+}): Promise<{ prfOutput: Hex; publicKeyId: Hex }> => {
+    assertValidHash(salt);
+
+    const saltBytes = hexToBytes(salt);
+    const tauriGetFn = tauriOptions && getTauriGetFn(tauriOptions);
+
+    const prfExtensions: WebAuthnExtensions = {
+        prf: { eval: { first: saltBytes } },
+    };
+
+    let assertion: Awaited<ReturnType<typeof WebAuthnP256.sign>>;
+    try {
+        assertion = await WebAuthnP256.sign({
+            challenge: PRF_DERIVATION_CHALLENGE,
+            ...(publicKeyCredential && {
+                credentialId: _formatCredentialIdForOx(publicKeyCredential.id),
+            }),
+            rpId: rpId || _formatSigningRpId(fullDomainSelected, tauriOptions),
+            userVerification: "required",
+            extensions: prfExtensions as unknown as Parameters<
+                typeof WebAuthnP256.sign
+            >[0]["extensions"],
+            ...(tauriGetFn && { getFn: tauriGetFn }),
+        });
+    } catch {
+        throw new PRFDerivationFailedError();
+    }
+
+    if (!assertion) throw new PRFDerivationFailedError();
+
+    const rawCredential = assertion.raw as PublicKeyCredential;
+    if (typeof rawCredential.getClientExtensionResults !== "function") {
+        throw new PRFDerivationFailedError();
+    }
+    const extensionResults = rawCredential.getClientExtensionResults() as {
+        prf?: PRFExtensionOutput;
+    };
+
+    const prfBuffer = extensionResults.prf?.results?.first;
+    if (!prfBuffer) throw new PRFNotSupportedError();
+
+    if (prfBuffer.byteLength !== 32) {
+        throw new PRFDerivationFailedError();
+    }
+
+    return {
+        prfOutput: hexArrayStr(prfBuffer) as Hex,
+        publicKeyId: hexArrayStr(assertion.raw.rawId) as Hex,
+    };
+};
+
+const derivePRFKeyForSmartAccount = async ({
+    salt,
+    smartAccountAddress,
+    fullDomainSelected,
+    rpId,
+    tauriOptions,
+}: {
+    salt: Hex;
+    smartAccountAddress: Address;
+    fullDomainSelected: boolean;
+    rpId?: string;
+    tauriOptions?: webAuthnOptions["tauriOptions"];
+}): Promise<{ prfOutput: Hex; publicKeyId: Hex }> => {
+    const passkey = getPasskeyInStorage(smartAccountAddress);
+    if (!passkey) throw new NoPasskeySignerFoundInDBError();
+
+    return derivePRFKey({
+        salt,
+        publicKeyCredential: {
+            id: parseHex(passkey.id) as BufferSource,
+            type: "public-key",
+        },
+        fullDomainSelected,
+        rpId,
+        tauriOptions,
+    });
 };
 
 const setPasskeyInStorage = (
@@ -685,4 +809,6 @@ export {
     sign,
     retrieveSmartAccountAddressFromPasskey,
     retrieveSmartAccountAddressFromPasskeyId,
+    derivePRFKey,
+    derivePRFKeyForSmartAccount,
 };
