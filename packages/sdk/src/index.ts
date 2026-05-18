@@ -38,7 +38,13 @@ import { smartSessionActions } from "./core/modules/sessionKey/decorators";
 import { toSmartSessionsSigner } from "./core/modules/sessionKey/toSmartSessionsSigner";
 import type { RecoveryParamsResponse } from "./core/services/delayModuleService";
 import { createSigner } from "./core/signers/createSigner";
-import type { webAuthnOptions } from "./core/signers/passkeys/types";
+import { derivePRFKeyForSmartAccount } from "./core/signers/passkeys/passkeyService";
+import type {
+    PRFExtensionInput,
+    PRFExtensionOutput,
+    WebAuthnExtensions,
+    webAuthnOptions,
+} from "./core/signers/passkeys/types";
 import type { Signer } from "./core/types";
 import { createLegacySafeSmartAccount } from "./migrationKit/createLegacySafeSmartAccount";
 import { retrieveLegacyWalletAddress } from "./migrationKit/retrieveLegacyWalletAddress";
@@ -98,6 +104,8 @@ import {
     NoRecoveryRequestFoundError,
     NoSignerFoundError,
     OwnerToRemoveIsNotSafeOwnerError,
+    PRFDerivationFailedError,
+    PRFNotSupportedError,
     PasskeyCreationError,
     PasskeySignatureFailedError,
     PasskeySignerFoundInLegacyDBError,
@@ -133,6 +141,7 @@ export {
     retrieveAccountAddressFromPasskeyId,
     retrieveAccountAddressFromPasskeysWithSignature,
     retrieveAccountAddressFromPasskeyIdWithSignature,
+    derivePRFKeyForSmartAccount,
     createNewSigner,
     createNewSignerWithAccountAddress,
     serializeUrlWithSignerPayload,
@@ -199,6 +208,8 @@ export {
     NoPasskeySignerFoundInLegacyDBError,
     PasskeySignatureFailedError,
     PasskeySignerNotValidError,
+    PRFNotSupportedError,
+    PRFDerivationFailedError,
     PermissionNotInstalledError,
     MissingToAddressError,
     APINotFoundError,
@@ -225,6 +236,9 @@ export type {
     EnrichedOwner,
     QRCodeOptions,
     webAuthnOptions,
+    WebAuthnExtensions,
+    PRFExtensionInput,
+    PRFExtensionOutput,
     GetRecoveryRequestParams,
     RecoveryParamsResponse,
     CancelRecoveryRequestParams,
