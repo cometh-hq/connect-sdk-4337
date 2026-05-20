@@ -40,7 +40,6 @@ type PRFExtensionInput = {
 };
 
 type PRFExtensionOutput = {
-    enabled?: boolean;
     results?: { first: ArrayBuffer; second?: ArrayBuffer };
 };
 

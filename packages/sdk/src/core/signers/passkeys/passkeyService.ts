@@ -322,14 +322,19 @@ const signWithPasskey = async ({
     return webAuthnSignature;
 };
 
-const PRF_DERIVATION_CHALLENGE: Hex = keccak256(
-    toBytes("cometh-prf-derivation")
-);
+// Stable, vendor-neutral tag for the WebAuthn challenge required by the
+// assertion API. The signature produced over this challenge is not used —
+// only the PRF extension result is read. Changing this string does not
+// invalidate any previously-derived `prfOutput` values, since PRF input
+// comes from `context`, not from the challenge.
+const PRF_DERIVATION_CHALLENGE: Hex = keccak256(toBytes("prf-derivation-v1"));
 
 /**
  * Derives a deterministic 32-byte symmetric key from a passkey via the
- * WebAuthn PRF extension. Same `(passkey, salt)` always yields the same
- * `prfOutput`.
+ * WebAuthn PRF extension. Same `(passkey, context)` always yields the same
+ * `prfOutput`. The `context` acts as a domain-separation tag (HKDF-style):
+ * it must be stable across calls for the same derived key. A random value
+ * that is not persisted will produce an unrecoverable key.
  *
  * Constraints:
  * - The credential must support PRF. Synced passkeys (Apple Passwords,
@@ -346,25 +351,25 @@ const PRF_DERIVATION_CHALLENGE: Hex = keccak256(
  * itself fails.
  */
 const derivePRFKey = async ({
-    salt,
+    context,
     publicKeyCredential,
     fullDomainSelected,
     rpId,
     tauriOptions,
 }: {
-    salt: Hex;
+    context: Hex;
     publicKeyCredential?: PublicKeyCredentialDescriptor;
     fullDomainSelected: boolean;
     rpId?: string;
     tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<{ prfOutput: Hex; publicKeyId: Hex }> => {
-    assertValidHash(salt);
+    assertValidHash(context, "context");
 
-    const saltBytes = hexToBytes(salt);
+    const contextBytes = hexToBytes(context);
     const tauriGetFn = tauriOptions && getTauriGetFn(tauriOptions);
 
     const prfExtensions: WebAuthnExtensions = {
-        prf: { eval: { first: saltBytes } },
+        prf: { eval: { first: contextBytes } },
     };
 
     let assertion: Awaited<ReturnType<typeof WebAuthnP256.sign>>;
@@ -381,15 +386,21 @@ const derivePRFKey = async ({
             >[0]["extensions"],
             ...(tauriGetFn && { getFn: tauriGetFn }),
         });
-    } catch {
-        throw new PRFDerivationFailedError();
+    } catch (e) {
+        throw new PRFDerivationFailedError({ cause: e });
     }
 
-    if (!assertion) throw new PRFDerivationFailedError();
+    if (!assertion) {
+        throw new PRFDerivationFailedError({
+            cause: "WebAuthnP256.sign returned no assertion",
+        });
+    }
 
     const rawCredential = assertion.raw as PublicKeyCredential;
     if (typeof rawCredential.getClientExtensionResults !== "function") {
-        throw new PRFDerivationFailedError();
+        throw new PRFDerivationFailedError({
+            cause: "getClientExtensionResults unavailable on credential",
+        });
     }
     const extensionResults = rawCredential.getClientExtensionResults() as {
         prf?: PRFExtensionOutput;
@@ -399,7 +410,9 @@ const derivePRFKey = async ({
     if (!prfBuffer) throw new PRFNotSupportedError();
 
     if (prfBuffer.byteLength !== 32) {
-        throw new PRFDerivationFailedError();
+        throw new PRFDerivationFailedError({
+            cause: `unexpected PRF output size: ${prfBuffer.byteLength} bytes (expected 32)`,
+        });
     }
 
     return {
@@ -409,13 +422,13 @@ const derivePRFKey = async ({
 };
 
 const derivePRFKeyForSmartAccount = async ({
-    salt,
+    context,
     smartAccountAddress,
     fullDomainSelected,
     rpId,
     tauriOptions,
 }: {
-    salt: Hex;
+    context: Hex;
     smartAccountAddress: Address;
     fullDomainSelected: boolean;
     rpId?: string;
@@ -425,7 +438,7 @@ const derivePRFKeyForSmartAccount = async ({
     if (!passkey) throw new NoPasskeySignerFoundInDBError();
 
     return derivePRFKey({
-        salt,
+        context,
         publicKeyCredential: {
             id: parseHex(passkey.id) as BufferSource,
             type: "public-key",

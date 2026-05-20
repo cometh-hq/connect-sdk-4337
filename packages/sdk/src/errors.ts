@@ -408,8 +408,8 @@ export class PRFNotSupportedError extends Error {
 }
 
 export class PRFDerivationFailedError extends Error {
-    constructor() {
-        super("Key derivation from passkey failed");
+    constructor(options?: { cause?: unknown }) {
+        super("Key derivation from passkey failed", options);
     }
 }
 

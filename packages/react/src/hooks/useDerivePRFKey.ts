@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import type { Address, Hex } from "viem";
 
 type DerivePRFKeyParameters = {
-    salt: Hex;
+    context: Hex;
     smartAccountAddress: Address;
     fullDomainSelected?: boolean;
     rpId?: string;
@@ -18,9 +18,10 @@ type DerivePRFKeyResult = {
  * Hook for deriving a deterministic symmetric key from a passkey via the
  * WebAuthn PRF extension.
  *
- * Same `(passkey, salt)` always yields the same `prfOutput` (32 bytes hex).
- * Suitable as a seed for downstream cryptographic use (e.g. seeding a
- * Bermuda account, deriving an AES key via HKDF, etc.).
+ * Same `(passkey, context)` always yields the same `prfOutput` (32 bytes
+ * hex). The `context` is a domain-separation tag, not a PBKDF2 salt: it
+ * must be stable across calls for the same derived key. A random value
+ * that is not persisted will produce an unrecoverable key.
  *
  * Triggers a biometric prompt on each call. Cache the result in memory for
  * the session to avoid prompting the user repeatedly.
@@ -45,7 +46,7 @@ export const useDerivePRFKey = () => {
             setError(null);
             try {
                 return await derivePRFKeyForSmartAccount({
-                    salt: params.salt,
+                    context: params.context,
                     smartAccountAddress: params.smartAccountAddress,
                     fullDomainSelected: params.fullDomainSelected ?? false,
                     rpId: params.rpId,
