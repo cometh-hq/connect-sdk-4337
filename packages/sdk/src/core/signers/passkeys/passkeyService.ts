@@ -25,6 +25,7 @@ import {
     hashMessage,
     hexToBytes,
     keccak256,
+    stringToHex,
     toBytes,
 } from "viem";
 import {
@@ -43,7 +44,6 @@ import {
 } from "../../../errors";
 import {
     arrayBufferToBase64,
-    assertValidHash,
     base64ToBase64Url,
     extractClientDataFields,
     hexArrayStr,
@@ -330,11 +330,14 @@ const signWithPasskey = async ({
 const PRF_DERIVATION_CHALLENGE: Hex = keccak256(toBytes("prf-derivation-v1"));
 
 /**
- * Derives a deterministic 32-byte symmetric key from a passkey via the
- * WebAuthn PRF extension. Same `(passkey, context)` always yields the same
- * `prfOutput`. The `context` acts as a domain-separation tag (HKDF-style):
- * it must be stable across calls for the same derived key. A random value
- * that is not persisted will produce an unrecoverable key.
+ * Derives a deterministic 32-byte symmetric key from the passkey bound to a
+ * smart account, via the WebAuthn PRF extension. Same `(passkey, context)`
+ * always yields the same `prfOutput`.
+ *
+ * `context` is a domain-separation label (e.g. "my-app-purpose-v1"). The SDK
+ * hashes it internally with `keccak256(utf8(context))` to feed the PRF. It
+ * must be stable across calls for the same derived key — a random or
+ * per-call value will produce an unrecoverable key.
  *
  * Constraints:
  * - The credential must support PRF. Synced passkeys (Apple Passwords,
@@ -349,23 +352,32 @@ const PRF_DERIVATION_CHALLENGE: Hex = keccak256(toBytes("prf-derivation-v1"));
  * PRF output (either unsupported or not enabled on this credential).
  * Throws `PRFDerivationFailedError` when the underlying WebAuthn assertion
  * itself fails.
+ * Throws `NoPasskeySignerFoundInDBError` when no passkey is in local storage
+ * for the given smart account.
  */
 const derivePRFKey = async ({
     context,
-    publicKeyCredential,
+    smartAccountAddress,
     fullDomainSelected,
     rpId,
     tauriOptions,
 }: {
-    context: Hex;
-    publicKeyCredential?: PublicKeyCredentialDescriptor;
+    context: string;
+    smartAccountAddress: Address;
     fullDomainSelected: boolean;
     rpId?: string;
     tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<{ prfOutput: Hex; publicKeyId: Hex }> => {
-    assertValidHash(context, "context");
+    if (context.length === 0) {
+        throw new PRFDerivationFailedError({
+            cause: "context must be a non-empty string",
+        });
+    }
 
-    const contextBytes = hexToBytes(context);
+    const passkey = getPasskeyInStorage(smartAccountAddress);
+    if (!passkey) throw new NoPasskeySignerFoundInDBError();
+
+    const contextBytes = hexToBytes(keccak256(stringToHex(context)));
     const tauriGetFn = tauriOptions && getTauriGetFn(tauriOptions);
 
     const prfExtensions: WebAuthnExtensions = {
@@ -376,9 +388,7 @@ const derivePRFKey = async ({
     try {
         assertion = await WebAuthnP256.sign({
             challenge: PRF_DERIVATION_CHALLENGE,
-            ...(publicKeyCredential && {
-                credentialId: _formatCredentialIdForOx(publicKeyCredential.id),
-            }),
+            credentialId: _formatCredentialIdForOx(parseHex(passkey.id)),
             rpId: rpId || _formatSigningRpId(fullDomainSelected, tauriOptions),
             userVerification: "required",
             extensions: prfExtensions as unknown as Parameters<
@@ -419,34 +429,6 @@ const derivePRFKey = async ({
         prfOutput: hexArrayStr(prfBuffer) as Hex,
         publicKeyId: hexArrayStr(assertion.raw.rawId) as Hex,
     };
-};
-
-const derivePRFKeyForSmartAccount = async ({
-    context,
-    smartAccountAddress,
-    fullDomainSelected,
-    rpId,
-    tauriOptions,
-}: {
-    context: Hex;
-    smartAccountAddress: Address;
-    fullDomainSelected: boolean;
-    rpId?: string;
-    tauriOptions?: webAuthnOptions["tauriOptions"];
-}): Promise<{ prfOutput: Hex; publicKeyId: Hex }> => {
-    const passkey = getPasskeyInStorage(smartAccountAddress);
-    if (!passkey) throw new NoPasskeySignerFoundInDBError();
-
-    return derivePRFKey({
-        context,
-        publicKeyCredential: {
-            id: parseHex(passkey.id) as BufferSource,
-            type: "public-key",
-        },
-        fullDomainSelected,
-        rpId,
-        tauriOptions,
-    });
 };
 
 const setPasskeyInStorage = (
@@ -823,5 +805,4 @@ export {
     retrieveSmartAccountAddressFromPasskey,
     retrieveSmartAccountAddressFromPasskeyId,
     derivePRFKey,
-    derivePRFKeyForSmartAccount,
 };

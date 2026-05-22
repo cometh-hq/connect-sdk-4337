@@ -38,7 +38,7 @@ import { smartSessionActions } from "./core/modules/sessionKey/decorators";
 import { toSmartSessionsSigner } from "./core/modules/sessionKey/toSmartSessionsSigner";
 import type { RecoveryParamsResponse } from "./core/services/delayModuleService";
 import { createSigner } from "./core/signers/createSigner";
-import { derivePRFKeyForSmartAccount } from "./core/signers/passkeys/passkeyService";
+import { derivePRFKey } from "./core/signers/passkeys/passkeyService";
 import type {
     PRFExtensionInput,
     PRFExtensionOutput,
@@ -141,7 +141,7 @@ export {
     retrieveAccountAddressFromPasskeyId,
     retrieveAccountAddressFromPasskeysWithSignature,
     retrieveAccountAddressFromPasskeyIdWithSignature,
-    derivePRFKeyForSmartAccount,
+    derivePRFKey,
     createNewSigner,
     createNewSignerWithAccountAddress,
     serializeUrlWithSignerPayload,

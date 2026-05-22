@@ -1,9 +1,9 @@
-import { derivePRFKeyForSmartAccount } from "@cometh/connect-sdk-4337";
+import { derivePRFKey } from "@cometh/connect-sdk-4337";
 import { useCallback, useState } from "react";
 import type { Address, Hex } from "viem";
 
 type DerivePRFKeyParameters = {
-    context: Hex;
+    context: string;
     smartAccountAddress: Address;
     fullDomainSelected?: boolean;
     rpId?: string;
@@ -19,9 +19,9 @@ type DerivePRFKeyResult = {
  * WebAuthn PRF extension.
  *
  * Same `(passkey, context)` always yields the same `prfOutput` (32 bytes
- * hex). The `context` is a domain-separation tag, not a PBKDF2 salt: it
- * must be stable across calls for the same derived key. A random value
- * that is not persisted will produce an unrecoverable key.
+ * hex). The `context` is a domain-separation label (e.g.
+ * "my-app-purpose-v1"). It must be stable across calls for the same derived
+ * key — a random or per-call value will produce an unrecoverable key.
  *
  * Triggers a biometric prompt on each call. Cache the result in memory for
  * the session to avoid prompting the user repeatedly.
@@ -38,14 +38,14 @@ export const useDerivePRFKey = () => {
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const derivePRFKey = useCallback(
+    const _derivePRFKey = useCallback(
         async (
             params: DerivePRFKeyParameters
         ): Promise<DerivePRFKeyResult> => {
             setIsPending(true);
             setError(null);
             try {
-                return await derivePRFKeyForSmartAccount({
+                return await derivePRFKey({
                     context: params.context,
                     smartAccountAddress: params.smartAccountAddress,
                     fullDomainSelected: params.fullDomainSelected ?? false,
@@ -64,7 +64,7 @@ export const useDerivePRFKey = () => {
     );
 
     return {
-        derivePRFKey,
+        derivePRFKey: _derivePRFKey,
         isPending,
         error,
     };
