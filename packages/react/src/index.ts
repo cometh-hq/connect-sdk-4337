@@ -14,6 +14,7 @@ import {
     useGetTransactionCost,
     useGrantPermission,
     useIsRecoveryActive,
+    useDerivePRFKey,
     useRemoveOwner,
     useRetrieveAccountAddressFromPasskeyId,
     useRetrieveAccountAddressFromPasskeys,
@@ -80,6 +81,7 @@ export {
     useSessionKeyClient,
     useSendPermission,
     useSessionKeySigner,
+    useDerivePRFKey,
 };
 
 export type {

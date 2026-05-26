@@ -20,6 +20,8 @@ export * from "@/hooks/useRetrieveAddressFromPasskey";
 
 export * from "@/hooks/useCreatePasskeySigner";
 
+export * from "@/hooks/useDerivePRFKey";
+
 export * from "@/hooks/useSignMessage";
 
 export * from "@/hooks/recovery/useSetUpRecovery";

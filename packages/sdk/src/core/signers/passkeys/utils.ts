@@ -34,10 +34,10 @@ export const rpId = (): { name: string; id?: string } => {
         : { name: "localhost" };
 };
 
-export const assertValidHash = (hash: Hex): void => {
+export const assertValidHash = (hash: Hex, label = "hash"): void => {
     if (!isHex(hash) || size(hash) !== 32) {
         throw new InvalidParamsError(
-            "hash must be a 32-byte 0x-prefixed hex string"
+            `${label} must be a 32-byte 0x-prefixed hex string`
         );
     }
 };

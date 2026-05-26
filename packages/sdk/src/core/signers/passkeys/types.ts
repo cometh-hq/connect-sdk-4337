@@ -31,6 +31,22 @@ type PasskeyCredentials = Readonly<{
     publicKeyY: Hex;
 }>;
 
+type PRFExtensionInput = {
+    eval?: { first: Uint8Array; second?: Uint8Array };
+    evalByCredential?: Record<
+        string,
+        { first: Uint8Array; second?: Uint8Array }
+    >;
+};
+
+type PRFExtensionOutput = {
+    results?: { first: ArrayBuffer; second?: ArrayBuffer };
+};
+
+type WebAuthnExtensions = {
+    prf?: PRFExtensionInput;
+} & Record<string, unknown>;
+
 interface webAuthnOptions {
     authenticatorSelection?: {
         authenticatorAttachment?: AuthenticatorAttachment;
@@ -39,8 +55,7 @@ interface webAuthnOptions {
         residentKey?: ResidentKeyRequirement;
     };
     attestation?: AttestationConveyancePreference;
-    // biome-ignore lint/suspicious/noExplicitAny: TODO: remove any
-    extensions?: any;
+    extensions?: WebAuthnExtensions;
     tauriOptions?: {
         androidApkOrigin: string;
         rpId: string;
@@ -107,4 +122,7 @@ export type {
     P256Signature,
     WebAuthnSignature,
     WebAuthnSigner,
+    PRFExtensionInput,
+    PRFExtensionOutput,
+    WebAuthnExtensions,
 };
