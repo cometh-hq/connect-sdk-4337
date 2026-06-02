@@ -1,7 +1,5 @@
 "use client";
 
-import React, { useState } from "react";
-
 import ConnectWallet from "./components/ConnectWallet";
 import Transaction from "./components/Transaction";
 import { useSmartAccount } from "./modules/hooks/useSmartAccount";
@@ -14,7 +12,6 @@ export default function App() {
         connectionError,
         smartAccount,
     } = useSmartAccount();
-    const [transactionSuccess, setTransactionSuccess] = useState(false);
 
     return (
         <div
@@ -41,13 +38,7 @@ export default function App() {
 
                         {isConnected && (
                             <>
-                                <Transaction
-                                    smartAccount={smartAccount}
-                                    transactionSuccess={transactionSuccess}
-                                    setTransactionSuccess={
-                                        setTransactionSuccess
-                                    }
-                                />
+                                <Transaction smartAccount={smartAccount} />
                             </>
                         )}
                     </div>

@@ -64,7 +64,12 @@ function SafeOwners({ smartAccount }: SafeOwnersProps) {
                                         `Error in ${actionItem.label}:`,
                                         error
                                     );
-                                    setResult({ error: error.message });
+                                    setResult({
+                                        error:
+                                            error instanceof Error
+                                                ? error.message
+                                                : String(error),
+                                    });
                                 }
                             }}
                         >
