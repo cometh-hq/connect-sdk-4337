@@ -260,7 +260,12 @@ function Transaction({ smartAccount }: TransactionProps) {
                                         `Error in ${test.label}:`,
                                         error
                                     );
-                                    setTestResult({ error: error.message });
+                                    setTestResult({
+                                        error:
+                                            error instanceof Error
+                                                ? error.message
+                                                : String(error),
+                                    });
                                 }
                             }}
                         >

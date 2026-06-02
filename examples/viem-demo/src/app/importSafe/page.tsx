@@ -11,7 +11,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { gnosis } from "viem/chains";
 import countContractAbi from "../contract/counterABI.json";
 
-export const COUNTER_CONTRACT_ADDRESS =
+const COUNTER_CONTRACT_ADDRESS =
     "0x4FbF9EE4B2AF774D4617eAb027ac2901a41a7b5F";
 
 export default function App() {

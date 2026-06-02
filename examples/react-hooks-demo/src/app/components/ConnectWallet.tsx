@@ -1,5 +1,6 @@
 import { Icons } from "@/app/lib/ui/components";
 import { CheckIcon } from "@radix-ui/react-icons";
+import type { JSX } from "react";
 
 import type { Address } from "viem";
 

@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, JSX, SetStateAction } from "react";
 
 export const AccountContext = createContext<{
     smartAccount: any | null;
