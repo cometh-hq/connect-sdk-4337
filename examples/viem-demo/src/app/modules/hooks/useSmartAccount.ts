@@ -23,6 +23,7 @@ export function useSmartAccount() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
     const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL;
     const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL;
+    const baseUrl = process.env.NEXT_PUBLIC_4337_API_URL;
 
     function displayError(message: string) {
         setConnectionError(message);
@@ -52,7 +53,7 @@ export function useSmartAccount() {
 
             let smartAccount;
             const comethSignerConfig = {
-                rpId: "metri.xyz",
+                rpId: process.env.NEXT_PUBLIC_WEBAUTHN_RP_ID ?? "metri.xyz",
             }
 
             if (localStorageAddress) {
@@ -62,12 +63,14 @@ export function useSmartAccount() {
                     publicClient,
                     //signer: owner,
                     smartAccountAddress: localStorageAddress,
+                    baseUrl,
                     comethSignerConfig
                 });
             } else {
                 smartAccount = await createSafeSmartAccount({
                     apiKey,
                     chain: gnosis,
+                    baseUrl,
                     //signer: owner,
                     publicClient,
                     comethSignerConfig
@@ -79,7 +82,7 @@ export function useSmartAccount() {
             }
 
             const paymasterClient = await createComethPaymasterClient({
-                transport: http(paymasterUrl),
+                transport: http(`${paymasterUrl}?apikey=${apiKey}`),
                 chain: gnosis,
                 publicClient,
             });
@@ -87,7 +90,7 @@ export function useSmartAccount() {
             const smartAccountClient = createSmartAccountClient({
                 account: smartAccount,
                 chain: gnosis,
-                bundlerTransport: http(bundlerUrl, {
+                bundlerTransport: http(`${bundlerUrl}?apikey=${apiKey}`, {
                     retryCount: 5,
                     retryDelay: 1000,
                     timeout: 20_000,
