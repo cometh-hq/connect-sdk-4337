@@ -16,8 +16,8 @@ export const COUNTER_CONTRACT_ADDRESS =
 
 export default function App() {
     const apiKey = process.env.NEXT_PUBLIC_COMETH_API_KEY!;
-    const bundlerUrl = process.env.NEXT_PUBLIC_4337_BUNDLER_URL!;
-    const paymasterUrl = process.env.NEXT_PUBLIC_4337_PAYMASTER_URL!;
+    const bundlerUrl = `${process.env.NEXT_PUBLIC_4337_BUNDLER_URL}?apikey=${apiKey}`;
+    const paymasterUrl = `${process.env.NEXT_PUBLIC_4337_PAYMASTER_URL}?apikey=${apiKey}`;
     const walletToImport = "0x";
 
     const migrateSafe = async () => {
