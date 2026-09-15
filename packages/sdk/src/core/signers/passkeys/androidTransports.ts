@@ -7,7 +7,7 @@ type BrowserGetFn = NonNullable<WebAuthnP256.sign.Options["getFn"]>;
 // Chrome 153 on Android fills omitted allowCredentials transports with every
 // known transport, including smart-card, which GMS Core cannot decode and hangs
 // on (crbug.com/555599813). This is the Chrome 152 default list without it.
-export const ANDROID_DEFAULT_TRANSPORTS: AuthenticatorTransport[] = [
+const ANDROID_DEFAULT_TRANSPORTS: AuthenticatorTransport[] = [
     "usb",
     "ble",
     "nfc",

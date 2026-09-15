@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-    ANDROID_DEFAULT_TRANSPORTS,
-    withExplicitTransports,
-} from "./androidTransports";
+import { withExplicitTransports } from "./androidTransports";
 
 const challenge = new Uint8Array([1, 2, 3]);
 const credentialId = new Uint8Array([9, 9, 9]);
@@ -24,17 +21,25 @@ describe("withExplicitTransports", () => {
     test("adds the default transports when transports are omitted", () => {
         const result = withExplicitTransports(requestWith({}));
 
-        expect(result.publicKey?.allowCredentials?.[0].transports).toEqual(
-            ANDROID_DEFAULT_TRANSPORTS
-        );
+        expect(result.publicKey?.allowCredentials?.[0].transports).toEqual([
+            "usb",
+            "ble",
+            "nfc",
+            "hybrid",
+            "internal",
+        ]);
     });
 
     test("treats an empty transports list like an omitted one", () => {
         const result = withExplicitTransports(requestWith({ transports: [] }));
 
-        expect(result.publicKey?.allowCredentials?.[0].transports).toEqual(
-            ANDROID_DEFAULT_TRANSPORTS
-        );
+        expect(result.publicKey?.allowCredentials?.[0].transports).toEqual([
+            "usb",
+            "ble",
+            "nfc",
+            "hybrid",
+            "internal",
+        ]);
     });
 
     test("keeps an explicit non-empty transports list", () => {
