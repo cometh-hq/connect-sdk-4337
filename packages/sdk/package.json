@@ -42,7 +42,8 @@
     "format:check": "biome check .",
     "format": "biome check --apply .",
     "clean": "rimraf dist",
-    "build": "tsup --splitting"
+    "build": "tsup --splitting",
+    "test": "bun test"
   },
   "peerDependencies": {
     "viem": "^2.31.1",
