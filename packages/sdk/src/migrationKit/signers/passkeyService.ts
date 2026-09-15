@@ -1,3 +1,4 @@
+import { withAndroidTransports } from "@/core/signers/passkeys/androidTransports";
 import type { Assertion } from "@/core/signers/passkeys/types";
 import { NoPasskeySignerFoundInDBError, SignerNotOwnerError } from "@/errors";
 import psl from "psl";
@@ -32,7 +33,7 @@ const signWithCredential = async (
     challenge: BufferSource,
     publicKeyCredential?: PublicKeyCredentialDescriptor[]
 ): Promise<Assertion | null> => {
-    const assertionPayload = (await navigator.credentials.get({
+    const options: CredentialRequestOptions = {
         publicKey: {
             challenge,
             rpId: _formatSigningRpId(),
@@ -40,7 +41,10 @@ const signWithCredential = async (
             userVerification: "required",
             timeout: 30000,
         },
-    })) as Assertion | null;
+    };
+    const assertionPayload = (await navigator.credentials.get(
+        withAndroidTransports(options)
+    )) as Assertion | null;
 
     return assertionPayload;
 };

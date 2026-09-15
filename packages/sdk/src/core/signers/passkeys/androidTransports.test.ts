@@ -1,5 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import { withExplicitTransports } from "./androidTransports";
+import { afterEach, describe, expect, test } from "bun:test";
+import {
+    withAndroidTransports,
+    withExplicitTransports,
+} from "./androidTransports";
 
 const challenge = new Uint8Array([1, 2, 3]);
 const credentialId = new Uint8Array([9, 9, 9]);
@@ -72,5 +75,50 @@ describe("withExplicitTransports", () => {
         expect(result.publicKey?.rpId).toBe("example.com");
         expect(result.publicKey?.userVerification).toBe("required");
         expect(result.publicKey?.allowCredentials?.[0].id).toBe(credentialId);
+    });
+});
+
+const ANDROID_CHROME_UA =
+    "Mozilla/5.0 (Linux; Android 14; M2012K11G) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.36 Mobile Safari/537.36";
+const MAC_CHROME_UA =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.36 Safari/537.36";
+
+const stubBrowserWindow = (userAgent: string) => {
+    globalThis.window = {
+        location: { hostname: "example.com", protocol: "https:" },
+        navigator: { userAgent },
+    } as unknown as Window & typeof globalThis;
+};
+
+describe("withAndroidTransports", () => {
+    afterEach(() => {
+        Reflect.deleteProperty(globalThis, "window");
+    });
+
+    test("injects transports in an Android browser", () => {
+        stubBrowserWindow(ANDROID_CHROME_UA);
+
+        const result = withAndroidTransports(requestWith({}));
+
+        expect(result.publicKey?.allowCredentials?.[0].transports).toEqual([
+            "usb",
+            "ble",
+            "nfc",
+            "hybrid",
+            "internal",
+        ]);
+    });
+
+    test("leaves the request untouched on desktop", () => {
+        stubBrowserWindow(MAC_CHROME_UA);
+        const options = requestWith({});
+
+        expect(withAndroidTransports(options)).toBe(options);
+    });
+
+    test("leaves the request untouched outside a browser", () => {
+        const options = requestWith({});
+
+        expect(withAndroidTransports(options)).toBe(options);
     });
 });
