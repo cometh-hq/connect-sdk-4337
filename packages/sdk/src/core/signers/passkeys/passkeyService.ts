@@ -51,6 +51,7 @@ import {
     uint8ArrayToBase64,
 } from "../passkeys/utils";
 import type { Signer } from "../types";
+import { getAndroidBrowserGetFn } from "./androidTransports";
 import type {
     OxPasskeyCredential,
     PRFExtensionOutput,
@@ -253,8 +254,8 @@ const sign = async ({
     rpId?: string;
     tauriOptions?: webAuthnOptions["tauriOptions"];
 }): Promise<{ signature: Hex; publicKeyId: Hex }> => {
-    // Only pass getFn if defined (Android), omit for iOS/web to use browser default
     const tauriGetFn = tauriOptions && getTauriGetFn(tauriOptions);
+    const getFn = tauriGetFn ?? getAndroidBrowserGetFn();
 
     const assertion = await WebAuthnP256.sign({
         challenge: challenge as Hex,
@@ -263,7 +264,7 @@ const sign = async ({
         }),
         rpId: rpId || _formatSigningRpId(fullDomainSelected, tauriOptions),
         userVerification: "required",
-        ...(tauriGetFn && { getFn: tauriGetFn }),
+        ...(getFn && { getFn }),
     });
 
     if (!assertion) throw new PasskeySignatureFailedError();
@@ -379,6 +380,7 @@ const derivePRFKey = async ({
 
     const contextBytes = hexToBytes(keccak256(stringToHex(context)));
     const tauriGetFn = tauriOptions && getTauriGetFn(tauriOptions);
+    const getFn = tauriGetFn ?? getAndroidBrowserGetFn();
 
     const prfExtensions: WebAuthnExtensions = {
         prf: { eval: { first: contextBytes } },
@@ -394,7 +396,7 @@ const derivePRFKey = async ({
             extensions: prfExtensions as unknown as Parameters<
                 typeof WebAuthnP256.sign
             >[0]["extensions"],
-            ...(tauriGetFn && { getFn: tauriGetFn }),
+            ...(getFn && { getFn }),
         });
     } catch (e) {
         throw new PRFDerivationFailedError({ cause: e });
