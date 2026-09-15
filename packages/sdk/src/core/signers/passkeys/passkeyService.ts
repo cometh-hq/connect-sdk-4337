@@ -380,6 +380,7 @@ const derivePRFKey = async ({
 
     const contextBytes = hexToBytes(keccak256(stringToHex(context)));
     const tauriGetFn = tauriOptions && getTauriGetFn(tauriOptions);
+    const getFn = tauriGetFn ?? getAndroidBrowserGetFn();
 
     const prfExtensions: WebAuthnExtensions = {
         prf: { eval: { first: contextBytes } },
@@ -395,7 +396,7 @@ const derivePRFKey = async ({
             extensions: prfExtensions as unknown as Parameters<
                 typeof WebAuthnP256.sign
             >[0]["extensions"],
-            ...(tauriGetFn && { getFn: tauriGetFn }),
+            ...(getFn && { getFn }),
         });
     } catch (e) {
         throw new PRFDerivationFailedError({ cause: e });
